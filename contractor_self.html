@@ -400,8 +400,12 @@
         const dd = String(today.getDate()).padStart(2, '0');
         const formattedDate = `${yyyy}-${mm}-${dd}`;
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const spreadsheetId = urlParams.get('spreadsheetId') || "";
+
         const payload = {
             action: "contractorRegistrationForm",
+            spreadsheetId: spreadsheetId,
             name: document.getElementById('name').value,
             ic: document.getElementById('ic').value,
             company: document.getElementById('company').value,

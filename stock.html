@@ -412,9 +412,10 @@
             document.getElementById('planner-empty').style.display = 'none';
 
             try {
+                const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
                 const [invRes, shortRes] = await Promise.all([
-                    fetch(`${GOOGLE_SCRIPT_URL}?action=getInventory&pin=${securePin}`),
-                    fetch(`${GOOGLE_SCRIPT_URL}?action=getShortages&pin=${securePin}`)
+                    fetch(`${GOOGLE_SCRIPT_URL}?action=getInventory&spreadsheetId=${sheetId}&pin=${securePin}`),
+                    fetch(`${GOOGLE_SCRIPT_URL}?action=getShortages&spreadsheetId=${sheetId}&pin=${securePin}`)
                 ]);
 
                 const invData = await invRes.json();
@@ -549,6 +550,7 @@
             try {
                 const payload = {
                     action: "updateInventory",
+                    spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
                     pin: securePin,
                     adjustments: [
                         { itemId: parseInt(itemId, 10), qty: qty, notes: notes, user: user }
@@ -588,6 +590,7 @@
             try {
                 const payload = {
                     action: "updateInventory",
+                    spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
                     pin: securePin,
                     adjustments: adjustments
                 };

@@ -1387,8 +1387,12 @@
                 return;
             }
 
+            const urlParams = new URLSearchParams(window.location.search);
+            const spreadsheetId = urlParams.get('spreadsheetId') || "";
+
             const formData = {
                 action: "contractorHandbookForm",
+                spreadsheetId: spreadsheetId,
                 timestamp: new Date().toISOString(),
                 company: companyName,
                 name: contractorName,

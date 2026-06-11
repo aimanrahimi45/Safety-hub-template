@@ -664,6 +664,7 @@
             // Gather standard metadata
             const formData = {
                 action: "firstAidForm",
+                spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
                 inspectDate: document.getElementById('inspect-date').value,
                 company: document.getElementById('inspect-company').value,
                 department: document.getElementById('inspect-dept').value,
@@ -712,7 +713,8 @@
             const selectEl = document.getElementById("inspect-boxid");
             if (GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") return;
             try {
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getBoxIds`);
+                const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getBoxIds&spreadsheetId=${sheetId}`);
                 const json = await res.json();
                 if (json.status === "SUCCESS") {
                     selectEl.innerHTML = '<option value="" disabled selected>Select First Aid Box...</option>';

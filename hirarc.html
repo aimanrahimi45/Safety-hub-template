@@ -256,7 +256,8 @@
         async function loadMasterList() {
             const select = document.getElementById('department');
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getMasterList`);
+                const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getMasterList&spreadsheetId=${sheetId}`);
                 const resJson = await response.json();
 
                 if (resJson.status !== "SUCCESS") {
@@ -368,8 +369,10 @@
                 localStorage.removeItem('hirarc_saved_sig');
             }
 
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
             const payload = {
                 action: "hirarcForm",
+                spreadsheetId: sheetId,
                 department: document.getElementById('department').value,
                 owner_name: document.getElementById('owner_name').value,
                 employee_id: document.getElementById('employee_id').value,

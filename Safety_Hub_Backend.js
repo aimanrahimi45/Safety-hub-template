@@ -1,21 +1,20 @@
 /**
  * SAFETY HUB PORTAL - UNIFIED BACKEND CONTROLLER
  * 
- * Commercial Template Release (Option C / Method B)
+ * Google Workspace Marketplace Add-on Release (Multi-Tenant Option A)
  * 
- * Setup Instructions:
- * 1. Open a blank Google Sheet (this will be your Master Safety Hub Admin sheet).
- * 2. Click "Extensions" > "Apps Script".
- * 3. Delete all code and paste this entire unified script.
- * 4. Select the "setupWorkspace" function in the dropdown at the top and click "Run" (or use the custom menu).
- *    This will automatically:
- *    - Create a "Safety Hub Workspace" folder in your Google Drive.
- *    - Create 4 separate databases: First Aid, PPE, Contractor, and HIRARC Systems.
- *    - Connect and link them to this Master script.
- * 5. Click "Deploy" > "New Deployment" > Web App.
+ * Setup Instructions (For Developer):
+ * 1. Deploy this script once as a Web App from your developer account.
  *    - Execute as: "Me"
- *    - Who has access: "Anyone"
- * 6. Copy the generated Web App URL and paste it into your web portals' config.
+ *    - Access: "Anyone"
+ * 2. Configure this Web App URL inside the portals' config.js.
+ * 3. Publish this script as a Google Workspace Sheets Add-on.
+ * 
+ * Setup Instructions (For Clients):
+ * 1. Install the "Safety Hub" Add-on from the Marketplace.
+ * 2. Open any blank spreadsheet, select "Extensions" > "Safety Hub" > "Settings & Configuration".
+ * 3. Enter your license key and save.
+ * 4. Select "Extensions" > "Safety Hub" > "Initialize Workspace" to generate database files.
  */
 
 // ========================================================
@@ -34,10 +33,10 @@ function onOpen() {
 // ========================================================
 function setupWorkspace() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const docProps = PropertiesService.getDocumentProperties();
+  const settings = getSystemSettings(ss);
   
   // Verify License Key before creating workspace
-  const licenseKey = docProps.getProperty("LICENSE_KEY") || "";
+  const licenseKey = settings["LICENSE_KEY"] || "";
   const licenseCheck = validateLicenseKey(licenseKey);
   if (!licenseCheck.valid) {
     try {
@@ -49,7 +48,7 @@ function setupWorkspace() {
   }
   
   // A. Create/Find central Drive folder
-  let folderId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+  let folderId = settings["WORKSPACE_FOLDER_ID"];
   let folder;
   if (folderId) {
     try {
@@ -59,13 +58,13 @@ function setupWorkspace() {
     }
   }
   if (!folderId) {
-    folder = DriveApp.createFolder("Safety Hub Workspace");
+    folder = DriveApp.createFolder(settings["SYSTEM_NAME"] + " Workspace");
     folderId = folder.getId();
-    docProps.setProperty("WORKSPACE_FOLDER_ID", folderId);
+    setSystemSetting(ss, "WORKSPACE_FOLDER_ID", folderId);
   }
   
   // B. Setup First Aid Spreadsheet
-  let faId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+  let faId = settings["FIRST_AID_SPREADSHEET_ID"];
   let faFile;
   if (faId) {
     try {
@@ -80,12 +79,12 @@ function setupWorkspace() {
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
     faFile = newSS;
-    docProps.setProperty("FIRST_AID_SPREADSHEET_ID", newSS.getId());
+    setSystemSetting(ss, "FIRST_AID_SPREADSHEET_ID", newSS.getId());
   }
   initializeFirstAidSheets(faFile);
-
+ 
   // C. Setup PPE Spreadsheet
-  let ppeId = docProps.getProperty("PPE_SPREADSHEET_ID");
+  let ppeId = settings["PPE_SPREADSHEET_ID"];
   let ppeFile;
   if (ppeId) {
     try {
@@ -100,12 +99,12 @@ function setupWorkspace() {
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
     ppeFile = newSS;
-    docProps.setProperty("PPE_SPREADSHEET_ID", newSS.getId());
+    setSystemSetting(ss, "PPE_SPREADSHEET_ID", newSS.getId());
   }
   initializePpeSheets(ppeFile);
-
+ 
   // D. Setup Contractor Spreadsheet
-  let contractorId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+  let contractorId = settings["CONTRACTOR_SPREADSHEET_ID"];
   let contractorFile;
   if (contractorId) {
     try {
@@ -120,12 +119,12 @@ function setupWorkspace() {
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
     contractorFile = newSS;
-    docProps.setProperty("CONTRACTOR_SPREADSHEET_ID", newSS.getId());
+    setSystemSetting(ss, "CONTRACTOR_SPREADSHEET_ID", newSS.getId());
   }
   initializeContractorSheets(contractorFile);
-
+ 
   // E. Setup HIRARC Spreadsheet
-  let hirarcId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
+  let hirarcId = settings["HIRARC_SPREADSHEET_ID"];
   let hirarcFile;
   if (hirarcId) {
     try {
@@ -140,43 +139,32 @@ function setupWorkspace() {
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
     hirarcFile = newSS;
-    docProps.setProperty("HIRARC_SPREADSHEET_ID", newSS.getId());
+    setSystemSetting(ss, "HIRARC_SPREADSHEET_ID", newSS.getId());
   }
   initializeHirarcSheets(hirarcFile);
-  
-  // Set default settings
-  if (!docProps.getProperty("DASHBOARD_PIN")) {
-    docProps.setProperty("DASHBOARD_PIN", "9911");
-  }
-  if (!docProps.getProperty("SYSTEM_NAME")) {
-    docProps.setProperty("SYSTEM_NAME", "Safety Hub");
-  }
-  if (!docProps.getProperty("LOGO_URL")) {
-    docProps.setProperty("LOGO_URL", "");
-  }
   
   // Format master control tab
   let masterSheet = ss.getSheetByName("Dashboard Links");
   if (!masterSheet) masterSheet = ss.insertSheet("Dashboard Links");
   masterSheet.clear();
   masterSheet.appendRow(["System Configuration Panel", "Values / Links"]);
-  masterSheet.appendRow(["Safety Hub Folder", folder.getUrl()]);
+  masterSheet.appendRow(["Workspace Parent Folder", folder.getUrl()]);
   masterSheet.appendRow(["First Aid Database", faFile.getUrl()]);
   masterSheet.appendRow(["PPE Database", ppeFile.getUrl()]);
   masterSheet.appendRow(["Contractor Database", contractorFile.getUrl()]);
   masterSheet.appendRow(["HIRARC Database", hirarcFile.getUrl()]);
   masterSheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   masterSheet.autoResizeColumns(1, 2);
-
+ 
   try {
-    SpreadsheetApp.getUi().alert("🎉 Safety Hub Workspace Ready!", "Created folder 'Safety Hub Workspace' and initialized all database systems inside it.\n\nPlease deploy this script as a Web App to link your HTML pages.", SpreadsheetApp.getUi().ButtonSet.OK);
+    SpreadsheetApp.getUi().alert("🎉 Safety Hub Workspace Ready!", "Created folder '" + settings["SYSTEM_NAME"] + " Workspace' and initialized all database sheets inside it.\n\nConnection URL settings are fully configured.", SpreadsheetApp.getUi().ButtonSet.OK);
   } catch (err) {
     Logger.log("🎉 Safety Hub Workspace Ready!");
   }
 }
-
+ 
 // --- SUB-SYSTEM SHEET INITIALIZERS ---
-
+ 
 function initializeFirstAidSheets(ss) {
   const defSheet = ss.getSheetByName("Sheet1");
   
@@ -193,14 +181,14 @@ function initializeFirstAidSheets(ss) {
   detailsSheet.getRange(1, 1, 1, detailHeaders.length).setValues([detailHeaders]);
   detailsSheet.getRange(1, 1, 1, detailHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   detailsSheet.setFrozenRows(1);
-
+ 
   // 3. Central Inventory
   let invSheet = ss.getSheetByName("First Aid Central Inventory") || ss.insertSheet("First Aid Central Inventory");
   const invHeaders = ["Item ID", "Item Name", "Unit", "Current Stock", "Min Alert Level", "Last Updated"];
   invSheet.getRange(1, 1, 1, invHeaders.length).setValues([invHeaders]);
   invSheet.getRange(1, 1, 1, invHeaders.length).setFontWeight("bold").setBackground("#0f766e").setFontColor("#ffffff");
   invSheet.setFrozenRows(1);
-
+ 
   if (invSheet.getLastRow() <= 1) {
     const defaultInventory = [
       [1, "Triangular Bandage 100cm", "pcs", 0, 10, new Date()],
@@ -229,7 +217,7 @@ function initializeFirstAidSheets(ss) {
     ];
     invSheet.getRange(2, 1, defaultInventory.length, invHeaders.length).setValues(defaultInventory);
   }
-
+ 
   // 4. Transactions
   let transSheet = ss.getSheetByName("First Aid Inventory Transactions") || ss.insertSheet("First Aid Inventory Transactions");
   const transHeaders = ["Timestamp", "ActionType", "Item ID", "Item Name", "QuantityChanged", "Box ID / Notes", "Logged By"];
@@ -239,7 +227,7 @@ function initializeFirstAidSheets(ss) {
   
   if (defSheet) ss.deleteSheet(defSheet);
 }
-
+ 
 function initializePpeSheets(ss) {
   const defSheet = ss.getSheetByName("Sheet1");
   let sheet = ss.getSheetByName("PPE Requests") || ss.insertSheet("PPE Requests");
@@ -249,7 +237,7 @@ function initializePpeSheets(ss) {
   sheet.setFrozenRows(1);
   if (defSheet) ss.deleteSheet(defSheet);
 }
-
+ 
 function initializeContractorSheets(ss) {
   const defSheet = ss.getSheetByName("Sheet1");
   
@@ -259,7 +247,7 @@ function initializeContractorSheets(ss) {
   indSheet.getRange(1, 1, 1, indHeaders.length).setValues([indHeaders]);
   indSheet.getRange(1, 1, 1, indHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   indSheet.setFrozenRows(1);
-
+ 
   // 2. Acknowledgments Log
   let ackSheet = ss.getSheetByName("Contractor Acknowledgments") || ss.insertSheet("Contractor Acknowledgments");
   const ackHeaders = ['Submission Date', 'Company Name', 'Contractor Name', 'Position', 'Email Address', 'Phone Number', 'IC Number (Last 4)', 'Operations Selected', 'Administration Selected', 'Logistics Selected', 'Has Digital Signature', 'Signature Image URL', 'Signature Data Size (chars)', 'IP Address', 'Browser Info', 'Processing Time', 'Status'];
@@ -269,7 +257,7 @@ function initializeContractorSheets(ss) {
   
   if (defSheet) ss.deleteSheet(defSheet);
 }
-
+ 
 function initializeHirarcSheets(ss) {
   const defSheet = ss.getSheetByName("Sheet1");
   
@@ -279,7 +267,7 @@ function initializeHirarcSheets(ss) {
   appSheet.getRange(1, 1, 1, appHeaders.length).setValues([appHeaders]);
   appSheet.getRange(1, 1, 1, appHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   appSheet.setFrozenRows(1);
-
+ 
   // 2. Master List Tab
   let masterSheet = ss.getSheetByName("HIRARC Master List") || ss.insertSheet("HIRARC Master List");
   if (masterSheet.getLastRow() <= 1) {
@@ -296,15 +284,22 @@ function initializeHirarcSheets(ss) {
   
   if (defSheet) ss.deleteSheet(defSheet);
 }
-
+ 
 // ========================================================
-// 3. UNIFIED GET ROUTER (READ API)
+// 3. UNIFIED GET ROUTER (READ API - MULTI-TENANT)
 // ========================================================
 function doGet(e) {
   try {
     const action = e.parameter.action;
-    const docProps = PropertiesService.getDocumentProperties();
-    const systemPIN = docProps.getProperty("DASHBOARD_PIN") || "9911";
+    const spreadsheetId = e.parameter.spreadsheetId;
+
+    if (!spreadsheetId) {
+      return returnJSON({ status: "ERROR", message: "Missing Spreadsheet ID" });
+    }
+
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    const settings = getSystemSettings(ss);
+    const systemPIN = settings["DASHBOARD_PIN"] || "9911";
     
     // ----------------------------------------------------
     // PUBLIC ACTIONS (No PIN required)
@@ -312,18 +307,18 @@ function doGet(e) {
     
     // Dynamic Box IDs lookup
     if (action === "getBoxIds") {
-      const boxIds = docProps.getProperty("BOX_IDS") || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
+      const boxIds = settings["BOX_IDS"] || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
       return returnJSON({ status: "SUCCESS", data: boxIds.split(",") });
     }
     
     // Look up Contractor Induction Status
     if (action === "lookupWorker") {
       const searchIC = e.parameter.ic;
-      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+      const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
       if (!ssId) return returnJSON({ status: "ERROR", message: "Contractor database not provisioned." });
       
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("Safety Inductions") || ss.getSheets()[0];
+      const contractorSS = SpreadsheetApp.openById(ssId);
+      const sheet = contractorSS.getSheetByName("Safety Inductions") || contractorSS.getSheets()[0];
       const rows = sheet.getDataRange().getValues();
       const worker = rows.find(r => r[2] && String(r[2]).includes(searchIC));
       
@@ -342,24 +337,24 @@ function doGet(e) {
     
     // Get HIRARC Master List Dropdowns
     if (action === "getMasterList") {
-      const ssId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
+      const ssId = settings["HIRARC_SPREADSHEET_ID"];
       if (!ssId) return returnJSON({ status: "ERROR", message: "HIRARC database not provisioned." });
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("HIRARC Master List") || ss.getSheets()[0];
+      const hirarcSS = SpreadsheetApp.openById(ssId);
+      const sheet = hirarcSS.getSheetByName("HIRARC Master List") || hirarcSS.getSheets()[0];
       const rows = sheet.getDataRange().getValues();
       const data = rows.map(r => [String(r[0]).trim(), r[1] ? String(r[1]).trim() : "", r[2] ? String(r[2]).trim() : ""]);
       return returnJSON({ status: "SUCCESS", data: data });
     }
-
+ 
     // Smart 6-Month PPE Issue warning check
     if (action === "checkLastIssue") {
       const staffId = e.parameter.staffId;
       const ppeType = e.parameter.ppeType;
-      const ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
+      const ssId = settings["PPE_SPREADSHEET_ID"];
       if (!ssId) return returnJSON({ status: "ERROR", message: "PPE database not provisioned." });
       
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("PPE Requests") || ss.getSheets()[0];
+      const ppeSS = SpreadsheetApp.openById(ssId);
+      const sheet = ppeSS.getSheetByName("PPE Requests") || ppeSS.getSheets()[0];
       const rows = sheet.getDataRange().getValues();
       let lastIssueDateObj = null;
       
@@ -396,11 +391,11 @@ function doGet(e) {
     if (action === "getBranding") {
       return returnJSON({
         status: "SUCCESS",
-        systemName: docProps.getProperty("SYSTEM_NAME") || "Safety Hub",
-        logoUrl: docProps.getProperty("LOGO_URL") || ""
+        systemName: settings["SYSTEM_NAME"] || "Safety Hub",
+        logoUrl: settings["LOGO_URL"] || ""
       });
     }
-
+ 
     // ----------------------------------------------------
     // SECURE ACTIONS (Requires PIN validation)
     // ----------------------------------------------------
@@ -416,51 +411,51 @@ function doGet(e) {
       let sheetName;
       
       if (db === "First Aid") {
-        ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+        ssId = settings["FIRST_AID_SPREADSHEET_ID"];
         sheetName = "First Aid Checklist Logs";
       } else if (db === "PPE") {
-        ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
+        ssId = settings["PPE_SPREADSHEET_ID"];
         sheetName = "PPE Requests";
       } else if (db === "Contractor") {
-        ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+        ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Safety Inductions";
       } else if (db === "Handbook") {
-        ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+        ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Contractor Acknowledgments";
       } else if (db === "HIRARC") {
-        ssId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
+        ssId = settings["HIRARC_SPREADSHEET_ID"];
         sheetName = "Signed Approvals";
       }
       
       if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
       
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName(sheetName);
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName(sheetName);
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
     // Get First Aid logs details
     if (action === "getDetails") {
-      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("First Aid Checklist Details");
+      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("First Aid Checklist Details");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
     // Get Central Inventory stock
     if (action === "getInventory") {
-      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("First Aid Central Inventory");
+      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("First Aid Central Inventory");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
     // Get consolidated shortages list (Replenishment Planner)
     if (action === "getShortages") {
-      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const logsSheet = ss.getSheetByName("First Aid Checklist Logs");
-      const detailsSheet = ss.getSheetByName("First Aid Checklist Details");
+      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const logsSheet = targetSS.getSheetByName("First Aid Checklist Logs");
+      const detailsSheet = targetSS.getSheetByName("First Aid Checklist Details");
       
       const logRows = logsSheet.getDataRange().getValues();
       const detailRows = detailsSheet.getDataRange().getValues();
@@ -506,42 +501,49 @@ function doGet(e) {
       }
       return returnJSON({ status: "SUCCESS", shortages: shortages });
     }
-
+ 
     return returnJSON({ status: "ERROR", message: "Invalid Action" });
   } catch (err) {
     return returnJSON({ status: "ERROR", message: err.message });
   }
 }
-
+ 
 // ========================================================
-// 4. UNIFIED POST ROUTER (SUBMISSIONS & UPDATES)
+// 4. UNIFIED POST ROUTER (SUBMISSIONS & UPDATES - MULTI-TENANT)
 // ========================================================
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const docProps = PropertiesService.getDocumentProperties();
-    const systemPIN = docProps.getProperty("DASHBOARD_PIN") || "9911";
+    const spreadsheetId = data.spreadsheetId;
+
+    if (!spreadsheetId) {
+      return returnJSON({ status: "ERROR", message: "Missing Spreadsheet ID" });
+    }
+
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    const settings = getSystemSettings(ss);
+    const systemPIN = settings["DASHBOARD_PIN"] || "9911";
     
     // A. First Aid Checklist Submission
     if (data.action === "firstAidForm") {
-      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const logsSheet = ss.getSheetByName("First Aid Checklist Logs");
-      const detailsSheet = ss.getSheetByName("First Aid Checklist Details");
-      const invSheet = ss.getSheetByName("First Aid Central Inventory");
-      const transSheet = ss.getSheetByName("First Aid Inventory Transactions");
+      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const logsSheet = targetSS.getSheetByName("First Aid Checklist Logs");
+      const detailsSheet = targetSS.getSheetByName("First Aid Checklist Details");
+      const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
+      const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
       
       // Auto folder setup for signatures
-      let folderId = docProps.getProperty("SIGNATURE_FOLDER_ID");
+      let folderId = settings["SIGNATURE_FOLDER_ID"];
       let folder;
       if (folderId) {
         try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
       }
       if (!folderId) {
-        const workspaceId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+        const workspaceId = settings["WORKSPACE_FOLDER_ID"];
         const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-        folder = workspace.createFolder("Safety Hub Signatures");
-        docProps.setProperty("SIGNATURE_FOLDER_ID", folder.getId());
+        folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
+        setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
       }
       
       let signatureUrl = "";
@@ -555,7 +557,7 @@ function doPost(e) {
       const auditId = "FA-" + String(logsSheet.getLastRow()).padStart(5, '0');
       const cleanCond = data[`item_24_avail`] || "Good";
       const cleanRem = data[`item_24_remarks`] || "-";
-
+ 
       logsSheet.appendRow([
         auditId, new Date(), data.inspectDate, data.company, data.department, data.section,
         data.boxId, data.location, cleanCond, cleanRem, data.findings || "-",
@@ -587,8 +589,8 @@ function doPost(e) {
         { id: 22, name: "Waste Bag", req: "3pcs" },
         { id: 23, name: "First Aid Manual", req: "1pcs" }
       ];
-
-      const stockMap = getCentralStockMap(ss);
+ 
+      const stockMap = getCentralStockMap(targetSS);
       const instantRestock = data.instantRestock === true;
       
       itemsList.forEach(item => {
@@ -597,7 +599,7 @@ function doPost(e) {
         const exp = data[`item_${item.id}_exp`] || "-";
         const remarksValue = data[`item_${item.id}_remarks`] || "-";
         let finalAvail = inputVal;
-
+ 
         if (instantRestock && inputVal < reqVal) {
           const shortage = reqVal - inputVal;
           const itemInfo = stockMap[item.id];
@@ -608,20 +610,20 @@ function doPost(e) {
           }
           finalAvail = reqVal;
         }
-
+ 
         detailsSheet.appendRow([auditId, item.id, item.name, item.req, finalAvail, exp, remarksValue, data.boxId, data.inspectDate]);
       });
       return returnText("SUCCESS");
     }
-
+ 
     // B. First Aid Inventory Adjustment
     if (data.action === "updateInventory") {
       if (data.pin !== systemPIN) return returnText("ERROR: Unauthorized");
-      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const invSheet = ss.getSheetByName("First Aid Central Inventory");
-      const transSheet = ss.getSheetByName("First Aid Inventory Transactions");
-      const stockMap = getCentralStockMap(ss);
+      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
+      const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
+      const stockMap = getCentralStockMap(targetSS);
       
       data.adjustments.forEach(adj => {
         const itemInfo = stockMap[adj.itemId];
@@ -634,12 +636,12 @@ function doPost(e) {
       });
       return returnText("SUCCESS");
     }
-
+ 
     // C. PPE Request Log
     if (data.action === "ppeForm") {
-      const ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("PPE Requests");
+      const ssId = settings["PPE_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("PPE Requests");
       const requestId = "REQ-" + String(sheet.getLastRow()).padStart(5, '0');
       const status = data.status || "Approved / Dispatched";
       const actionDate = (status !== "Pending Approval") ? Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd") : "";
@@ -652,15 +654,15 @@ function doPost(e) {
       ]);
       return returnJSON({ status: "SUCCESS", requestId: requestId });
     }
-
+ 
     // D. PPE Approval Status Update
     if (data.action === "updateRequestStatus") {
       if (String(data.pin).trim() !== String(systemPIN).trim()) {
         return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
       }
-      const ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("PPE Requests");
+      const ssId = settings["PPE_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("PPE Requests");
       const rows = sheet.getDataRange().getValues();
       let foundRow = -1;
       for (let i = 1; i < rows.length; i++) {
@@ -677,23 +679,23 @@ function doPost(e) {
       }
       return returnJSON({ status: "ERROR", message: "Request ID not found" });
     }
-
+ 
     // E. Contractor Self-Registration Form
     if (data.action === "contractorRegistrationForm") {
-      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("Safety Inductions");
+      const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("Safety Inductions");
       
-      let folderId = docProps.getProperty("PHOTO_FOLDER_ID");
+      let folderId = settings["PHOTO_FOLDER_ID"];
       let folder;
       if (folderId) {
         try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
       }
       if (!folderId) {
-        const workspaceId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+        const workspaceId = settings["WORKSPACE_FOLDER_ID"];
         const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-        folder = workspace.createFolder("Safety Hub Photos");
-        docProps.setProperty("PHOTO_FOLDER_ID", folder.getId());
+        folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Photos");
+        setSystemSetting(ss, "PHOTO_FOLDER_ID", folder.getId());
       }
       
       let photoUrl = "";
@@ -707,13 +709,13 @@ function doPost(e) {
       sheet.appendRow([new Date(), data.name, data.ic, data.company, data.date, data.inducted_by, data.declaration, data.signature, photoUrl, data.status || "Pending Approval"]);
       return returnJSON({ status: "success" });
     }
-
+ 
     // F. Contractor Approval
     if (data.action === "approveWorkers") {
       if (data.pin !== systemPIN) return returnJSON({ status: "error", message: "Unauthorized PIN" });
-      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("Safety Inductions");
+      const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("Safety Inductions");
       const rows = sheet.getDataRange().getValues();
       let count = 0;
       
@@ -732,23 +734,23 @@ function doPost(e) {
       });
       return returnJSON({ status: "success", count: count });
     }
-
+ 
     // G. Contractor Handbook Signature Acknowledgment
     if (data.action === "contractorHandbookForm") {
-      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("Contractor Acknowledgments");
+      const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("Contractor Acknowledgments");
       
-      let folderId = docProps.getProperty("SIGNATURE_FOLDER_ID");
+      let folderId = settings["SIGNATURE_FOLDER_ID"];
       let folder;
       if (folderId) {
         try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
       }
       if (!folderId) {
-        const workspaceId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+        const workspaceId = settings["WORKSPACE_FOLDER_ID"];
         const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-        folder = workspace.createFolder("Safety Hub Signatures");
-        docProps.setProperty("SIGNATURE_FOLDER_ID", folder.getId());
+        folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
+        setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
       }
       
       let signatureUrl = "";
@@ -768,32 +770,34 @@ function doPost(e) {
       ]);
       return returnJSON({ status: "success" });
     }
-
+ 
     // H. HIRARC Signature Submission
     if (data.action === "hirarcForm") {
-      const ssId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
-      const ss = SpreadsheetApp.openById(ssId);
-      const sheet = ss.getSheetByName("Signed Approvals") || ss.getSheets()[0];
+      const ssId = settings["HIRARC_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("Signed Approvals") || targetSS.getSheets()[0];
       sheet.appendRow([new Date(), data.department, data.owner_name, data.employee_id, data.date, data.document_version, data.declaration, data.signature]);
       return returnJSON({ status: "success" });
     }
-
+ 
     return returnJSON({ status: "ERROR", message: "Invalid action type" });
   } catch (err) {
     return returnJSON({ status: "ERROR", message: err.message });
   }
 }
-
+ 
 // ========================================================
 // 5. CLIENT SIDE CONFIGURATION UI (SETTINGS SIDEBAR)
 // ========================================================
 function showSettingsSidebar() {
-  const docProps = PropertiesService.getDocumentProperties();
-  const currentPin = docProps.getProperty("DASHBOARD_PIN") || "9911";
-  const currentLogo = docProps.getProperty("LOGO_URL") || "";
-  const currentName = docProps.getProperty("SYSTEM_NAME") || "Safety Hub";
-  const licenseKey = docProps.getProperty("LICENSE_KEY") || "";
-  const boxIds = docProps.getProperty("BOX_IDS") || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const settings = getSystemSettings(ss);
+  
+  const currentPin = settings["DASHBOARD_PIN"] || "9911";
+  const currentLogo = settings["LOGO_URL"] || "";
+  const currentName = settings["SYSTEM_NAME"] || "Safety Hub";
+  const licenseKey = settings["LICENSE_KEY"] || "";
+  const boxIds = settings["BOX_IDS"] || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -845,7 +849,7 @@ function showSettingsSidebar() {
       
       <button class="btn" onclick="saveSettings()">Save Configuration</button>
       <div id="statusBox" class="status"></div>
-
+ 
       <script>
         function saveSettings() {
           const btn = document.querySelector(".btn");
@@ -889,10 +893,10 @@ function showSettingsSidebar() {
       .setWidth(300);
   SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
-
+ 
 function updateClientSettings(config) {
   try {
-    const docProps = PropertiesService.getDocumentProperties();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
     
     // 1. License Check Validation
     const licenseResult = validateLicenseKey(config.licenseKey);
@@ -901,18 +905,18 @@ function updateClientSettings(config) {
     }
     
     // 2. Save configurations
-    docProps.setProperty("SYSTEM_NAME", config.systemName || "Safety Hub");
-    docProps.setProperty("LOGO_URL", config.logoUrl || "");
-    docProps.setProperty("DASHBOARD_PIN", config.pin || "9911");
-    docProps.setProperty("BOX_IDS", config.boxIds || "");
-    docProps.setProperty("LICENSE_KEY", config.licenseKey || "");
+    setSystemSetting(ss, "SYSTEM_NAME", config.systemName || "Safety Hub");
+    setSystemSetting(ss, "LOGO_URL", config.logoUrl || "");
+    setSystemSetting(ss, "DASHBOARD_PIN", config.pin || "9911");
+    setSystemSetting(ss, "BOX_IDS", config.boxIds || "");
+    setSystemSetting(ss, "LICENSE_KEY", config.licenseKey || "");
     
     return { status: "success", message: "🎉 Configuration saved successfully!" };
   } catch (err) {
     return { status: "error", message: "Error: " + err.message };
   }
 }
-
+ 
 function validateLicenseKey(key) {
   if (!key) {
     return { valid: false, reason: "License key is required." };
@@ -926,21 +930,21 @@ function validateLicenseKey(key) {
   
   return { valid: false, reason: "Invalid format. Key format is 'SAFETY-XXXX-XXXX'" };
 }
-
+ 
 // ========================================================
 // 6. SHARED UTILITIES & API HELPERS
 // ========================================================
-
+ 
 // Return text response
 function returnText(val) {
   return ContentService.createTextOutput(val).setMimeType(ContentService.MimeType.TEXT);
 }
-
+ 
 // Return JSON response
 function returnJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
-
+ 
 // Fetch central stock map
 function getCentralStockMap(ss) {
   const invSheet = ss.getSheetByName("First Aid Central Inventory");
@@ -955,7 +959,7 @@ function getCentralStockMap(ss) {
   }
   return map;
 }
-
+ 
 // Convert sheet values to clean JSON Array
 function fetchSheetDataAsJSON(sheet) {
   const rows = sheet.getDataRange().getValues();
@@ -977,4 +981,49 @@ function fetchSheetDataAsJSON(sheet) {
     data.push(obj);
   }
   return data;
+}
+
+// Get system settings from hidden tab
+function getSystemSettings(ss) {
+  let sheet = ss.getSheetByName("System Settings");
+  if (!sheet) {
+    sheet = ss.insertSheet("System Settings");
+    sheet.hideSheet();
+    const defaults = [
+      ["SYSTEM_NAME", "Safety Hub"],
+      ["LOGO_URL", ""],
+      ["DASHBOARD_PIN", "9911"],
+      ["BOX_IDS", "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07"],
+      ["LICENSE_KEY", ""]
+    ];
+    sheet.getRange(1, 1, defaults.length, 2).setValues(defaults);
+  }
+  const rows = sheet.getDataRange().getValues();
+  const settings = {};
+  rows.forEach(r => {
+    if (r[0]) settings[r[0]] = String(r[1] || "").trim();
+  });
+  return settings;
+}
+
+// Set system settings in hidden tab
+function setSystemSetting(ss, key, val) {
+  let sheet = ss.getSheetByName("System Settings");
+  if (!sheet) {
+    getSystemSettings(ss);
+    sheet = ss.getSheetByName("System Settings");
+  }
+  const rows = sheet.getDataRange().getValues();
+  let foundRow = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i][0] === key) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+  if (foundRow !== -1) {
+    sheet.getRange(foundRow, 2).setValue(val);
+  } else {
+    sheet.appendRow([key, val]);
+  }
 }

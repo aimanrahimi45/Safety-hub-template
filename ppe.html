@@ -646,7 +646,7 @@
             loadMsg.innerText = "Verifying security PIN & loading database...";
 
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&pin=${pin}`);
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&spreadsheetId=${localStorage.getItem("safety_hub_spreadsheet_id")}&pin=${pin}`);
                 const resJson = await response.json();
 
                 if (resJson.status === "ERROR") {
@@ -682,7 +682,7 @@
             loadMsg.innerText = "Verifying security PIN...";
 
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&pin=${pin}`);
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&spreadsheetId=${localStorage.getItem("safety_hub_spreadsheet_id")}&pin=${pin}`);
                 const resJson = await response.json();
 
                 if (resJson.status === "ERROR") {
@@ -800,6 +800,7 @@
 
             const payload = {
                 action: "parseEmailWithAi",
+                spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
                 pin: pin,
                 emailContent: bodyText,
                 validDepartments: validDepartments
@@ -901,6 +902,7 @@
             
             const payload = {
                 action: "ppeForm",
+                spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
                 requestDate: worker.date,
                 staffId: worker.id,
                 staffName: worker.name,
@@ -1511,7 +1513,8 @@
             // Fallback to server fetch if local database cache is not yet loaded
             console.warn("Local database cache is empty, falling back to server-side check.");
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=checkLastIssue&staffId=${encodeURIComponent(staffId)}&ppeType=${encodeURIComponent(ppeType)}`);
+                const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=checkLastIssue&spreadsheetId=${sheetId}&staffId=${encodeURIComponent(staffId)}&ppeType=${encodeURIComponent(ppeType)}`);
                 const resJson = await response.json();
                 if (resJson.status === "SUCCESS" && resJson.found) {
                     found = true;
@@ -1555,6 +1558,7 @@
 
         const payload = {
             action: "ppeForm",
+            spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
             requestDate: document.getElementById('req-date').value,
             staffId: document.getElementById('req-staff-id').value.trim(),
             staffName: document.getElementById('req-staff-name').value.trim(),
@@ -1618,7 +1622,7 @@
         loadMsg.innerText = "Refreshing database...";
 
         try {
-            const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&pin=${pin}`);
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&spreadsheetId=${localStorage.getItem("safety_hub_spreadsheet_id")}&pin=${pin}`);
             const resJson = await response.json();
 
             if (resJson.status === "ERROR") {
@@ -1776,6 +1780,7 @@
         try {
             const payload = {
                 action: "updateRequestStatus",
+                spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
                 pin: pin,
                 requestId: requestId,
                 status: newStatus,

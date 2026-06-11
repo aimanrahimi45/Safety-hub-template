@@ -533,11 +533,12 @@
 
                     // 2. Fetch secure JSON data
                     try {
+                        const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
                         if (db.name === "First Aid Inspections") {
                             // Relational database requires parallel fetching of logs and details
                             const [logsRes, detailsRes] = await Promise.all([
-                                fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=First Aid&pin=${pin}`),
-                                fetch(`${GOOGLE_SCRIPT_URL}?action=getDetails&pin=${pin}`)
+                                fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=First Aid&spreadsheetId=${sheetId}&pin=${pin}`),
+                                fetch(`${GOOGLE_SCRIPT_URL}?action=getDetails&spreadsheetId=${sheetId}&pin=${pin}`)
                             ]);
 
                             const logsJson = await logsRes.json();
@@ -591,7 +592,7 @@
                             ]);
                         } else {
                             // Non-relational secure databases (HIRARC, Contractor Inductions, Contractor Handbook)
-                            const logsRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=${db.dbKey}&pin=${pin}`);
+                            const logsRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=${db.dbKey}&spreadsheetId=${sheetId}&pin=${pin}`);
                             const logsJson = await logsRes.json();
 
                             if (logsJson.status === "ERROR") {

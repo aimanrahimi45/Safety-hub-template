@@ -18,9 +18,13 @@
  */
 
 // ========================================================
-// 1. SPREADSHEET OPEN TRIGGER (CUSTOM MENU)
+// 1. ADD-ON INSTALL & SPREADSHEET OPEN TRIGGER
 // ========================================================
-function onOpen() {
+function onInstall(e) {
+  onOpen(e);
+}
+
+function onOpen(e) {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🛡️ Safety Hub')
       .addItem('⚡ Initialize Workspace', 'setupWorkspace')

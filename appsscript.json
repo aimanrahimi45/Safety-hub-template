@@ -1,0 +1,21 @@
+{
+  "timeZone": "Asia/Kuala_Lumpur",
+  "dependencies": {
+    "enabledAdvancedServices": []
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "sheets": {
+    "addOns": {
+      "common": {
+        "name": "Safety Hub",
+        "logoUrl": "https://lh3.googleusercontent.com/d/1t3VqK7Xw_9e06180373pY_M4_F5_H6_U"
+      }
+    }
+  }
+}

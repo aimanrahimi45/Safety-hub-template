@@ -1,46 +1,72 @@
 /* ==========================================
-   Safety Hub - Universal Design System
+   Safety Hub - Premium Design System
+   Warm Minimalist Theme (Firecheck Inspired)
    ========================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --success: #10b981;
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
+    --primary: #eb5757;          /* Coral/Red Accent */
+    --primary-hover: #d93838;
+    --success: #10b981;          /* Completed Green */
+    --warning: #f59e0b;          /* Pending Orange */
+    --bg: #f0eee9;               /* Warm Cream/Beige Background */
+    --surface: #ffffff;          /* Pure White Cards */
+    --sidebar-bg: #e6e4de;       /* Slightly Darker Warm Gray/Beige */
+    --text-main: #1c1917;        /* Charcoal Stone Text */
+    --text-muted: #78716c;       /* Muted Stone Gray */
+    --border: #e3e1da;           /* Light Warm Gray Border */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 20px -2px rgba(28, 25, 23, 0.05);
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
 }
 
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
+    font-family: var(--font-body);
     background: var(--bg);
     color: var(--text-main);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* Page Title Section */
+.page-title {
+    margin-bottom: 24px;
+}
+.page-title h1 {
+    font-family: var(--font-heading);
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.page-title p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 4px;
 }
 
 /* Common Container Layout */
 .container {
     max-width: 600px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 24px;
     padding-bottom: 60px;
 }
 
-/* Premium Glassmorphic Cards */
+/* Premium White Cards */
 .card {
     background: var(--surface);
     padding: 24px;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-md);
     margin-bottom: 20px;
     border: 1px solid var(--border);
     transition: transform 0.2s, box-shadow 0.2s;
@@ -48,13 +74,21 @@ body {
 
 /* Headings */
 h2 {
+    font-family: var(--font-heading);
     color: var(--text-main);
-    margin-top: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    border-bottom: 2px solid #f1f5f9;
-    padding-bottom: 10px;
+    font-size: 1.35rem;
+    font-weight: 700;
     margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+}
+
+h3 {
+    font-family: var(--font-heading);
+    color: var(--text-main);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
 }
 
 /* Shared Back Button */
@@ -79,13 +113,15 @@ h2 {
     margin-right: 6px;
 }
 
-/* Premium Standard Inputs & Selects */
+/* Inputs & Form Controls */
 label {
     display: block;
-    margin-top: 16px;
+    margin-top: 18px;
     font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-main);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
 }
 
 input[type="text"], 
@@ -98,12 +134,12 @@ textarea {
     padding: 12px 16px;
     margin-top: 6px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
     box-sizing: border-box;
     font-size: 0.95rem;
     font-family: inherit;
     transition: all 0.2s ease;
-    background: #f8fafc;
+    background: #fafaf9;
     color: var(--text-main);
 }
 
@@ -115,32 +151,33 @@ select:focus,
 textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(235, 87, 87, 0.12);
     background: var(--surface);
 }
 
 /* Required field red asterisk */
 .required-mark {
-    color: #ef4444;
+    color: var(--primary);
     margin-left: 3px;
     font-weight: bold;
 }
 
-/* Dynamically Injected Shared Header Bar */
+/* Injected Header Bar */
 .header-bar-shared {
     width: 100%;
     background: var(--surface);
-    padding: 20px 0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 18px 24px;
+    box-shadow: var(--shadow-sm);
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 100;
     margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
 }
 
 .header-bar-shared img {
-    height: 45px;
+    height: 40px;
     object-fit: contain;
     transition: transform 0.2s ease-in-out;
 }
@@ -149,3 +186,35 @@ textarea:focus {
     transform: scale(1.05);
 }
 
+/* ==========================================
+   IFRAME COMPATIBILITY CLASSES
+   ========================================== */
+body.in-iframe {
+    background: transparent !important;
+    padding: 0px !important;
+}
+
+body.in-iframe .header-bar-shared {
+    display: none !important;
+}
+
+body.in-iframe .back-link {
+    display: none !important;
+}
+
+body.in-iframe .container {
+    padding: 10px 0 !important;
+    max-width: 100% !important;
+}
+
+/* Toggle Switches */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafaf9;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+}

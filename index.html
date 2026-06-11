@@ -1,409 +1,491 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safety Hub Portal</title>
+    <title>Safety Hub Console</title>
     <link rel="icon" type="image/png" href="safety-logo-v2.png">
     <link rel="apple-touch-icon" href="safety-logo-v2.png">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <script src="config.js"></script>
     <script src="shared.js" defer></script>
     <style>
         body {
-            background: linear-gradient(135deg, #f6f8fd 0%, #eef2fa 100%);
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background: var(--bg);
+            overflow: hidden;
+            font-family: var(--font-body);
+        }
+
+        /* Sidebar Container */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        /* Sidebar Brand */
+        .brand {
+            display: flex;
             align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding-left: 4px;
         }
 
-        .header-bar {
-            width: 100%;
-            background: var(--surface);
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .header-bar img {
-            height: 45px;
+        .brand img {
+            height: 35px;
             object-fit: contain;
         }
 
-        .container {
-            max-width: 900px;
-            width: 90%;
-            margin: 40px auto;
-        }
-
-        .page-title {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .page-title h1 {
-            font-size: 2.2rem;
+        .brand span {
+            font-family: var(--font-heading);
             font-weight: 800;
-            color: #1e3a8a;
-            margin: 0 0 10px 0;
+            font-size: 1.25rem;
             letter-spacing: -0.5px;
         }
 
-        .page-title p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin: 0;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-        }
-
-        .app-card {
-            background: var(--surface);
-            border-radius: 16px;
-            padding: 30px 25px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
-            border: 1px solid var(--border);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            color: inherit;
+        /* Navigation List */
+        .nav-list {
             display: flex;
             flex-direction: column;
-            position: relative;
+            gap: 6px;
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        /* Nav Group (Collapsible Sections) */
+        .nav-group {
+            margin-bottom: 15px;
+        }
+
+        .nav-group-header {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .nav-group-items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: max-height 0.2s ease-out;
             overflow: hidden;
         }
 
-        .app-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--primary);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.3s ease;
-        }
-
-        .app-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 35px rgba(37, 99, 235, 0.1);
-            border-color: #bfdbfe;
-        }
-
-        .app-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .card-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+        /* Individual Links */
+        .nav-link {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+            gap: 12px;
+            padding: 10px 14px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.15s ease;
+            cursor: pointer;
         }
 
-        .icon-blue {
-            background: #eff6ff;
-            color: #2563eb;
-        }
-
-        .icon-green {
-            background: #f0fdf4;
-            color: #16a34a;
-        }
-
-        .icon-gray {
-            background: #f1f5f9;
-            color: #64748b;
-        }
-
-        .app-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-
-        .app-card p {
+        .nav-link svg {
+            width: 18px;
+            height: 18px;
             color: var(--text-muted);
-            font-size: 0.95rem;
-            margin: 0 0 25px 0;
-            flex-grow: 1;
-            line-height: 1.5;
+            transition: color 0.15s;
         }
 
-        .launch-btn {
+        .nav-link:hover {
+            background: rgba(28, 25, 23, 0.04);
+        }
+
+        .nav-link:hover svg {
+            color: var(--text-main);
+        }
+
+        /* Active Pill State like Firecheck */
+        .nav-link.active {
+            background: var(--surface);
+            color: var(--text-main);
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-link.active svg {
+            color: var(--primary);
+        }
+
+        /* Main Workspace Panel */
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Top Header Panel */
+        .top-bar {
+            height: 70px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: transparent;
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.95rem;
-            padding: 10px 0;
+            padding: 0 32px;
+            flex-shrink: 0;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #fafaf9;
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 8px;
+            width: 220px;
+        }
+
+        .search-box input {
             border: none;
-            cursor: pointer;
+            background: transparent;
+            font-size: 0.85rem;
+            outline: none;
             width: 100%;
+            margin-left: 8px;
         }
 
-        .launch-btn svg {
-            width: 18px;
-            height: 18px;
-            transition: transform 0.2s;
-        }
-
-        .app-card:hover .launch-btn svg {
-            transform: translateX(5px);
-        }
-
-        .coming-soon {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .coming-soon:hover {
-            transform: none;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
-            border-color: var(--border);
-        }
-
-        .coming-soon:hover::before {
-            transform: scaleX(0);
-        }
-
-        .badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #f1f5f9;
-            color: #475569;
+        .badge-connected {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #dcfce7;
+            color: #15803d;
             font-size: 0.75rem;
             font-weight: 600;
             padding: 4px 10px;
             border-radius: 20px;
         }
 
-        .admin-footer {
-            margin-top: 50px;
+        .badge-connected span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            display: inline-block;
+        }
+
+        /* Fullscreen Iframe Wrapper */
+        .iframe-container {
+            flex-grow: 1;
+            width: 100%;
+            height: calc(100% - 70px);
+            background: transparent;
+        }
+
+        #portal-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+        }
+
+        /* Upgrade Box in Sidebar */
+        .upgrade-card {
+            background: linear-gradient(135deg, #fbfaf8 0%, #f4f2ec 100%);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
             text-align: center;
-            padding-bottom: 30px;
         }
-
-        .admin-link {
-            display: inline-flex;
-            align-items: center;
-            color: var(--text-muted);
-            text-decoration: none;
+        .upgrade-card h4 {
             font-size: 0.85rem;
-            font-weight: 500;
-            transition: color 0.2s;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .upgrade-card p {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+        .upgrade-btn {
+            background: var(--text-main);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .upgrade-btn:hover {
+            opacity: 0.9;
         }
 
-        .admin-link:hover {
-            color: var(--primary);
-        }
-
-        .admin-link svg {
-            width: 14px;
-            height: 14px;
-            margin-right: 6px;
+        /* Mobile Layout */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 12px 20px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                overflow-x: auto;
+            }
+            .brand, .nav-group-header, .upgrade-card, .top-bar, .nav-group:not(:first-child) {
+                display: none !important;
+            }
+            .nav-list {
+                flex-direction: row;
+                width: 100%;
+                justify-content: space-around;
+            }
+            .nav-link {
+                padding: 8px;
+                font-size: 0.75rem;
+            }
+            .iframe-container {
+                height: calc(100% - 60px);
+            }
         }
     </style>
 </head>
-
 <body>
 
-    <div class="header-bar">
-        <img src="" alt="Logo">
-    </div>
-
-    <div class="container">
-        <div class="page-title">
-            <h1>Safety Hub Portal</h1>
-            <p>Centralized hub for all ISO 45001 digital safety workflows</p>
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+        <div class="brand">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eb5757" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="background: #fef2f2; padding: 4px; border-radius: 6px;">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span id="sidebar-brand-name">Safety Hub</span>
         </div>
 
-        <div class="grid">
-
-            <!-- App 1: Contractor Induction -->
-            <a href="contractor.html" class="app-card">
-                <div class="card-icon icon-blue">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <polyline points="16 11 18 13 22 9"></polyline>
+        <ul class="nav-list">
+            <!-- GROUP 1: OVERVIEW -->
+            <div class="nav-group">
+                <div class="nav-link active" onclick="loadTab('dashboard.html', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
                     </svg>
-                </div>
-                <h3>Contractor Induction</h3>
-                <p>Digital safety induction form with live photo verification and ISO 45001 declarations.</p>
-                <div class="launch-btn">
-                    Launch App
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- App 2: HIRARC -->
-            <a href="hirarc.html" class="app-card">
-                <div class="card-icon icon-green">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <path d="M16 13H8"></path>
-                        <path d="M16 17H8"></path>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                </div>
-                <h3>HIRARC Approvals</h3>
-                <p>Yearly risk assessment review and digital sign-off workflow for department area owners.</p>
-                <div class="launch-btn">
-                    Launch App
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- App 3: Contractor Handbook -->
-            <a href="contractor_handbook.html" class="app-card">
-                <div class="card-icon" style="background: #fff7ed; color: #ea580c;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                    </svg>
-                </div>
-                <h3>Contractor Handbook</h3>
-                <p>Digital health and safety handbook with built-in acknowledgment and signature capture.</p>
-                <div class="launch-btn">
-                    Launch App
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- App 4: First Aid Checklist -->
-            <a href="first_aid.html" class="app-card">
-                <div class="card-icon" style="background: #fef2f2; color: #ef4444;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                    </svg>
-                </div>
-                <h3>First Aid Inspection</h3>
-                <p>Monthly checklist inspection for plant first aid boxes under ISO 45001 standards.</p>
-                <div class="launch-btn">
-                    Launch App
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- App 5: First Aid Stock Monitor -->
-            <a href="stock.html" class="app-card">
-                <div class="card-icon" style="background: #f0fdfa; color: #0d9488;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
-                        <polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"></polygon>
-                        <polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"></polygon>
-                        <polygon points="12 12 21 6.92 12 1.92 3 6.92 12 12"></polygon>
-                    </svg>
-                </div>
-                <h3>First Aid Stock Monitor</h3>
-                <p>Track central supply inventory, view pending box shortages, and log restocking logs.</p>
-                <div class="launch-btn">
-                    Launch App
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- App 6: PPE Management -->
-            <a href="ppe.html" class="app-card">
-                <div class="card-icon" style="background: #f5f3ff; color: #7c3aed;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                </div>
-                <h3>PPE Management</h3>
-                <p>Self-record database for issuing personal protective equipment with smart 6-month checks.</p>
-                <div class="launch-btn">
-                    Launch App
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- App 5: Future -->
-            <div class="app-card coming-soon">
-                <span class="badge">In Development</span>
-                <div class="card-icon icon-gray">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
-                        </path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                </div>
-                <h3>Incident Reporting</h3>
-                <p>Future module for reporting workplace incidents, near misses, and unsafe acts.</p>
-                <div class="launch-btn" style="color: var(--text-muted);">
-                    Coming Soon
+                    Dashboard
                 </div>
             </div>
 
+            <!-- GROUP 2: MEDICAL & PPE -->
+            <div class="nav-group">
+                <div class="nav-group-header">First Aid & Gear</div>
+                <div class="nav-group-items">
+                    <div class="nav-link" onclick="loadTab('first_aid.html', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        </svg>
+                        Inspections
+                    </div>
+                    <div class="nav-link" onclick="loadTab('stock.html', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                            <polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"></polygon>
+                            <polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"></polygon>
+                            <polygon points="12 12 21 6.92 12 1.92 3 6.92 12 12"></polygon>
+                        </svg>
+                        Stock Monitor
+                    </div>
+                    <div class="nav-link" onclick="loadTab('ppe.html', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        PPE Requests
+                    </div>
+                </div>
+            </div>
+
+            <!-- GROUP 3: WORKERS -->
+            <div class="nav-group">
+                <div class="nav-group-header">Contractors</div>
+                <div class="nav-group-items">
+                    <div class="nav-link" onclick="loadTab('contractor.html', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Inductions
+                    </div>
+                    <div class="nav-link" onclick="loadTab('contractor_handbook.html', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        Handbook
+                    </div>
+                    <div class="nav-link" onclick="loadTab('hirarc.html', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        HIRARC Reviews
+                    </div>
+                </div>
+            </div>
+
+            <!-- GROUP 4: AUDITS -->
+            <div class="nav-group">
+                <div class="nav-group-header">Audits & Logs</div>
+                <div class="nav-group-items">
+                    <div class="nav-link" onclick="loadTab('audit.html', this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="9"></line>
+                            <line x1="9" y1="13" x2="15" y2="13"></line>
+                            <line x1="9" y1="17" x2="15" y2="17"></line>
+                        </svg>
+                        Database Logs
+                    </div>
+                </div>
+            </div>
+        </ul>
+
+        <!-- Connection Settings in Sidebar Footer -->
+        <div style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: auto;">
+            <div class="nav-link" style="color: var(--text-muted); font-size: 0.8rem;" onclick="disconnectSheet()">
+                ⚙️ Disconnect Sheet
+            </div>
         </div>
 
-        <div class="admin-footer">
-            <a href="audit.html" class="admin-link">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                Secure Audit Dashboard
-            </a>
+        <!-- Upgrade Card -->
+        <div class="upgrade-card">
+            <h4>Safety Hub Pro</h4>
+            <p>Unlock incident reports, advanced analytics, and PDF exports.</p>
+            <a href="#" class="upgrade-btn">Upgrade Now</a>
         </div>
     </div>
 
+    <!-- MAIN WORKSPACE -->
+    <div class="workspace">
+        <!-- TOP HEADER PANEL -->
+        <div class="top-bar">
+            <div class="top-bar-left" id="breadcrumb-text">
+                Safety records &gt; Dashboard Overview
+            </div>
+            <div class="top-bar-right">
+                <div class="search-box">
+                    🔎 <input type="text" placeholder="Search safety files...">
+                </div>
+                <div class="badge-connected">
+                    <span></span> Connected
+                </div>
+                <!-- Profile Avatar Circle -->
+                <div style="width: 38px; height: 38px; border-radius: 50%; background: #e6e4de; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; color: var(--text-main);">
+                    SO
+                </div>
+            </div>
+        </div>
+
+        <!-- IFRAME CONTAINER -->
+        <div class="iframe-container">
+            <iframe id="portal-frame" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const frame = document.getElementById("portal-frame");
+
+        function loadTab(url, element) {
+            // Update active state class in sidebar
+            document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
+            element.classList.add("active");
+
+            // Load url parameter in iframe
+            const spreadsheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            let targetUrl = url;
+            if (spreadsheetId) {
+                targetUrl = `${url}?spreadsheetId=${encodeURIComponent(spreadsheetId)}`;
+            }
+            frame.src = targetUrl;
+
+            // Update Breadcrumb text
+            const title = element.innerText.trim();
+            document.getElementById("breadcrumb-text").innerText = `Safety records > ${title}`;
+
+            // Save URL hash to preserve state on refresh
+            const hash = url.replace(".html", "");
+            window.location.hash = hash;
+        }
+
+        function disconnectSheet() {
+            if (confirm("Are you sure you want to disconnect this portal from the current Google Sheet database?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // Initialize dynamic tab based on hash or default to dashboard
+        document.addEventListener("DOMContentLoaded", () => {
+            const systemName = localStorage.getItem("safety_hub_system_name") || "Safety Hub";
+            document.getElementById("sidebar-brand-name").innerText = systemName;
+
+            const hash = window.location.hash.replace("#", "");
+            let defaultPage = "dashboard.html";
+            let activeLinkSelector = '.nav-link[onclick*="dashboard.html"]';
+
+            if (hash) {
+                defaultPage = `${hash}.html`;
+                activeLinkSelector = `.nav-link[onclick*="${defaultPage}"]`;
+            }
+
+            const activeLink = document.querySelector(activeLinkSelector);
+            if (activeLink) {
+                loadTab(defaultPage, activeLink);
+            } else {
+                const homeLink = document.querySelector('.nav-link[onclick*="dashboard.html"]');
+                loadTab("dashboard.html", homeLink);
+            }
+        });
+    </script>
 </body>
-
 </html>
-
-

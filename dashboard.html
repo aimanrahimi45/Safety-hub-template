@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety Hub Dashboard</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="stylesheet" href="shared.css">
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .app-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(28, 25, 23, 0.08);
+            border-color: var(--primary);
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            margin-bottom: 16px;
+        }
+
+        .icon-blue {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .icon-green {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .icon-orange {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .icon-red {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .icon-teal {
+            background: #f0fdfa;
+            color: #0d9488;
+        }
+
+        .icon-purple {
+            background: #f5f3ff;
+            color: #7c3aed;
+        }
+
+        .icon-gray {
+            background: #fafaf9;
+            color: #78716c;
+            border: 1px dashed var(--border);
+        }
+
+        .app-card p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            line-height: 1.45;
+        }
+
+        .launch-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.88rem;
+            width: 100%;
+        }
+
+        .launch-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .app-card:hover .launch-btn svg {
+            transform: translateX(4px);
+        }
+
+        .coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: #fafaf9;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        /* Stats Cards like Firecheck */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .stat-info h4 {
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-top: 6px;
+            color: var(--text-main);
+        }
+
+        .stat-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-top: 6px;
+            display: inline-block;
+        }
+
+        .badge-green { background: #dcfce7; color: #15803d; }
+        .badge-red { background: #fee2e2; color: #b91c1c; }
+
+        .stat-icon {
+            padding: 10px;
+            border-radius: 10px;
+            background: #fafaf9;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-title">
+            <h1>Overview</h1>
+            <p>Centralized hub for all ISO 45001 digital safety workflows.</p>
+        </div>
+
+        <!-- Simulated Stats Overview Row like Firecheck -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>First Aid Compliance</h4>
+                    <div class="stat-val">100%</div>
+                    <span class="stat-badge badge-green">🟢 Checked today</span>
+                </div>
+                <div class="stat-icon">🩹</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>Pending Inductions</h4>
+                    <div class="stat-val" id="val-pending">0</div>
+                    <span class="stat-badge badge-red" id="badge-pending">No backlog</span>
+                </div>
+                <div class="stat-icon">👷</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>PPE Inventory</h4>
+                    <div class="stat-val">Stable</div>
+                    <span class="stat-badge badge-green">🟢 Stock ok</span>
+                </div>
+                <div class="stat-icon">🛡️</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- App 1: Contractor Induction -->
+            <a href="contractor.html" class="app-card">
+                <div class="card-icon icon-blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <polyline points="16 11 18 13 22 9"></polyline>
+                    </svg>
+                </div>
+                <h3>Contractor Induction</h3>
+                <p>Digital safety induction form with live photo verification and ISO 45001 declarations.</p>
+                <div class="launch-btn">
+                    Open Dashboard
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 2: HIRARC -->
+            <a href="hirarc.html" class="app-card">
+                <div class="card-icon icon-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <path d="M16 13H8"></path>
+                        <path d="M16 17H8"></path>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <h3>HIRARC Approvals</h3>
+                <p>Yearly risk assessment review and digital sign-off workflow for department area owners.</p>
+                <div class="launch-btn">
+                    Open Dashboard
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 3: Contractor Handbook -->
+            <a href="contractor_handbook.html" class="app-card">
+                <div class="card-icon icon-orange">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                </div>
+                <h3>Contractor Handbook</h3>
+                <p>Digital health and safety handbook with built-in acknowledgment and signature capture.</p>
+                <div class="launch-btn">
+                    Open Handbook
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 4: First Aid Checklist -->
+            <a href="first_aid.html" class="app-card">
+                <div class="card-icon icon-red">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                </div>
+                <h3>First Aid Inspection</h3>
+                <p>Monthly checklist inspection for plant first aid boxes under ISO 45001 standards.</p>
+                <div class="launch-btn">
+                    Open Inspection
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 5: First Aid Stock Monitor -->
+            <a href="stock.html" class="app-card">
+                <div class="card-icon icon-teal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                        <polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"></polygon>
+                        <polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"></polygon>
+                        <polygon points="12 12 21 6.92 12 1.92 3 6.92 12 12"></polygon>
+                    </svg>
+                </div>
+                <h3>First Aid Stock Monitor</h3>
+                <p>Track central supply inventory, view pending box shortages, and log restocking logs.</p>
+                <div class="launch-btn">
+                    Open Stock Room
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 6: PPE Management -->
+            <a href="ppe.html" class="app-card">
+                <div class="card-icon icon-purple">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <h3>PPE Management</h3>
+                <p>Self-record database for issuing personal protective equipment with smart 6-month checks.</p>
+                <div class="launch-btn">
+                    Open Management
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 7: Incident Reporting (Future) -->
+            <div class="app-card coming-soon">
+                <span class="badge">In Development</span>
+                <div class="card-icon icon-gray">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+                <h3>Incident Reporting</h3>
+                <p>Future module for reporting workplace incidents, near misses, and unsafe acts.</p>
+                <div class="launch-btn" style="color: var(--text-muted);">
+                    Coming Soon
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch pending registrations count to show in stats badge in background
+        document.addEventListener("DOMContentLoaded", async () => {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            const pin = localStorage.getItem("safety_hub_pin") || "";
+            if (sheetId && pin && typeof GOOGLE_SCRIPT_URL !== "undefined" && GOOGLE_SCRIPT_URL) {
+                try {
+                    const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Contractor&spreadsheetId=${sheetId}&pin=${pin}`);
+                    const json = await res.json();
+                    if (json.status === "SUCCESS") {
+                        const pendingCount = json.data.filter(r => r["Status"] === "Pending Approval").length;
+                        if (pendingCount > 0) {
+                            document.getElementById("val-pending").innerText = pendingCount;
+                            const badge = document.getElementById("badge-pending");
+                            badge.innerText = `🔴 ${pendingCount} require sign-off`;
+                            badge.className = "stat-badge badge-red";
+                        }
+                    }
+                } catch(e) {
+                    console.log("Error loading dashboard stats count:", e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -18,9 +18,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const path = window.location.pathname.toLowerCase();
     const isHub = path.endsWith("index.html") || path === "/" || path.endsWith("/");
     const isPublicForm = path.endsWith("contractor_self.html") || path.endsWith("contractor_handbook.html");
+    const inIframe = (window.self !== window.top);
 
-    // 3. Render connection overlay screen if Spreadsheet ID is missing
-    if (!spreadsheetId && !isPublicForm) {
+    if (inIframe) {
+        document.body.classList.add("in-iframe");
+    }
+
+    // 3. Render connection overlay screen if Spreadsheet ID is missing and we are not in iframe
+    if (!spreadsheetId && !isPublicForm && !inIframe) {
         showConnectionSetupOverlay();
         return;
     }
@@ -85,18 +90,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
         } else {
-            // On sub-pages, inject or update the shared header bar
-            let header = document.querySelector(".header-bar-shared");
-            if (!header) {
-                header = document.createElement("div");
-                header.className = "header-bar-shared";
-                document.body.prepend(header);
+            // On sub-pages, inject or update the shared header bar only if NOT in iframe
+            if (!inIframe) {
+                let header = document.querySelector(".header-bar-shared");
+                if (!header) {
+                    header = document.createElement("div");
+                    header.className = "header-bar-shared";
+                    document.body.prepend(header);
+                }
+                header.innerHTML = `
+                    <a href="index.html" title="Back to Central Hub" style="text-decoration: none;">
+                        ${getLogoHTML()}
+                    </a>
+                `;
             }
-            header.innerHTML = `
-                <a href="index.html" title="Back to Central Hub" style="text-decoration: none;">
-                    ${getLogoHTML()}
-                </a>
-            `;
         }
     };
 

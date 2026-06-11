@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrod Malaysia - Contractor Health & Safety Handbook</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="apple-touch-icon" href="safety-logo-v2.png">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .header-content {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header-content h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .metrod-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metrod-logo img {
+            height: 50px;
+            width: auto;
+            max-width: 180px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .navigation {
+            background: #f8f9fa;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .nav-button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .nav-button:hover {
+            background: #1e3c72;
+        }
+
+        .nav-button.active {
+            background: #ff6b35;
+        }
+
+        .section {
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            color: #2a5298;
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section h3 {
+            color: #1e3c72;
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .safety-box {
+            background: #28a745;
+            color: white;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        ul {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .signature-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .signature-pad {
+            border: 2px solid #2a5298;
+            border-radius: 8px;
+            cursor: crosshair;
+            display: block;
+            margin: 1rem 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .signature-button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin: 1rem 0;
+            transition: background 0.3s;
+            display: block;
+            width: 100%;
+        }
+
+        .signature-button:hover {
+            background: #1e3c72;
+        }
+
+        .signature-status {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .signature-status.signed {
+            display: block;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #2a5298;
+        }
+
+        .modal-header h2 {
+            color: #2a5298;
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            color: #000;
+        }
+
+        .signature-canvas-container {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .legal-declaration {
+            background: linear-gradient(135deg, #fff8dc 0%, #fef5e7 100%);
+            border: 2px solid #e6b800;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 15px rgba(230, 184, 0, 0.1);
+        }
+
+        .legal-declaration-title {
+            color: #cc9900;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legal-declaration-content {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e6b800;
+            margin-top: 1rem;
+        }
+
+        .legal-declaration ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .legal-declaration li {
+            margin: 0.5rem 0;
+            line-height: 1.4;
+        }
+
+        .legal-checkbox {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e6b800;
+        }
+
+        .legal-checkbox label {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .legal-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 0.25rem;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #1e3c72;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            font-size: 1.1rem;
+            padding: 1rem 2rem;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .contents-list {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .contents-list h3 {
+            color: #2a5298;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #2a5298, #ff6b35);
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .acknowledgment-text {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .navigation {
+                padding: 0.5rem;
+            }
+
+            .nav-button {
+                display: block;
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+
+            .header {
+                padding: 1.5rem 1rem;
+                text-align: center;
+            }
+
+            .header-content {
+                max-width: none;
+                margin: 0;
+            }
+
+            .metrod-logo {
+                position: static;
+                margin: 0 auto 1rem auto;
+                justify-content: center;
+            }
+
+            .metrod-logo img {
+                height: 40px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+                padding: 1rem;
+            }
+
+            .signature-pad {
+                width: 100%;
+                height: 120px;
+            }
+
+            .legal-declaration {
+                padding: 1rem;
+            }
+
+            .legal-checkbox label {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: left;
+            }
+
+            .legal-checkbox input[type="checkbox"] {
+                margin-top: 0;
+                align-self: flex-start;
+            }
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 15px 20px 0 20px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #1e3c72;
+        }
+
+        .back-link svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Metrod Hub
+        </a>
+        <div class="header">
+            <div class="metrod-logo">
+                <img src="images/metrod-logo.png" alt="Metrod Malaysia">
+            </div>
+            <div class="header-content">
+                <h1>Contractor Handbook</h1>
+            </div>
+        </div>
+
+        <!-- Simple Signature Modal -->
+        <div id="signatureModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✍️ Digital Signature</h2>
+                    <button class="close-modal" onclick="closeSignatureModal()">&times;</button>
+                </div>
+                <div class="signature-canvas-container">
+                    <p><strong>Please sign below using your mouse or finger:</strong></p>
+                    <canvas id="signaturePad" class="signature-pad" width="400" height="120"></canvas>
+                    <div style="margin: 1rem 0;">
+                        <button type="button" class="btn btn-danger" onclick="clearSignature()">🗑️ Clear</button>
+                        <button type="button" class="btn" onclick="saveSignature()">✓ Save Signature</button>
+                    </div>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                    <small><strong>Note:</strong> Your signature will be compressed and stored securely.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 0%;"></div>
+            </div>
+
+            <div class="navigation">
+                <button class="nav-button active" onclick="showSection('contents')">Contents</button>
+                <button class="nav-button" onclick="showSection('introduction')">Introduction</button>
+                <button class="nav-button" onclick="showSection('policy')">Policy</button>
+                <button class="nav-button" onclick="showSection('responsibilities')">Health & Safety
+                    Responsibilities</button>
+                <button class="nav-button" onclick="showSection('risk-assessment')">Risk Assessment & Permits</button>
+                <button class="nav-button" onclick="showSection('general-rules')">General Rules</button>
+                <button class="nav-button" onclick="showSection('behavior')">Unacceptable Behaviour</button>
+                <button class="nav-button" onclick="showSection('substances')">Alcohol, Drugs & Chemicals</button>
+                <button class="nav-button" onclick="showSection('safety-procedures')">Safety Procedures</button>
+                <button class="nav-button" onclick="showSection('confined-heights')">Confined Space & Heights</button>
+                <button class="nav-button" onclick="showSection('equipment')">Tools & Equipment</button>
+                <button class="nav-button" onclick="showSection('emergency')">Emergency & First Aid</button>
+                <button class="nav-button" onclick="showSection('workplace')">Workplace Standards</button>
+                <button class="nav-button" onclick="showSection('vehicle-safety')">Vehicle & Manual Handling</button>
+                <button class="nav-button" onclick="showSection('compliance')">Compliance & Management</button>
+                <button class="nav-button" onclick="showSection('acknowledgment')">Acknowledgment & Signature</button>
+            </div>
+
+            <!-- Contents Section -->
+            <div id="contents" class="section active">
+                <div class="contents-list">
+                    <h3>CONTENTS</h3>
+                    <ol>
+                        <li>OHS Policy</li>
+                        <li>Introduction</li>
+                        <li>Environment, Health and Safety Policy</li>
+                        <li>Legal</li>
+                        <li>OHS responsibilities</li>
+                        <li>General safety rules</li>
+                        <li>Unacceptable Behaviour</li>
+                        <li>Alcohol and drugs on site</li>
+                        <li>Smoking on site</li>
+                        <li>Chemicals on site</li>
+                        <li>Waste Disposal</li>
+                        <li>Compressed Air Safety</li>
+                        <li>Dust</li>
+                        <li>Tools</li>
+                        <li>Electrical safety</li>
+                        <li>Emergency procedures</li>
+                        <li>Employee consultation</li>
+                        <li>Fire protection</li>
+                        <li>First Aid</li>
+                        <li>Hazards – identification and control</li>
+                        <li>Housekeeping & access</li>
+                        <li>Hygiene</li>
+                        <li>Incident reporting</li>
+                        <li>Ladders/Elevated Platforms</li>
+                        <li>Machinery, guarding, isolation Procedures</li>
+                        <li>Manual handling</li>
+                        <li>Personal protective equipment</li>
+                        <li>Signs on site</li>
+                        <li>Vehicle safety</li>
+                        <li>Acknowledgment and Sign Off</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Introduction Section -->
+            <div id="introduction" class="section">
+                <h2>INTRODUCTION</h2>
+                <p>As you complete your installation work, you will find various procedures at your work locations that
+                    must be followed specifically for you're the workplace conservation, health & safety for all
+                    parties.</p>
+                <p>This Handbook gives brief details of issues that may be found at the workplace. Although every effort
+                    has been made to make the handbook comprehensive, it cannot detail all the aspects or risks you may
+                    encounter in the course of your work. It is important that you use the Handbook as a reference in
+                    addition to the training you will receive from site.</p>
+                <p>Safety preservation is the responsibility of everyone! We encourage input from staffs and
+                    sub-contractors to help improve the workplace.</p>
+                <p><strong>If you are uncertain of the correct and safe way to do the job, ask advice – Do Not Take
+                        Chances.</strong></p>
+                <p style="margin-top: 2rem;"><strong>Remember, you are not expected to work in an unsafe manner just to
+                        get the job done.</strong></p>
+            </div>
+
+            <!-- Policy Section -->
+            <div id="policy" class="section">
+                <h2>ENVIRONMENT, HEALTH AND SAFETY POLICY</h2>
+                <p>The Environment, Health & Safety (EHS) policy of Metrod, which is involved in the manufacture and
+                    marketing of copper products for electrical application, is driven by the vision to be a responsible
+                    corporate citizen with integrity, high ethical standards and in harmony with environment.</p>
+
+                <p>We are committed towards providing a healthier, cleaner, and greener environment by implementing
+                    effective EHS management system, guided by our <strong>"M.E.T.R.O.D"</strong> principles that
+                    include:</p>
+
+                <ul style="list-style-type: none; margin-left: 1rem;">
+                    <li style="margin: 1rem 0;"><strong>➤ Manage</strong> our occupational and surrounding environments
+                        to be safe, healthy and clean.</li>
+                    <li style="margin: 1rem 0;"><strong>➤ Enhance</strong> our performance by continual improvement of
+                        management system and to achieve the set objectives and targets.</li>
+                    <li style="margin: 1rem 0;"><strong>➤ Train</strong> all the employee to improve competency and
+                        active participation at all levels.</li>
+                    <li style="margin: 1rem 0;"><strong>➤ Rightfully</strong> comply with all applicable legal and other
+                        requirements.</li>
+                    <li style="margin: 1rem 0;"><strong>➤ Optimise</strong> and conserve the available resources for
+                        sustainable development and prevention of pollution.</li>
+                    <li style="margin: 1rem 0;"><strong>➤ Deploy</strong> relevant and necessary resource for the
+                        improvement of work place ergonomics and environment.</li>
+                </ul>
+
+                <p style="font-style: italic; margin-top: 2rem;">The EHS Policy is communicated, understood, implemented
+                    and maintained throughout the organization and other interested parties.</p>
+
+                <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <p><strong>Issue:</strong> 03</p>
+                        <p><strong>May 2023</strong></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p><strong>President and</strong></p>
+                        <p><strong>Chief Executive Officer</strong></p>
+                        <div
+                            style="margin-top: 1rem; width: 200px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                            <img src="images/ceo-signature.png" alt="CEO Digital Signature"
+                                style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health & Safety Responsibilities -->
+            <div id="responsibilities" class="section">
+                <h2>HEALTH & SAFETY RESPONSIBILITIES</h2>
+                <p>The principal/contractor/sub-contractor to take the following responsibilities:</p>
+                <ul>
+                    <li>ensure safety of their employees while at work and provide and maintain a safe work environment
+                    </li>
+                    <li>provide and maintain adequate work facilities</li>
+                    <li>ensure that while at work, employees are not exposed to hazards</li>
+                    <li>hazards must be identified, assessed and controlled</li>
+                    <li>develop procedures for dealing with emergencies that may arise at work</li>
+                    <li>provide adequate training and supervision</li>
+                    <li>provide general safety information</li>
+                    <li>consult with employees when developing procedures</li>
+                    <li>that no action or inaction of the employee while at work causes harm to any other person</li>
+                </ul>
+
+                <div class="safety-box">
+                    BE CAREFUL<br>
+                    THE BEST SAFETY DEVICE IS A CAREFUL WORKER. LET THE SAFETY HABIT
+                </div>
+
+                <div class="safety-box" style="background: #28a745;">
+                    THINK<br>
+                    CARELESSNESS IS DANGEROUS
+                </div>
+
+                <h3>LEGAL FRAMEWORK & COMPLIANCE</h3>
+                <p>This contractor handbook is specifically developed to ensure compliance with the OSH Act 1994
+                    (Occupational Safety and Health Act, Amendment 2022). All this requirements now applies to all
+                    places of work throughout Malaysia and introduces stringent new legal obligations for principals and
+                    contractors.</p>
+                <p>All procedures and requirements in this handbook are legally mandated under the new Act.
+                    Non-compliance with these guidelines may result in significant penalties, including fines up to
+                    RM500,000 and potential imprisonment. This handbook serves as your practical guide to meeting these
+                    legal obligations while ensuring workplace safety.</p>
+            </div>
+
+            <div id="risk-assessment" class="section">
+                <h2>RISK ASSESSMENT & PERMIT TO WORK SYSTEMS</h2>
+                <h3>MANDATORY RISK ASSESSMENT</h3>
+                <ul>
+                    <li>Complete Job Safety & Environmental Analysis (JSEA) before starting work</li>
+                    <li>Identify all hazards and implement control measures</li>
+                    <li>Review and update risk assessment if conditions change</li>
+                    <li>Obtain approval from site supervisor before commencing high-risk activities</li>
+                </ul>
+
+                <h3>PERMIT TO WORK REQUIRED FOR:</h3>
+                <ul>
+                    <li>Hot work (welding, cutting, grinding)</li>
+                    <li>Working at heights above 2 meters</li>
+                    <li>Confined space entry</li>
+                    <li>Electrical work on live systems</li>
+                    <li>Excavation work</li>
+                    <li>Work near hazardous substances</li>
+                </ul>
+
+                <div class="safety-box">
+                    NO WORK SHALL COMMENCE WITHOUT PROPER PERMITS AND RISK ASSESSMENT
+                </div>
+            </div>
+
+            <!-- General Rules -->
+            <div id="general-rules" class="section">
+                <h2>GENERAL RULES AT SITE</h2>
+                <ul>
+                    <li>Report all defects, hazards and incidents promptly</li>
+                    <li>Keep all walkways clear at all times</li>
+                    <li>Stack materials safely</li>
+                    <li>Wear required personal protective equipment</li>
+                    <li>Know where site fire extinguishers are</li>
+                    <li>Remove rubbish promptly</li>
+                    <li>Don't work in the dark – arrange sufficient lighting</li>
+                    <li>Check electrical tools and leads for damage before use</li>
+                    <li>Keep electrical leads clear of water</li>
+                    <li>Watch where you are walking</li>
+                    <li>Do not run – walk in workplace</li>
+                    <li>Do not throw objects in workplace</li>
+                </ul>
+                <div class="safety-box">
+                    SAFETY FIRST
+                </div>
+            </div>
+
+            <!-- Unacceptable Behaviour -->
+            <div id="behavior" class="section">
+                <h2>UNACCEPTABLE BEHAVIOUR</h2>
+                <p>For the safety and security and that of others, the following behaviour will not be tolerated:</p>
+                <ul>
+                    <li>Practical jokes and silly antics</li>
+                    <li>Fighting or threatening to fight</li>
+                    <li>Assaulting, threatening or interfering with other persons</li>
+                    <li>Intoxication at work from drugs or alcohol</li>
+                    <li>Abuse, damage or destruction of company property</li>
+                    <li>Interfering with, removing without permission, company property or that of another person</li>
+                    <li>Interfering, tampering or bypassing or rendering inoperative controls or guards designed to
+                        provide protection</li>
+                    <li>Failing to follow safety procedures and practices</li>
+                </ul>
+            </div>
+
+            <!-- Substances -->
+            <div id="substances" class="section">
+                <h2>ALCOHOL AND DRUGS ON SITE</h2>
+                <p><strong>The possession of illegal drugs at work is strictly prohibited.</strong></p>
+                <p>Any person who reports for work under the influence of alcohol or drugs is considered a hazard to
+                    him/herself, his/her workmates and everyone else.</p>
+                <h3>SMOKING ON SITE</h3>
+                <p><strong>STRICTLY</strong> Non-Smoking zone within company premises.</p>
+                <p>Ask site management about designated site smoking areas.</p>
+                <h3>CHEMICALS ON SITES</h3>
+                <p>No matter how safe a chemical may appear to be, it is essential to observe the following:</p>
+                <ul>
+                    <li>Review the Material Safety Data Sheet attached to the generic SDS/Work Method Statement if you
+                        are unfamiliar with the product</li>
+                    <li>Avoid contact with skin – do not splash about</li>
+                    <li>Avoid breathing or swallowing chemical</li>
+                    <li>Use a barrier cream if working with chemicals regularly</li>
+                    <li>Wear prescribed personal protective equipment</li>
+                </ul>
+                <h3>WASTE DISPOSAL</h3>
+                <p>All wastes shall be disposed properly and correctly upon completion of job/task.</p>
+                <p><strong>General waste:</strong></p>
+                <ul>
+                    <li>Collect all waste / debris daily</li>
+                    <li>Dispose to designated general waste disposal area</li>
+                </ul>
+                <p><strong>Scheduled waste:</strong></p>
+                <ul>
+                    <li>Prepare designated disposal bin for disposal</li>
+                    <li>Collect all scheduled wastes upon completion</li>
+                    <li>Store temporarily at designated area</li>
+                    <li>Remove all scheduled waste from the site</li>
+                    <li>Disposed via contractors licensed by Department of Environment (DOE)</li>
+                </ul>
+            </div>
+
+            <!-- Safety Procedures -->
+            <div id="safety-procedures" class="section">
+                <h2>COMPRESSED AIR SAFETY</h2>
+                <p>Compressed air can cause serious injury including:</p>
+                <ul>
+                    <li>Airborne particles made airborne</li>
+                    <li>Injuries can be caused by the air jet and by particles made airborne</li>
+                    <li>Airborne particles can enter your eyes or abrade skin. On rare occasions compressed air can
+                        enter the blood stream through a break in the skin or through a body opening</li>
+                    <li>An air bubble in the blood stream is known medically as an embolism (blood vessel is blocked)
+                    </li>
+                    <li>An embolism of an artery can cause coma, paralysis or death depending upon its size, duration
+                        and location</li>
+                </ul>
+                <p><strong>Safety measures:</strong></p>
+                <ul>
+                    <li>Ensure portable cutting equipment has appropriate extraction or there is access to a vacuum
+                        exhaust, preferably with disposable filters</li>
+                    <li>Wear approved respirators (e.g. dust masks) when cutting or employing preparation unit</li>
+                    <li>Do not sweep or blow dust away</li>
+                    <li>Rotate tasks between workers wherever possible to minimise exposure</li>
+                    <li>Persons with wood dust skin sensitivity should wear suitable personal protective equipment, e.g.
+                        overalls, gloves, glasses, goggles</li>
+                    <li>Wash hands and any other body parts contaminated with dust before eating or smoking</li>
+                </ul>
+                <h3>DUST</h3>
+                <p>On site installations often involve cutting/machining which can cause dust.</p>
+                <p>Always assess the installation requirements to limit on site cutting and machining wherever possible.
+                </p>
+                <p>Strive to take accurate measurements to avoid the need to cut and fit on-site.</p>
+                <p>Isolate area for cutting away from other persons on site.</p>
+                <p>Ensure cutting area is well-ventilated – cut outside if possible.</p>
+                <p>Put plastic sheeting under cutting area to facilitate clean up.</p>
+            </div>
+
+            <div id="confined-heights" class="section">
+                <h2>CONFINED SPACE & WORKING AT HEIGHTS</h2>
+                <h3>CONFINED SPACE SAFETY</h3>
+                <ul>
+                    <li>Obtain confined space permit before entry</li>
+                    <li>Test atmosphere for oxygen, toxic gases, and flammable vapors</li>
+                    <li>Maintain continuous ventilation</li>
+                    <li>Station attendant outside at all times</li>
+                    <li>Use harness and lifeline systems</li>
+                    <li>Emergency rescue plan must be in place</li>
+                </ul>
+
+                <h3>WORKING AT HEIGHTS (Above 2m)</h3>
+                <ul>
+                    <li>Use proper fall protection equipment</li>
+                    <li>Inspect all safety equipment before use</li>
+                    <li>Secure all tools to prevent dropping</li>
+                    <li>Establish exclusion zones below work area</li>
+                    <li>Weather conditions must be suitable</li>
+                </ul>
+            </div>
+
+            <div id="equipment" class="section">
+                <h2>TOOLS & EQUIPMENT</h2>
+                <h3>LOCKOUT/TAGOUT (LOTO) PROCEDURES</h3>
+                <ul>
+                    <li>Only authorized personnel may perform LOTO</li>
+                    <li>Identify all energy sources before isolation</li>
+                    <li>Apply personal locks and tags</li>
+                    <li>Test equipment to verify isolation</li>
+                    <li>Only the person who applied the lock may remove it</li>
+                </ul>
+
+                <h3>TOOL SAFETY</h3>
+                <p>Always use the correct tool for the job ensuring that tools are in good order.</p>
+                <ul>
+                    <li>Inspect all tools before use</li>
+                    <li>Power tools must have current electrical safety tags</li>
+                    <li>Damaged tools must be removed from service immediately</li>
+                    <li>Portable electrical tools must have RCD protection</li>
+                    <li>Report defective equipment to supervisor</li>
+                </ul>
+            </div>
+
+            <!-- Emergency -->
+            <div id="emergency" class="section">
+                <h2>EMERGENCY PROCEDURES</h2>
+                <p>At induction, the Principal Contractor should outline:</p>
+                <ul>
+                    <li>Site warning system</li>
+                    <li>Escape routes</li>
+                    <li>Assembly area in emergency</li>
+                </ul>
+                <p>Ensure you are familiar with the above before you start work on site. If not sure, ask.</p>
+                <h3>EMPLOYEE CONSULTATION</h3>
+                <p>Please raise any safety concerns with site management, the site OHS Representative and/or your
+                    Supervisor.</p>
+                <p>At induction, the Principal Contractor should advise who the site Health and Safety Representative
+                    is.</p>
+                <h3>FIRE PROTECTION</h3>
+                <p>The risk of fire is always present, but can be reduced by keeping your work area clean.</p>
+                <p>Know where the fire extinguishers and alarms are located.</p>
+                <p>Do not put yourself at risk when handling an emergency situation – get assistance.</p>
+                <p>Only use firefighting equipment for the purpose it was intended for.</p>
+                <p>Ensure good access to fire fighting equipment is always maintained.</p>
+                <h3>FIRST AID</h3>
+                <p>Report all workplace injuries to your Project Supervisor.</p>
+                <p>At induction, the Principal Contractor should outline who the site first aiders are and where first
+                    aid supplies may be found.</p>
+                <p>In an emergency, do not panic. Remember:</p>
+                <ul>
+                    <li>Assess the area – look for danger to yourself, the injured person and any bystanders. Take
+                        action to ensure safety, or await trained rescuers but do not move the person if they are in
+                        further danger</li>
+                    <li>Assess consciousness of the injured person. Call for help</li>
+                    <li>Airway – clear and open airway</li>
+                    <li>Breathing – check for breathing</li>
+                    <li>Circulation – check for pulse</li>
+                </ul>
+            </div>
+
+            <!-- Workplace Standards -->
+            <div id="workplace" class="section">
+                <h2>HAZARDS – IDENTIFICATION AND CONTROL</h2>
+                <p>All hazards, i.e. any condition that could cause injury, illness or damage, must be reported.</p>
+                <p>Complete Shopfitters will provide you with generic JSEA/Work Method Statements which outline
+                    potential hazards for installation.</p>
+                <p>Before you start work, please complete the Site Hazard Identification form to capture site specific
+                    hazards and how these will be controlled. The completed form is to be given/faxed to your Project
+                    Supervisor.</p>
+                <h3>HOUSEKEEPING & ACCESS</h3>
+                <p>Poor housekeeping in the workplace puts everyone at risk from trips and falls.</p>
+                <p>All tools and equipment should be safely stored when not in use.</p>
+                <p>Doorways and walkways must always be kept clear in case of an emergency.</p>
+                <p>Ensure that temporary barriers are used as required to isolate work areas from the public/passersby.
+                </p>
+                <h3>HYGIENE</h3>
+                <p>Often sickness can be avoided by keeping tidy and clean, maintaining hygiene standards, e.g washing
+                    hands frequently after using the toilet and before eating.</p>
+                <p>Ensure that any body part or clothing is kept clean – serious infections can result from a minor
+                    scratch if not cleaned.</p>
+                <h3>INCIDENT REPORTING</h3>
+                <p>All incidents must be recorded on the Incident Report Form provided to you. The completed form is to
+                    be provided to your Project Supervisor.</p>
+                <p>This reporting procedure is very important because:</p>
+                <ul>
+                    <li>Neglect, minor injuries can become more serious</li>
+                    <li>The incident should be investigated to allow the identification of controls so that the incident
+                        cause may be eliminated</li>
+                    <li>Serious injuries/incidents require reporting to state authorities – please contact your WorkSafe
+                        Authority for reporting requirements</li>
+                </ul>
+                <h3>LADDERS/ELEVATED WORK PLATFORMS</h3>
+                <p>Before considering using a ladder, give consideration to whether:</p>
+                <ul>
+                    <li>the items can be done on the ground with extension tools</li>
+                    <li>the construction or repair of the item or part of it can be done on the ground</li>
+                    <li>the item being accessed can be relocated to ground level to eliminate the need to work at height
+                        temporarily or permanently</li>
+                    <li>an elevating work platform such as a scissor lift or cherry picker. A fixed or mobile work
+                        platform can be used</li>
+                    <li>scaffolding or use a mobile scaffold can be used</li>
+                    <li>a work positioning system such as a travel restraint or industrial rope access system can be
+                        used</li>
+                    <li>a step platform can be used, and</li>
+                    <li>fixed stairs or steps can be installed that comply with relevant Australian Standards and
+                        building codes</li>
+                </ul>
+                <p><strong>If none of the above options are not reasonably practicable for the given situation, then it
+                        may be acceptable to use a ladder provided it can be used safely.</strong></p>
+                <p><strong>When using ladders:</strong></p>
+                <ul>
+                    <li>Always check the ladder before use</li>
+                    <li>Where possible, place the ladder clear of walkways and traffic areas</li>
+                    <li>Position ladder in a safe manner with both feet on firm level footing</li>
+                    <li>Ensure sufficient slope – 1 measure out to 4 measures up</li>
+                    <li>Secure the ladder at least 1 metre above the landing place</li>
+                    <li>Secure ladder or have it held by a workmate</li>
+                    <li>Don't use a metal ladder near electricity</li>
+                </ul>
+            </div>
+
+            <!-- Vehicle & Manual Handling -->
+            <div id="vehicle-safety" class="section">
+                <h2>MANUAL HANDLING</h2>
+                <ul>
+                    <li>Never attempt to lift beyond your capacity. Test the object's weight before handling – if too
+                        heavy, get a mechanical aid or some assistance</li>
+                    <li>Plan the lift – know where you want to lift to and that the access way is clear</li>
+                    <li>Stand close to the load with feet solidly placed and far enough apart for stability</li>
+                    <li>Grip the load firmly – away from sharp edges or slippery areas</li>
+                    <li>Move your body close to the load – do not lift at arms length</li>
+                    <li>Bend your knees, lift by straightening legs and keeping back straight</li>
+                    <li>If doing a team lift, ensure that clear instructions are issued by only one person and there is
+                        a pre-arranged plan</li>
+                </ul>
+                <h3>PERSONAL PROTECTIVE EQUIPMENT</h3>
+                <ul>
+                    <li>Eye safety equipment must be worn on site if there is risk of flying particles or chemicals
+                        entering the eyes</li>
+                    <li>Use barrier cream if required to protect hands from chemical contact</li>
+                    <li>Always wear gloves when handling sharp edged/pointed material</li>
+                    <li>If working outdoors presents a risk of sunburn or skin cancer – a wide brimmed hat and a long
+                        sleeve shirt</li>
+                    <li>Wear a mask in dusty environment or if chemicals need protection</li>
+                    <li>When working in an area where there is risk of head injury by a vehicle or if falling objects,
+                        you will require hearing protection</li>
+                    <li>If it is necessary to raise your voice to be heard by someone less than 1 metre away, you will
+                        require hearing protection</li>
+                </ul>
+                <h3>SIGNS ON SITE</h3>
+                <p>Pay attention to all site warning signs, which are there for your protection.</p>
+                <p>Do not remove, alter, shifting or destruction of any sign without authorisation may put people at
+                    risk and is therefore forbidden.</p>
+                <h3>VEHICLE SAFETY</h3>
+                <ul>
+                    <li>No one shall operate any vehicle, plant, mobile or other equipment unless they are properly
+                        trained and authorised to do so – licences must be held where required</li>
+                    <li>Vehicles must be parked safely and securely, not posing a hazard to other vehicles</li>
+                    <li>Obey speed limit signs – do not speed on site</li>
+                    <li>Look out for pedestrians everywhere and be aware in heavy vehicles at reversal times</li>
+                    <li>Loads on vehicles must be secure and safe</li>
+                    <li>Wear seatbelts fitted to all vehicles</li>
+                    <li>At no time should an additional person be allowed to ride on any vehicle, or any other purpose
+                    </li>
+                    <li>Use of forklifts as work platforms or for lifting people from platforms is strictly prohibited
+                        work practice</li>
+                    <li>Keep your distance from site vehicles and be aware of the hazard they present</li>
+                </ul>
+            </div>
+
+            <div id="compliance" class="section">
+                <h2>CONTRACTOR MANAGEMENT & COMPLIANCE</h2>
+                <h3>MANDATORY REQUIREMENTS</h3>
+                <ul>
+                    <li>Valid business registration and insurance coverage</li>
+                    <li>Competent person certification for specialized work</li>
+                    <li>Regular safety meetings with all workers</li>
+                    <li>Maintain training records for all personnel</li>
+                    <li>Submit weekly safety reports</li>
+                </ul>
+
+                <h3>SUB-CONTRACTOR MANAGEMENT</h3>
+                <ul>
+                    <li>Principal contractor responsible for all sub-contractors</li>
+                    <li>All sub-contractors must complete this handbook</li>
+                    <li>Coordinate safety activities between multiple contractors</li>
+                    <li>Ensure sub-contractors have required permits and training</li>
+                </ul>
+
+                <h3>PENALTIES & ENFORCEMENT</h3>
+                <div
+                    style="background: #ffebee; border: 2px solid #f44336; padding: 1rem; margin: 1rem 0; border-radius: 8px;">
+                    <strong>⚠️ NON-COMPLIANCE PENALTIES:</strong>
+                    <ul>
+                        <li>Safety violation: <strong>RM 100 per incident</strong></li>
+                        <li>Repeated violations: <strong>Contract suspension</strong></li>
+                        <li>Serious safety breach: <strong>Contract termination</strong></li>
+                        <li>Legal violations: <strong>Prosecution under OSH Act 1994</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Acknowledgment Section -->
+            <div id="acknowledgment" class="section">
+                <h2>RECEIPT AND ACKNOWLEDGEMENT</h2>
+                <div class="acknowledgment-text">
+                    <p><strong>I/We have reviewed and understand the contents of the Health and Safety
+                            Handbook.</strong></p>
+                    <p><strong>I/We understand that I am/we are required to follow the guidelines and instructions
+                            contained therein.</strong></p>
+                    <p><strong>Furthermore, I/we understand that failure to follow the guidelines and instructions
+                            detailed in the handbook may result in penalty & termination of my/our contracts with METROD
+                            MALAYSIA SDN BHD.</strong></p>
+                    <p><strong>*Penalty RM 100 per case</strong></p>
+                </div>
+
+                <div class="signature-section">
+                    <h3>Contractor Information & Digital Signature</h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="mmbCheck"> MMB
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="ccrCheck"> CCR
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="mfpCheck"> MFP
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="companyName">Company Name:</label>
+                        <input type="text" id="companyName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contractorName">Name:</label>
+                        <input type="text" id="contractorName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="position">Position:</label>
+                        <input type="text" id="position" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address:</label>
+                        <input type="email" id="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number:</label>
+                        <input type="tel" id="phone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="icNumber">IC Number (Last 4 digits only):</label>
+                        <input type="text" id="icNumber" maxlength="4" placeholder="e.g., 1234" required>
+                    </div>
+
+                    <!-- Simple Digital Signature -->
+                    <div class="form-group">
+                        <label>Digital Signature:</label>
+                        <button type="button" class="signature-button" onclick="openSignatureModal()">
+                            ✍️ Click Here to Sign
+                        </button>
+                        <div id="signatureStatus" class="signature-status">
+                            <strong>✓ Signature Captured</strong><br>
+                            <small>Your digital signature has been successfully recorded and compressed.</small>
+                        </div>
+                    </div>
+
+                    <!-- Legal Declaration -->
+                    <div class="legal-declaration">
+                        <div class="legal-declaration-title">
+                            ⚖️ Legal Declaration & Agreement
+                        </div>
+                        <div class="legal-declaration-content">
+                            <p><strong>By proceeding with this acknowledgment, I hereby confirm and agree to the
+                                    following:</strong></p>
+                            <ul>
+                                <li>All information provided is <strong>accurate and complete</strong></li>
+                                <li>I am <strong>authorized to sign</strong> on behalf of the stated company</li>
+                                <li>This electronic signature has the <strong>same legal effect</strong> as a
+                                    handwritten signature</li>
+                                <li>I have <strong>read and understood</strong> all terms and procedures in this
+                                    handbook</li>
+                                <li>I agree to <strong>comply with all safety guidelines</strong> outlined in this
+                                    document</li>
+                                <li>I understand my obligations under the <strong>OSH Act 1994 (Amendment 2022)</strong>
+                                </li>
+                                <li>I will ensure all sub-contractors comply with these requirements</li>
+                                <li>I will maintain all required permits, training records, and certifications</li>
+                                <li>I acknowledge that serious violations may result in <strong>legal
+                                        prosecution</strong></li>
+                                <li>I understand that <strong>non-compliance may result in penalties</strong> (RM 100
+                                    per case)</li>
+                            </ul>
+                        </div>
+                        <div class="legal-checkbox">
+                            <label>
+                                <input type="checkbox" id="legalDeclaration" required>
+                                <span>I have read, understood, and agree to all the terms stated above. I acknowledge
+                                    that this constitutes a legally binding agreement.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="button" class="btn btn-success" onclick="submitForm()" id="submitBtn">
+                            ✓ Submit Acknowledgment
+                        </button>
+                    </div>
+
+                    <div id="submitMessage"
+                        style="margin-top: 1rem; padding: 1rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; display: none;">
+                        <strong>✓ Thank you!</strong> Your acknowledgment has been recorded successfully.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple signature functionality - no debug, just compression
+        let currentSection = 'contents';
+        const sections = ['contents', 'introduction', 'policy', 'responsibilities', 'risk-assessment', 'general-rules', 'behavior', 'substances', 'safety-procedures', 'confined-heights', 'equipment', 'emergency', 'workplace', 'vehicle-safety', 'compliance', 'acknowledgment'];
+
+        // Signature variables
+        let canvas, ctx;
+        let isDrawing = false;
+        let hasSignature = false;
+        let lastX, lastY;
+        let signatureData = null;
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+
+            currentSection = sectionId;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const currentIndex = sections.indexOf(currentSection);
+            const progress = ((currentIndex + 1) / sections.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function openSignatureModal() {
+            document.getElementById('signatureModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            setTimeout(initializeCanvas, 100);
+        }
+
+        function closeSignatureModal() {
+            document.getElementById('signatureModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function initializeCanvas() {
+            canvas = document.getElementById('signaturePad');
+            if (!canvas) return;
+
+            ctx = canvas.getContext('2d');
+
+            // Simple canvas setup
+            const containerWidth = Math.min(canvas.parentElement.clientWidth - 32, 400);
+            const canvasHeight = 120;
+
+            canvas.style.width = containerWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = containerWidth * dpr;
+            canvas.height = canvasHeight * dpr;
+
+            ctx.scale(dpr, dpr);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // White background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, containerWidth, canvasHeight);
+
+            addCanvasEvents();
+        }
+
+        function addCanvasEvents() {
+            canvas.addEventListener('mousedown', handleStart, false);
+            canvas.addEventListener('mousemove', handleMove, false);
+            canvas.addEventListener('mouseup', handleEnd, false);
+            canvas.addEventListener('mouseout', handleEnd, false);
+            canvas.addEventListener('touchstart', handleStart, false);
+            canvas.addEventListener('touchmove', handleMove, false);
+            canvas.addEventListener('touchend', handleEnd, false);
+        }
+
+        function getEventPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function handleStart(e) {
+            e.preventDefault();
+            isDrawing = true;
+
+            const pos = getEventPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+        }
+
+        function handleMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+
+            const pos = getEventPos(e);
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+
+            lastX = pos.x;
+            lastY = pos.y;
+            hasSignature = true;
+        }
+
+        function handleEnd(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            isDrawing = false;
+            ctx.beginPath();
+        }
+
+        function clearSignature() {
+            if (!ctx || !canvas) return;
+
+            const containerWidth = canvas.clientWidth;
+            const canvasHeight = canvas.clientHeight;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, containerWidth, canvasHeight);
+
+            hasSignature = false;
+            signatureData = null;
+
+            // Reset UI
+            document.getElementById('signatureStatus').style.display = 'none';
+            const button = document.querySelector('.signature-button');
+            button.innerHTML = '✍️ Click Here to Sign';
+            button.style.background = '#2a5298';
+        }
+
+        function saveSignature() {
+            if (!hasSignature) {
+                alert('Please draw your signature first.');
+                return;
+            }
+
+            // Compress signature aggressively
+            const compressedCanvas = document.createElement('canvas');
+            const compressedCtx = compressedCanvas.getContext('2d');
+
+            // Very small size for maximum compression
+            compressedCanvas.width = 200;
+            compressedCanvas.height = 80;
+
+            // White background
+            compressedCtx.fillStyle = '#ffffff';
+            compressedCtx.fillRect(0, 0, 200, 80);
+
+            // Draw scaled signature
+            compressedCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 200, 80);
+
+            // Very low quality JPEG for maximum compression
+            signatureData = compressedCanvas.toDataURL('image/jpeg', 0.3);
+
+            console.log('Compressed signature size:', signatureData.length, 'characters');
+
+            // Show status
+            document.getElementById('signatureStatus').style.display = 'block';
+            const button = document.querySelector('.signature-button');
+            button.innerHTML = '✓ Signature Captured - Click to Re-sign';
+            button.style.background = '#28a745';
+
+            closeSignatureModal();
+        }
+
+        async function submitForm() {
+            // Validate fields
+            const companyName = document.getElementById('companyName').value;
+            const contractorName = document.getElementById('contractorName').value;
+            const position = document.getElementById('position').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const icNumber = document.getElementById('icNumber').value;
+
+            if (!companyName || !contractorName || !position || !email || !phone || !icNumber) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            if (!hasSignature || !signatureData) {
+                alert('Please provide your digital signature.');
+                return;
+            }
+
+            if (!document.getElementById('legalDeclaration').checked) {
+                alert('Please accept the legal declaration.');
+                return;
+            }
+
+            const formData = {
+                timestamp: new Date().toISOString(),
+                company: companyName,
+                name: contractorName,
+                position: position,
+                email: email,
+                phone: phone,
+                icNumber: icNumber,
+                mmb: document.getElementById('mmbCheck').checked,
+                ccr: document.getElementById('ccrCheck').checked,
+                mfp: document.getElementById('mfpCheck').checked,
+                signature: signatureData,
+                ipAddress: 'Browser submission',
+                userAgent: navigator.userAgent
+            };
+
+            const submitButton = document.getElementById('submitBtn');
+            const originalText = submitButton.textContent;
+
+            // Change to submitting state
+            submitButton.textContent = '⏳ Submitting...';
+            submitButton.disabled = true;
+            submitButton.style.cursor = 'not-allowed';
+
+            try {
+                // Replace with your Google Apps Script URL
+                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwswo184YEPoDU9P8SXsHPu23W4EDuq69d0PoSnToTYGXSSSl44k6_Qf4nlwXrhR01B/exec';
+
+                console.log('Submitting compressed signature:', signatureData.length, 'characters');
+
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                // SUCCESS: Change button to submitted state
+                submitButton.textContent = '✅ Submitted';
+                submitButton.style.background = '#6c757d';
+                submitButton.style.cursor = 'not-allowed';
+                // Keep button disabled permanently - user must refresh to submit again
+
+                // Show success message
+                document.getElementById('submitMessage').style.display = 'block';
+                document.getElementById('submitMessage').innerHTML = `
+                    <strong>✅ Thank you!</strong> Your acknowledgment has been submitted successfully.<br>
+                    <small>Submission completed at: ${new Date().toLocaleString()}</small><br>
+                    <small>Compressed signature: ${signatureData.length} characters</small><br>
+                    <small><strong>Note:</strong> Refresh the page to submit another acknowledgment.</small>
+                `;
+
+                // Disable entire form to prevent any changes
+                document.querySelectorAll('input, button:not(.nav-button), canvas').forEach(element => {
+                    element.disabled = true;
+                    if (element.tagName === 'CANVAS') {
+                        element.style.pointerEvents = 'none';
+                        element.style.opacity = '0.6';
+                    }
+                });
+
+                // Also disable signature button
+                const signatureButton = document.querySelector('.signature-button');
+                signatureButton.disabled = true;
+                signatureButton.style.cursor = 'not-allowed';
+                signatureButton.style.opacity = '0.6';
+
+                document.getElementById('submitMessage').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                console.error('Submission error:', error);
+
+                // ERROR: Restore button to original state so user can try again
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+                submitButton.style.cursor = 'pointer';
+                submitButton.style.background = '#28a745'; // Original green color
+
+                alert('Failed to submit. Please try again.');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('signatureModal');
+            if (event.target == modal) {
+                closeSignatureModal();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            updateProgress();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrod Automation System</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="apple-touch-icon" href="safety-logo-v2.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared.js" defer></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f6f8fd 0%, #eef2fa 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-bar {
+            width: 100%;
+            background: var(--surface);
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-bar img {
+            height: 45px;
+            object-fit: contain;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 90%;
+            margin: 40px auto;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .page-title p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .app-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 30px 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 35px rgba(37, 99, 235, 0.1);
+            border-color: #bfdbfe;
+        }
+
+        .app-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .icon-blue {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .icon-green {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .icon-gray {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .app-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .app-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0 0 25px 0;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .launch-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: transparent;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 10px 0;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .launch-btn svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.2s;
+        }
+
+        .app-card:hover .launch-btn svg {
+            transform: translateX(5px);
+        }
+
+        .coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            border-color: var(--border);
+        }
+
+        .coming-soon:hover::before {
+            transform: scaleX(0);
+        }
+
+        .badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .admin-footer {
+            margin-top: 50px;
+            text-align: center;
+            padding-bottom: 30px;
+        }
+
+        .admin-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .admin-link:hover {
+            color: var(--primary);
+        }
+
+        .admin-link svg {
+            width: 14px;
+            height: 14px;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-bar">
+        <img src="logo-metrod.webp" alt="Metrod Logo">
+    </div>
+
+    <div class="container">
+        <div class="page-title">
+            <h1>Metrod Automation System</h1>
+            <p>Centralized hub for all ISO 45001 digital safety workflows</p>
+        </div>
+
+        <div class="grid">
+
+            <!-- App 1: Contractor Induction -->
+            <a href="contractor.html" class="app-card">
+                <div class="card-icon icon-blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <polyline points="16 11 18 13 22 9"></polyline>
+                    </svg>
+                </div>
+                <h3>Contractor Induction</h3>
+                <p>Digital safety induction form with live photo verification and ISO 45001 declarations.</p>
+                <div class="launch-btn">
+                    Launch App
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 2: HIRARC -->
+            <a href="hirarc.html" class="app-card">
+                <div class="card-icon icon-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <path d="M16 13H8"></path>
+                        <path d="M16 17H8"></path>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <h3>HIRARC Approvals</h3>
+                <p>Yearly risk assessment review and digital sign-off workflow for department area owners.</p>
+                <div class="launch-btn">
+                    Launch App
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 3: Contractor Handbook -->
+            <a href="contractor_handbook.html" class="app-card">
+                <div class="card-icon" style="background: #fff7ed; color: #ea580c;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                </div>
+                <h3>Contractor Handbook</h3>
+                <p>Digital health and safety handbook with built-in acknowledgment and signature capture.</p>
+                <div class="launch-btn">
+                    Launch App
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 4: First Aid Checklist -->
+            <a href="first_aid.html" class="app-card">
+                <div class="card-icon" style="background: #fef2f2; color: #ef4444;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                </div>
+                <h3>First Aid Inspection</h3>
+                <p>Monthly checklist inspection for plant first aid boxes under ISO 45001 standards.</p>
+                <div class="launch-btn">
+                    Launch App
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 5: First Aid Stock Monitor -->
+            <a href="stock.html" class="app-card">
+                <div class="card-icon" style="background: #f0fdfa; color: #0d9488;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                        <polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"></polygon>
+                        <polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"></polygon>
+                        <polygon points="12 12 21 6.92 12 1.92 3 6.92 12 12"></polygon>
+                    </svg>
+                </div>
+                <h3>First Aid Stock Monitor</h3>
+                <p>Track central supply inventory, view pending box shortages, and log restocking logs.</p>
+                <div class="launch-btn">
+                    Launch App
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 6: PPE Management -->
+            <a href="ppe.html" class="app-card">
+                <div class="card-icon" style="background: #f5f3ff; color: #7c3aed;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <h3>PPE Management</h3>
+                <p>Self-record database for issuing personal protective equipment with smart 6-month checks.</p>
+                <div class="launch-btn">
+                    Launch App
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- App 5: Future -->
+            <div class="app-card coming-soon">
+                <span class="badge">In Development</span>
+                <div class="card-icon icon-gray">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                        </path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+                <h3>Incident Reporting</h3>
+                <p>Future module for reporting workplace incidents, near misses, and unsafe acts.</p>
+                <div class="launch-btn" style="color: var(--text-muted);">
+                    Coming Soon
+                </div>
+            </div>
+
+        </div>
+
+        <div class="admin-footer">
+            <a href="audit.html" class="admin-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Secure Audit Dashboard
+            </a>
+        </div>
+    </div>
+
+</body>
+
+</html>

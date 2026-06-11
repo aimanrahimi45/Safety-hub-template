@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Aid Box Inspection Checklist</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="apple-touch-icon" href="safety-logo-v2.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+        :root {
+            --danger: #ef4444;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1e3a8a;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header img {
+            max-height: 50px;
+            margin-bottom: 12px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .form-section {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Reusing global styles for labels, inputs, selects, and textareas from shared.css */
+
+        /* Autofill bar */
+        .autofill-bar {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .autofill-bar p {
+            font-size: 0.85rem;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .btn-autofill {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-autofill:hover {
+            background: #2563eb;
+        }
+
+        /* Accordion CSS */
+        .accordion {
+            margin: 0 25px 25px 25px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .accordion-item {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+
+        .accordion-header {
+            background: #f8fafc;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .accordion-header:hover {
+            background: #f1f5f9;
+        }
+
+        .accordion-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1e293b;
+        }
+
+        .accordion-icon {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .accordion-content {
+            padding: 20px;
+            display: none;
+            background: white;
+        }
+
+        .accordion-item.active .accordion-content {
+            display: block;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Checklist Items Table inside accordion */
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .item-row {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .item-req {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .item-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .item-fields {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Signature block */
+        .signature-container {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #f8fafc;
+            position: relative;
+            margin-top: 8px;
+            height: 150px;
+        }
+
+        .signature-pad {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .clear-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: calc(100% - 50px);
+            margin: 0 25px 25px 25px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-submit:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        /* Loading indicator */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Brand Header -->
+        <div class="header">
+            <img src="logo-metrod.webp" alt="Metrod Logo" onerror="this.style.display='none'">
+            <h1>First Aid Box Inspection</h1>
+            <p>ISO 45001 Compliance Safety Monitoring Portal</p>
+        </div>
+
+        <form id="inspection-form" onsubmit="submitForm(event)">
+            <!-- General Metadata -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    Inspection Metadata
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label for="inspect-date">Date of Inspection <span style="color:var(--danger)">*</span></label>
+                        <input type="date" id="inspect-date" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="inspect-company">Company <span style="color:var(--danger)">*</span></label>
+                        <input type="text" id="inspect-company" value="Metrod Malaysia" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="inspect-dept">Department <span style="color:var(--danger)">*</span></label>
+                        <input type="text" id="inspect-dept" placeholder="e.g. Production / Safety" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="inspect-section">Section <span style="color:var(--danger)">*</span></label>
+                        <input type="text" id="inspect-section" placeholder="e.g. Main Plant" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="inspect-boxid">First Aid Box ID <span style="color:var(--danger)">*</span></label>
+                        <select id="inspect-boxid" required>
+                            <option value="" disabled selected>Select First Aid Box...</option>
+                            <option value="OSH/FAB/01">OSH/FAB/01</option>
+                            <option value="OSH/FAB/02">OSH/FAB/02</option>
+                            <option value="OSH/FAB/03">OSH/FAB/03</option>
+                            <option value="OSH/FAB/04">OSH/FAB/04</option>
+                            <option value="OSH/FAB/05">OSH/FAB/05</option>
+                            <option value="OSH/FAB/06">OSH/FAB/06</option>
+                            <option value="OSH/FAB/07">OSH/FAB/07</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="inspect-location">Location <span style="color:var(--danger)">*</span></label>
+                        <input type="text" id="inspect-location" placeholder="e.g. Office / Warehouse" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Autofill Quick Bar -->
+            <div class="autofill-bar">
+                <p>💡 Box fully stocked with standard items?</p>
+                <button type="button" class="btn-autofill" onclick="quickFill()">Autofill Standards</button>
+            </div>
+
+            <!-- Collapsible Checklist Accordion -->
+            <div class="accordion">
+                <!-- Group 1: Bandages & Wound Care -->
+                <div class="accordion-item active">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span class="accordion-title">1. Bandages & Wound Care (1-9, 18-20)</span>
+                        <span class="accordion-icon">&#9662;</span>
+                    </div>
+                    <div class="accordion-content">
+                        <!-- Items -->
+                        <div id="group-1-items"></div>
+                    </div>
+                </div>
+
+                <!-- Group 2: Dressings & General Supplies -->
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span class="accordion-title">2. Medical Supplies & Dressings (10-12, 14, 15, 17)</span>
+                        <span class="accordion-icon">&#9662;</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div id="group-2-items"></div>
+                    </div>
+                </div>
+
+                <!-- Group 3: Antiseptics, Instruments & Info -->
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span class="accordion-title">3. Equipment & Manuals (13, 16, 21-23)</span>
+                        <span class="accordion-icon">&#9662;</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div id="group-3-items"></div>
+                    </div>
+                </div>
+
+                <!-- Group 4: Box Cleanliness & Findings -->
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span class="accordion-title">4. Condition & Audit Sign-Off (24, Findings, Sign-off)</span>
+                        <span class="accordion-icon">&#9662;</span>
+                    </div>
+                    <div class="accordion-content">
+                        <!-- Cleanliness -->
+                        <div class="item-row">
+                            <div class="item-header">
+                                <span class="item-name">24. First Aid Box Item Cleanliness <span style="color:var(--danger)">*</span></span>
+                                <span class="item-req">CONDITION</span>
+                            </div>
+                            <div class="item-fields">
+                                <select id="item-24-avail" required>
+                                    <option value="Good" selected>Good</option>
+                                    <option value="Needs Cleaning">Needs Cleaning</option>
+                                    <option value="Damaged Box">Damaged Box</option>
+                                </select>
+                                <input type="text" id="item-24-remarks" placeholder="Remarks...">
+                            </div>
+                        </div>
+
+                        <!-- Findings -->
+                        <div class="input-group" style="margin-top: 15px;">
+                            <label for="inspect-findings">Inspection Findings / Corrective Action (If any)</label>
+                            <textarea id="inspect-findings" rows="3" placeholder="Describe any corrective actions needed or taken..."></textarea>
+                        </div>
+
+                        <!-- Officer details -->
+                        <div class="grid" style="margin-top: 15px;">
+                            <div class="input-group">
+                                <label for="officer-name">Inspected By (Name) <span style="color:var(--danger)">*</span></label>
+                                <input type="text" id="officer-name" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="officer-pos">Position <span style="color:var(--danger)">*</span></label>
+                                <input type="text" id="officer-pos" value="Safety Officer" required>
+                            </div>
+                        </div>
+
+                        <!-- Signature -->
+                        <div class="input-group" style="margin-top: 15px;">
+                            <label>Digital Verification Sign-off <span style="color:var(--danger)">*</span></label>
+                            <div class="signature-container">
+                                <canvas class="signature-pad" id="sig-pad"></canvas>
+                                <button type="button" class="clear-btn" onclick="clearSignature()">Clear</button>
+                            </div>
+                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="save-sig-check" style="width: 16px; height: 16px; margin: 0; cursor: pointer; accent-color: var(--primary);">
+                                <label for="save-sig-check" style="margin: 0; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); cursor: pointer; user-select: none;">Save signature on this device</label>
+                            </div>
+                        </div>
+
+                        <!-- Instant Restock Checkbox -->
+                        <div style="margin-top: 20px; padding: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="instant-restock-check" style="width:20px; height:20px; margin:0; cursor:pointer; accent-color:var(--primary);">
+                            <label for="instant-restock-check" style="margin:0; font-size:0.85rem; font-weight:500; color:#1e40af; cursor:pointer; user-select:none;">
+                                <strong>Deduct Refill from Central Inventory?</strong> Check this if you immediately refilled missing items from the safety cabinet.
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit" class="btn-submit" id="submit-btn">Submit ISO 45001 Compliance Log</button>
+        </form>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="overlay-text" style="font-weight:600;font-size:1.1rem;">Saving Inspection to Cloud Sheet...</p>
+    </div>
+
+    <script>
+        // ========================================================
+        // DEPLOYED WEB APP URL (PASTE YOUR DEPLOYED GOOGLE SCRIPT URL HERE)
+        // ========================================================
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLbTTov3rghz5Z6mqKxm5DOeFLe6KWcyBiHwgc6ZTXKbsoAMfu4MMhn_A5TinpsTEEJQ/exec";
+
+        const CHECKLIST_ITEMS = [
+            { id: 1, name: "1. Triangular Bandage 100cm", req: "5pcs", group: 1 },
+            { id: 2, name: "2. Eye Dressing No 16", req: "3pkt", group: 1 },
+            { id: 3, name: "3. Sterile Gamgee Pad 25cm", req: "3pkt", group: 1 },
+            { id: 4, name: "4. Sterile Gauze Pad 7.5cm", req: "6pkt", group: 1 },
+            { id: 5, name: "5. Sterile Gauze Pad 10cm", req: "6pkt", group: 1 },
+            { id: 6, name: "6. Elastic Bandage", req: "3pkt", group: 1 },
+            { id: 7, name: "7. W.O.W Bandage 2.5cm", req: "8pcs", group: 1 },
+            { id: 8, name: "8. W.O.W Bandage 5.0cm", req: "8pcs", group: 1 },
+            { id: 9, name: "9. W.O.W Bandage 7.5cm", req: "8pcs", group: 1 },
+            { id: 10, name: "10. Instant Ice Pack", req: "6pkt", group: 2 },
+            { id: 11, name: "11. Sterile Non-Adherent Pad", req: "6pkt", group: 2 },
+            { id: 12, name: "12. Pair of Glove", req: "6pkt", group: 2 },
+            { id: 13, name: "13. Scissors", req: "1pcs", group: 3 },
+            { id: 14, name: "14. Adhesive Tape", req: "1pcs", group: 2 },
+            { id: 15, name: "15. Bactigras", req: "2pcs", group: 2 },
+            { id: 16, name: "16. Yellow Antiseptic Liquid", req: "1pcs", group: 3, exp: "10/26" },
+            { id: 17, name: "17. Cotton Bud 100pcs", req: "1pkt", group: 2 },
+            { id: 18, name: "18. CPR Face Shield", req: "3pcs", group: 1, exp: "08/28" },
+            { id: 19, name: "19. Adhesive Plaster", req: "60pcs", group: 1 },
+            { id: 20, name: "20. Safety Pin", req: "36pcs", group: 1 },
+            { id: 21, name: "21. Thermometer", req: "1pcs", group: 3 },
+            { id: 22, name: "22. Waste Bag", req: "3pcs", group: 3 },
+            { id: 23, name: "23. First Aid Manual", req: "1pcs", group: 3 }
+        ];
+
+        // --- Render Items ---
+        function renderItems() {
+            CHECKLIST_ITEMS.forEach(item => {
+                const target = document.getElementById(`group-${item.group}-items`);
+                if (!target) return;
+
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                row.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-req">${item.req}</span>
+                    </div>
+                    <div class="item-fields">
+                        <div class="input-group">
+                            <label style="font-size:0.75rem;">Quantity Available <span style="color:var(--danger)">*</span></label>
+                            <input type="number" id="item-${item.id}-avail" placeholder="e.g. ${parseInt(item.req, 10)}" min="0" required>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-size:0.75rem;">Expiry Date</label>
+                            <input type="text" id="item-${item.id}-exp" placeholder="MM/YY" value="${item.exp || ''}">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-size:0.75rem;">Remarks</label>
+                            <input type="text" id="item-${item.id}-remarks" placeholder="Optional notes...">
+                        </div>
+                    </div>
+                `;
+                target.appendChild(row);
+            });
+        }
+
+        // --- Initialize Today's Date ---
+        document.getElementById('inspect-date').valueAsDate = new Date();
+
+        // --- Accordion Logic ---
+        function toggleAccordion(header) {
+            const item = header.parentElement;
+            item.classList.toggle('active');
+            
+            // If the expanded item contains the signature pad, resize it immediately once visible
+            if (item.classList.contains('active') && item.querySelector('#sig-pad')) {
+                setTimeout(() => {
+                    resizeSignatureCanvas();
+                }, 150);
+            }
+        }
+
+        // --- Signature Pad Initializer ---
+        let signaturePad;
+        
+        function resizeSignatureCanvas() {
+            const canvas = document.getElementById('sig-pad');
+            if (!canvas || !signaturePad) return;
+            
+            // Only resize if container is visible (has width/height)
+            if (canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                signaturePad.clear(); // Reset drawing context state
+            }
+        }
+
+        function initSignature() {
+            const canvas = document.getElementById('sig-pad');
+            if (!canvas) return;
+
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(248, 250, 252)',
+                penColor: 'rgb(15, 23, 42)'
+            });
+
+            // Set initial size if visible
+            resizeSignatureCanvas();
+
+            window.addEventListener("resize", resizeSignatureCanvas);
+
+            // Load saved signature if available
+            const savedSig = localStorage.getItem('first_aid_saved_sig');
+            if (savedSig) {
+                setTimeout(() => {
+                    signaturePad.fromDataURL(savedSig);
+                }, 150);
+                const check = document.getElementById('save-sig-check');
+                if (check) check.checked = true;
+            }
+        }
+
+        function clearSignature() {
+            if (signaturePad) {
+                signaturePad.clear();
+                localStorage.removeItem('first_aid_saved_sig');
+                const check = document.getElementById('save-sig-check');
+                if (check) check.checked = false;
+            }
+        }
+
+        // --- Quick Standard Fill ---
+        function quickFill() {
+            CHECKLIST_ITEMS.forEach(item => {
+                const numericQty = parseInt(item.req, 10) || 0;
+                document.getElementById(`item-${item.id}-avail`).value = numericQty;
+                if (item.exp) {
+                    document.getElementById(`item-${item.id}-exp`).value = item.exp;
+                }
+            });
+            alert("✅ Standard quantities and standard expiries autofilled successfully!");
+        }
+
+        // --- Submit ---
+        async function submitForm(e) {
+            e.preventDefault();
+
+            if (signaturePad.isEmpty()) {
+                alert("❌ ISO 45001 Compliance requires a safety inspection signature before submission!");
+                return;
+            }
+
+            const sigData = signaturePad.toDataURL('image/png');
+
+            // Save signature if checked
+            const saveSigCheck = document.getElementById('save-sig-check');
+            if (saveSigCheck && saveSigCheck.checked) {
+                localStorage.setItem('first_aid_saved_sig', sigData);
+            } else {
+                localStorage.removeItem('first_aid_saved_sig');
+            }
+
+            const confirmSubmit = confirm("Submit this First Aid Box Inspection Log?");
+            if (!confirmSubmit) return;
+
+            const submitBtn = document.getElementById('submit-btn');
+            const overlay = document.getElementById('loading-overlay');
+            
+            submitBtn.disabled = true;
+            overlay.style.display = 'flex';
+
+            // Gather standard metadata
+            const formData = {
+                inspectDate: document.getElementById('inspect-date').value,
+                company: document.getElementById('inspect-company').value,
+                department: document.getElementById('inspect-dept').value,
+                section: document.getElementById('inspect-section').value,
+                boxId: document.getElementById('inspect-boxid').value,
+                location: document.getElementById('inspect-location').value,
+                findings: document.getElementById('inspect-findings').value,
+                officerName: document.getElementById('officer-name').value,
+                officerPos: document.getElementById('officer-pos').value,
+                signature: sigData, // base64 string
+                instantRestock: document.getElementById('instant-restock-check').checked
+            };
+
+            // Gather items 1 to 24
+            for (let i = 1; i <= 24; i++) {
+                const availEl = document.getElementById(`item-${i}-avail`);
+                const expEl = document.getElementById(`item-${i}-exp`);
+                const remarksEl = document.getElementById(`item-${i}-remarks`);
+
+                formData[`item_${i}_avail`] = availEl ? availEl.value : "-";
+                formData[`item_${i}_exp`] = expEl ? expEl.value || "-" : "-";
+                formData[`item_${i}_remarks`] = remarksEl ? remarksEl.value || "-" : "-";
+            }
+
+            try {
+                if (GOOGLE_SCRIPT_URL === "YOUR_FIRST_AID_SCRIPT_URL") {
+                    throw new Error("Google Web App URL placeholder active. Please complete the script setup and paste your URL first.");
+                }
+
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // standard Apps Script request setup
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                alert("🎉 First Aid Inspection Log successfully submitted to cloud Sheet!");
+                location.reload();
+            } catch (err) {
+                alert("⚠️ Submission error: " + err.message + "\n\nNote: If you have not configured the Google Sheets script URL yet, please check the dashboard documentation to configure your cloud Web App.");
+                overlay.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Run rendering on start
+        renderItems();
+        initSignature();
+    </script>
+</body>
+
+</html>

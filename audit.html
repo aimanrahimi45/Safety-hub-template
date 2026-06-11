@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrod Universal Audit Hub</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="apple-touch-icon" href="safety-logo-v2.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared.js" defer></script>
+    <style>
+        .header {
+            background: var(--surface);
+            padding: 20px 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #1e3a8a;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        select,
+        input {
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .container {
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .table-wrapper {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            padding: 15px 20px;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .sig-img {
+            max-height: 60px;
+            max-width: 150px;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            object-fit: contain;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Pagination Controls */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #1e40af;
+            /* primary dark */
+        }
+
+        .pagination button:disabled {
+            background: #cbd5e1;
+            color: #64748b;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .page-info {
+            font-weight: 600;
+            color: #475569;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 20px;
+                gap: 15px;
+            }
+
+            .header h1 {
+                text-align: center;
+            }
+
+            .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .controls select,
+            .controls input {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .pagination {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            /* Mobile Card Styling for Table */
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+            }
+
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            tr {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                margin-bottom: 15px;
+                background: var(--surface);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+                padding: 10px;
+                cursor: pointer;
+            }
+
+            td {
+                border: none;
+                border-bottom: 1px solid #f1f5f9;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+                padding: 10px 15px !important;
+                font-size: 0.9rem;
+                text-align: right;
+            }
+
+            td:last-child {
+                border-bottom: none;
+            }
+
+            td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #475569;
+                text-align: left;
+                max-width: 60%;
+                white-space: normal;
+                word-break: break-word;
+            }
+
+            .sig-img {
+                max-height: 40px;
+            }
+
+            /* Center & Scale Modal Container on Mobile */
+            .modal {
+                padding: 10px;
+            }
+
+            .modal-content {
+                padding: 20px 15px;
+                max-height: 95vh;
+                width: 100%;
+            }
+
+            .close-modal {
+                top: 15px;
+                right: 15px;
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 12px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-modal:hover {
+            color: #ef4444;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #1e3a8a;
+            font-size: 1.3rem;
+            margin-top: 0;
+        }
+
+        .detail-meta-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        .detail-meta-box strong {
+            color: #475569;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* Accordion CSS for Modal */
+        .accordion-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background: #f8fafc;
+            padding: 12px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.9rem;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 15px;
+            background: white;
+        }
+
+        .accordion-item.active .accordion-content {
+            display: block;
+        }
+
+        /* Reusing global styles for back-link from shared.css */
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Audit Dashboard</h1>
+        <div class="controls">
+            <select id="db-selector" onchange="loadDatabase()">
+                <option value="" disabled selected>Select Database to Audit...</option>
+                <!-- Databases will be populated here by JS -->
+            </select>
+            <select id="month-filter" style="display: none;" onchange="filterTable()">
+                <option value="">All Months</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+            <select id="year-filter" style="display: none;" onchange="filterTable()">
+                <option value="">All Years</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+            </select>
+            <input type="text" id="search" placeholder="Search records..." onkeyup="filterTable()">
+            <button id="export-btn" style="display: none; padding: 10px 15px; border-radius: 8px; font-weight: 500; font-family: inherit; font-size: 0.95rem; cursor: pointer; border: none; background: #0f766e; color: white; transition: background 0.2s;" onmouseover="this.style.background='#0d5e58'" onmouseout="this.style.background='#0f766e'" onclick="exportToCSV()">📥 Export Report</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <a href="index.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Metrod Hub
+        </a>
+        <div class="table-wrapper">
+            <table id="data-table">
+                <thead id="table-head"></thead>
+                <tbody id="table-body">
+                    <tr>
+                        <td class="loading">Please select a database to begin audit.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination" id="pagination-controls" style="display: none;">
+            <button id="prev-btn" onclick="changePage(-1)" disabled>&laquo; Previous</button>
+            <span class="page-info" id="page-info">Page 1 of 1</span>
+            <button id="next-btn" onclick="changePage(1)" disabled>Next &raquo;</button>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="details-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title">Inspection Details</h2>
+            <div id="modal-metadata"
+                style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            <div class="modal-accordion" id="modal-accordion">
+                <!-- Collapsible detail sections or generic list go here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // ADMIN CONFIGURATION: PASTE YOUR CSV LINKS HERE
+        // ==========================================
+        const DATABASES = [
+            {
+                name: "HIRARC Yearly Approvals",
+                // Secure serverless API: Paste your deployed HIRARC Apps Script Web App URL here
+                scriptUrl: "https://script.google.com/macros/s/AKfycbz4ZcK2HdwiEeO9ze18rdwbppoPt7SwDAoHwq3VRBNUkv9B_J0IIdUS4D-va4iR7H8/exec",
+                isSecure: true
+            },
+            {
+                name: "Contractor Inductions",
+                // Secure serverless API: Paste your deployed Contractor Induction Apps Script Web App URL here
+                scriptUrl: "https://script.google.com/macros/s/AKfycbzYeKbpgUAyBBO6_jsFnbrf6qqtN2yTFZZnR_PN_19SduKxtJSpL5gxIMavQgzTcQM43w/exec",
+                isSecure: true
+            },
+            {
+                name: "Contractor Handbook",
+                // Secure serverless API: Paste your deployed Contractor Handbook Apps Script Web App URL here
+                scriptUrl: "https://script.google.com/macros/s/AKfycbwswo184YEPoDU9P8SXsHPu23W4EDuq69d0PoSnToTYGXSSSl44k6_Qf4nlwXrhR01B/exec",
+                isSecure: true
+            },
+            {
+                name: "First Aid Inspections",
+                // Secure serverless API: Paste your deployed First Aid Apps Script Web App URL here
+                scriptUrl: "https://script.google.com/macros/s/AKfycbzLbTTov3rghz5Z6mqKxm5DOeFLe6KWcyBiHwgc6ZTXKbsoAMfu4MMhn_A5TinpsTEEJQ/exec",
+                isSecure: true
+            }
+        ];
+
+        // --- Globals ---
+        let globalHeaders = [];
+        let currentData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 10;
+
+        // --- Initialize Dropdown ---
+        const selector = document.getElementById('db-selector');
+        DATABASES.forEach((db, index) => {
+            let opt = document.createElement('option');
+            opt.value = index;
+            opt.innerHTML = db.name;
+            selector.appendChild(opt);
+        });
+
+        // --- Fetch & Render CSV ---
+        async function loadDatabase() {
+            const index = selector.value;
+            if (!index) return;
+
+            const db = DATABASES[index];
+            const tbody = document.getElementById('table-body');
+            const thead = document.getElementById('table-head');
+            const paginationControls = document.getElementById('pagination-controls');
+
+            // Toggle Export and Month/Year controls for First Aid Inspections
+            const monthFilter = document.getElementById("month-filter");
+            const yearFilter = document.getElementById("year-filter");
+            const exportBtn = document.getElementById("export-btn");
+
+            if (db.name === "First Aid Inspections") {
+                if (monthFilter) monthFilter.style.display = "inline-block";
+                if (yearFilter) yearFilter.style.display = "inline-block";
+                if (exportBtn) exportBtn.style.display = "inline-block";
+            } else {
+                if (monthFilter) { monthFilter.style.display = "none"; monthFilter.value = ""; }
+                if (yearFilter) { yearFilter.style.display = "none"; yearFilter.value = ""; }
+                if (exportBtn) exportBtn.style.display = "none";
+            }
+
+            tbody.innerHTML = '<tr><td class="loading">Fetching secure data...</td></tr>';
+            thead.innerHTML = '';
+            paginationControls.style.display = 'none'; // hide pagination while loading
+
+            try {
+                // If it is a secure Apps Script database, handle securely via JSON API
+                if (db.isSecure) {
+                    if (db.scriptUrl.includes("YOUR_") || db.scriptUrl.includes("docs.google.com")) {
+                        tbody.innerHTML = `<tr><td class="loading">Configuration needed: Please paste your deployed Web App URL into the 'scriptUrl' config inside audit.html code for '${db.name}'.</td></tr>`;
+                        return;
+                    }
+
+                    // 1. Get PIN from cache or prompt
+                    let pin = localStorage.getItem("metrod_dashboard_pin");
+                    if (!pin) {
+                        pin = prompt("🔐 This safety database is private.\n\nPlease enter the Dashboard security PIN to access logs:");
+                        if (!pin) {
+                            tbody.innerHTML = '<tr><td class="loading" style="color:#ef4444; font-weight:600;">Access Denied: Dashboard security PIN is required.</td></tr>';
+                            return;
+                        }
+                        localStorage.setItem("metrod_dashboard_pin", pin);
+                    }
+
+                    // 2. Fetch secure JSON data
+                    try {
+                        if (db.name === "First Aid Inspections") {
+                            // Relational database requires parallel fetching of logs and details
+                            const [logsRes, detailsRes] = await Promise.all([
+                                fetch(`${db.scriptUrl}?action=getLogs&pin=${pin}`),
+                                fetch(`${db.scriptUrl}?action=getDetails&pin=${pin}`)
+                            ]);
+
+                            const logsJson = await logsRes.json();
+                            const detailsJson = await detailsRes.json();
+
+                            if (logsJson.status === "ERROR") {
+                                localStorage.removeItem("metrod_dashboard_pin");
+                                tbody.innerHTML = `<tr><td class="loading" style="color:#ef4444; font-weight:600;">Access Denied: ${logsJson.message}</td></tr>`;
+                                return;
+                            }
+
+                            // Store details in memory cache
+                            window.cachedDetailsData = detailsJson.data.map(item => [
+                                item["Audit ID"],
+                                item["Item ID"],
+                                item["Item Name"],
+                                item["Required Standard"],
+                                item["Quantity Available"],
+                                item["Expiry Date"],
+                                item["Remarks"]
+                            ]);
+
+                            // Render table headers
+                            globalHeaders = [
+                                "Audit ID", "Timestamp", "Date of Inspection", "Company", "Department",
+                                "Section", "Box ID", "Location", "Cleanliness Condition", "Cleanliness Remarks",
+                                "Inspection Findings", "Inspected By Name", "Inspected By Position", "Signature URL"
+                            ];
+
+                            let headerHTML = '<tr>';
+                            globalHeaders.forEach(h => { headerHTML += `<th>${h}</th>`; });
+                            headerHTML += '</tr>';
+                            thead.innerHTML = headerHTML;
+
+                            // Parse logs into standard table row values
+                            currentData = logsJson.data.map(item => [
+                                item["Audit ID"],
+                                item["Timestamp"],
+                                item["Date of Inspection"],
+                                item["Company"],
+                                item["Department"],
+                                item["Section"],
+                                item["Box ID"],
+                                item["Location"],
+                                item["Cleanliness Condition"],
+                                item["Cleanliness Remarks"],
+                                item["Inspection Findings"],
+                                item["Inspected By Name"],
+                                item["Inspected By Position"],
+                                item["Signature URL"]
+                            ]);
+                        } else {
+                            // Non-relational secure databases (HIRARC, Contractor Inductions, Contractor Handbook)
+                            const logsRes = await fetch(`${db.scriptUrl}?pin=${pin}`);
+                            const logsJson = await logsRes.json();
+
+                            if (logsJson.status === "ERROR") {
+                                localStorage.removeItem("metrod_dashboard_pin");
+                                tbody.innerHTML = `<tr><td class="loading" style="color:#ef4444; font-weight:600;">Access Denied: ${logsJson.message}</td></tr>`;
+                                return;
+                            }
+
+                            if (logsJson.data.length === 0) {
+                                tbody.innerHTML = `<tr><td class="loading">Database is empty.</td></tr>`;
+                                return;
+                            }
+
+                            // Dynamically extract headers from JSON object keys
+                            globalHeaders = Object.keys(logsJson.data[0]);
+
+                            let headerHTML = '<tr>';
+                            globalHeaders.forEach(h => { headerHTML += `<th>${h}</th>`; });
+                            headerHTML += '</tr>';
+                            thead.innerHTML = headerHTML;
+
+                            // Convert objects to row arrays
+                            currentData = logsJson.data.map(item => {
+                                return globalHeaders.map(h => item[h] !== undefined ? String(item[h]) : "");
+                            });
+                        }
+
+                        filteredData = [...currentData];
+                        paginationControls.style.display = 'flex';
+                        currentPage = 1;
+                        renderTable(currentPage);
+                        return;
+
+                    } catch (secErr) {
+                        localStorage.removeItem("metrod_dashboard_pin");
+                        tbody.innerHTML = `<tr><td class="loading" style="color:#ef4444; font-weight:600;">Secure Connection Failed: Make sure your Web App URL is correctly deployed and your PIN is correct. Error: ${secErr.message}</td></tr>`;
+                        return;
+                    }
+                }
+
+                // --- Fallback Legacy Public CSV Fetching (If isSecure is false or missing) ---
+                if (db.url && db.url.includes("YOUR_")) {
+                    tbody.innerHTML = `<tr><td class="loading">Configuration needed: Please paste your CSV link into the code for '${db.name}'.</td></tr>`;
+                    return;
+                }
+
+                const response = await fetch(db.url);
+                const csvText = await response.text();
+
+                // Load Relational Details CSV in parallel if configured
+                window.cachedDetailsData = [];
+                if (db.detailsUrl && !db.detailsUrl.includes("YOUR_")) {
+                    try {
+                        const detResponse = await fetch(db.detailsUrl);
+                        const detCsvText = await detResponse.text();
+                        const detRows = detCsvText.split('\n').map(r => {
+                            return r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, '').trim());
+                        });
+                        detRows.shift(); // Remove header row
+                        window.cachedDetailsData = detRows.filter(r => !(r.length === 1 && r[0] === ''));
+                    } catch (detErr) {
+                        console.error("Error fetching details sheet:", detErr);
+                    }
+                }
+
+                // Parse CSV (handles commas inside quotes)
+                const rows = csvText.split('\n').map(row => {
+                    return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, '').trim());
+                });
+
+                if (rows.length < 1) throw new Error("Database is empty.");
+
+                // Render Headers
+                globalHeaders = rows.shift(); // Remove first row (headers)
+
+                // Filter out completely empty rows immediately
+                currentData = rows.filter(row => !(row.length === 1 && row[0] === ''));
+                filteredData = [...currentData];
+
+                let headerHTML = '<tr>';
+                globalHeaders.forEach(h => { headerHTML += `<th>${h}</th>`; });
+                headerHTML += '</tr>';
+                thead.innerHTML = headerHTML;
+
+                paginationControls.style.display = 'flex'; // show pagination
+
+                // Render the first page
+                currentPage = 1;
+                renderTable(currentPage);
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td class="loading" style="color:red;">Error loading database: ${e.message}</td></tr>`;
+            }
+        }
+
+        // --- Render Table Page ---
+        function renderTable(page) {
+            const tbody = document.getElementById('table-body');
+            const pageInfo = document.getElementById('page-info');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td class="loading">No records found.</td></tr>';
+                pageInfo.innerText = 'Page 0 of 0';
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                return;
+            }
+
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
+            // Safety bounds
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPage = page;
+
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            let bodyHTML = '';
+            pageData.forEach((row, rowIndex) => {
+                const absoluteIndex = startIndex + rowIndex;
+                bodyHTML += `<tr onclick="openDetails(${absoluteIndex})" style="cursor: pointer;">`;
+                row.forEach((cell, cellIndex) => {
+                    let isImage = false;
+                    let imgSrc = cell;
+                    const label = globalHeaders[cellIndex] || '';
+
+                    // Check for Base64 or New Format
+                    if (cell.startsWith('data:image') || cell.startsWith('https://lh3.googleusercontent.com/d/')) {
+                        isImage = true;
+                    }
+                    // Fix for Google's recent security block on drive.google.com/uc endpoint
+                    else if (cell.includes('drive.google.com/uc')) {
+                        const match = cell.match(/id=([a-zA-Z0-9_-]+)/);
+                        if (match && match[1]) {
+                            isImage = true;
+                            imgSrc = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                        }
+                    }
+                    // Check for OLD Google Drive Links
+                    else if (cell.includes('drive.google.com/file/d/')) {
+                        const match = cell.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+                        if (match && match[1]) {
+                            isImage = true;
+                            imgSrc = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                        }
+                    }
+
+                    if (isImage) {
+                        bodyHTML += `<td data-label="${label}"><img src="${imgSrc}" class="sig-img" alt="Signature/Photo"></td>`;
+                    } else {
+                        bodyHTML += `<td data-label="${label}">${cell}</td>`;
+                    }
+                });
+                bodyHTML += '</tr>';
+            });
+
+            tbody.innerHTML = bodyHTML;
+
+            // Update Pagination UI
+            pageInfo.innerText = `Page ${currentPage} of ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
+
+        function changePage(direction) {
+            renderTable(currentPage + direction);
+        }
+
+        // --- Search & Date Filter ---
+        function filterTable() {
+            const input = document.getElementById("search").value.toLowerCase();
+            const dbName = selector.options[selector.selectedIndex].text;
+
+            let data = currentData;
+
+            // Apply Month and Year filters if First Aid Inspections is selected
+            if (dbName === "First Aid Inspections") {
+                const monthVal = document.getElementById("month-filter").value;
+                const yearVal = document.getElementById("year-filter").value;
+
+                data = data.filter(row => {
+                    const dateStr = row[2] || ""; // Date of Inspection is index 2
+                    if (!dateStr || dateStr.length < 7) return false;
+
+                    const year = dateStr.substring(0, 4);
+                    const month = dateStr.substring(5, 7);
+
+                    const matchesMonth = !monthVal || month === monthVal;
+                    const matchesYear = !yearVal || year === yearVal;
+                    return matchesMonth && matchesYear;
+                });
+            }
+
+            // Apply text search input filter
+            if (!input) {
+                filteredData = data;
+            } else {
+                filteredData = data.filter(row => {
+                    // Check if any cell in the row contains the search term
+                    return row.some(cell => String(cell).toLowerCase().includes(input));
+                });
+            }
+
+            // Reset to page 1 when filtering
+            renderTable(1);
+        }
+
+        // --- Export to CSV ---
+        function exportToCSV() {
+            const dbName = selector.options[selector.selectedIndex].text;
+            if (dbName !== "First Aid Inspections") return;
+
+            const monthVal = document.getElementById("month-filter").value;
+            const yearVal = document.getElementById("year-filter").value;
+
+            const monthNames = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const monthStr = monthVal ? monthNames[parseInt(monthVal, 10)] : "All";
+            const yearStr = yearVal ? yearVal : "All";
+            const fileName = `First_Aid_Inspection_Report_${monthStr}_${yearStr}.csv`;
+
+            const csvHeaders = [
+                "Audit ID", "Date of Inspection", "Box ID", "Location", 
+                "Inspected By", "Item ID", "Item Name", 
+                "Required Standard", "Quantity Available", "Expiry Date", "Remarks"
+            ];
+
+            const csvRows = [csvHeaders.join(",")];
+
+            function escapeCSV(val) {
+                if (val === null || val === undefined) return "";
+                let str = String(val);
+                if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+                    str = str.replace(/"/g, '""');
+                    return `"${str}"`;
+                }
+                return str;
+            }
+
+            filteredData.forEach(logRow => {
+                const auditId = logRow[0];
+                const date = logRow[2];
+                const boxId = logRow[6];
+                const location = logRow[7];
+                const inspectedBy = logRow[11];
+
+                const details = (window.cachedDetailsData || []).filter(d => d[0] === auditId);
+
+                details.forEach(detRow => {
+                    const rowData = [
+                        auditId,
+                        date,
+                        boxId,
+                        location,
+                        inspectedBy,
+                        detRow[1], // Item ID
+                        detRow[2], // Item Name
+                        detRow[3], // Required Standard
+                        detRow[4], // Qty Available
+                        detRow[5], // Expiry Date
+                        detRow[6]  // Remarks
+                    ];
+                    csvRows.push(rowData.map(escapeCSV).join(","));
+                });
+            });
+
+            // Trigger download with UTF-8 BOM
+            const csvContent = "\uFEFF" + csvRows.join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", fileName);
+                link.style.visibility = "hidden";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // --- Details Modal Implementation ---
+        function openDetails(index) {
+            const row = filteredData[index];
+            const modal = document.getElementById('details-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMetadata = document.getElementById('modal-metadata');
+            const modalAccordion = document.getElementById('modal-accordion');
+
+            modalTitle.innerText = `${selector.options[selector.selectedIndex].text} - Audit Log`;
+            modalMetadata.innerHTML = '';
+            modalAccordion.innerHTML = '';
+
+            const dbName = selector.options[selector.selectedIndex].text;
+
+            if (dbName === "First Aid Inspections") {
+                // Mapping Google Sheet Columns from Logs tab (14 columns)
+                const metaFields = [
+                    { label: "Date of Inspection", val: row[2] || "-" },
+                    { label: "First Aid Box ID", val: row[6] || "-" },
+                    { label: "Location", val: row[7] || "-" },
+                    { label: "Inspected By", val: `${row[11] || "-"} (${row[12] || "-"})` },
+                    { label: "Company / Dept", val: `${row[3] || "-"} / ${row[4] || "-"}` },
+                    { label: "Section", val: row[5] || "-" }
+                ];
+
+                metaFields.forEach(f => {
+                    modalMetadata.innerHTML += `
+                        <div class="detail-meta-box">
+                            <strong>${f.label}</strong>
+                            <span>${f.val}</span>
+                        </div>
+                    `;
+                });
+
+                const group1Ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 18, 19, 20];
+                const group2Ids = [10, 11, 12, 14, 15, 17];
+                const group3Ids = [13, 16, 21, 22, 23];
+
+                const groups = [
+                    { name: "1. Bandages & Wound Care", ids: group1Ids },
+                    { name: "2. Medical Supplies & Dressings", ids: group2Ids },
+                    { name: "3. Equipment & Manuals", ids: group3Ids },
+                ];
+
+                const auditId = row[0];
+                // Filter vertical items from window.cachedDetailsData where Audit ID matches
+                const itemRows = (window.cachedDetailsData || []).filter(r => r[0] === auditId);
+
+                // Helper to retrieve item values dynamically by Item ID
+                function getItemDetails(id) {
+                    const found = itemRows.find(r => parseInt(r[1]) === id);
+                    return found ? {
+                        qty: found[4] || "-",
+                        exp: found[5] || "-",
+                        rem: found[6] || "-"
+                    } : { qty: "-", exp: "-", rem: "-" };
+                }
+
+                groups.forEach((g) => {
+                    let itemsHTML = '<table style="width:100%; border-collapse:collapse; font-size:0.9rem;">';
+                    itemsHTML += '<tr style="background:#f8fafc;"><th style="padding:8px; border-bottom:1px solid #e2e8f0; text-align:left;">Item</th><th style="padding:8px; border-bottom:1px solid #e2e8f0; text-align:center;">Qty</th><th style="padding:8px; border-bottom:1px solid #e2e8f0; text-align:center;">Expiry</th><th style="padding:8px; border-bottom:1px solid #e2e8f0; text-align:center;">Remarks</th></tr>';
+
+                    g.ids.forEach(id => {
+                        const itemName = getItemName(id);
+                        const details = getItemDetails(id);
+
+                        itemsHTML += `
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding:8px; text-align:left; font-weight:500;">${itemName}</td>
+                                <td style="padding:8px; text-align:center;">${details.qty}</td>
+                                <td style="padding:8px; text-align:center;">${details.exp}</td>
+                                <td style="padding:8px; text-align:center; color:#64748b;">${details.rem}</td>
+                            </tr>
+                        `;
+                    });
+                    itemsHTML += '</table>';
+
+                    modalAccordion.innerHTML += `
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleAccordion(this)">
+                                <span>${g.name}</span>
+                                <span>&#9662;</span>
+                            </div>
+                            <div class="accordion-content">
+                                ${itemsHTML}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Cleanliness & Findings Accordion
+                const cleanCond = row[8] || "-";
+                const cleanRem = row[9] || "-";
+                const findings = row[10] || "-";
+                const sigUrl = row[13] || "";
+                let finalSigUrl = sigUrl;
+
+                // Convert Google Drive view links to direct high-res CDN stream links
+                if (sigUrl.includes('drive.google.com/uc')) {
+                    const match = sigUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                        finalSigUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                    }
+                } else if (sigUrl.includes('drive.google.com/file/d/')) {
+                    const match = sigUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                        finalSigUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                    }
+                }
+
+                let sigHTML = "";
+                if (finalSigUrl.startsWith('http') || finalSigUrl.startsWith('data:image')) {
+                    sigHTML = `<img src="${finalSigUrl}" style="max-height:80px; border:1px solid var(--border); border-radius:4px; margin-top:5px; background:white; object-fit:contain;" alt="Signature">`;
+                } else {
+                    sigHTML = `<span style="color:var(--text-muted); font-style:italic;">No signature captured</span>`;
+                }
+
+                modalAccordion.innerHTML += `
+                    <div class="accordion-item">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>4. Cleanliness, Findings & Signature</span>
+                            <span>&#9662;</span>
+                        </div>
+                        <div class="accordion-content" style="font-size:0.9rem; line-height:1.6;">
+                            <div style="margin-bottom:12px;"><strong>Box Item Cleanliness Condition:</strong> <span style="background:#eff6ff; color:#1e40af; padding:2px 8px; border-radius:12px; font-weight:500;">${cleanCond}</span></div>
+                            <div style="margin-bottom:12px; color:#64748b;"><strong>Cleanliness Remarks:</strong> ${cleanRem}</div>
+                            <div style="margin-bottom:12px; border-top:1px solid #f1f5f9; padding-top:10px;"><strong>Inspection Findings:</strong><p style="background:#f8fafc; padding:8px; border-radius:6px; margin-top:5px; color:#334155;">${findings}</p></div>
+                            <div style="border-top:1px solid #f1f5f9; padding-top:10px;"><strong>Digital Sign-off Verification:</strong><br>${sigHTML}</div>
+                        </div>
+                    </div>
+                `;
+
+            } else {
+                // Generic Vertical Table view for other databases
+                let listHTML = '<table style="width:100%; border-collapse:collapse; font-size:0.95rem;">';
+                globalHeaders.forEach((h, hIdx) => {
+                    let cell = row[hIdx] || "-";
+                    let isImage = false;
+                    let imgSrc = cell;
+
+                    if (cell.startsWith('data:image') || cell.startsWith('https://lh3.googleusercontent.com/d/')) {
+                        isImage = true;
+                    } else if (cell.includes('drive.google.com/uc')) {
+                        const match = cell.match(/id=([a-zA-Z0-9_-]+)/);
+                        if (match && match[1]) {
+                            isImage = true;
+                            imgSrc = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                        }
+                    } else if (cell.includes('drive.google.com/file/d/')) {
+                        const match = cell.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+                        if (match && match[1]) {
+                            isImage = true;
+                            imgSrc = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                        }
+                    }
+
+                    if (isImage) {
+                        cell = `<img src="${imgSrc}" style="max-height:80px; border:1px solid var(--border); border-radius:4px; background:white; object-fit:contain;" alt="Signature">`;
+                    }
+
+                    listHTML += `
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; color:#475569; width:40%; text-align:left; vertical-align:top;">${h}</td>
+                            <td style="padding:10px; text-align:left; vertical-align:top;">${cell}</td>
+                        </tr>
+                    `;
+                });
+                listHTML += '</table>';
+                modalAccordion.innerHTML = listHTML;
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('details-modal').style.display = 'none';
+        }
+
+        function toggleAccordion(header) {
+            const item = header.parentElement;
+            item.classList.toggle('active');
+        }
+
+        function getItemName(id) {
+            const items = [
+                "",
+                "Triangular Bandage 100cm", "Eye Dressing No 16", "Sterile Gamgee Pad 25cm",
+                "Sterile Gauze Pad 7.5cm", "Sterile Gauze Pad 10cm", "Elastic Bandage",
+                "W.O.W Bandage 2.5cm", "W.O.W Bandage 5.0cm", "W.O.W Bandage 7.5cm",
+                "Instant Ice Pack", "Sterile Non-Adherent Pad", "Pair of Glove",
+                "Scissors", "Adhesive Tape", "Bactigras", "Yellow Antiseptic Liquid",
+                "Cotton Bud 100pcs", "CPR Face Shield", "Adhesive Plaster", "Safety Pin",
+                "Thermometer", "Waste Bag", "First Aid Manual"
+            ];
+            return items[id] || `Item ${id}`;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('details-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

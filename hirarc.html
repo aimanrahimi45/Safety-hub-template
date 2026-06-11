@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRARC Digital Sign-off</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="apple-touch-icon" href="safety-logo-v2.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* Reusing global h2, labels, inputs, selects from shared.css */
+
+        /* Ultra-Smart Document Viewer Box */
+        #doc-viewer-box {
+            display: none;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        #doc-viewer-box p {
+            margin: 0 0 10px 0;
+            font-size: 0.9rem;
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+
+        .read-doc-btn {
+            display: inline-block;
+            background: var(--surface);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .read-doc-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .checklist-group {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            cursor: pointer;
+            margin-top: 0;
+        }
+
+        .checkbox-container:last-child {
+            margin-bottom: 0;
+        }
+
+        .checkbox-container input {
+            margin-top: 3px;
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .checkbox-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        #signature-pad {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            width: 100%;
+            height: 180px;
+            background: var(--surface);
+            margin-top: 10px;
+            transition: border-color 0.2s;
+        }
+
+        #signature-pad:active {
+            border-color: var(--primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+            margin-top: 30px;
+        }
+
+        button.action-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .submit-btn {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:active {
+            transform: translateY(1px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--bg);
+            color: var(--text-main);
+        }
+
+        /* Reusing global back-link from shared.css */
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <a href="index.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Metrod Hub
+        </a>
+        <div class="card">
+            <h2>HIRARC Yearly Review Sign-off</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: -10px; margin-bottom: 20px;">Official
+                acknowledgment of Hazard Identification, Risk Assessment and Risk Control (HIRARC) documentation as per
+                ISO 45001 standards.</p>
+
+            <form id="hirarcForm">
+
+                <label>Department / Area</label>
+                <select id="department" required>
+                    <option value="" disabled selected>Loading Master List...</option>
+                    <!-- Options will be dynamically populated from CSV -->
+                </select>
+
+                <!-- ULTRA-SMART DOCUMENT VIEWER (Hidden until Department is selected) -->
+                <div id="doc-viewer-box">
+                    <p>Assigned Document: <span id="display-doc-version">Loading...</span></p>
+                    <a href="#" target="_blank" id="doc-link-btn" class="read-doc-btn">Read HIRARC Document</a>
+                </div>
+
+                <label>Area Owner Name</label>
+                <input type="text" id="owner_name" placeholder="Full Name" required>
+
+                <label>Employee ID</label>
+                <input type="text" id="employee_id" placeholder="e.g. EMP-1234" required>
+
+                <label>Review Date</label>
+                <input type="date" id="review_date" required>
+
+                <label>ISO 45001 Acknowledgment</label>
+                <div class="checklist-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" class="iso-check" required>
+                        <span class="checkbox-text">I have actively participated in reviewing the updated HIRARC for my
+                            designated area.</span>
+                    </label>
+                    <label class="checkbox-container">
+                        <input type="checkbox" class="iso-check" required>
+                        <span class="checkbox-text">I understand and agree to strictly implement the specified risk
+                            control measures.</span>
+                    </label>
+                    <label class="checkbox-container">
+                        <input type="checkbox" class="iso-check" required>
+                        <span class="checkbox-text">I will formally communicate these hazards and controls to all
+                            workers operating in my area via Toolbox Talks or briefings.</span>
+                    </label>
+                </div>
+
+                <label>Area Owner Signature</label>
+                <canvas id="signature-pad"></canvas>
+                <div style="margin-top: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="save-sig-check" style="width: 16px; height: 16px; margin: 0; cursor: pointer; accent-color: var(--primary);">
+                    <label for="save-sig-check" style="margin: 0; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); cursor: pointer; user-select: none;">Save signature on this device</label>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="action-btn submit-btn">Submit Approval</button>
+                    <button type="button" class="action-btn clear-btn" id="clear">Clear Signature</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4ZcK2HdwiEeO9ze18rdwbppoPt7SwDAoHwq3VRBNUkv9B_J0IIdUS4D-va4iR7H8/exec";
+
+        let hirarcDatabase = [];
+        let currentDocumentVersion = "";
+
+        async function loadMasterList() {
+            const select = document.getElementById('department');
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getMasterList`);
+                const resJson = await response.json();
+
+                if (resJson.status !== "SUCCESS") {
+                    throw new Error(resJson.message || "Failed to load master list");
+                }
+
+                const rows = resJson.data;
+
+                // Save to global database variable
+                hirarcDatabase = rows.filter(r => r[0] && r[0].trim() !== "");
+
+                // Populate dropdown
+                select.innerHTML = '<option value="" disabled selected>Select Department...</option>';
+                for (let i = 1; i < hirarcDatabase.length; i++) {
+                    const deptName = hirarcDatabase[i][0].trim();
+                    const option = document.createElement('option');
+                    option.value = deptName;
+                    option.textContent = deptName;
+                    select.appendChild(option);
+                }
+            } catch (err) {
+                select.innerHTML = '<option value="" disabled selected>Error loading list. Check backend.</option>';
+            }
+        }
+
+        // Load master list immediately when page opens
+        loadMasterList();
+
+        // --- DYNAMIC DOCUMENT VIEWER ---
+        document.getElementById('department').addEventListener('change', function () {
+            const selectedDept = this.value;
+            const viewerBox = document.getElementById('doc-viewer-box');
+            const docVersionSpan = document.getElementById('display-doc-version');
+            const linkBtn = document.getElementById('doc-link-btn');
+
+            // Find the selected department in our downloaded CSV database
+            const row = hirarcDatabase.find(r => r[0].trim() === selectedDept);
+
+            if (row) {
+                currentDocumentVersion = row[1].trim(); // Column B
+                const documentLink = row[2].trim();     // Column C
+
+                docVersionSpan.textContent = currentDocumentVersion;
+                linkBtn.href = documentLink;
+                viewerBox.style.display = 'block'; // Show the box!
+            } else {
+                viewerBox.style.display = 'none';
+            }
+        });
+
+
+        // --- SIGNATURE PAD ---
+        const canvasSig = document.getElementById('signature-pad');
+        const signaturePad = new SignaturePad(canvasSig);
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvasSig.width = canvasSig.offsetWidth * ratio;
+            canvasSig.height = canvasSig.offsetHeight * ratio;
+            canvasSig.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear();
+
+            // Load saved signature on startup after canvas size is set
+            const savedSig = localStorage.getItem('hirarc_saved_sig');
+            if (savedSig) {
+                setTimeout(() => {
+                    signaturePad.fromDataURL(savedSig);
+                }, 150);
+                const check = document.getElementById('save-sig-check');
+                if (check) check.checked = true;
+            }
+        }
+        window.onresize = resizeCanvas;
+        resizeCanvas();
+
+        document.getElementById('clear').addEventListener('click', () => {
+            signaturePad.clear();
+            localStorage.removeItem('hirarc_saved_sig');
+            const check = document.getElementById('save-sig-check');
+            if (check) check.checked = false;
+        });
+        document.getElementById('review_date').valueAsDate = new Date();
+
+        // --- SUBMISSION ---
+        document.getElementById('hirarcForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            if (signaturePad.isEmpty()) {
+                alert("Please provide your digital signature to approve the document.");
+                return;
+            }
+
+            if (!currentDocumentVersion) {
+                alert("Error: No document version assigned to this department.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('.submit-btn');
+            submitBtn.innerText = "Submitting...";
+            submitBtn.disabled = true;
+
+            const sigData = signaturePad.toDataURL();
+
+            // Save signature if checked
+            const saveSigCheck = document.getElementById('save-sig-check');
+            if (saveSigCheck && saveSigCheck.checked) {
+                localStorage.setItem('hirarc_saved_sig', sigData);
+            } else {
+                localStorage.removeItem('hirarc_saved_sig');
+            }
+
+            const payload = {
+                department: document.getElementById('department').value,
+                owner_name: document.getElementById('owner_name').value,
+                employee_id: document.getElementById('employee_id').value,
+                date: document.getElementById('review_date').value,
+                document_version: currentDocumentVersion, // This proves exactly what they signed!
+                declaration: "Agreed to review, implement controls, and communicate to workers.",
+                signature: sigData
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        const result = JSON.parse(text);
+                        if (result.status === "error") {
+                            alert("BACKEND SCRIPT ERROR:\n\n" + result.message);
+                            throw new Error(result.message);
+                        }
+
+                        alert("HIRARC Sign-off Saved Successfully!");
+                        setTimeout(() => { location.reload(); }, 500);
+
+                    } catch (e) {
+                        if (text.includes("<!DOCTYPE") || text.includes("<html")) {
+                            if (text.includes("Exception") || text.includes("Error") || text.includes("permission") || text.includes("not found")) {
+                                alert("GOOGLE SERVER HTML ERROR:\n\n" + text.substring(0, 300));
+                                throw new Error("Google HTML Error");
+                            } else {
+                                alert("HIRARC Sign-off Saved Successfully! (HTML Fallback)");
+                                setTimeout(() => { location.reload(); }, 500);
+                            }
+                        } else if (e.message !== "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON") {
+                            alert("UNKNOWN PARSE ERROR:\n\n" + e.message + "\n\nServer returned:\n" + text.substring(0, 200));
+                            throw e;
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (!err.message.includes("Google HTML Error") && !err.message.includes("Backend")) {
+                        alert("NETWORK ERROR:\n\n" + err.message);
+                    }
+                    submitBtn.innerText = "Submit Approval";
+                    submitBtn.disabled = false;
+                });
+        });
+    </script>
+
+</body>
+
+</html>

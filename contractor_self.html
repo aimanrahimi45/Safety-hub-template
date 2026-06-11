@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contractor Self-Registration</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="apple-touch-icon" href="safety-logo-v2.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 40px;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .checklist-group {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            cursor: pointer;
+            margin-top: 0;
+        }
+        .checkbox-container:last-child {
+            margin-bottom: 0;
+        }
+        .checkbox-container input {
+            margin-top: 3px;
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .checkbox-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        #signature-pad {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            width: 100%;
+            height: 180px;
+            background: var(--surface);
+            margin-top: 10px;
+            transition: border-color 0.2s;
+        }
+        #signature-pad:active {
+            border-color: var(--primary);
+        }
+
+        /* Camera UI */
+        #camera-container {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            background: var(--bg);
+            margin-top: 10px;
+            text-align: center;
+        }
+        #video-feed, #captured-photo {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            display: none;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn-group, .camera-btn-group {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+        .camera-btn-group {
+            flex-direction: row;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .camera-btn-group button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .submit-btn {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+        .submit-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .submit-btn:active {
+            transform: translateY(1px);
+        }
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+        .clear-btn:hover {
+            background: var(--bg);
+            color: var(--text-main);
+        }
+        
+        .secondary-btn {
+            background: var(--surface);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        .secondary-btn:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        /* Success Card Styling */
+        #success-card {
+            display: none;
+            text-align: center;
+            padding: 40px 24px;
+        }
+        .success-icon {
+            width: 72px;
+            height: 72px;
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px auto;
+        }
+        .success-icon svg {
+            width: 36px;
+            height: 36px;
+        }
+        .success-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        /* Fullscreen Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- FULLSCREEN LOADING OVERLAY -->
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div style="font-weight: 600; font-size: 1.1rem; text-align: center; padding: 0 20px;">Submitting Safety Registration...</div>
+</div>
+
+<div class="container">
+    <!-- Main Form Card -->
+    <div class="card" id="form-card">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="safety-logo-v2.png" alt="Metrod Logo" style="height: 60px; margin-bottom: 10px;">
+            <h2>Contractor Registration</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Please fill in your details to register for site safety induction.</p>
+        </div>
+        
+        <form id="selfRegForm">
+            <label>Full Name</label>
+            <input type="text" id="name" placeholder="As per IC/Passport" required>
+            
+            <label>IC / Passport Number</label>
+            <input type="text" id="ic" placeholder="e.g. 900101145555" required>
+            
+            <label>Contractor Company</label>
+            <input type="text" id="company" placeholder="Company Name" required>
+            
+            <label>Safety Declaration</label>
+            <div class="checklist-group">
+                <label class="checkbox-container">
+                    <input type="checkbox" required>
+                    <span class="checkbox-text">I understand the site Emergency Evacuation Plan & Assembly Points.</span>
+                </label>
+                <label class="checkbox-container">
+                    <input type="checkbox" required>
+                    <span class="checkbox-text">I understand the mandatory PPE requirements for my work area.</span>
+                </label>
+                <label class="checkbox-container">
+                    <input type="checkbox" required>
+                    <span class="checkbox-text">I agree to report all hazards, near-misses, and accidents immediately.</span>
+                </label>
+            </div>
+            
+            <!-- LIVE PHOTO CAPTURE SECTION (OPTIONAL) -->
+            <label>Live Identity Photo (Optional)</label>
+            <div id="camera-container">
+                <video id="video-feed" autoplay playsinline></video>
+                <img id="captured-photo" alt="Captured Identity Photo">
+                <canvas id="photo-canvas" style="display: none;"></canvas>
+                
+                <div class="camera-btn-group">
+                    <button type="button" class="secondary-btn" id="btn-open-camera">Open Camera</button>
+                    <button type="button" class="secondary-btn" id="btn-switch-camera" style="display: none;">🔄 Switch Camera</button>
+                    <button type="button" class="submit-btn" id="btn-capture" style="display: none;">Take Photo</button>
+                    <button type="button" class="clear-btn" id="btn-retake" style="display: none;">Retake</button>
+                </div>
+            </div>
+
+            <label>Worker Signature</label>
+            <canvas id="signature-pad"></canvas>
+            
+            <div class="btn-group" style="margin-top: 30px;">
+                <button type="submit" class="submit-btn">Submit Registration</button>
+                <button type="button" class="clear-btn" id="clear">Clear Signature</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Success Card -->
+    <div class="card" id="success-card">
+        <div class="success-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <div class="success-title">Registration Complete!</div>
+    </div>
+</div>
+
+<script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYeKbpgUAyBBO6_jsFnbrf6qqtN2yTFZZnR_PN_19SduKxtJSpL5gxIMavQgzTcQM43w/exec";
+
+    // --- SIGNATURE PAD ---
+    const canvasSig = document.getElementById('signature-pad');
+    const signaturePad = new SignaturePad(canvasSig);
+
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvasSig.width = canvasSig.offsetWidth * ratio;
+        canvasSig.height = canvasSig.offsetHeight * ratio;
+        canvasSig.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear();
+    }
+    window.onresize = resizeCanvas;
+    resizeCanvas();
+    document.getElementById('clear').addEventListener('click', () => signaturePad.clear());
+
+    // --- CAMERA LOGIC ---
+    const video = document.getElementById('video-feed');
+    const canvasPhoto = document.getElementById('photo-canvas');
+    const capturedPhoto = document.getElementById('captured-photo');
+    const btnOpenCamera = document.getElementById('btn-open-camera');
+    const btnSwitchCamera = document.getElementById('btn-switch-camera');
+    const btnCapture = document.getElementById('btn-capture');
+    const btnRetake = document.getElementById('btn-retake');
+    
+    let cameraStream = null;
+    let finalPhotoData = null;
+    let currentFacingMode = 'user'; // Default to front camera
+
+    async function startCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+            video.srcObject = cameraStream;
+            video.style.display = 'block';
+            capturedPhoto.style.display = 'none';
+            btnOpenCamera.style.display = 'none';
+            btnSwitchCamera.style.display = 'block';
+            btnCapture.style.display = 'block';
+            btnRetake.style.display = 'none';
+        } catch (err) {
+            alert("Camera access denied or unavailable. Details: " + err.message);
+        }
+    }
+
+    btnOpenCamera.addEventListener('click', startCamera);
+
+    btnSwitchCamera.addEventListener('click', () => {
+        currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+        startCamera();
+    });
+
+    btnCapture.addEventListener('click', () => {
+        const MAX_WIDTH = 800;
+        const scale = Math.min(MAX_WIDTH / video.videoWidth, 1);
+        canvasPhoto.width = video.videoWidth * scale;
+        canvasPhoto.height = video.videoHeight * scale;
+        
+        const ctx = canvasPhoto.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvasPhoto.width, canvasPhoto.height);
+        
+        finalPhotoData = canvasPhoto.toDataURL('image/jpeg', 0.6);
+        
+        capturedPhoto.src = finalPhotoData;
+        capturedPhoto.style.display = 'block';
+        video.style.display = 'none';
+        
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+        
+        btnCapture.style.display = 'none';
+        btnSwitchCamera.style.display = 'none';
+        btnRetake.style.display = 'block';
+        btnOpenCamera.style.display = 'none';
+    });
+
+    btnRetake.addEventListener('click', () => {
+        finalPhotoData = null;
+        startCamera();
+    });
+
+    // --- FORM SUBMISSION ---
+    document.getElementById('selfRegForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (signaturePad.isEmpty()) {
+            alert("Please draw your signature to acknowledge the safety briefing.");
+            return;
+        }
+
+        const submitBtn = document.querySelector('.submit-btn');
+        const overlay = document.getElementById('loading-overlay');
+        
+        submitBtn.disabled = true;
+        overlay.style.display = 'flex';
+
+        // Format today's date (YYYY-MM-DD)
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+        const payload = {
+            name: document.getElementById('name').value,
+            ic: document.getElementById('ic').value,
+            company: document.getElementById('company').value,
+            date: formattedDate,
+            inducted_by: "", // Filled in later by SHO upon sign-off
+            declaration: "Agreed: Emergency Evac, PPE Rules, Incident Reporting",
+            signature: signaturePad.toDataURL(),
+            photo: finalPhotoData || "", // Optional
+            status: "Pending Approval"  // Stored in the new Status column
+        };
+
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            
+            const text = await response.text();
+            let result = {};
+            try {
+                result = JSON.parse(text);
+            } catch(jsonErr) {
+                if (text.includes("<!DOCTYPE") || text.includes("<html")) {
+                    if (text.includes("Exception") || text.includes("Error") || text.includes("permission") || text.includes("not found")) {
+                        throw new Error("Google Server Exception");
+                    } else {
+                        // Harmless redirect success state
+                        result = { status: "success" };
+                    }
+                } else {
+                    throw new Error("Invalid response format");
+                }
+            }
+
+            if (result.status === "error") {
+                throw new Error(result.message);
+            }
+
+            // Show Success Card
+            overlay.style.display = 'none';
+            document.getElementById('form-card').style.display = 'none';
+            document.getElementById('success-card').style.display = 'block';
+
+        } catch (err) {
+            overlay.style.display = 'none';
+            submitBtn.disabled = false;
+            alert("❌ Submission Failed:\n\n" + err.message + "\n\nPlease try again or report to the safety officer.");
+        }
+    });
+</script>
+</body>
+</html>

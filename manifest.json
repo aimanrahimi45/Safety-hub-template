@@ -1,0 +1,17 @@
+{
+  "name": "Metrod Safety Hub",
+  "short_name": "Safety Hub",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "safety-logo-v2.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "safety-logo-v2.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

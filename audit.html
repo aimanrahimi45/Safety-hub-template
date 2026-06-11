@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metrod Universal Audit Hub</title>
+    <title>Safety Hub Audit Dashboard</title>
     <link rel="icon" type="image/png" href="safety-logo-v2.png">
     <link rel="apple-touch-icon" href="safety-logo-v2.png">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
+    <script src="config.js"></script>
     <script src="shared.js" defer></script>
     <style>
         .header {
@@ -400,7 +401,7 @@
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            Back to Metrod Hub
+            Back to Safety Hub
         </a>
         <div class="table-wrapper">
             <table id="data-table">
@@ -440,27 +441,28 @@
         // ==========================================
         const DATABASES = [
             {
-                name: "HIRARC Yearly Approvals",
-                // Secure serverless API: Paste your deployed HIRARC Apps Script Web App URL here
-                scriptUrl: "https://script.google.com/macros/s/AKfycbz4ZcK2HdwiEeO9ze18rdwbppoPt7SwDAoHwq3VRBNUkv9B_J0IIdUS4D-va4iR7H8/exec",
+                name: "First Aid Inspections",
+                dbKey: "First Aid",
+                isSecure: true
+            },
+            {
+                name: "PPE Requests",
+                dbKey: "PPE",
                 isSecure: true
             },
             {
                 name: "Contractor Inductions",
-                // Secure serverless API: Paste your deployed Contractor Induction Apps Script Web App URL here
-                scriptUrl: "https://script.google.com/macros/s/AKfycbzYeKbpgUAyBBO6_jsFnbrf6qqtN2yTFZZnR_PN_19SduKxtJSpL5gxIMavQgzTcQM43w/exec",
+                dbKey: "Contractor",
                 isSecure: true
             },
             {
-                name: "Contractor Handbook",
-                // Secure serverless API: Paste your deployed Contractor Handbook Apps Script Web App URL here
-                scriptUrl: "https://script.google.com/macros/s/AKfycbwswo184YEPoDU9P8SXsHPu23W4EDuq69d0PoSnToTYGXSSSl44k6_Qf4nlwXrhR01B/exec",
+                name: "Contractor Handbook Acknowledgment",
+                dbKey: "Handbook",
                 isSecure: true
             },
             {
-                name: "First Aid Inspections",
-                // Secure serverless API: Paste your deployed First Aid Apps Script Web App URL here
-                scriptUrl: "https://script.google.com/macros/s/AKfycbzLbTTov3rghz5Z6mqKxm5DOeFLe6KWcyBiHwgc6ZTXKbsoAMfu4MMhn_A5TinpsTEEJQ/exec",
+                name: "HIRARC Yearly Approvals",
+                dbKey: "HIRARC",
                 isSecure: true
             }
         ];
@@ -513,20 +515,20 @@
             try {
                 // If it is a secure Apps Script database, handle securely via JSON API
                 if (db.isSecure) {
-                    if (db.scriptUrl.includes("YOUR_") || db.scriptUrl.includes("docs.google.com")) {
-                        tbody.innerHTML = `<tr><td class="loading">Configuration needed: Please paste your deployed Web App URL into the 'scriptUrl' config inside audit.html code for '${db.name}'.</td></tr>`;
+                    if (GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                        tbody.innerHTML = `<tr><td class="loading">Configuration needed: Please paste your deployed Web App URL into config.js.</td></tr>`;
                         return;
                     }
 
                     // 1. Get PIN from cache or prompt
-                    let pin = localStorage.getItem("metrod_dashboard_pin");
+                    let pin = localStorage.getItem("safety_hub_pin");
                     if (!pin) {
                         pin = prompt("🔐 This safety database is private.\n\nPlease enter the Dashboard security PIN to access logs:");
                         if (!pin) {
                             tbody.innerHTML = '<tr><td class="loading" style="color:#ef4444; font-weight:600;">Access Denied: Dashboard security PIN is required.</td></tr>';
                             return;
                         }
-                        localStorage.setItem("metrod_dashboard_pin", pin);
+                        localStorage.setItem("safety_hub_pin", pin);
                     }
 
                     // 2. Fetch secure JSON data
@@ -534,15 +536,15 @@
                         if (db.name === "First Aid Inspections") {
                             // Relational database requires parallel fetching of logs and details
                             const [logsRes, detailsRes] = await Promise.all([
-                                fetch(`${db.scriptUrl}?action=getLogs&pin=${pin}`),
-                                fetch(`${db.scriptUrl}?action=getDetails&pin=${pin}`)
+                                fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=First Aid&pin=${pin}`),
+                                fetch(`${GOOGLE_SCRIPT_URL}?action=getDetails&pin=${pin}`)
                             ]);
 
                             const logsJson = await logsRes.json();
                             const detailsJson = await detailsRes.json();
 
                             if (logsJson.status === "ERROR") {
-                                localStorage.removeItem("metrod_dashboard_pin");
+                                localStorage.removeItem("safety_hub_pin");
                                 tbody.innerHTML = `<tr><td class="loading" style="color:#ef4444; font-weight:600;">Access Denied: ${logsJson.message}</td></tr>`;
                                 return;
                             }
@@ -589,11 +591,11 @@
                             ]);
                         } else {
                             // Non-relational secure databases (HIRARC, Contractor Inductions, Contractor Handbook)
-                            const logsRes = await fetch(`${db.scriptUrl}?pin=${pin}`);
+                            const logsRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=${db.dbKey}&pin=${pin}`);
                             const logsJson = await logsRes.json();
 
                             if (logsJson.status === "ERROR") {
-                                localStorage.removeItem("metrod_dashboard_pin");
+                                localStorage.removeItem("safety_hub_pin");
                                 tbody.innerHTML = `<tr><td class="loading" style="color:#ef4444; font-weight:600;">Access Denied: ${logsJson.message}</td></tr>`;
                                 return;
                             }
@@ -624,7 +626,7 @@
                         return;
 
                     } catch (secErr) {
-                        localStorage.removeItem("metrod_dashboard_pin");
+                        localStorage.removeItem("safety_hub_pin");
                         tbody.innerHTML = `<tr><td class="loading" style="color:#ef4444; font-weight:600;">Secure Connection Failed: Make sure your Web App URL is correctly deployed and your PIN is correct. Error: ${secErr.message}</td></tr>`;
                         return;
                     }
@@ -1083,3 +1085,5 @@
 </body>
 
 </html>
+
+

@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metrod Malaysia - Contractor Health & Safety Handbook</title>
+    <title>Our Company - Contractor Health & Safety Handbook</title>
     <link rel="icon" type="image/png" href="safety-logo-v2.png">
     <link rel="apple-touch-icon" href="safety-logo-v2.png">
     <link rel="manifest" href="manifest.json">
+    <script src="config.js"></script>
     <style>
         * {
             margin: 0;
@@ -51,7 +52,7 @@
             letter-spacing: 1px;
         }
 
-        .metrod-logo {
+        .THE COMPANY-logo {
             position: absolute;
             top: 20px;
             right: 20px;
@@ -60,7 +61,7 @@
             justify-content: center;
         }
 
-        .metrod-logo img {
+        .THE COMPANY-logo img {
             height: 50px;
             width: auto;
             max-width: 180px;
@@ -431,13 +432,13 @@
                 margin: 0;
             }
 
-            .metrod-logo {
+            .THE COMPANY-logo {
                 position: static;
                 margin: 0 auto 1rem auto;
                 justify-content: center;
             }
 
-            .metrod-logo img {
+            .THE COMPANY-logo img {
                 height: 40px;
             }
 
@@ -500,11 +501,11 @@
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            Back to Metrod Hub
+            Back to Safety Hub
         </a>
         <div class="header">
-            <div class="metrod-logo">
-                <img src="images/metrod-logo.png" alt="Metrod Malaysia">
+            <div class="THE COMPANY-logo">
+                <img src="images/THE COMPANY-logo.png" alt="Our Company">
             </div>
             <div class="header-content">
                 <h1>Contractor Handbook</h1>
@@ -617,16 +618,16 @@
             <!-- Policy Section -->
             <div id="policy" class="section">
                 <h2>ENVIRONMENT, HEALTH AND SAFETY POLICY</h2>
-                <p>The Environment, Health & Safety (EHS) policy of Metrod, which is involved in the manufacture and
+                <p>The Environment, Health & Safety (EHS) policy of THE COMPANY, which is involved in the manufacture and
                     marketing of copper products for electrical application, is driven by the vision to be a responsible
                     corporate citizen with integrity, high ethical standards and in harmony with environment.</p>
 
                 <p>We are committed towards providing a healthier, cleaner, and greener environment by implementing
-                    effective EHS management system, guided by our <strong>"M.E.T.R.O.D"</strong> principles that
+                    effective EHS management system, guided by our <strong>"core"</strong> principles that
                     include:</p>
 
                 <ul style="list-style-type: none; margin-left: 1rem;">
-                    <li style="margin: 1rem 0;"><strong>➤ Manage</strong> our occupational and surrounding environments
+                    <li style="margin: 1rem 0;"><strong>➤ Safeguard</strong> our occupational and surrounding environments
                         to be safe, healthy and clean.</li>
                     <li style="margin: 1rem 0;"><strong>➤ Enhance</strong> our performance by continual improvement of
                         management system and to achieve the set objectives and targets.</li>
@@ -634,7 +635,7 @@
                         active participation at all levels.</li>
                     <li style="margin: 1rem 0;"><strong>➤ Rightfully</strong> comply with all applicable legal and other
                         requirements.</li>
-                    <li style="margin: 1rem 0;"><strong>➤ Optimise</strong> and conserve the available resources for
+                    <li style="margin: 1rem 0;"><strong>➤ Optimize</strong> and conserve the available resources for
                         sustainable development and prevention of pollution.</li>
                     <li style="margin: 1rem 0;"><strong>➤ Deploy</strong> relevant and necessary resource for the
                         improvement of work place ergonomics and environment.</li>
@@ -652,9 +653,8 @@
                         <p><strong>President and</strong></p>
                         <p><strong>Chief Executive Officer</strong></p>
                         <div
-                            style="margin-top: 1rem; width: 200px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                            <img src="images/ceo-signature.png" alt="CEO Digital Signature"
-                                style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                            style="margin-top: 1rem; width: 200px; height: 50px; display: flex; align-items: center; justify-content: right; font-style: italic; color: #475569; font-weight: 500; font-size: 0.9rem; border-bottom: 2px dashed #cbd5e1; padding-bottom: 5px;">
+                            Digitally Signed
                         </div>
                     </div>
                 </div>
@@ -1065,7 +1065,7 @@
                     <p><strong>I/We understand that I am/we are required to follow the guidelines and instructions
                             contained therein.</strong></p>
                     <p><strong>Furthermore, I/we understand that failure to follow the guidelines and instructions
-                            detailed in the handbook may result in penalty & termination of my/our contracts with METROD
+                            detailed in the handbook may result in penalty & termination of my/our contracts with THE COMPANY
                             MALAYSIA SDN BHD.</strong></p>
                     <p><strong>*Penalty RM 100 per case</strong></p>
                 </div>
@@ -1075,13 +1075,13 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
                         <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="mmbCheck"> MMB
+                            <input type="checkbox" id="opsCheck"> Operations
                         </label>
                         <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="ccrCheck"> CCR
+                            <input type="checkbox" id="adminCheck"> Administration
                         </label>
                         <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="mfpCheck"> MFP
+                            <input type="checkbox" id="logisticsCheck"> Logistics
                         </label>
                     </div>
 
@@ -1388,6 +1388,7 @@
             }
 
             const formData = {
+                action: "contractorHandbookForm",
                 timestamp: new Date().toISOString(),
                 company: companyName,
                 name: contractorName,
@@ -1395,9 +1396,9 @@
                 email: email,
                 phone: phone,
                 icNumber: icNumber,
-                mmb: document.getElementById('mmbCheck').checked,
-                ccr: document.getElementById('ccrCheck').checked,
-                mfp: document.getElementById('mfpCheck').checked,
+                operations: document.getElementById('opsCheck').checked,
+                administration: document.getElementById('adminCheck').checked,
+                logistics: document.getElementById('logisticsCheck').checked,
                 signature: signatureData,
                 ipAddress: 'Browser submission',
                 userAgent: navigator.userAgent
@@ -1412,8 +1413,8 @@
             submitButton.style.cursor = 'not-allowed';
 
             try {
-                // Replace with your Google Apps Script URL
-                const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwswo184YEPoDU9P8SXsHPu23W4EDuq69d0PoSnToTYGXSSSl44k6_Qf4nlwXrhR01B/exec';
+                // Central backend URL loaded from config.js
+
 
                 console.log('Submitting compressed signature:', signatureData.length, 'characters');
 
@@ -1487,3 +1488,5 @@
 </body>
 
 </html>
+
+

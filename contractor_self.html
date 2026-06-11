@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
     <style>
         .container {
             max-width: 550px;
@@ -222,7 +224,7 @@
     <!-- Main Form Card -->
     <div class="card" id="form-card">
         <div style="text-align: center; margin-bottom: 20px;">
-            <img src="safety-logo-v2.png" alt="Metrod Logo" style="height: 60px; margin-bottom: 10px;">
+            <img src="safety-logo-v2.png" alt="Safety Hub Logo" style="height: 60px; margin-bottom: 10px;">
             <h2>Contractor Registration</h2>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Please fill in your details to register for site safety induction.</p>
         </div>
@@ -290,7 +292,8 @@
 </div>
 
 <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYeKbpgUAyBBO6_jsFnbrf6qqtN2yTFZZnR_PN_19SduKxtJSpL5gxIMavQgzTcQM43w/exec";
+    const APPS_SCRIPT_URL = GOOGLE_SCRIPT_URL; // Alias to central config.js URL
+
 
     // --- SIGNATURE PAD ---
     const canvasSig = document.getElementById('signature-pad');
@@ -398,6 +401,7 @@
         const formattedDate = `${yyyy}-${mm}-${dd}`;
 
         const payload = {
+            action: "contractorRegistrationForm",
             name: document.getElementById('name').value,
             ic: document.getElementById('ic').value,
             company: document.getElementById('company').value,
@@ -450,3 +454,6 @@
 </script>
 </body>
 </html>
+
+
+

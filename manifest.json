@@ -1,5 +1,5 @@
 {
-  "name": "Metrod Safety Hub",
+  "name": "Safety Hub Portal",
   "short_name": "Safety Hub",
   "display": "standalone",
   "icons": [
@@ -15,3 +15,6 @@
     }
   ]
 }
+
+
+

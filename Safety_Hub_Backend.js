@@ -1,0 +1,980 @@
+/**
+ * SAFETY HUB PORTAL - UNIFIED BACKEND CONTROLLER
+ * 
+ * Commercial Template Release (Option C / Method B)
+ * 
+ * Setup Instructions:
+ * 1. Open a blank Google Sheet (this will be your Master Safety Hub Admin sheet).
+ * 2. Click "Extensions" > "Apps Script".
+ * 3. Delete all code and paste this entire unified script.
+ * 4. Select the "setupWorkspace" function in the dropdown at the top and click "Run" (or use the custom menu).
+ *    This will automatically:
+ *    - Create a "Safety Hub Workspace" folder in your Google Drive.
+ *    - Create 4 separate databases: First Aid, PPE, Contractor, and HIRARC Systems.
+ *    - Connect and link them to this Master script.
+ * 5. Click "Deploy" > "New Deployment" > Web App.
+ *    - Execute as: "Me"
+ *    - Who has access: "Anyone"
+ * 6. Copy the generated Web App URL and paste it into your web portals' config.
+ */
+
+// ========================================================
+// 1. SPREADSHEET OPEN TRIGGER (CUSTOM MENU)
+// ========================================================
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('🛡️ Safety Hub')
+      .addItem('⚡ Initialize Workspace', 'setupWorkspace')
+      .addItem('⚙️ Settings & Configuration', 'showSettingsSidebar')
+      .addToUi();
+}
+
+// ========================================================
+// 2. DYNAMIC SYSTEM INITIALIZATION (WORKSPACE SETUP)
+// ========================================================
+function setupWorkspace() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const docProps = PropertiesService.getDocumentProperties();
+  
+  // Verify License Key before creating workspace
+  const licenseKey = docProps.getProperty("LICENSE_KEY") || "";
+  const licenseCheck = validateLicenseKey(licenseKey);
+  if (!licenseCheck.valid) {
+    try {
+      SpreadsheetApp.getUi().alert("❌ Setup Blocked", "Please enter a valid License Key in the Settings sidebar first before initializing the workspace.", SpreadsheetApp.getUi().ButtonSet.OK);
+    } catch(e) {
+      Logger.log("❌ Setup Blocked: Invalid License Key.");
+    }
+    return;
+  }
+  
+  // A. Create/Find central Drive folder
+  let folderId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+  let folder;
+  if (folderId) {
+    try {
+      folder = DriveApp.getFolderById(folderId);
+    } catch (err) {
+      folderId = null;
+    }
+  }
+  if (!folderId) {
+    folder = DriveApp.createFolder("Safety Hub Workspace");
+    folderId = folder.getId();
+    docProps.setProperty("WORKSPACE_FOLDER_ID", folderId);
+  }
+  
+  // B. Setup First Aid Spreadsheet
+  let faId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+  let faFile;
+  if (faId) {
+    try {
+      faFile = SpreadsheetApp.openById(faId);
+    } catch (err) {
+      faId = null;
+    }
+  }
+  if (!faId) {
+    const newSS = SpreadsheetApp.create("First Aid System");
+    const file = DriveApp.getFileById(newSS.getId());
+    folder.addFile(file);
+    DriveApp.getRootFolder().removeFile(file);
+    faFile = newSS;
+    docProps.setProperty("FIRST_AID_SPREADSHEET_ID", newSS.getId());
+  }
+  initializeFirstAidSheets(faFile);
+
+  // C. Setup PPE Spreadsheet
+  let ppeId = docProps.getProperty("PPE_SPREADSHEET_ID");
+  let ppeFile;
+  if (ppeId) {
+    try {
+      ppeFile = SpreadsheetApp.openById(ppeId);
+    } catch (err) {
+      ppeId = null;
+    }
+  }
+  if (!ppeId) {
+    const newSS = SpreadsheetApp.create("PPE System");
+    const file = DriveApp.getFileById(newSS.getId());
+    folder.addFile(file);
+    DriveApp.getRootFolder().removeFile(file);
+    ppeFile = newSS;
+    docProps.setProperty("PPE_SPREADSHEET_ID", newSS.getId());
+  }
+  initializePpeSheets(ppeFile);
+
+  // D. Setup Contractor Spreadsheet
+  let contractorId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+  let contractorFile;
+  if (contractorId) {
+    try {
+      contractorFile = SpreadsheetApp.openById(contractorId);
+    } catch (err) {
+      contractorId = null;
+    }
+  }
+  if (!contractorId) {
+    const newSS = SpreadsheetApp.create("Contractor System");
+    const file = DriveApp.getFileById(newSS.getId());
+    folder.addFile(file);
+    DriveApp.getRootFolder().removeFile(file);
+    contractorFile = newSS;
+    docProps.setProperty("CONTRACTOR_SPREADSHEET_ID", newSS.getId());
+  }
+  initializeContractorSheets(contractorFile);
+
+  // E. Setup HIRARC Spreadsheet
+  let hirarcId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
+  let hirarcFile;
+  if (hirarcId) {
+    try {
+      hirarcFile = SpreadsheetApp.openById(hirarcId);
+    } catch (err) {
+      hirarcId = null;
+    }
+  }
+  if (!hirarcId) {
+    const newSS = SpreadsheetApp.create("HIRARC System");
+    const file = DriveApp.getFileById(newSS.getId());
+    folder.addFile(file);
+    DriveApp.getRootFolder().removeFile(file);
+    hirarcFile = newSS;
+    docProps.setProperty("HIRARC_SPREADSHEET_ID", newSS.getId());
+  }
+  initializeHirarcSheets(hirarcFile);
+  
+  // Set default settings
+  if (!docProps.getProperty("DASHBOARD_PIN")) {
+    docProps.setProperty("DASHBOARD_PIN", "9911");
+  }
+  if (!docProps.getProperty("SYSTEM_NAME")) {
+    docProps.setProperty("SYSTEM_NAME", "Safety Hub");
+  }
+  if (!docProps.getProperty("LOGO_URL")) {
+    docProps.setProperty("LOGO_URL", "");
+  }
+  
+  // Format master control tab
+  let masterSheet = ss.getSheetByName("Dashboard Links");
+  if (!masterSheet) masterSheet = ss.insertSheet("Dashboard Links");
+  masterSheet.clear();
+  masterSheet.appendRow(["System Configuration Panel", "Values / Links"]);
+  masterSheet.appendRow(["Safety Hub Folder", folder.getUrl()]);
+  masterSheet.appendRow(["First Aid Database", faFile.getUrl()]);
+  masterSheet.appendRow(["PPE Database", ppeFile.getUrl()]);
+  masterSheet.appendRow(["Contractor Database", contractorFile.getUrl()]);
+  masterSheet.appendRow(["HIRARC Database", hirarcFile.getUrl()]);
+  masterSheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  masterSheet.autoResizeColumns(1, 2);
+
+  try {
+    SpreadsheetApp.getUi().alert("🎉 Safety Hub Workspace Ready!", "Created folder 'Safety Hub Workspace' and initialized all database systems inside it.\n\nPlease deploy this script as a Web App to link your HTML pages.", SpreadsheetApp.getUi().ButtonSet.OK);
+  } catch (err) {
+    Logger.log("🎉 Safety Hub Workspace Ready!");
+  }
+}
+
+// --- SUB-SYSTEM SHEET INITIALIZERS ---
+
+function initializeFirstAidSheets(ss) {
+  const defSheet = ss.getSheetByName("Sheet1");
+  
+  // 1. Checklist Logs
+  let logsSheet = ss.getSheetByName("First Aid Checklist Logs") || ss.insertSheet("First Aid Checklist Logs");
+  const logHeaders = ["Audit ID", "Timestamp", "Date of Inspection", "Company", "Department", "Section", "Box ID", "Location", "Cleanliness Condition", "Cleanliness Remarks", "Inspection Findings", "Inspected By Name", "Inspected By Position", "Signature URL"];
+  logsSheet.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
+  logsSheet.getRange(1, 1, 1, logHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  logsSheet.setFrozenRows(1);
+  
+  // 2. Checklist Details
+  let detailsSheet = ss.getSheetByName("First Aid Checklist Details") || ss.insertSheet("First Aid Checklist Details");
+  const detailHeaders = ["Audit ID", "Item ID", "Item Name", "Required Standard", "Quantity Available", "Expiry Date", "Remarks", "Box ID", "Date of Inspection"];
+  detailsSheet.getRange(1, 1, 1, detailHeaders.length).setValues([detailHeaders]);
+  detailsSheet.getRange(1, 1, 1, detailHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  detailsSheet.setFrozenRows(1);
+
+  // 3. Central Inventory
+  let invSheet = ss.getSheetByName("First Aid Central Inventory") || ss.insertSheet("First Aid Central Inventory");
+  const invHeaders = ["Item ID", "Item Name", "Unit", "Current Stock", "Min Alert Level", "Last Updated"];
+  invSheet.getRange(1, 1, 1, invHeaders.length).setValues([invHeaders]);
+  invSheet.getRange(1, 1, 1, invHeaders.length).setFontWeight("bold").setBackground("#0f766e").setFontColor("#ffffff");
+  invSheet.setFrozenRows(1);
+
+  if (invSheet.getLastRow() <= 1) {
+    const defaultInventory = [
+      [1, "Triangular Bandage 100cm", "pcs", 0, 10, new Date()],
+      [2, "Eye Dressing No 16", "pkt", 0, 5, new Date()],
+      [3, "Sterile Gamgee Pad 25cm", "pkt", 0, 5, new Date()],
+      [4, "Sterile Gauze Pad 7.5cm", "pkt", 0, 10, new Date()],
+      [5, "Sterile Gauze Pad 10cm", "pkt", 0, 10, new Date()],
+      [6, "Elastic Bandage", "pkt", 0, 5, new Date()],
+      [7, "W.O.W Bandage 2.5cm", "pcs", 0, 15, new Date()],
+      [8, "W.O.W Bandage 5.0cm", "pcs", 0, 15, new Date()],
+      [9, "W.O.W Bandage 7.5cm", "pcs", 0, 15, new Date()],
+      [10, "Instant Ice Pack", "pkt", 0, 10, new Date()],
+      [11, "Sterile Non-Adherent Pad", "pkt", 0, 10, new Date()],
+      [12, "Pair of Glove", "pkt", 0, 10, new Date()],
+      [13, "Scissors", "pcs", 0, 2, new Date()],
+      [14, "Adhesive Tape", "pcs", 0, 5, new Date()],
+      [15, "Bactigras", "pcs", 0, 5, new Date()],
+      [16, "Yellow Antiseptic Liquid", "pcs", 0, 2, new Date()],
+      [17, "Cotton Bud 100pcs", "pkt", 0, 5, new Date()],
+      [18, "CPR Face Shield", "pcs", 0, 5, new Date()],
+      [19, "Adhesive Plaster", "pcs", 0, 100, new Date()],
+      [20, "Safety Pin", "pcs", 0, 50, new Date()],
+      [21, "Thermometer", "pcs", 0, 2, new Date()],
+      [22, "Waste Bag", "pcs", 0, 10, new Date()],
+      [23, "First Aid Manual", "pcs", 0, 2, new Date()]
+    ];
+    invSheet.getRange(2, 1, defaultInventory.length, invHeaders.length).setValues(defaultInventory);
+  }
+
+  // 4. Transactions
+  let transSheet = ss.getSheetByName("First Aid Inventory Transactions") || ss.insertSheet("First Aid Inventory Transactions");
+  const transHeaders = ["Timestamp", "ActionType", "Item ID", "Item Name", "QuantityChanged", "Box ID / Notes", "Logged By"];
+  transSheet.getRange(1, 1, 1, transHeaders.length).setValues([transHeaders]);
+  transSheet.getRange(1, 1, 1, transHeaders.length).setFontWeight("bold").setBackground("#374151").setFontColor("#ffffff");
+  transSheet.setFrozenRows(1);
+  
+  if (defSheet) ss.deleteSheet(defSheet);
+}
+
+function initializePpeSheets(ss) {
+  const defSheet = ss.getSheetByName("Sheet1");
+  let sheet = ss.getSheetByName("PPE Requests") || ss.insertSheet("PPE Requests");
+  const headers = ["Request ID", "Timestamp", "Staff ID", "Staff Name", "Department", "Supervisor Name", "PPE Type", "Size", "Color/Specs", "Replacement Reason", "Condition Remarks", "Status", "Authorized By", "Action Date"];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0f766e").setFontColor("#ffffff");
+  sheet.setFrozenRows(1);
+  if (defSheet) ss.deleteSheet(defSheet);
+}
+
+function initializeContractorSheets(ss) {
+  const defSheet = ss.getSheetByName("Sheet1");
+  
+  // 1. Safety Inductions Log
+  let indSheet = ss.getSheetByName("Safety Inductions") || ss.insertSheet("Safety Inductions");
+  const indHeaders = ["Timestamp", "Name", "IC Number", "Company", "Induction Date", "Inducted By", "Declaration", "Signature", "Photo URL", "Status"];
+  indSheet.getRange(1, 1, 1, indHeaders.length).setValues([indHeaders]);
+  indSheet.getRange(1, 1, 1, indHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  indSheet.setFrozenRows(1);
+
+  // 2. Acknowledgments Log
+  let ackSheet = ss.getSheetByName("Contractor Acknowledgments") || ss.insertSheet("Contractor Acknowledgments");
+  const ackHeaders = ['Submission Date', 'Company Name', 'Contractor Name', 'Position', 'Email Address', 'Phone Number', 'IC Number (Last 4)', 'Operations Selected', 'Administration Selected', 'Logistics Selected', 'Has Digital Signature', 'Signature Image URL', 'Signature Data Size (chars)', 'IP Address', 'Browser Info', 'Processing Time', 'Status'];
+  ackSheet.getRange(1, 1, 1, ackHeaders.length).setValues([ackHeaders]);
+  ackSheet.getRange(1, 1, 1, ackHeaders.length).setFontWeight("bold").setBackground("#2a5298").setFontColor("#ffffff");
+  ackSheet.setFrozenRows(1);
+  
+  if (defSheet) ss.deleteSheet(defSheet);
+}
+
+function initializeHirarcSheets(ss) {
+  const defSheet = ss.getSheetByName("Sheet1");
+  
+  // 1. Signed Approvals
+  let appSheet = ss.getSheetByName("Signed Approvals") || ss.insertSheet("Signed Approvals");
+  const appHeaders = ["Timestamp", "Department", "Area Owner Name", "Employee ID", "Review Date", "Document Version", "ISO Acknowledgment", "Signature"];
+  appSheet.getRange(1, 1, 1, appHeaders.length).setValues([appHeaders]);
+  appSheet.getRange(1, 1, 1, appHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  appSheet.setFrozenRows(1);
+
+  // 2. Master List Tab
+  let masterSheet = ss.getSheetByName("HIRARC Master List") || ss.insertSheet("HIRARC Master List");
+  if (masterSheet.getLastRow() <= 1) {
+    const defaultMaster = [
+      ["Department", "Document Version ID", "Revision Date"],
+      ["Production", "HIRARC-PROD-2026-V2", "2026-01-15"],
+      ["Maintenance", "HIRARC-MAINT-2026-V1", "2026-02-10"],
+      ["Warehouse", "HIRARC-WH-2026-V3", "2026-03-01"],
+      ["Logistics", "HIRARC-LOG-2026-V1", "2026-03-12"]
+    ];
+    masterSheet.getRange(1, 1, defaultMaster.length, 3).setValues(defaultMaster);
+    masterSheet.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#374151").setFontColor("#ffffff");
+  }
+  
+  if (defSheet) ss.deleteSheet(defSheet);
+}
+
+// ========================================================
+// 3. UNIFIED GET ROUTER (READ API)
+// ========================================================
+function doGet(e) {
+  try {
+    const action = e.parameter.action;
+    const docProps = PropertiesService.getDocumentProperties();
+    const systemPIN = docProps.getProperty("DASHBOARD_PIN") || "9911";
+    
+    // ----------------------------------------------------
+    // PUBLIC ACTIONS (No PIN required)
+    // ----------------------------------------------------
+    
+    // Dynamic Box IDs lookup
+    if (action === "getBoxIds") {
+      const boxIds = docProps.getProperty("BOX_IDS") || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
+      return returnJSON({ status: "SUCCESS", data: boxIds.split(",") });
+    }
+    
+    // Look up Contractor Induction Status
+    if (action === "lookupWorker") {
+      const searchIC = e.parameter.ic;
+      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+      if (!ssId) return returnJSON({ status: "ERROR", message: "Contractor database not provisioned." });
+      
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("Safety Inductions") || ss.getSheets()[0];
+      const rows = sheet.getDataRange().getValues();
+      const worker = rows.find(r => r[2] && String(r[2]).includes(searchIC));
+      
+      if (worker) {
+        let inductionDateStr = (worker[4] instanceof Date) ? Utilities.formatDate(worker[4], "GMT+8", "yyyy-MM-dd") : String(worker[4]);
+        return returnJSON({
+          status: "SUCCESS",
+          found: true,
+          name: worker[1],
+          date: inductionDateStr
+        });
+      } else {
+        return returnJSON({ status: "SUCCESS", found: false });
+      }
+    }
+    
+    // Get HIRARC Master List Dropdowns
+    if (action === "getMasterList") {
+      const ssId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
+      if (!ssId) return returnJSON({ status: "ERROR", message: "HIRARC database not provisioned." });
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("HIRARC Master List") || ss.getSheets()[0];
+      const rows = sheet.getDataRange().getValues();
+      const data = rows.map(r => [String(r[0]).trim(), r[1] ? String(r[1]).trim() : "", r[2] ? String(r[2]).trim() : ""]);
+      return returnJSON({ status: "SUCCESS", data: data });
+    }
+
+    // Smart 6-Month PPE Issue warning check
+    if (action === "checkLastIssue") {
+      const staffId = e.parameter.staffId;
+      const ppeType = e.parameter.ppeType;
+      const ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
+      if (!ssId) return returnJSON({ status: "ERROR", message: "PPE database not provisioned." });
+      
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("PPE Requests") || ss.getSheets()[0];
+      const rows = sheet.getDataRange().getValues();
+      let lastIssueDateObj = null;
+      
+      for (let i = rows.length - 1; i >= 1; i--) {
+        const rowStaffId = String(rows[i][2]).trim().toLowerCase();
+        const rowPpeType = String(rows[i][6]).trim().toLowerCase();
+        const rowStatus = String(rows[i][11]).trim().toLowerCase();
+        
+        if (rowStaffId === staffId.trim().toLowerCase() && 
+            rowPpeType === ppeType.trim().toLowerCase() && 
+            rowStatus.indexOf("approved") !== -1) {
+          const dateVal = rows[i][13] || rows[i][1];
+          if (dateVal instanceof Date) {
+            lastIssueDateObj = dateVal;
+            break;
+          }
+        }
+      }
+      
+      if (lastIssueDateObj) {
+        const diffMonths = (new Date().getFullYear() - lastIssueDateObj.getFullYear()) * 12 + (new Date().getMonth() - lastIssueDateObj.getMonth());
+        return returnJSON({
+          status: "SUCCESS",
+          found: true,
+          lastDate: Utilities.formatDate(lastIssueDateObj, "GMT+8", "yyyy-MM-dd"),
+          diffMonths: diffMonths
+        });
+      } else {
+        return returnJSON({ status: "SUCCESS", found: false });
+      }
+    }
+    
+    // Get Portal Branding Configuration
+    if (action === "getBranding") {
+      return returnJSON({
+        status: "SUCCESS",
+        systemName: docProps.getProperty("SYSTEM_NAME") || "Safety Hub",
+        logoUrl: docProps.getProperty("LOGO_URL") || ""
+      });
+    }
+
+    // ----------------------------------------------------
+    // SECURE ACTIONS (Requires PIN validation)
+    // ----------------------------------------------------
+    const pin = e.parameter.pin;
+    if (pin !== systemPIN) {
+      return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
+    }
+    
+    // Fetch logs for the secure Audit Dashboard
+    if (action === "getLogs") {
+      const db = e.parameter.db;
+      let ssId;
+      let sheetName;
+      
+      if (db === "First Aid") {
+        ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+        sheetName = "First Aid Checklist Logs";
+      } else if (db === "PPE") {
+        ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
+        sheetName = "PPE Requests";
+      } else if (db === "Contractor") {
+        ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+        sheetName = "Safety Inductions";
+      } else if (db === "Handbook") {
+        ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+        sheetName = "Contractor Acknowledgments";
+      } else if (db === "HIRARC") {
+        ssId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
+        sheetName = "Signed Approvals";
+      }
+      
+      if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
+      
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName(sheetName);
+      return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
+    }
+    
+    // Get First Aid logs details
+    if (action === "getDetails") {
+      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("First Aid Checklist Details");
+      return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
+    }
+    
+    // Get Central Inventory stock
+    if (action === "getInventory") {
+      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("First Aid Central Inventory");
+      return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
+    }
+    
+    // Get consolidated shortages list (Replenishment Planner)
+    if (action === "getShortages") {
+      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const logsSheet = ss.getSheetByName("First Aid Checklist Logs");
+      const detailsSheet = ss.getSheetByName("First Aid Checklist Details");
+      
+      const logRows = logsSheet.getDataRange().getValues();
+      const detailRows = detailsSheet.getDataRange().getValues();
+      
+      const boxLatestAudit = {};
+      const boxLatestDate = {};
+      
+      for (let i = 1; i < logRows.length; i++) {
+        const auditId = logRows[i][0];
+        const dateStr = logRows[i][2];
+        const boxId = logRows[i][6];
+        const dateObj = new Date(dateStr);
+        
+        if (!boxLatestDate[boxId] || dateObj > boxLatestDate[boxId]) {
+          boxLatestDate[boxId] = dateObj;
+          boxLatestAudit[boxId] = auditId;
+        }
+      }
+      
+      const shortages = [];
+      for (let i = 1; i < detailRows.length; i++) {
+        const auditId = detailRows[i][0];
+        const itemId = parseInt(detailRows[i][1], 10);
+        const itemName = detailRows[i][2];
+        const reqStr = detailRows[i][3];
+        const availVal = parseInt(detailRows[i][4], 10) || 0;
+        const boxId = Object.keys(boxLatestAudit).find(key => boxLatestAudit[key] === auditId);
+        
+        if (boxId) {
+          const reqVal = parseInt(reqStr.match(/^(\d+)/)[1], 10) || 0;
+          if (availVal < reqVal) {
+            shortages.push({
+              boxId: boxId,
+              auditId: auditId,
+              itemId: itemId,
+              itemName: itemName,
+              required: reqVal,
+              available: availVal,
+              shortage: reqVal - availVal
+            });
+          }
+        }
+      }
+      return returnJSON({ status: "SUCCESS", shortages: shortages });
+    }
+
+    return returnJSON({ status: "ERROR", message: "Invalid Action" });
+  } catch (err) {
+    return returnJSON({ status: "ERROR", message: err.message });
+  }
+}
+
+// ========================================================
+// 4. UNIFIED POST ROUTER (SUBMISSIONS & UPDATES)
+// ========================================================
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const docProps = PropertiesService.getDocumentProperties();
+    const systemPIN = docProps.getProperty("DASHBOARD_PIN") || "9911";
+    
+    // A. First Aid Checklist Submission
+    if (data.action === "firstAidForm") {
+      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const logsSheet = ss.getSheetByName("First Aid Checklist Logs");
+      const detailsSheet = ss.getSheetByName("First Aid Checklist Details");
+      const invSheet = ss.getSheetByName("First Aid Central Inventory");
+      const transSheet = ss.getSheetByName("First Aid Inventory Transactions");
+      
+      // Auto folder setup for signatures
+      let folderId = docProps.getProperty("SIGNATURE_FOLDER_ID");
+      let folder;
+      if (folderId) {
+        try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
+      }
+      if (!folderId) {
+        const workspaceId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+        const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
+        folder = workspace.createFolder("Safety Hub Signatures");
+        docProps.setProperty("SIGNATURE_FOLDER_ID", folder.getId());
+      }
+      
+      let signatureUrl = "";
+      if (data.signature) {
+        const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", `Sig_${data.boxId.replace(/\//g, '_')}_${data.inspectDate}.png`);
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        signatureUrl = file.getUrl();
+      }
+      
+      const auditId = "FA-" + String(logsSheet.getLastRow()).padStart(5, '0');
+      const cleanCond = data[`item_24_avail`] || "Good";
+      const cleanRem = data[`item_24_remarks`] || "-";
+
+      logsSheet.appendRow([
+        auditId, new Date(), data.inspectDate, data.company, data.department, data.section,
+        data.boxId, data.location, cleanCond, cleanRem, data.findings || "-",
+        data.officerName || "-", data.officerPos || "-", signatureUrl
+      ]);
+      
+      const itemsList = [
+        { id: 1, name: "Triangular Bandage 100cm", req: "5pcs" },
+        { id: 2, name: "Eye Dressing No 16", req: "3pkt" },
+        { id: 3, name: "Sterile Gamgee Pad 25cm", req: "3pkt" },
+        { id: 4, name: "Sterile Gauze Pad 7.5cm", req: "6pkt" },
+        { id: 5, name: "Sterile Gauze Pad 10cm", req: "6pkt" },
+        { id: 6, name: "Elastic Bandage", req: "3pkt" },
+        { id: 7, name: "W.O.W Bandage 2.5cm", req: "8pcs" },
+        { id: 8, name: "W.O.W Bandage 5.0cm", req: "8pcs" },
+        { id: 9, name: "W.O.W Bandage 7.5cm", req: "8pcs" },
+        { id: 10, name: "Instant Ice Pack", req: "6pkt" },
+        { id: 11, name: "Sterile Non-Adherent Pad", req: "6pkt" },
+        { id: 12, name: "Pair of Glove", req: "6pkt" },
+        { id: 13, name: "Scissors", req: "1pcs" },
+        { id: 14, name: "Adhesive Tape", req: "1pcs" },
+        { id: 15, name: "Bactigras", req: "2pcs" },
+        { id: 16, name: "Yellow Antiseptic Liquid", req: "1pcs" },
+        { id: 17, name: "Cotton Bud 100pcs", req: "1pkt" },
+        { id: 18, name: "CPR Face Shield", req: "3pcs" },
+        { id: 19, name: "Adhesive Plaster", req: "60pcs" },
+        { id: 20, name: "Safety Pin", req: "36pcs" },
+        { id: 21, name: "Thermometer", req: "1pcs" },
+        { id: 22, name: "Waste Bag", req: "3pcs" },
+        { id: 23, name: "First Aid Manual", req: "1pcs" }
+      ];
+
+      const stockMap = getCentralStockMap(ss);
+      const instantRestock = data.instantRestock === true;
+      
+      itemsList.forEach(item => {
+        const inputVal = parseInt(data[`item_${item.id}_avail`], 10) || 0;
+        const reqVal = parseInt(item.req.match(/^(\d+)/)[1], 10) || 0;
+        const exp = data[`item_${item.id}_exp`] || "-";
+        const remarksValue = data[`item_${item.id}_remarks`] || "-";
+        let finalAvail = inputVal;
+
+        if (instantRestock && inputVal < reqVal) {
+          const shortage = reqVal - inputVal;
+          const itemInfo = stockMap[item.id];
+          if (itemInfo) {
+            invSheet.getRange(itemInfo.rowIdx, 4).setValue(Math.max(0, itemInfo.stock - shortage));
+            invSheet.getRange(itemInfo.rowIdx, 6).setValue(new Date());
+            transSheet.appendRow([new Date(), "DISPATCH", item.id, item.name, -shortage, `Refill Box ${data.boxId} (Inspection)`, data.officerName || "Safety Officer"]);
+          }
+          finalAvail = reqVal;
+        }
+
+        detailsSheet.appendRow([auditId, item.id, item.name, item.req, finalAvail, exp, remarksValue, data.boxId, data.inspectDate]);
+      });
+      return returnText("SUCCESS");
+    }
+
+    // B. First Aid Inventory Adjustment
+    if (data.action === "updateInventory") {
+      if (data.pin !== systemPIN) return returnText("ERROR: Unauthorized");
+      const ssId = docProps.getProperty("FIRST_AID_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const invSheet = ss.getSheetByName("First Aid Central Inventory");
+      const transSheet = ss.getSheetByName("First Aid Inventory Transactions");
+      const stockMap = getCentralStockMap(ss);
+      
+      data.adjustments.forEach(adj => {
+        const itemInfo = stockMap[adj.itemId];
+        if (itemInfo) {
+          const newQty = Math.max(0, itemInfo.stock + adj.qty);
+          invSheet.getRange(itemInfo.rowIdx, 4).setValue(newQty);
+          invSheet.getRange(itemInfo.rowIdx, 6).setValue(new Date());
+          transSheet.appendRow([new Date(), adj.qty > 0 ? "RESTOCK" : "DISPATCH", adj.itemId, itemInfo.name, adj.qty, adj.notes || "Dashboard Stock Update", adj.user || "Safety Admin"]);
+        }
+      });
+      return returnText("SUCCESS");
+    }
+
+    // C. PPE Request Log
+    if (data.action === "ppeForm") {
+      const ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("PPE Requests");
+      const requestId = "REQ-" + String(sheet.getLastRow()).padStart(5, '0');
+      const status = data.status || "Approved / Dispatched";
+      const actionDate = (status !== "Pending Approval") ? Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd") : "";
+      const authorizedBy = (status !== "Pending Approval") ? (data.authorizedBy || "Safety Officer") : "";
+      
+      sheet.appendRow([
+        requestId, new Date(), data.staffId, data.staffName, data.department, data.supervisorName || "SHO",
+        data.ppeType, data.size || "-", data.colorSpecs || "-", data.replacementReason || "Damaged",
+        data.conditionRemarks || "-", status, authorizedBy, actionDate
+      ]);
+      return returnJSON({ status: "SUCCESS", requestId: requestId });
+    }
+
+    // D. PPE Approval Status Update
+    if (data.action === "updateRequestStatus") {
+      if (String(data.pin).trim() !== String(systemPIN).trim()) {
+        return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
+      }
+      const ssId = docProps.getProperty("PPE_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("PPE Requests");
+      const rows = sheet.getDataRange().getValues();
+      let foundRow = -1;
+      for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]).trim() === String(data.requestId).trim()) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      if (foundRow !== -1) {
+        sheet.getRange(foundRow, 12).setValue(data.status);
+        sheet.getRange(foundRow, 13).setValue(data.authorizedBy);
+        sheet.getRange(foundRow, 14).setValue(Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd"));
+        return returnJSON({ status: "SUCCESS", message: "Status updated" });
+      }
+      return returnJSON({ status: "ERROR", message: "Request ID not found" });
+    }
+
+    // E. Contractor Self-Registration Form
+    if (data.action === "contractorRegistrationForm") {
+      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("Safety Inductions");
+      
+      let folderId = docProps.getProperty("PHOTO_FOLDER_ID");
+      let folder;
+      if (folderId) {
+        try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
+      }
+      if (!folderId) {
+        const workspaceId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+        const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
+        folder = workspace.createFolder("Safety Hub Photos");
+        docProps.setProperty("PHOTO_FOLDER_ID", folder.getId());
+      }
+      
+      let photoUrl = "";
+      if (data.photo) {
+        const blob = Utilities.newBlob(Utilities.base64Decode(data.photo.split(",")[1]), "image/jpeg", "Induction_" + data.name + "_" + new Date().getTime() + ".jpg");
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        photoUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
+      }
+      
+      sheet.appendRow([new Date(), data.name, data.ic, data.company, data.date, data.inducted_by, data.declaration, data.signature, photoUrl, data.status || "Pending Approval"]);
+      return returnJSON({ status: "success" });
+    }
+
+    // F. Contractor Approval
+    if (data.action === "approveWorkers") {
+      if (data.pin !== systemPIN) return returnJSON({ status: "error", message: "Unauthorized PIN" });
+      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("Safety Inductions");
+      const rows = sheet.getDataRange().getValues();
+      let count = 0;
+      
+      data.workerIcs.forEach(ic => {
+        for (let i = 1; i < rows.length; i++) {
+          const rowIc = String(rows[i][2]).trim();
+          const rowStatus = rows[i][9] ? String(rows[i][9]).trim().toLowerCase() : "";
+          if (rowIc === String(ic).trim() && rowStatus === "pending approval") {
+            sheet.getRange(i + 1, 5).setValue(data.inductionDate || new Date());
+            sheet.getRange(i + 1, 6).setValue(data.inductedBy);
+            sheet.getRange(i + 1, 10).setValue("Approved");
+            count++;
+            break;
+          }
+        }
+      });
+      return returnJSON({ status: "success", count: count });
+    }
+
+    // G. Contractor Handbook Signature Acknowledgment
+    if (data.action === "contractorHandbookForm") {
+      const ssId = docProps.getProperty("CONTRACTOR_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("Contractor Acknowledgments");
+      
+      let folderId = docProps.getProperty("SIGNATURE_FOLDER_ID");
+      let folder;
+      if (folderId) {
+        try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
+      }
+      if (!folderId) {
+        const workspaceId = docProps.getProperty("WORKSPACE_FOLDER_ID");
+        const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
+        folder = workspace.createFolder("Safety Hub Signatures");
+        docProps.setProperty("SIGNATURE_FOLDER_ID", folder.getId());
+      }
+      
+      let signatureUrl = "";
+      if (data.signature && data.signature.startsWith("data:image/")) {
+        const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/jpeg", "Sig_Handbook_" + new Date().getTime() + ".jpg");
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        signatureUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
+      }
+      
+      sheet.appendRow([
+        Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"),
+        data.company || '', data.name || '', data.position || '', data.email || '', data.phone || '', data.icNumber || '',
+        data.operations ? 'Yes' : 'No', data.administration ? 'Yes' : 'No', data.logistics ? 'Yes' : 'No',
+        signatureUrl ? 'Yes' : 'No', signatureUrl, data.signature ? data.signature.length : 0,
+        'Browser submission', 'Desktop Portal', Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"), 'Active'
+      ]);
+      return returnJSON({ status: "success" });
+    }
+
+    // H. HIRARC Signature Submission
+    if (data.action === "hirarcForm") {
+      const ssId = docProps.getProperty("HIRARC_SPREADSHEET_ID");
+      const ss = SpreadsheetApp.openById(ssId);
+      const sheet = ss.getSheetByName("Signed Approvals") || ss.getSheets()[0];
+      sheet.appendRow([new Date(), data.department, data.owner_name, data.employee_id, data.date, data.document_version, data.declaration, data.signature]);
+      return returnJSON({ status: "success" });
+    }
+
+    return returnJSON({ status: "ERROR", message: "Invalid action type" });
+  } catch (err) {
+    return returnJSON({ status: "ERROR", message: err.message });
+  }
+}
+
+// ========================================================
+// 5. CLIENT SIDE CONFIGURATION UI (SETTINGS SIDEBAR)
+// ========================================================
+function showSettingsSidebar() {
+  const docProps = PropertiesService.getDocumentProperties();
+  const currentPin = docProps.getProperty("DASHBOARD_PIN") || "9911";
+  const currentLogo = docProps.getProperty("LOGO_URL") || "";
+  const currentName = docProps.getProperty("SYSTEM_NAME") || "Safety Hub";
+  const licenseKey = docProps.getProperty("LICENSE_KEY") || "";
+  const boxIds = docProps.getProperty("BOX_IDS") || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <base target="_top">
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <style>
+        body { font-family: 'Inter', sans-serif; padding: 15px; background: #f8fafc; color: #1e293b; font-size: 13px; }
+        h3 { margin-top: 0; color: #1e3a8a; font-weight: 700; border-bottom: 2px solid #3b82f6; padding-bottom: 5px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; margin-bottom: 4px; color: #475569; }
+        input[type="text"], textarea { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 12px; }
+        input:focus, textarea:focus { border-color: #3b82f6; outline: none; }
+        .btn { background: #3b82f6; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; margin-top: 15px; transition: background 0.2s; }
+        .btn:hover { background: #2563eb; }
+        .status { margin-top: 10px; padding: 8px; border-radius: 4px; display: none; font-weight: 500; text-align: center; font-size: 12px; }
+        .status.success { background: #dcfce7; color: #166534; border: 1px solid #b2f2bb; }
+        .status.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+      </style>
+    </head>
+    <body>
+      <h3>Safety Hub Settings</h3>
+      
+      <div class="form-group">
+        <label for="systemName">System Brand Name</label>
+        <input type="text" id="systemName" value="${currentName}" placeholder="e.g. Acme Safety Hub">
+      </div>
+      
+      <div class="form-group">
+        <label for="logoUrl">Company Logo Image URL</label>
+        <input type="text" id="logoUrl" value="${currentLogo}" placeholder="https://example.com/logo.png">
+      </div>
+      
+      <div class="form-group">
+        <label for="pin">Dashboard PIN Lock</label>
+        <input type="text" id="pin" value="${currentPin}" placeholder="4-digit PIN">
+      </div>
+      
+      <div class="form-group">
+        <label for="boxIds">First Aid Box IDs (Comma-separated)</label>
+        <textarea id="boxIds" rows="3" placeholder="OSH/FAB/01,OSH/FAB/02">${boxIds}</textarea>
+      </div>
+      
+      <div class="form-group" style="background: #eff6ff; padding: 10px; border-radius: 8px; border: 1px solid #bfdbfe; margin-top: 15px;">
+        <label for="licenseKey" style="color: #1e40af;">🔑 License Key Validation</label>
+        <input type="text" id="licenseKey" value="${licenseKey}" placeholder="SAFETY-XXXX-XXXX-XXXX">
+      </div>
+      
+      <button class="btn" onclick="saveSettings()">Save Configuration</button>
+      <div id="statusBox" class="status"></div>
+
+      <script>
+        function saveSettings() {
+          const btn = document.querySelector(".btn");
+          const statusBox = document.getElementById("statusBox");
+          btn.disabled = true;
+          btn.innerHTML = "Saving...";
+          statusBox.style.display = "none";
+          
+          const config = {
+            systemName: document.getElementById("systemName").value,
+            logoUrl: document.getElementById("logoUrl").value,
+            pin: document.getElementById("pin").value,
+            boxIds: document.getElementById("boxIds").value,
+            licenseKey: document.getElementById("licenseKey").value
+          };
+          
+          google.script.run
+            .withSuccessHandler(function(response) {
+              btn.disabled = false;
+              btn.innerHTML = "Save Configuration";
+              statusBox.className = "status " + (response.status === "success" ? "success" : "error");
+              statusBox.innerHTML = response.message;
+              statusBox.style.display = "block";
+            })
+            .withFailureHandler(function(err) {
+              btn.disabled = false;
+              btn.innerHTML = "Save Configuration";
+              statusBox.className = "status error";
+              statusBox.innerHTML = "Connection Error: " + err;
+              statusBox.style.display = "block";
+            })
+            .updateClientSettings(config);
+        }
+      </script>
+    </body>
+    </html>
+  `;
+  
+  const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
+      .setTitle('Safety Hub Settings')
+      .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
+}
+
+function updateClientSettings(config) {
+  try {
+    const docProps = PropertiesService.getDocumentProperties();
+    
+    // 1. License Check Validation
+    const licenseResult = validateLicenseKey(config.licenseKey);
+    if (!licenseResult.valid) {
+      return { status: "error", message: "❌ Invalid License Key: " + licenseResult.reason };
+    }
+    
+    // 2. Save configurations
+    docProps.setProperty("SYSTEM_NAME", config.systemName || "Safety Hub");
+    docProps.setProperty("LOGO_URL", config.logoUrl || "");
+    docProps.setProperty("DASHBOARD_PIN", config.pin || "9911");
+    docProps.setProperty("BOX_IDS", config.boxIds || "");
+    docProps.setProperty("LICENSE_KEY", config.licenseKey || "");
+    
+    return { status: "success", message: "🎉 Configuration saved successfully!" };
+  } catch (err) {
+    return { status: "error", message: "Error: " + err.message };
+  }
+}
+
+function validateLicenseKey(key) {
+  if (!key) {
+    return { valid: false, reason: "License key is required." };
+  }
+  
+  const cleanKey = String(key).trim();
+  // Validates standard mock template key formatting
+  if (cleanKey.startsWith("SAFETY-") && cleanKey.length >= 12) {
+    return { valid: true };
+  }
+  
+  return { valid: false, reason: "Invalid format. Key format is 'SAFETY-XXXX-XXXX'" };
+}
+
+// ========================================================
+// 6. SHARED UTILITIES & API HELPERS
+// ========================================================
+
+// Return text response
+function returnText(val) {
+  return ContentService.createTextOutput(val).setMimeType(ContentService.MimeType.TEXT);
+}
+
+// Return JSON response
+function returnJSON(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Fetch central stock map
+function getCentralStockMap(ss) {
+  const invSheet = ss.getSheetByName("First Aid Central Inventory");
+  const rows = invSheet.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < rows.length; i++) {
+    map[rows[i][0]] = {
+      rowIdx: i + 1,
+      name: rows[i][1],
+      stock: parseInt(rows[i][3], 10) || 0
+    };
+  }
+  return map;
+}
+
+// Convert sheet values to clean JSON Array
+function fetchSheetDataAsJSON(sheet) {
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows[0];
+  const data = [];
+  for (let i = 1; i < rows.length; i++) {
+    const obj = {};
+    for (let j = 0; j < headers.length; j++) {
+      let val = rows[i][j];
+      if (val instanceof Date) {
+        if (headers[j].toLowerCase().indexOf("timestamp") !== -1 || headers[j].toLowerCase().indexOf("date") !== -1) {
+          val = Utilities.formatDate(val, "GMT+8", "yyyy-MM-dd HH:mm:ss");
+        } else {
+          val = Utilities.formatDate(val, "GMT+8", "yyyy-MM-dd");
+        }
+      }
+      obj[headers[j]] = val;
+    }
+    data.push(obj);
+  }
+  return data;
+}

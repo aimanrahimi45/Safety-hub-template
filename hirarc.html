@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="config.js"></script>
     <script src="shared.js" defer></script>
     <style>
 
@@ -180,7 +181,7 @@
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            Back to Metrod Hub
+            Back to Safety Hub
         </a>
         <div class="card">
             <h2>HIRARC Yearly Review Sign-off</h2>
@@ -246,7 +247,8 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4ZcK2HdwiEeO9ze18rdwbppoPt7SwDAoHwq3VRBNUkv9B_J0IIdUS4D-va4iR7H8/exec";
+        const APPS_SCRIPT_URL = GOOGLE_SCRIPT_URL; // Alias to central config.js URL
+
 
         let hirarcDatabase = [];
         let currentDocumentVersion = "";
@@ -367,6 +369,7 @@
             }
 
             const payload = {
+                action: "hirarcForm",
                 department: document.getElementById('department').value,
                 owner_name: document.getElementById('owner_name').value,
                 employee_id: document.getElementById('employee_id').value,
@@ -420,3 +423,5 @@
 </body>
 
 </html>
+
+

@@ -9,6 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
+    <script src="config.js"></script>
     <script src="shared.js" defer></script>
     <style>
         .container {
@@ -276,7 +277,7 @@
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            Back to Metrod Hub
+            Back to Safety Hub
         </a>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
@@ -382,7 +383,8 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLbTTov3rghz5Z6mqKxm5DOeFLe6KWcyBiHwgc6ZTXKbsoAMfu4MMhn_A5TinpsTEEJQ/exec";
+        // Central backend URL loaded from config.js
+
         
         let inventory = [];
         let shortages = [];
@@ -390,14 +392,14 @@
 
         // PIN validation before loading
         async function initPage() {
-            securePin = localStorage.getItem("metrod_dashboard_pin");
+            securePin = localStorage.getItem("safety_hub_pin");
             if (!securePin) {
                 securePin = prompt("🔐 Enter Dashboard security PIN to access Stock Monitor:");
                 if (!securePin) {
                     document.body.innerHTML = `<div style="text-align:center; margin-top:100px; font-family:sans-serif; color:#ef4444;"><h3>Access Denied: PIN Required</h3><a href="index.html" style="color:#2563eb;">Return to Hub</a></div>`;
                     return;
                 }
-                localStorage.setItem("metrod_dashboard_pin", securePin);
+                localStorage.setItem("safety_hub_pin", securePin);
             }
             await refreshData();
         }
@@ -419,7 +421,7 @@
                 const shortData = await shortRes.json();
 
                 if (invData.status === "ERROR" || shortData.status === "ERROR") {
-                    localStorage.removeItem("metrod_dashboard_pin");
+                    localStorage.removeItem("safety_hub_pin");
                     alert("❌ Invalid PIN authorization. Access denied.");
                     location.reload();
                     return;
@@ -614,3 +616,6 @@
     </script>
 </body>
 </html>
+
+
+

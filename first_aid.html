@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="config.js"></script>
     <script src="shared.js" defer></script>
     <style>
         :root {
@@ -324,7 +325,7 @@
     <div class="container">
         <!-- Brand Header -->
         <div class="header">
-            <img src="logo-metrod.webp" alt="Metrod Logo" onerror="this.style.display='none'">
+            <img src="" alt="Logo" onerror="this.style.display='none'">
             <h1>First Aid Box Inspection</h1>
             <p>ISO 45001 Compliance Safety Monitoring Portal</p>
         </div>
@@ -343,7 +344,7 @@
                     </div>
                     <div class="input-group">
                         <label for="inspect-company">Company <span style="color:var(--danger)">*</span></label>
-                        <input type="text" id="inspect-company" value="Metrod Malaysia" required>
+                        <input type="text" id="inspect-company" placeholder="e.g. My Company" required>
                     </div>
                     <div class="input-group">
                         <label for="inspect-dept">Department <span style="color:var(--danger)">*</span></label>
@@ -492,10 +493,8 @@
     </div>
 
     <script>
-        // ========================================================
-        // DEPLOYED WEB APP URL (PASTE YOUR DEPLOYED GOOGLE SCRIPT URL HERE)
-        // ========================================================
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLbTTov3rghz5Z6mqKxm5DOeFLe6KWcyBiHwgc6ZTXKbsoAMfu4MMhn_A5TinpsTEEJQ/exec";
+        // Central backend URL loaded from config.js
+
 
         const CHECKLIST_ITEMS = [
             { id: 1, name: "1. Triangular Bandage 100cm", req: "5pcs", group: 1 },
@@ -664,6 +663,7 @@
 
             // Gather standard metadata
             const formData = {
+                action: "firstAidForm",
                 inspectDate: document.getElementById('inspect-date').value,
                 company: document.getElementById('inspect-company').value,
                 department: document.getElementById('inspect-dept').value,
@@ -689,9 +689,7 @@
             }
 
             try {
-                if (GOOGLE_SCRIPT_URL === "YOUR_FIRST_AID_SCRIPT_URL") {
-                    throw new Error("Google Web App URL placeholder active. Please complete the script setup and paste your URL first.");
-                }
+
 
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
@@ -709,10 +707,32 @@
             }
         }
 
+        // Load Box IDs dynamically
+        async function loadBoxIds() {
+            const selectEl = document.getElementById("inspect-boxid");
+            if (GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") return;
+            try {
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getBoxIds`);
+                const json = await res.json();
+                if (json.status === "SUCCESS") {
+                    selectEl.innerHTML = '<option value="" disabled selected>Select First Aid Box...</option>';
+                    json.data.forEach(id => {
+                        selectEl.innerHTML += `<option value="${id}">${id}</option>`;
+                    });
+                }
+            } catch (err) {
+                console.warn("Failed to load dynamic Box IDs, using defaults:", err);
+            }
+        }
+
         // Run rendering on start
         renderItems();
         initSignature();
+        loadBoxIds();
     </script>
 </body>
 
 </html>
+
+
+

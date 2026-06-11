@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="shared.css">
     <!-- Chart.js CDN for premium responsive data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
     <script src="shared.js" defer></script>
     <style>
         .container {
@@ -313,7 +314,7 @@
 <div class="container">
     <a href="index.html" class="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-        Back to Metrod Hub
+        Back to Safety Hub
     </a>
 
     <!-- LOCKED SCREEN VIEW -->
@@ -620,7 +621,8 @@
 </div>
 
 <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdsqXhtBjAGVDH_oMEKEsCDRS88nL6xbcaDaiKDU-65-jr89inIWp8EtYFbWY53yxFxw/exec"; // Linked to your main deployment URL
+    const APPS_SCRIPT_URL = GOOGLE_SCRIPT_URL; // Alias to central config.js URL
+
 
     let ppeData = [];
     let activeCharts = {};
@@ -632,7 +634,7 @@
 
     // --- SECURITY PIN VALIDATION ---
     function getDashboardPin() {
-        return localStorage.getItem("metrod_dashboard_pin") || "";
+        return localStorage.getItem("safety_hub_pin") || "";
     }
 
     async function verifyPinState() {
@@ -644,11 +646,11 @@
             loadMsg.innerText = "Verifying security PIN & loading database...";
 
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getRequests&pin=${pin}`);
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&pin=${pin}`);
                 const resJson = await response.json();
 
                 if (resJson.status === "ERROR") {
-                    localStorage.removeItem("metrod_dashboard_pin");
+                    localStorage.removeItem("safety_hub_pin");
                     document.getElementById('lock-screen').style.display = 'block';
                     document.getElementById('dashboard-content').style.display = 'none';
                     alert("❌ Session expired or PIN invalid. Please unlock again.");
@@ -680,13 +682,13 @@
             loadMsg.innerText = "Verifying security PIN...";
 
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=getRequests&pin=${pin}`);
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&pin=${pin}`);
                 const resJson = await response.json();
 
                 if (resJson.status === "ERROR") {
                     alert("❌ Invalid PIN entered!");
                 } else {
-                    localStorage.setItem("metrod_dashboard_pin", pin);
+                    localStorage.setItem("safety_hub_pin", pin);
                     ppeData = resJson.data || [];
                     document.getElementById('lock-screen').style.display = 'none';
                     document.getElementById('dashboard-content').style.display = 'block';
@@ -898,6 +900,7 @@
             loadMsg.innerText = `Submitting request ${i + 1} of ${window.parsedWorkers.length}: ${worker.name || 'Unknown'} (${worker.ppeType})...`;
             
             const payload = {
+                action: "ppeForm",
                 requestDate: worker.date,
                 staffId: worker.id,
                 staffName: worker.name,
@@ -1551,6 +1554,7 @@
         const remarksVal = document.getElementById('req-remarks').value.trim();
 
         const payload = {
+            action: "ppeForm",
             requestDate: document.getElementById('req-date').value,
             staffId: document.getElementById('req-staff-id').value.trim(),
             staffName: document.getElementById('req-staff-name').value.trim(),
@@ -1614,11 +1618,11 @@
         loadMsg.innerText = "Refreshing database...";
 
         try {
-            const response = await fetch(`${APPS_SCRIPT_URL}?action=getRequests&pin=${pin}`);
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&pin=${pin}`);
             const resJson = await response.json();
 
             if (resJson.status === "ERROR") {
-                localStorage.removeItem("metrod_dashboard_pin");
+                localStorage.removeItem("safety_hub_pin");
                 verifyPinState();
                 return;
             }
@@ -1996,3 +2000,6 @@
 </script>
 </body>
 </html>
+
+
+

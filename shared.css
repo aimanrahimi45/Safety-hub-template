@@ -257,3 +257,185 @@ body.in-iframe .container {
     box-shadow: var(--shadow-sm);
     margin-bottom: 20px;
 }
+
+/* ==========================================
+   STICKER BOOK & HOLOGRAPHIC GLOW EFFECTS
+   ========================================== */
+
+/* The Sticker cutout outline style */
+.sticker {
+    border: 3px solid #FFFFFF !important;  /* Inner white vinyl outline */
+    outline: 3px solid var(--border) !important; /* Outer die-cut outline */
+    box-shadow: 4px 4px 0px var(--border) !important;
+}
+
+/* The holographic rainbow reflection overlay */
+.holographic {
+    position: relative;
+    overflow: hidden;
+}
+
+.holographic::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; right: -50%; bottom: -50%;
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255, 107, 107, 0.25) 30%,
+        rgba(255, 209, 102, 0.25) 40%,
+        rgba(78, 202, 100, 0.25) 50%,
+        rgba(78, 168, 222, 0.25) 60%,
+        transparent 70%
+    );
+    background-size: 200% 200%;
+    transform: rotate(10deg);
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+    mix-blend-mode: color-dodge;
+    z-index: 10;
+}
+
+.holographic:hover::after {
+    opacity: 1;
+    animation: holo-shimmer 2s linear infinite;
+}
+
+@keyframes holo-shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ==========================================
+   PEELED STICKER CARDS
+   ========================================== */
+
+/* Peeled Sticker Card style */
+.sticker-card {
+    position: relative;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 3px solid #FFFFFF !important;        /* Inner white vinyl border */
+    outline: 3px solid var(--border) !important;   /* Outer ink outline */
+    box-shadow: var(--shadow-md) !important;
+    overflow: visible !important;                  /* Let peeled corner render outside */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transform: rotate(var(--rotate, 0deg));
+    translate: 0px 0px;
+    scale: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.sticker-card:hover {
+    translate: 0px -8px;
+    scale: 1.02;
+    box-shadow: 10px 10px 0px var(--border) !important;
+    border-color: #FFFFFF !important;
+}
+
+.sticker-card:active {
+    translate: 0px 2px;
+    box-shadow: 2px 2px 0px var(--border) !important;
+}
+
+/* Peeled Corner - Background Cutout */
+.sticker-card::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 28px 28px 0;
+    border-color: transparent transparent var(--bg) transparent; /* Match general page background */
+    z-index: 6; /* Sit above card border, below fold */
+    transition: border-width 0.2s ease;
+}
+
+.sticker-card:hover::before {
+    border-width: 0 38px 38px 0;
+}
+
+/* Peeled Corner - Folded Flap */
+.sticker-card-fold {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 28px;
+    height: 28px;
+    background: #FFFFFF;
+    border-left: 3px solid var(--border);
+    border-bottom: 3px solid var(--border);
+    border-bottom-left-radius: 10px;
+    z-index: 7;
+    transform-origin: top right;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: -3px 3px 6px rgba(43, 45, 66, 0.2);
+}
+
+.sticker-card:hover .sticker-card-fold {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, var(--warning) 100%);
+    transform: rotate(-6deg);
+    box-shadow: -5px 5px 10px rgba(43, 45, 66, 0.3);
+}
+
+/* Bright glow radiating from behind the peeled corner */
+.peel-glow {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(
+        circle at 80% 20%,
+        rgba(255, 107, 107, 0.95) 0%,
+        rgba(255, 209, 102, 0.85) 30%,
+        rgba(78, 202, 100, 0.75) 50%,
+        rgba(78, 168, 222, 0.65) 70%,
+        transparent 90%
+    );
+    filter: blur(6px);
+    opacity: 0;
+    z-index: 5; /* Behind the cutout and fold */
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    border-radius: 50%;
+}
+
+.sticker-card:hover .peel-glow {
+    opacity: 1;
+    transform: scale(1.3) translate(5px, -5px);
+}
+
+/* Holographic Shimmer Overlay */
+.holo-shimmer {
+    position: absolute;
+    inset: 0;
+    border-radius: 17px; /* Matches card inner radius */
+    background: linear-gradient(
+        115deg,
+        transparent 30%,
+        rgba(255, 107, 107, 0.2) 40%,
+        rgba(255, 209, 102, 0.2) 48%,
+        rgba(78, 202, 100, 0.2) 55%,
+        rgba(78, 168, 222, 0.2) 62%,
+        transparent 70%
+    );
+    background-size: 200% 200%;
+    opacity: 0;
+    mix-blend-mode: color-dodge;
+    z-index: 4;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.sticker-card:hover .holo-shimmer {
+    opacity: 1;
+    animation: holo-shimmer 2s linear infinite;
+}

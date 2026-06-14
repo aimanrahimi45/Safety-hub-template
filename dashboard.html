@@ -225,6 +225,23 @@
             width: 50px;
             height: 50px;
         }
+
+        /* Overrides for coming-soon sticker cards to disable hover peeling/glows */
+        .sticker-card.coming-soon:hover {
+            translate: 0px 0px !important;
+            scale: 1 !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+        .sticker-card.coming-soon:hover::before {
+            border-width: 0 28px 28px 0 !important;
+        }
+        .sticker-card.coming-soon:hover .sticker-card-fold {
+            width: 28px !important;
+            height: 28px !important;
+            background: #FFFFFF !important;
+            transform: none !important;
+            box-shadow: -3px 3px 6px rgba(43, 45, 66, 0.2) !important;
+        }
     </style>
 </head>
 <body>
@@ -264,7 +281,10 @@
 
         <div class="grid">
             <!-- App 1: Contractor Induction -->
-            <a href="contractor.html" class="app-card">
+            <a href="contractor.html" class="app-card sticker-card" style="--rotate: -1.2deg;">
+                <div class="peel-glow"></div>
+                <div class="holo-shimmer"></div>
+                <div class="sticker-card-fold"></div>
                 <div class="card-icon icon-blue">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -286,7 +306,10 @@
             </a>
 
             <!-- App 2: HIRARC -->
-            <a href="hirarc.html" class="app-card">
+            <a href="hirarc.html" class="app-card sticker-card" style="--rotate: 1deg;">
+                <div class="peel-glow"></div>
+                <div class="holo-shimmer"></div>
+                <div class="sticker-card-fold"></div>
                 <div class="card-icon icon-green">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -310,7 +333,10 @@
             </a>
 
             <!-- App 3: Contractor Handbook -->
-            <a href="contractor_handbook.html" class="app-card">
+            <a href="contractor_handbook.html" class="app-card sticker-card" style="--rotate: -0.6deg;">
+                <div class="peel-glow"></div>
+                <div class="holo-shimmer"></div>
+                <div class="sticker-card-fold"></div>
                 <div class="card-icon icon-orange">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -331,7 +357,10 @@
             </a>
 
             <!-- App 4: First Aid Checklist -->
-            <a href="first_aid.html" class="app-card">
+            <a href="first_aid.html" class="app-card sticker-card" style="--rotate: 1.2deg;">
+                <div class="peel-glow"></div>
+                <div class="holo-shimmer"></div>
+                <div class="sticker-card-fold"></div>
                 <div class="card-icon icon-red">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -351,7 +380,10 @@
             </a>
 
             <!-- App 5: First Aid Stock Monitor -->
-            <a href="stock.html" class="app-card">
+            <a href="stock.html" class="app-card sticker-card" style="--rotate: -1deg;">
+                <div class="peel-glow"></div>
+                <div class="holo-shimmer"></div>
+                <div class="sticker-card-fold"></div>
                 <div class="card-icon icon-teal">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -374,7 +406,10 @@
             </a>
 
             <!-- App 6: PPE Management -->
-            <a href="ppe.html" class="app-card">
+            <a href="ppe.html" class="app-card sticker-card" style="--rotate: 0.8deg;">
+                <div class="peel-glow"></div>
+                <div class="holo-shimmer"></div>
+                <div class="sticker-card-fold"></div>
                 <div class="card-icon icon-purple">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -394,7 +429,8 @@
             </a>
 
             <!-- App 7: Incident Reporting (Future) -->
-            <div class="app-card coming-soon">
+            <div class="app-card sticker-card coming-soon" style="--rotate: -0.5deg;">
+                <div class="sticker-card-fold"></div>
                 <span class="badge">In Development</span>
                 <div class="card-icon icon-gray">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"

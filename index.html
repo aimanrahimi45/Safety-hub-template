@@ -141,11 +141,12 @@
         /* Active Pill State */
         .nav-link.active {
             background: var(--warning);
-            border-color: var(--border);
             color: var(--text-main);
             font-weight: 700;
-            box-shadow: 4px 4px 0px var(--border);
-            transform: translate(-2px, -2px);
+            border: 3px solid #FFFFFF !important;  /* Inner white vinyl border */
+            outline: 3px solid var(--border) !important; /* Outer black die-cut */
+            box-shadow: 4px 4px 0px var(--border) !important;
+            transform: translate(-2px, -2px) rotate(-1.5deg); /* Tilted sticker look! */
         }
 
         .nav-link.active svg {
@@ -155,8 +156,7 @@
 
         .nav-link.active:hover {
             background: var(--warning);
-            box-shadow: 4px 4px 0px var(--border);
-            transform: translate(-2px, -2px);
+            transform: translate(-2px, -2px) rotate(-1.5deg);
         }
 
         /* Main Workspace Panel */
@@ -466,7 +466,7 @@
         <div class="upgrade-card">
             <h4>Safety Hub Pro</h4>
             <p>Unlock incident reports, advanced analytics, and PDF exports.</p>
-            <a href="#" class="upgrade-btn">Upgrade Now</a>
+            <a href="#" class="upgrade-btn holographic">Upgrade Now</a>
         </div>
     </div>
 

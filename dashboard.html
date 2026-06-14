@@ -174,7 +174,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-radius 0.3s ease-in-out;
         }
 
         .stat-card:hover {
@@ -226,22 +226,13 @@
             height: 50px;
         }
 
-        /* Overrides for coming-soon sticker cards to disable hover peeling/glows */
-        .sticker-card.coming-soon:hover {
+        /* Overrides for coming-soon wobbly cards to prevent hover scaling/morphing */
+        .wobbly-card.coming-soon:hover {
             translate: 0px 0px !important;
             scale: 1 !important;
             box-shadow: var(--shadow-md) !important;
-        }
-        .sticker-card.coming-soon:hover::before {
-            width: 32px !important;
-            height: 32px !important;
-        }
-        .sticker-card.coming-soon:hover .sticker-card-fold {
-            width: 32px !important;
-            height: 32px !important;
-            background: linear-gradient(135deg, transparent 50%, #FFFFFF 50%) !important;
-            transform: none !important;
-            box-shadow: none !important;
+            border-color: var(--border) !important;
+            border-radius: inherit !important;
         }
     </style>
 </head>
@@ -254,7 +245,7 @@
 
         <!-- Simulated Stats Overview Row like Firecheck -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card wobbly-style-b">
                 <div class="stat-info">
                     <h4>First Aid Compliance</h4>
                     <div class="stat-val">100%</div>
@@ -262,7 +253,7 @@
                 </div>
                 <div class="stat-icon">🩹</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card wobbly-style-d">
                 <div class="stat-info">
                     <h4>Pending Inductions</h4>
                     <div class="stat-val" id="val-pending">0</div>
@@ -270,7 +261,7 @@
                 </div>
                 <div class="stat-icon">👷</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card wobbly-style-c">
                 <div class="stat-info">
                     <h4>PPE Inventory</h4>
                     <div class="stat-val">Stable</div>
@@ -282,10 +273,7 @@
 
         <div class="grid">
             <!-- App 1: Contractor Induction -->
-            <a href="contractor.html" class="app-card sticker-card" style="--rotate: -1.2deg;">
-                <div class="peel-glow"></div>
-                <div class="holo-shimmer"></div>
-                <div class="sticker-card-fold"></div>
+            <a href="contractor.html" class="app-card wobbly-card wobbly-style-a" style="--rotate: -1.2deg;">
                 <div class="card-icon icon-blue">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -307,10 +295,7 @@
             </a>
 
             <!-- App 2: HIRARC -->
-            <a href="hirarc.html" class="app-card sticker-card" style="--rotate: 1deg;">
-                <div class="peel-glow"></div>
-                <div class="holo-shimmer"></div>
-                <div class="sticker-card-fold"></div>
+            <a href="hirarc.html" class="app-card wobbly-card wobbly-style-b" style="--rotate: 1deg;">
                 <div class="card-icon icon-green">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -334,10 +319,7 @@
             </a>
 
             <!-- App 3: Contractor Handbook -->
-            <a href="contractor_handbook.html" class="app-card sticker-card" style="--rotate: -0.6deg;">
-                <div class="peel-glow"></div>
-                <div class="holo-shimmer"></div>
-                <div class="sticker-card-fold"></div>
+            <a href="contractor_handbook.html" class="app-card wobbly-card wobbly-style-c" style="--rotate: -0.6deg;">
                 <div class="card-icon icon-orange">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -358,10 +340,7 @@
             </a>
 
             <!-- App 4: First Aid Checklist -->
-            <a href="first_aid.html" class="app-card sticker-card" style="--rotate: 1.2deg;">
-                <div class="peel-glow"></div>
-                <div class="holo-shimmer"></div>
-                <div class="sticker-card-fold"></div>
+            <a href="first_aid.html" class="app-card wobbly-card wobbly-style-d" style="--rotate: 1.2deg;">
                 <div class="card-icon icon-red">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -381,10 +360,7 @@
             </a>
 
             <!-- App 5: First Aid Stock Monitor -->
-            <a href="stock.html" class="app-card sticker-card" style="--rotate: -1deg;">
-                <div class="peel-glow"></div>
-                <div class="holo-shimmer"></div>
-                <div class="sticker-card-fold"></div>
+            <a href="stock.html" class="app-card wobbly-card wobbly-style-a" style="--rotate: -1deg;">
                 <div class="card-icon icon-teal">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -407,10 +383,7 @@
             </a>
 
             <!-- App 6: PPE Management -->
-            <a href="ppe.html" class="app-card sticker-card" style="--rotate: 0.8deg;">
-                <div class="peel-glow"></div>
-                <div class="holo-shimmer"></div>
-                <div class="sticker-card-fold"></div>
+            <a href="ppe.html" class="app-card wobbly-card wobbly-style-b" style="--rotate: 0.8deg;">
                 <div class="card-icon icon-purple">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -430,8 +403,7 @@
             </a>
 
             <!-- App 7: Incident Reporting (Future) -->
-            <div class="app-card sticker-card coming-soon" style="--rotate: -0.5deg;">
-                <div class="sticker-card-fold"></div>
+            <div class="app-card wobbly-card wobbly-style-c coming-soon" style="--rotate: -0.5deg;">
                 <span class="badge">In Development</span>
                 <div class="card-icon icon-gray">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"

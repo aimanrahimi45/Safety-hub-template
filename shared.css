@@ -309,19 +309,46 @@ body.in-iframe .container {
 }
 
 /* ==========================================
-   PEELED STICKER CARDS
+   HAND-DRAWN WOBBLY BORDERS (ORGANIC ASYMMETRY)
    ========================================== */
 
-/* Peeled Sticker Card style */
-.sticker-card {
-    position: relative;
+/* Alternating wobbly border radius styles to look hand-sketched */
+.wobbly-style-a {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+}
+.wobbly-style-a:hover {
+    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
+}
+
+.wobbly-style-b {
+    border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px !important;
+}
+.wobbly-style-b:hover {
+    border-radius: 220px 20px 240px 20px / 20px 240px 20px 220px !important;
+}
+
+.wobbly-style-c {
+    border-radius: 15px 255px 15px 225px / 225px 15px 255px 15px !important;
+}
+.wobbly-style-c:hover {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+}
+
+.wobbly-style-d {
+    border-radius: 240px 20px 220px 20px / 20px 220px 20px 240px !important;
+}
+.wobbly-style-d:hover {
+    border-radius: 20px 220px 20px 240px / 240px 20px 220px 20px !important;
+}
+
+/* Wobbly Card Base */
+.wobbly-card {
     background: var(--surface);
-    border-radius: 20px;
-    border: 3px solid #FFFFFF !important;        /* Inner white vinyl border */
-    outline: 3px solid var(--border) !important;   /* Outer ink outline */
+    border: 3px solid var(--border) !important;
     box-shadow: var(--shadow-md) !important;
-    overflow: visible !important;                  /* Let peeled corner render outside */
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                box-shadow 0.2s ease, 
+                border-radius 0.3s ease-in-out !important;
     transform: rotate(var(--rotate, 0deg));
     translate: 0px 0px;
     scale: 1;
@@ -329,122 +356,23 @@ body.in-iframe .container {
     flex-direction: column;
 }
 
-.sticker-card:hover {
+.wobbly-card:hover {
     translate: 0px -8px;
-    scale: 1.02;
+    scale: 1.03;
     box-shadow: 10px 10px 0px var(--border) !important;
-    border-color: #FFFFFF !important;
+    border-color: var(--primary) !important;
 }
 
-.sticker-card:active {
+.wobbly-card:active {
     translate: 0px 2px;
     box-shadow: 2px 2px 0px var(--border) !important;
 }
 
-/* Peeled Corner - Background Cutout with Diagonal Border */
-.sticker-card::before {
-    content: '';
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 32px;
-    height: 32px;
-    /* Draws a transparent bottom-left, 3px black diagonal line, and cream top-right */
-    background: linear-gradient(
-        45deg,
-        transparent 50%,
-        var(--border) 50%,
-        var(--border) calc(50% + 3px),
-        var(--bg) calc(50% + 3.5px)
-    );
-    z-index: 6; /* Sit above card border, below fold */
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    pointer-events: none;
+/* Wobbly Button style for a sketched look */
+.wobbly-btn {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+    transition: all 0.2s ease !important;
 }
-
-.sticker-card:hover::before {
-    width: 42px;
-    height: 42px;
-}
-
-/* Peeled Corner - Folded Flap */
-.sticker-card-fold {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 32px;
-    height: 32px;
-    /* Bottom-left half is white (sticker underside), top-right is transparent */
-    background: linear-gradient(45deg, #FFFFFF 50%, transparent 50%);
-    border-left: 3px solid var(--border);
-    border-bottom: 3px solid var(--border);
-    border-bottom-left-radius: 12px;
-    z-index: 7;
-    transform-origin: top right;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    pointer-events: none;
-}
-
-.sticker-card:hover .sticker-card-fold {
-    width: 42px;
-    height: 42px;
-    /* Transition to yellow/holo gradient for the adhesive side */
-    background: linear-gradient(45deg, var(--warning) 50%, transparent 50%);
-    transform: rotate(-10deg) translate(-3px, 3px);
-    box-shadow: -4px 4px 8px rgba(43, 45, 66, 0.25);
-}
-
-/* Bright glow radiating from behind the peeled corner */
-.peel-glow {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 80px;
-    height: 80px;
-    background: radial-gradient(
-        circle at 70% 30%,
-        rgba(255, 107, 107, 0.95) 0%,
-        rgba(255, 209, 102, 0.85) 30%,
-        rgba(78, 202, 100, 0.75) 50%,
-        rgba(78, 168, 222, 0.65) 70%,
-        transparent 90%
-    );
-    filter: blur(6px);
-    opacity: 0;
-    z-index: 5; /* Behind the cutout and fold */
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    pointer-events: none;
-    border-radius: 50%;
-}
-
-.sticker-card:hover .peel-glow {
-    opacity: 1;
-    transform: scale(1.3) translate(2px, -2px);
-}
-
-/* Holographic Shimmer Overlay */
-.holo-shimmer {
-    position: absolute;
-    inset: 0;
-    border-radius: 17px; /* Matches card inner radius */
-    background: linear-gradient(
-        115deg,
-        transparent 30%,
-        rgba(255, 107, 107, 0.25) 40%,
-        rgba(255, 209, 102, 0.25) 48%,
-        rgba(78, 202, 100, 0.25) 55%,
-        rgba(78, 168, 222, 0.25) 62%,
-        transparent 70%
-    );
-    background-size: 200% 200%;
-    opacity: 0;
-    mix-blend-mode: color-dodge;
-    z-index: 4;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-}
-
-.sticker-card:hover .holo-shimmer {
-    opacity: 1;
-    animation: holo-shimmer 2s linear infinite;
+.wobbly-btn:hover {
+    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
 }

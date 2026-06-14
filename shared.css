@@ -241,7 +241,7 @@ body.in-iframe .back-link {
 }
 
 body.in-iframe .container {
-    padding: 10px 0 !important;
+    padding: 24px 32px !important;
     max-width: 100% !important;
 }
 

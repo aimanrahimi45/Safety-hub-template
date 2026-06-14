@@ -530,260 +530,276 @@ function doPost(e) {
     
     // A. First Aid Checklist Submission
     if (data.action === "firstAidForm") {
-      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const logsSheet = targetSS.getSheetByName("First Aid Checklist Logs");
-      const detailsSheet = targetSS.getSheetByName("First Aid Checklist Details");
-      const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
-      const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
-      
-      // Auto folder setup for signatures
-      let folderId = settings["SIGNATURE_FOLDER_ID"];
-      let folder;
-      if (folderId) {
-        try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
-      }
-      if (!folderId) {
-        const workspaceId = settings["WORKSPACE_FOLDER_ID"];
-        const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-        folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
-        setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
-      }
-      
-      let signatureUrl = "";
-      if (data.signature) {
-        const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", `Sig_${data.boxId.replace(/\//g, '_')}_${data.inspectDate}.png`);
-        const file = folder.createFile(blob);
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        signatureUrl = file.getUrl();
-      }
-      
-      const auditId = "FA-" + String(logsSheet.getLastRow()).padStart(5, '0');
-      const cleanCond = data[`item_24_avail`] || "Good";
-      const cleanRem = data[`item_24_remarks`] || "-";
- 
-      logsSheet.appendRow([
-        auditId, new Date(), data.inspectDate, data.company, data.department, data.section,
-        data.boxId, data.location, cleanCond, cleanRem, data.findings || "-",
-        data.officerName || "-", data.officerPos || "-", signatureUrl
-      ]);
-      
-      const itemsList = [
-        { id: 1, name: "Triangular Bandage 100cm", req: "5pcs" },
-        { id: 2, name: "Eye Dressing No 16", req: "3pkt" },
-        { id: 3, name: "Sterile Gamgee Pad 25cm", req: "3pkt" },
-        { id: 4, name: "Sterile Gauze Pad 7.5cm", req: "6pkt" },
-        { id: 5, name: "Sterile Gauze Pad 10cm", req: "6pkt" },
-        { id: 6, name: "Elastic Bandage", req: "3pkt" },
-        { id: 7, name: "W.O.W Bandage 2.5cm", req: "8pcs" },
-        { id: 8, name: "W.O.W Bandage 5.0cm", req: "8pcs" },
-        { id: 9, name: "W.O.W Bandage 7.5cm", req: "8pcs" },
-        { id: 10, name: "Instant Ice Pack", req: "6pkt" },
-        { id: 11, name: "Sterile Non-Adherent Pad", req: "6pkt" },
-        { id: 12, name: "Pair of Glove", req: "6pkt" },
-        { id: 13, name: "Scissors", req: "1pcs" },
-        { id: 14, name: "Adhesive Tape", req: "1pcs" },
-        { id: 15, name: "Bactigras", req: "2pcs" },
-        { id: 16, name: "Yellow Antiseptic Liquid", req: "1pcs" },
-        { id: 17, name: "Cotton Bud 100pcs", req: "1pkt" },
-        { id: 18, name: "CPR Face Shield", req: "3pcs" },
-        { id: 19, name: "Adhesive Plaster", req: "60pcs" },
-        { id: 20, name: "Safety Pin", req: "36pcs" },
-        { id: 21, name: "Thermometer", req: "1pcs" },
-        { id: 22, name: "Waste Bag", req: "3pcs" },
-        { id: 23, name: "First Aid Manual", req: "1pcs" }
-      ];
- 
-      const stockMap = getCentralStockMap(targetSS);
-      const instantRestock = data.instantRestock === true;
-      
-      itemsList.forEach(item => {
-        const inputVal = parseInt(data[`item_${item.id}_avail`], 10) || 0;
-        const reqVal = parseInt(item.req.match(/^(\d+)/)[1], 10) || 0;
-        const exp = data[`item_${item.id}_exp`] || "-";
-        const remarksValue = data[`item_${item.id}_remarks`] || "-";
-        let finalAvail = inputVal;
- 
-        if (instantRestock && inputVal < reqVal) {
-          const shortage = reqVal - inputVal;
-          const itemInfo = stockMap[item.id];
-          if (itemInfo) {
-            invSheet.getRange(itemInfo.rowIdx, 4).setValue(Math.max(0, itemInfo.stock - shortage));
-            invSheet.getRange(itemInfo.rowIdx, 6).setValue(new Date());
-            transSheet.appendRow([new Date(), "DISPATCH", item.id, item.name, -shortage, `Refill Box ${data.boxId} (Inspection)`, data.officerName || "Safety Officer"]);
-          }
-          finalAvail = reqVal;
+      return runTransaction(() => {
+        const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const logsSheet = targetSS.getSheetByName("First Aid Checklist Logs");
+        const detailsSheet = targetSS.getSheetByName("First Aid Checklist Details");
+        const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
+        const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
+        
+        // Auto folder setup for signatures
+        let folderId = settings["SIGNATURE_FOLDER_ID"];
+        let folder;
+        if (folderId) {
+          try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
         }
- 
-        detailsSheet.appendRow([auditId, item.id, item.name, item.req, finalAvail, exp, remarksValue, data.boxId, data.inspectDate]);
+        if (!folderId) {
+          const workspaceId = settings["WORKSPACE_FOLDER_ID"];
+          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
+          folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
+          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
+        }
+        
+        let signatureUrl = "";
+        if (data.signature) {
+          const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", `Sig_${data.boxId.replace(/\//g, '_')}_${data.inspectDate}.png`);
+          const file = folder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          signatureUrl = file.getUrl();
+        }
+        
+        const auditId = "FA-" + String(logsSheet.getLastRow()).padStart(5, '0');
+        const cleanCond = data[`item_24_avail`] || "Good";
+        const cleanRem = data[`item_24_remarks`] || "-";
+   
+        logsSheet.appendRow([
+          auditId, new Date(), data.inspectDate, data.company, data.department, data.section,
+          data.boxId, data.location, cleanCond, cleanRem, data.findings || "-",
+          data.officerName || "-", data.officerPos || "-", signatureUrl
+        ]);
+        
+        const itemsList = [
+          { id: 1, name: "Triangular Bandage 100cm", req: "5pcs" },
+          { id: 2, name: "Eye Dressing No 16", req: "3pkt" },
+          { id: 3, name: "Sterile Gamgee Pad 25cm", req: "3pkt" },
+          { id: 4, name: "Sterile Gauze Pad 7.5cm", req: "6pkt" },
+          { id: 5, name: "Sterile Gauze Pad 10cm", req: "6pkt" },
+          { id: 6, name: "Elastic Bandage", req: "3pkt" },
+          { id: 7, name: "W.O.W Bandage 2.5cm", req: "8pcs" },
+          { id: 8, name: "W.O.W Bandage 5.0cm", req: "8pcs" },
+          { id: 9, name: "W.O.W Bandage 7.5cm", req: "8pcs" },
+          { id: 10, name: "Instant Ice Pack", req: "6pkt" },
+          { id: 11, name: "Sterile Non-Adherent Pad", req: "6pkt" },
+          { id: 12, name: "Pair of Glove", req: "6pkt" },
+          { id: 13, name: "Scissors", req: "1pcs" },
+          { id: 14, name: "Adhesive Tape", req: "1pcs" },
+          { id: 15, name: "Bactigras", req: "2pcs" },
+          { id: 16, name: "Yellow Antiseptic Liquid", req: "1pcs" },
+          { id: 17, name: "Cotton Bud 100pcs", req: "1pkt" },
+          { id: 18, name: "CPR Face Shield", req: "3pcs" },
+          { id: 19, name: "Adhesive Plaster", req: "60pcs" },
+          { id: 20, name: "Safety Pin", req: "36pcs" },
+          { id: 21, name: "Thermometer", req: "1pcs" },
+          { id: 22, name: "Waste Bag", req: "3pcs" },
+          { id: 23, name: "First Aid Manual", req: "1pcs" }
+        ];
+   
+        const stockMap = getCentralStockMap(targetSS);
+        const instantRestock = data.instantRestock === true;
+        
+        itemsList.forEach(item => {
+          const inputVal = parseInt(data[`item_${item.id}_avail`], 10) || 0;
+          const reqVal = parseInt(item.req.match(/^(\d+)/)[1], 10) || 0;
+          const exp = data[`item_${item.id}_exp`] || "-";
+          const remarksValue = data[`item_${item.id}_remarks`] || "-";
+          let finalAvail = inputVal;
+   
+          if (instantRestock && inputVal < reqVal) {
+            const shortage = reqVal - inputVal;
+            const itemInfo = stockMap[item.id];
+            if (itemInfo) {
+              invSheet.getRange(itemInfo.rowIdx, 4).setValue(Math.max(0, itemInfo.stock - shortage));
+              invSheet.getRange(itemInfo.rowIdx, 6).setValue(new Date());
+              transSheet.appendRow([new Date(), "DISPATCH", item.id, item.name, -shortage, `Refill Box ${data.boxId} (Inspection)`, data.officerName || "Safety Officer"]);
+            }
+            finalAvail = reqVal;
+          }
+   
+          detailsSheet.appendRow([auditId, item.id, item.name, item.req, finalAvail, exp, remarksValue, data.boxId, data.inspectDate]);
+        });
+        return returnText("SUCCESS");
       });
-      return returnText("SUCCESS");
     }
- 
+   
     // B. First Aid Inventory Adjustment
     if (data.action === "updateInventory") {
       if (data.pin !== systemPIN) return returnText("ERROR: Unauthorized");
-      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
-      const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
-      const stockMap = getCentralStockMap(targetSS);
-      
-      data.adjustments.forEach(adj => {
-        const itemInfo = stockMap[adj.itemId];
-        if (itemInfo) {
-          const newQty = Math.max(0, itemInfo.stock + adj.qty);
-          invSheet.getRange(itemInfo.rowIdx, 4).setValue(newQty);
-          invSheet.getRange(itemInfo.rowIdx, 6).setValue(new Date());
-          transSheet.appendRow([new Date(), adj.qty > 0 ? "RESTOCK" : "DISPATCH", adj.itemId, itemInfo.name, adj.qty, adj.notes || "Dashboard Stock Update", adj.user || "Safety Admin"]);
-        }
+      return runTransaction(() => {
+        const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
+        const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
+        const stockMap = getCentralStockMap(targetSS);
+        
+        data.adjustments.forEach(adj => {
+          const itemInfo = stockMap[adj.itemId];
+          if (itemInfo) {
+            const newQty = Math.max(0, itemInfo.stock + adj.qty);
+            invSheet.getRange(itemInfo.rowIdx, 4).setValue(newQty);
+            invSheet.getRange(itemInfo.rowIdx, 6).setValue(new Date());
+            transSheet.appendRow([new Date(), adj.qty > 0 ? "RESTOCK" : "DISPATCH", adj.itemId, itemInfo.name, adj.qty, adj.notes || "Dashboard Stock Update", adj.user || "Safety Admin"]);
+          }
+        });
+        return returnText("SUCCESS");
       });
-      return returnText("SUCCESS");
     }
- 
+   
     // C. PPE Request Log
     if (data.action === "ppeForm") {
-      const ssId = settings["PPE_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("PPE Requests");
-      const requestId = "REQ-" + String(sheet.getLastRow()).padStart(5, '0');
-      const status = data.status || "Approved / Dispatched";
-      const actionDate = (status !== "Pending Approval") ? Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd") : "";
-      const authorizedBy = (status !== "Pending Approval") ? (data.authorizedBy || "Safety Officer") : "";
-      
-      sheet.appendRow([
-        requestId, new Date(), data.staffId, data.staffName, data.department, data.supervisorName || "SHO",
-        data.ppeType, data.size || "-", data.colorSpecs || "-", data.replacementReason || "Damaged",
-        data.conditionRemarks || "-", status, authorizedBy, actionDate
-      ]);
-      return returnJSON({ status: "SUCCESS", requestId: requestId });
+      return runTransaction(() => {
+        const ssId = settings["PPE_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("PPE Requests");
+        const requestId = "REQ-" + String(sheet.getLastRow()).padStart(5, '0');
+        const status = data.status || "Approved / Dispatched";
+        const actionDate = (status !== "Pending Approval") ? Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd") : "";
+        const authorizedBy = (status !== "Pending Approval") ? (data.authorizedBy || "Safety Officer") : "";
+        
+        sheet.appendRow([
+          requestId, new Date(), data.staffId, data.staffName, data.department, data.supervisorName || "SHO",
+          data.ppeType, data.size || "-", data.colorSpecs || "-", data.replacementReason || "Damaged",
+          data.conditionRemarks || "-", status, authorizedBy, actionDate
+        ]);
+        return returnJSON({ status: "SUCCESS", requestId: requestId });
+      });
     }
- 
+   
     // D. PPE Approval Status Update
     if (data.action === "updateRequestStatus") {
       if (String(data.pin).trim() !== String(systemPIN).trim()) {
         return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
       }
-      const ssId = settings["PPE_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("PPE Requests");
-      const rows = sheet.getDataRange().getValues();
-      let foundRow = -1;
-      for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]).trim() === String(data.requestId).trim()) {
-          foundRow = i + 1;
-          break;
-        }
-      }
-      if (foundRow !== -1) {
-        sheet.getRange(foundRow, 12).setValue(data.status);
-        sheet.getRange(foundRow, 13).setValue(data.authorizedBy);
-        sheet.getRange(foundRow, 14).setValue(Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd"));
-        return returnJSON({ status: "SUCCESS", message: "Status updated" });
-      }
-      return returnJSON({ status: "ERROR", message: "Request ID not found" });
-    }
- 
-    // E. Contractor Self-Registration Form
-    if (data.action === "contractorRegistrationForm") {
-      const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("Safety Inductions");
-      
-      let folderId = settings["PHOTO_FOLDER_ID"];
-      let folder;
-      if (folderId) {
-        try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
-      }
-      if (!folderId) {
-        const workspaceId = settings["WORKSPACE_FOLDER_ID"];
-        const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-        folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Photos");
-        setSystemSetting(ss, "PHOTO_FOLDER_ID", folder.getId());
-      }
-      
-      let photoUrl = "";
-      if (data.photo) {
-        const blob = Utilities.newBlob(Utilities.base64Decode(data.photo.split(",")[1]), "image/jpeg", "Induction_" + data.name + "_" + new Date().getTime() + ".jpg");
-        const file = folder.createFile(blob);
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        photoUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
-      }
-      
-      sheet.appendRow([new Date(), data.name, data.ic, data.company, data.date, data.inducted_by, data.declaration, data.signature, photoUrl, data.status || "Pending Approval"]);
-      return returnJSON({ status: "success" });
-    }
- 
-    // F. Contractor Approval
-    if (data.action === "approveWorkers") {
-      if (data.pin !== systemPIN) return returnJSON({ status: "error", message: "Unauthorized PIN" });
-      const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("Safety Inductions");
-      const rows = sheet.getDataRange().getValues();
-      let count = 0;
-      
-      data.workerIcs.forEach(ic => {
+      return runTransaction(() => {
+        const ssId = settings["PPE_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("PPE Requests");
+        const rows = sheet.getDataRange().getValues();
+        let foundRow = -1;
         for (let i = 1; i < rows.length; i++) {
-          const rowIc = String(rows[i][2]).trim();
-          const rowStatus = rows[i][9] ? String(rows[i][9]).trim().toLowerCase() : "";
-          if (rowIc === String(ic).trim() && rowStatus === "pending approval") {
-            sheet.getRange(i + 1, 5).setValue(data.inductionDate || new Date());
-            sheet.getRange(i + 1, 6).setValue(data.inductedBy);
-            sheet.getRange(i + 1, 10).setValue("Approved");
-            count++;
+          if (String(rows[i][0]).trim() === String(data.requestId).trim()) {
+            foundRow = i + 1;
             break;
           }
         }
+        if (foundRow !== -1) {
+          sheet.getRange(foundRow, 12).setValue(data.status);
+          sheet.getRange(foundRow, 13).setValue(data.authorizedBy);
+          sheet.getRange(foundRow, 14).setValue(Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd"));
+          return returnJSON({ status: "SUCCESS", message: "Status updated" });
+        }
+        return returnJSON({ status: "ERROR", message: "Request ID not found" });
       });
-      return returnJSON({ status: "success", count: count });
     }
- 
+   
+    // E. Contractor Self-Registration Form
+    if (data.action === "contractorRegistrationForm") {
+      return runTransaction(() => {
+        const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("Safety Inductions");
+        
+        let folderId = settings["PHOTO_FOLDER_ID"];
+        let folder;
+        if (folderId) {
+          try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
+        }
+        if (!folderId) {
+          const workspaceId = settings["WORKSPACE_FOLDER_ID"];
+          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
+          folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Photos");
+          setSystemSetting(ss, "PHOTO_FOLDER_ID", folder.getId());
+        }
+        
+        let photoUrl = "";
+        if (data.photo) {
+          const blob = Utilities.newBlob(Utilities.base64Decode(data.photo.split(",")[1]), "image/jpeg", "Induction_" + data.name + "_" + new Date().getTime() + ".jpg");
+          const file = folder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          photoUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
+        }
+        
+        sheet.appendRow([new Date(), data.name, data.ic, data.company, data.date, data.inducted_by, data.declaration, data.signature, photoUrl, data.status || "Pending Approval"]);
+        return returnJSON({ status: "success" });
+      });
+    }
+   
+    // F. Contractor Approval
+    if (data.action === "approveWorkers") {
+      if (data.pin !== systemPIN) return returnJSON({ status: "error", message: "Unauthorized PIN" });
+      return runTransaction(() => {
+        const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("Safety Inductions");
+        const rows = sheet.getDataRange().getValues();
+        let count = 0;
+        
+        data.workerIcs.forEach(ic => {
+          for (let i = 1; i < rows.length; i++) {
+            const rowIc = String(rows[i][2]).trim();
+            const rowStatus = rows[i][9] ? String(rows[i][9]).trim().toLowerCase() : "";
+            if (rowIc === String(ic).trim() && rowStatus === "pending approval") {
+              sheet.getRange(i + 1, 5).setValue(data.inductionDate || new Date());
+              sheet.getRange(i + 1, 6).setValue(data.inductedBy);
+              sheet.getRange(i + 1, 10).setValue("Approved");
+              count++;
+              break;
+            }
+          }
+        });
+        return returnJSON({ status: "success", count: count });
+      });
+    }
+   
     // G. Contractor Handbook Signature Acknowledgment
     if (data.action === "contractorHandbookForm") {
-      const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("Contractor Acknowledgments");
-      
-      let folderId = settings["SIGNATURE_FOLDER_ID"];
-      let folder;
-      if (folderId) {
-        try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
-      }
-      if (!folderId) {
-        const workspaceId = settings["WORKSPACE_FOLDER_ID"];
-        const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-        folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
-        setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
-      }
-      
-      let signatureUrl = "";
-      if (data.signature && data.signature.startsWith("data:image/")) {
-        const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/jpeg", "Sig_Handbook_" + new Date().getTime() + ".jpg");
-        const file = folder.createFile(blob);
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        signatureUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
-      }
-      
-      sheet.appendRow([
-        Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"),
-        data.company || '', data.name || '', data.position || '', data.email || '', data.phone || '', data.icNumber || '',
-        data.operations ? 'Yes' : 'No', data.administration ? 'Yes' : 'No', data.logistics ? 'Yes' : 'No',
-        signatureUrl ? 'Yes' : 'No', signatureUrl, data.signature ? data.signature.length : 0,
-        'Browser submission', 'Desktop Portal', Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"), 'Active'
-      ]);
-      return returnJSON({ status: "success" });
+      return runTransaction(() => {
+        const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("Contractor Acknowledgments");
+        
+        let folderId = settings["SIGNATURE_FOLDER_ID"];
+        let folder;
+        if (folderId) {
+          try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
+        }
+        if (!folderId) {
+          const workspaceId = settings["WORKSPACE_FOLDER_ID"];
+          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
+          folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
+          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
+        }
+        
+        let signatureUrl = "";
+        if (data.signature && data.signature.startsWith("data:image/")) {
+          const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/jpeg", "Sig_Handbook_" + new Date().getTime() + ".jpg");
+          const file = folder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          signatureUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
+        }
+        
+        sheet.appendRow([
+          Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"),
+          data.company || '', data.name || '', data.position || '', data.email || '', data.phone || '', data.icNumber || '',
+          data.operations ? 'Yes' : 'No', data.administration ? 'Yes' : 'No', data.logistics ? 'Yes' : 'No',
+          signatureUrl ? 'Yes' : 'No', signatureUrl, data.signature ? data.signature.length : 0,
+          'Browser submission', 'Desktop Portal', Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"), 'Active'
+        ]);
+        return returnJSON({ status: "success" });
+      });
     }
- 
+   
     // H. HIRARC Signature Submission
     if (data.action === "hirarcForm") {
-      const ssId = settings["HIRARC_SPREADSHEET_ID"];
-      const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("Signed Approvals") || targetSS.getSheets()[0];
-      sheet.appendRow([new Date(), data.department, data.owner_name, data.employee_id, data.date, data.document_version, data.declaration, data.signature]);
-      return returnJSON({ status: "success" });
+      return runTransaction(() => {
+        const ssId = settings["HIRARC_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("Signed Approvals") || targetSS.getSheets()[0];
+        sheet.appendRow([new Date(), data.department, data.owner_name, data.employee_id, data.date, data.document_version, data.declaration, data.signature]);
+        return returnJSON({ status: "success" });
+      });
     }
- 
+   
     return returnJSON({ status: "ERROR", message: "Invalid action type" });
   } catch (err) {
     return returnJSON({ status: "ERROR", message: err.message });
@@ -1031,3 +1047,26 @@ function setSystemSetting(ss, key, val) {
     sheet.appendRow([key, val]);
   }
 }
+
+/**
+ * Safely executes any database read-modify-write operation inside a critical locked section.
+ * Prevents race conditions, duplicate IDs, and stock calculations overwrites globally.
+ * 
+ * @param {Function} callback - The database read/write logic to execute atomically.
+ * @param {number} [timeoutMs=15000] - Max time in milliseconds to wait for the lock.
+ * @return {*} The value returned by the callback function.
+ */
+function runTransaction(callback, timeoutMs) {
+  const timeout = timeoutMs || 15000;
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(timeout);
+    return callback();
+  } catch (err) {
+    Logger.log("Database Transaction Lock Error: " + err.message);
+    throw new Error("Database is temporarily busy. Please try again. Details: " + err.message);
+  } finally {
+    lock.releaseLock();
+  }
+}
+

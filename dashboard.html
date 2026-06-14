@@ -12,40 +12,52 @@
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            gap: 24px;
             margin-top: 10px;
         }
 
         .app-card {
             background: var(--surface);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 24px;
             box-shadow: var(--shadow-md);
-            border: 1px solid var(--border);
+            border: 3px solid var(--border);
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            transition: all 0.2s ease;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease, border-color 0.15s ease;
         }
 
         .app-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(28, 25, 23, 0.08);
+            transform: translate(-3px, -3px);
+            box-shadow: 9px 9px 0px var(--border);
             border-color: var(--primary);
         }
 
+        .app-card:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--border);
+        }
+
         .card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 3px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.35rem;
+            font-size: 1.4rem;
             margin-bottom: 16px;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .app-card:hover .card-icon {
+            transform: scale(1.1) rotate(-4deg);
         }
 
         .icon-blue {
@@ -81,53 +93,68 @@
         .icon-gray {
             background: #fafaf9;
             color: #78716c;
-            border: 1px dashed var(--border);
         }
 
         .app-card p {
             color: var(--text-muted);
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             margin-bottom: 20px;
             flex-grow: 1;
             line-height: 1.45;
+            font-weight: 500;
         }
 
         .launch-btn {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.88rem;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 0.9rem;
             width: 100%;
         }
 
         .launch-btn svg {
-            width: 16px;
-            height: 16px;
-            transition: transform 0.2s;
+            width: 18px;
+            height: 18px;
+            stroke-width: 2.5px;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .app-card:hover .launch-btn svg {
-            transform: translateX(4px);
+            transform: translateX(6px);
         }
 
         .coming-soon {
-            opacity: 0.6;
+            opacity: 0.75;
             cursor: not-allowed;
+        }
+
+        .coming-soon:hover {
+            transform: none !important;
+            box-shadow: var(--shadow-md) !important;
+            border-color: var(--border) !important;
         }
 
         .badge {
             position: absolute;
-            top: 24px;
-            right: 24px;
-            background: #fafaf9;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: 0.72rem;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 20px;
+            top: 18px;
+            right: 18px;
+            background: var(--warning);
+            border: 3px solid var(--border);
+            color: var(--text-main);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 0px var(--border);
+            transform: rotate(5deg);
+            animation: wiggle 2.5s infinite ease-in-out;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(5deg); }
+            50% { transform: rotate(-3deg); }
         }
 
         /* Stats Cards like Firecheck */
@@ -140,49 +167,63 @@
 
         .stat-card {
             background: var(--surface);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 20px;
-            border: 1px solid var(--border);
+            border: 3px solid var(--border);
             box-shadow: var(--shadow-md);
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .stat-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px var(--border);
         }
 
         .stat-info h4 {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text-muted);
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .stat-val {
             font-family: var(--font-heading);
-            font-size: 1.75rem;
-            font-weight: 800;
-            margin-top: 6px;
+            font-size: 2.1rem;
+            font-weight: 700;
+            margin-top: 4px;
             color: var(--text-main);
         }
 
         .stat-badge {
-            font-size: 0.72rem;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
             margin-top: 6px;
             display: inline-block;
+            box-shadow: 1.5px 1.5px 0px var(--border);
         }
 
-        .badge-green { background: #dcfce7; color: #15803d; }
-        .badge-red { background: #fee2e2; color: #b91c1c; }
+        .badge-green { background: var(--success); color: var(--text-main); }
+        .badge-red { background: var(--primary); color: var(--text-main); }
 
         .stat-icon {
+            font-size: 2rem;
             padding: 10px;
-            border-radius: 10px;
-            background: #fafaf9;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
+            border-radius: 14px;
+            background: var(--bg);
+            border: 3px solid var(--border);
+            box-shadow: 2px 2px 0px var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
         }
     </style>
 </head>

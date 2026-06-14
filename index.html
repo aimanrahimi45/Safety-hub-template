@@ -24,7 +24,7 @@
         .sidebar {
             width: 260px;
             background: var(--sidebar-bg);
-            border-right: 1px solid var(--border);
+            border-right: 3px solid var(--border);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
@@ -42,14 +42,20 @@
         }
 
         .brand img {
-            height: 35px;
+            height: 38px;
             object-fit: contain;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .brand:hover img {
+            transform: scale(1.1) rotate(-3deg);
         }
 
         .brand span {
             font-family: var(--font-heading);
-            font-weight: 800;
-            font-size: 1.25rem;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--text-main);
             letter-spacing: -0.5px;
         }
 
@@ -68,11 +74,11 @@
         }
 
         .nav-group-header {
-            font-size: 0.72rem;
+            font-size: 0.8rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: var(--text-muted);
+            color: var(--text-main);
             margin-bottom: 8px;
             padding-left: 10px;
             display: flex;
@@ -80,6 +86,7 @@
             align-items: center;
             cursor: pointer;
             user-select: none;
+            opacity: 0.85;
         }
 
         .nav-group-items {
@@ -98,38 +105,52 @@
             padding: 10px 14px;
             color: var(--text-main);
             text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-radius: 10px;
-            transition: all 0.15s ease;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: 3px solid transparent;
+            transition: all 0.1s ease;
             cursor: pointer;
         }
 
         .nav-link svg {
             width: 18px;
             height: 18px;
-            color: var(--text-muted);
-            transition: color 0.15s;
+            color: var(--text-main);
+            stroke-width: 2.5px;
+            transition: transform 0.15s ease;
         }
 
         .nav-link:hover {
-            background: rgba(28, 25, 23, 0.04);
-        }
-
-        .nav-link:hover svg {
-            color: var(--text-main);
-        }
-
-        /* Active Pill State like Firecheck */
-        .nav-link.active {
             background: var(--surface);
-            color: var(--text-main);
-            font-weight: 600;
+            border-color: var(--border);
+            transform: translate(-2px, -2px);
             box-shadow: var(--shadow-sm);
         }
 
+        .nav-link:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* Active Pill State */
+        .nav-link.active {
+            background: var(--warning);
+            border-color: var(--border);
+            color: var(--text-main);
+            font-weight: 700;
+            box-shadow: 4px 4px 0px var(--border);
+            transform: translate(-2px, -2px);
+        }
+
         .nav-link.active svg {
-            color: var(--primary);
+            color: var(--text-main);
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .nav-link.active:hover {
+            background: var(--warning);
+            box-shadow: 4px 4px 0px var(--border);
+            transform: translate(-2px, -2px);
         }
 
         /* Main Workspace Panel */
@@ -145,7 +166,7 @@
         .top-bar {
             height: 70px;
             background: var(--surface);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 3px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -157,9 +178,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            font-weight: 600;
         }
 
         .top-bar-right {
@@ -171,40 +192,61 @@
         .search-box {
             display: flex;
             align-items: center;
-            background: #fafaf9;
-            border: 1px solid var(--border);
+            background: #FFFFFF;
+            border: 3px solid var(--border);
             padding: 8px 14px;
-            border-radius: 8px;
+            border-radius: 12px;
             width: 220px;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .search-box input {
             border: none;
             background: transparent;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             outline: none;
             width: 100%;
             margin-left: 8px;
+            font-family: inherit;
+            color: var(--text-main);
+        }
+
+        .search-box:focus-within {
+            width: 280px;
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px var(--border);
+            border-color: var(--primary);
         }
 
         .badge-connected {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #dcfce7;
-            color: #15803d;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 3px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 12px;
+            box-shadow: 2px 2px 0px var(--border);
         }
 
         .badge-connected span {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            background: #22c55e;
+            background: #4CAF50;
             display: inline-block;
+            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            animation: pulse-dot 1.8s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(76, 175, 80, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
         }
 
         /* Fullscreen Iframe Wrapper */
@@ -213,6 +255,7 @@
             width: 100%;
             height: calc(100% - 70px);
             background: transparent;
+            transition: opacity 0.15s ease-in-out;
         }
 
         #portal-frame {
@@ -224,37 +267,53 @@
 
         /* Upgrade Box in Sidebar */
         .upgrade-card {
-            background: linear-gradient(135deg, #fbfaf8 0%, #f4f2ec 100%);
-            border: 1px solid var(--border);
+            background: var(--surface);
+            border: 3px solid var(--border);
             padding: 16px;
-            border-radius: 12px;
+            border-radius: 16px;
             margin-top: 20px;
             text-align: center;
+            box-shadow: 4px 4px 0px var(--border);
         }
+        
         .upgrade-card h4 {
-            font-size: 0.85rem;
+            font-family: var(--font-heading);
+            font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 4px;
+            color: var(--text-main);
+            margin-bottom: 6px;
         }
+        
         .upgrade-card p {
-            font-size: 0.72rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            line-height: 1.3;
+            line-height: 1.4;
             margin-bottom: 12px;
         }
+        
         .upgrade-btn {
-            background: var(--text-main);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            background: var(--primary);
+            color: var(--text-main);
+            border: 3px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
             text-decoration: none;
             display: inline-block;
-            transition: opacity 0.2s;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: all 0.1s ease;
         }
+        
         .upgrade-btn:hover {
-            opacity: 0.9;
+            background: var(--primary-hover);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
+        }
+
+        .upgrade-btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 0px 0px 0px var(--border);
         }
 
         /* Mobile Layout */
@@ -269,7 +328,7 @@
                 justify-content: space-between;
                 padding: 12px 20px;
                 border-right: none;
-                border-bottom: 1px solid var(--border);
+                border-bottom: 3px solid var(--border);
                 overflow-x: auto;
             }
             .brand, .nav-group-header, .upgrade-card, .top-bar, .nav-group:not(:first-child) {
@@ -282,7 +341,7 @@
             }
             .nav-link {
                 padding: 8px;
-                font-size: 0.75rem;
+                font-size: 0.8rem;
             }
             .iframe-container {
                 height: calc(100% - 60px);
@@ -391,8 +450,8 @@
         </ul>
 
         <!-- Connection Settings in Sidebar Footer -->
-        <div style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: auto;">
-            <div class="nav-link" style="color: var(--text-muted); font-size: 0.8rem;" onclick="disconnectSheet()">
+        <div style="border-top: 3px solid var(--border); padding-top: 15px; margin-top: auto;">
+            <div class="nav-link" style="color: var(--text-muted); font-size: 0.85rem;" onclick="disconnectSheet()">
                 ⚙️ Disconnect Sheet
             </div>
         </div>
@@ -420,8 +479,11 @@
                     <span></span> Connected
                 </div>
                 <!-- Profile Avatar Circle -->
-                <div style="width: 38px; height: 38px; border-radius: 50%; background: #e6e4de; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; color: var(--text-main);">
-                    SO
+                <div style="position: relative; display: flex; align-items: center;">
+                    <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--warning); border: 3px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: var(--text-main); box-shadow: 2px 2px 0px var(--border);">
+                        SO
+                    </div>
+                    <span style="position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; background: var(--success); border: 2.5px solid var(--border); border-radius: 50%;"></span>
                 </div>
             </div>
         </div>

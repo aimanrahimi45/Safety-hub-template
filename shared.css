@@ -349,9 +349,9 @@ body.in-iframe .container {
     right: -6px;
     width: 32px;
     height: 32px;
-    /* Draws a transparent top-left, 3px black diagonal line, and cream bottom-right */
+    /* Draws a transparent bottom-left, 3px black diagonal line, and cream top-right */
     background: linear-gradient(
-        135deg,
+        45deg,
         transparent 50%,
         var(--border) 50%,
         var(--border) calc(50% + 3px),
@@ -375,7 +375,7 @@ body.in-iframe .container {
     width: 32px;
     height: 32px;
     /* Bottom-left half is white (sticker underside), top-right is transparent */
-    background: linear-gradient(135deg, transparent 50%, #FFFFFF 50%);
+    background: linear-gradient(45deg, #FFFFFF 50%, transparent 50%);
     border-left: 3px solid var(--border);
     border-bottom: 3px solid var(--border);
     border-bottom-left-radius: 12px;
@@ -389,7 +389,7 @@ body.in-iframe .container {
     width: 42px;
     height: 42px;
     /* Transition to yellow/holo gradient for the adhesive side */
-    background: linear-gradient(135deg, transparent 50%, var(--warning) 50%);
+    background: linear-gradient(45deg, var(--warning) 50%, transparent 50%);
     transform: rotate(-10deg) translate(-3px, 3px);
     box-shadow: -4px 4px 8px rgba(43, 45, 66, 0.25);
 }

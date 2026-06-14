@@ -1189,6 +1189,7 @@
         let hasSignature = false;
         let lastX, lastY;
         let signatureData = null;
+        let canvasEventsAdded = false;
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
@@ -1229,28 +1230,40 @@
 
             ctx = canvas.getContext('2d');
 
-            // Simple canvas setup
-            const containerWidth = Math.min(canvas.parentElement.clientWidth - 32, 400);
+            // Simple canvas setup with safeguard against zero/negative parent width
+            const rawParentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+            const containerWidth = Math.max(Math.min(rawParentWidth - 32, 400), 100);
             const canvasHeight = 120;
 
-            canvas.style.width = containerWidth + 'px';
-            canvas.style.height = canvasHeight + 'px';
-
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = containerWidth * dpr;
-            canvas.height = canvasHeight * dpr;
+            const targetWidth = containerWidth * dpr;
+            const targetHeight = canvasHeight * dpr;
 
-            ctx.scale(dpr, dpr);
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+            // Only update backing store (which clears the canvas) if dimensions have changed
+            if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+                canvas.style.width = containerWidth + 'px';
+                canvas.style.height = canvasHeight + 'px';
 
-            // White background
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, containerWidth, canvasHeight);
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
 
-            addCanvasEvents();
+                ctx.scale(dpr, dpr);
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // White background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, containerWidth, canvasHeight);
+                
+                hasSignature = false;
+            }
+
+            if (!canvasEventsAdded) {
+                addCanvasEvents();
+                canvasEventsAdded = true;
+            }
         }
 
         function addCanvasEvents() {
@@ -1276,6 +1289,7 @@
 
         function handleStart(e) {
             e.preventDefault();
+            initializeCanvas(); // Ensure size is stable before reading coordinates
             isDrawing = true;
 
             const pos = getEventPos(e);

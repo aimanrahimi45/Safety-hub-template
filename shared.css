@@ -80,20 +80,25 @@ body {
     padding-bottom: 60px;
 }
 
-/* Playful Cartoon Cards */
+/* Playful Cartoon Cards (Unified Hand-Drawn Wobbly style) */
 .card {
     background: var(--surface);
     padding: 24px;
-    border-radius: 20px;
-    border: 3px solid var(--border);
-    box-shadow: var(--shadow-md);
+    border: 3px solid var(--border) !important;
+    box-shadow: var(--shadow-md) !important;
+    /* Wobbly style B as default */
+    border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px !important;
     margin-bottom: 24px;
-    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                box-shadow 0.2s ease, 
+                border-radius 0.3s ease-in-out !important;
 }
 
 .card:hover {
     transform: translate(-3px, -3px);
-    box-shadow: 9px 9px 0px var(--border);
+    box-shadow: 9px 9px 0px var(--border) !important;
+    border-color: var(--primary) !important;
+    border-radius: 220px 20px 240px 20px / 20px 240px 20px 220px !important;
 }
 
 /* Headings */
@@ -375,4 +380,77 @@ body.in-iframe .container {
 }
 .wobbly-btn:hover {
     border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
+}
+
+/* ==========================================
+   SHARED DESIGN SYSTEM BUTTONS
+   ========================================== */
+.submit-btn, .secondary-btn, .clear-btn, .btn, .signature-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    font-family: var(--font-heading) !important;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border: 3px solid var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, border-radius 0.2s ease !important;
+    text-decoration: none;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+.submit-btn {
+    background: var(--primary) !important;
+    color: #FFFFFF !important;
+}
+.submit-btn:hover {
+    background: var(--primary-hover) !important;
+    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px var(--border) !important;
+}
+.submit-btn:active {
+    transform: translate(2px, 2px) !important;
+    box-shadow: 0px 0px 0px var(--border) !important;
+}
+.submit-btn:disabled {
+    opacity: 0.65 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.secondary-btn, .signature-button {
+    background: var(--surface) !important;
+    color: var(--text-main) !important;
+}
+.secondary-btn:hover, .signature-button:hover {
+    background: var(--bg) !important;
+    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px var(--border) !important;
+}
+.secondary-btn:active, .signature-button:active {
+    transform: translate(2px, 2px) !important;
+    box-shadow: 0px 0px 0px var(--border) !important;
+}
+
+.clear-btn {
+    background: #F1F5F9 !important;
+    color: #64748B !important;
+}
+.clear-btn:hover {
+    background: #E2E8F0 !important;
+    color: var(--text-main) !important;
+    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px var(--border) !important;
+}
+.clear-btn:active {
+    transform: translate(2px, 2px) !important;
+    box-shadow: 0px 0px 0px var(--border) !important;
 }

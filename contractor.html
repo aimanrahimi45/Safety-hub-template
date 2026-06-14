@@ -91,28 +91,6 @@
         .camera-btn-group { flex-direction: row; justify-content: center; }
         .camera-btn-group button { flex: 1; }
 
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .submit-btn { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
-        .submit-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .submit-btn:active { transform: translateY(1px); }
-        .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        .clear-btn { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-        .clear-btn:hover { background: var(--bg); color: var(--text-main); }
-        
-        .secondary-btn { background: var(--surface); color: var(--primary); border: 1px solid var(--primary); }
-        .secondary-btn:hover { background: rgba(37, 99, 235, 0.05); }
-
         /* Reusing global back-link from shared.css */
 
         /* Switch Toggle Styling */
@@ -431,13 +409,18 @@
 
     function resizeCanvas() {
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvasSig.width = canvasSig.offsetWidth * ratio;
-        canvasSig.height = canvasSig.offsetHeight * ratio;
-        canvasSig.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear();
+        const targetWidth = canvasSig.offsetWidth * ratio;
+        const targetHeight = canvasSig.offsetHeight * ratio;
+        if (canvasSig.width !== targetWidth || canvasSig.height !== targetHeight) {
+            canvasSig.width = targetWidth;
+            canvasSig.height = targetHeight;
+            canvasSig.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear();
+        }
     }
     window.onresize = resizeCanvas;
     resizeCanvas();
+    canvasSig.addEventListener('pointerdown', resizeCanvas);
     document.getElementById('clear').addEventListener('click', () => signaturePad.clear());
     document.getElementById('induction_date').valueAsDate = new Date();
 

@@ -21,19 +21,18 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: var(--surface);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border);
-            overflow: hidden;
+            padding-bottom: 40px;
         }
 
         .header {
-            background: #1e3a8a;
+            background: var(--primary);
             color: white;
             padding: 30px 20px;
             text-align: center;
             position: relative;
+            border-bottom: 3px solid var(--border);
+            margin: -24px -24px 24px -24px;
+            border-radius: 20px 240px 0px 0px / 220px 20px 0px 0px;
         }
 
         .header img {
@@ -42,26 +41,33 @@
         }
 
         .header h1 {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 700;
+            font-family: var(--font-heading);
             letter-spacing: -0.5px;
+            color: #FFFFFF;
         }
 
         .header p {
-            font-size: 0.9rem;
-            opacity: 0.8;
+            font-size: 0.95rem;
+            opacity: 0.9;
             margin-top: 5px;
         }
 
         .form-section {
-            padding: 25px;
-            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            border-bottom: 3px dashed var(--border);
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
         }
 
         .form-section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #1e3a8a;
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: var(--text-main);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -86,53 +92,61 @@
             gap: 6px;
         }
 
-        /* Reusing global styles for labels, inputs, selects, and textareas from shared.css */
-
-        /* Autofill bar */
+        /* Autofill bar styled as custom neat cartoon block */
         .autofill-bar {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-            padding: 12px 20px;
-            margin: 25px;
+            background: var(--warning);
+            border: 3px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin: 24px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
+            box-shadow: var(--shadow-sm);
         }
 
         .autofill-bar p {
-            font-size: 0.85rem;
-            color: #1e40af;
-            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-weight: 700;
         }
 
         .btn-autofill {
-            background: #3b82f6;
-            color: white;
-            border: none;
+            background: var(--surface);
+            color: var(--text-main);
+            border: 3px solid var(--border);
             padding: 8px 14px;
-            border-radius: 6px;
+            border-radius: 12px;
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: all 0.1s ease;
         }
 
         .btn-autofill:hover {
-            background: #2563eb;
+            background: var(--bg);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
         }
 
-        /* Accordion CSS */
+        .btn-autofill:active {
+            transform: translate(1px, 1px);
+            box-shadow: 0px 0px 0px var(--border);
+        }
+
+        /* Accordion CSS standard cartoon look */
         .accordion {
-            margin: 0 25px 25px 25px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            margin: 0 0 24px 0;
+            border: 3px solid var(--border);
+            border-radius: 14px;
             overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
 
         .accordion-item {
-            border-bottom: 1px solid var(--border);
+            border-bottom: 3px solid var(--border);
         }
 
         .accordion-item:last-child {
@@ -140,7 +154,7 @@
         }
 
         .accordion-header {
-            background: #f8fafc;
+            background: var(--surface);
             padding: 16px 20px;
             display: flex;
             justify-content: space-between;
@@ -151,13 +165,13 @@
         }
 
         .accordion-header:hover {
-            background: #f1f5f9;
+            background: var(--bg);
         }
 
         .accordion-title {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.95rem;
-            color: #1e293b;
+            color: var(--text-main);
         }
 
         .accordion-icon {
@@ -169,7 +183,7 @@
         .accordion-content {
             padding: 20px;
             display: none;
-            background: white;
+            background: var(--surface);
         }
 
         .accordion-item.active .accordion-content {
@@ -187,8 +201,8 @@
         }
 
         .item-row {
-            border-bottom: 1px solid #f1f5f9;
-            padding: 15px 0;
+            border-bottom: 2px dashed #e2e8f0;
+            padding: 16px 0;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -205,18 +219,19 @@
         }
 
         .item-name {
-            font-weight: 600;
-            font-size: 0.9rem;
+            font-weight: 700;
+            font-size: 0.95rem;
             color: var(--text-main);
         }
 
         .item-req {
             font-size: 0.8rem;
-            color: var(--text-muted);
-            background: #e2e8f0;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 500;
+            color: var(--text-main);
+            background: var(--warning);
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-weight: 700;
+            border: 2px solid var(--border);
         }
 
         .item-fields {
@@ -231,14 +246,14 @@
             }
         }
 
-        /* Signature block */
+        /* Signature block cartoon look */
         .signature-container {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #f8fafc;
+            border: 3px dashed var(--border);
+            border-radius: 14px;
+            background: var(--bg);
             position: relative;
             margin-top: 8px;
-            height: 150px;
+            height: 180px;
         }
 
         .signature-pad {
@@ -250,44 +265,6 @@
             cursor: crosshair;
         }
 
-        .clear-btn {
-            position: absolute;
-            right: 10px;
-            bottom: 10px;
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .btn-submit {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: calc(100% - 50px);
-            margin: 0 25px 25px 25px;
-            transition: background 0.2s;
-        }
-
-        .btn-submit:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-submit:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-        }
-
         /* Loading indicator */
         .overlay {
             position: fixed;
@@ -295,7 +272,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(5px);
             display: none;
             justify-content: center;
             align-items: center;
@@ -306,11 +284,11 @@
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            border-top-color: white;
+            border-top-color: var(--primary);
             animation: spin 1s ease-in-out infinite;
         }
 
@@ -323,7 +301,14 @@
 <body>
 
     <div class="container">
-        <!-- Brand Header -->
+        <!-- Back Link -->
+        <a href="index.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Safety Hub
+        </a>
+
+        <div class="card">
+            <!-- Brand Header -->
         <div class="header">
             <img src="" alt="Logo" onerror="this.style.display='none'">
             <h1>First Aid Box Inspection</h1>
@@ -462,18 +447,20 @@
                             <label>Digital Verification Sign-off <span style="color:var(--danger)">*</span></label>
                             <div class="signature-container">
                                 <canvas class="signature-pad" id="sig-pad"></canvas>
-                                <button type="button" class="clear-btn" onclick="clearSignature()">Clear</button>
                             </div>
-                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" id="save-sig-check" style="width: 16px; height: 16px; margin: 0; cursor: pointer; accent-color: var(--primary);">
-                                <label for="save-sig-check" style="margin: 0; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); cursor: pointer; user-select: none;">Save signature on this device</label>
+                            <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="save-sig-check" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--primary);">
+                                    <label for="save-sig-check" style="margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); cursor: pointer; user-select: none;">Save signature on this device</label>
+                                </div>
+                                <button type="button" class="clear-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="clearSignature()">Clear Signature</button>
                             </div>
                         </div>
 
                         <!-- Instant Restock Checkbox -->
-                        <div style="margin-top: 20px; padding: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                        <div style="margin-top: 20px; padding: 12px; background: #eff6ff; border: 3px solid var(--border); border-radius: 12px; display: flex; align-items: center; gap: 10px;">
                             <input type="checkbox" id="instant-restock-check" style="width:20px; height:20px; margin:0; cursor:pointer; accent-color:var(--primary);">
-                            <label for="instant-restock-check" style="margin:0; font-size:0.85rem; font-weight:500; color:#1e40af; cursor:pointer; user-select:none;">
+                            <label for="instant-restock-check" style="margin:0; font-size:0.85rem; font-weight: 700; color:#1e40af; cursor:pointer; user-select:none;">
                                 <strong>Deduct Refill from Central Inventory?</strong> Check this if you immediately refilled missing items from the safety cabinet.
                             </label>
                         </div>
@@ -482,9 +469,9 @@
             </div>
 
             <!-- Submit button -->
-            <button type="submit" class="btn-submit" id="submit-btn">Submit ISO 45001 Compliance Log</button>
+            <button type="submit" class="submit-btn" id="submit-btn" style="width: 100%; margin-top: 24px;">Submit ISO 45001 Compliance Log</button>
         </form>
-    </div>
+    </div> <!-- Close card -->
 
     <!-- Loading Overlay -->
     <div class="overlay" id="loading-overlay">
@@ -580,10 +567,14 @@
             // Only resize if container is visible (has width/height)
             if (canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-                signaturePad.clear(); // Reset drawing context state
+                const targetWidth = canvas.offsetWidth * ratio;
+                const targetHeight = canvas.offsetHeight * ratio;
+                if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    canvas.getContext("2d").scale(ratio, ratio);
+                    signaturePad.clear(); // Reset drawing context state
+                }
             }
         }
 
@@ -600,6 +591,7 @@
             resizeSignatureCanvas();
 
             window.addEventListener("resize", resizeSignatureCanvas);
+            canvas.addEventListener('pointerdown', resizeSignatureCanvas);
 
             // Load saved signature if available
             const savedSig = localStorage.getItem('first_aid_saved_sig');

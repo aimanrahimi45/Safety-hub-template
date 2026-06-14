@@ -604,7 +604,7 @@
                     }
                 }
                 
-                if (result.status === "error") {
+                if (result.status && result.status.toLowerCase() === "error") {
                     throw new Error(result.message);
                 }
                 
@@ -853,7 +853,7 @@
             const text = await response.text();
             let result = JSON.parse(text);
 
-            if (result.status === "error") {
+            if (result.status && result.status.toLowerCase() === "error") {
                 throw new Error(result.message);
             }
 

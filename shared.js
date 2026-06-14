@@ -175,13 +175,39 @@ function showConnectionSetupOverlay() {
 
     document.body.appendChild(overlay);
 
-    document.getElementById("btn-save-connection").addEventListener("click", () => {
+    document.getElementById("btn-save-connection").addEventListener("click", async () => {
         const inputVal = document.getElementById("setup-sheet-id").value.trim();
         if (!inputVal) {
             alert("❌ Please enter your Spreadsheet ID to proceed.");
             return;
         }
-        localStorage.setItem("safety_hub_spreadsheet_id", inputVal);
-        location.reload();
+
+        const btn = document.getElementById("btn-save-connection");
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "⏳ Connecting & Verifying...";
+
+        try {
+            if (typeof GOOGLE_SCRIPT_URL === "undefined" || !GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("YOUR_WEB_APP_URL")) {
+                throw new Error("Google Apps Script URL is not configured in config.js.");
+            }
+
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getBranding&spreadsheetId=${inputVal}`);
+            const data = await response.json();
+
+            if (data.status === "ERROR") {
+                throw new Error(data.message || "Failed to verify connection.");
+            }
+
+            // Connection successful! Save setup details and reload
+            localStorage.setItem("safety_hub_spreadsheet_id", inputVal);
+            if (data.systemName) localStorage.setItem("safety_hub_system_name", data.systemName);
+            if (data.logoUrl) localStorage.setItem("safety_hub_logo_url", data.logoUrl);
+            location.reload();
+        } catch (err) {
+            alert(`❌ Connection Failed:\n\n${err.message}\n\nPlease check the Spreadsheet ID and ensure your Google Apps Script has access to it.`);
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
     });
 }

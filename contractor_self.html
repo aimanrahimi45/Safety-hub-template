@@ -391,7 +391,7 @@
                 }
             }
 
-            if (result.status === "error") {
+            if (result.status && result.status.toLowerCase() === "error") {
                 throw new Error(result.message);
             }
 

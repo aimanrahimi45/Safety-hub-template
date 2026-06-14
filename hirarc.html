@@ -347,7 +347,7 @@
                 .then(text => {
                     try {
                         const result = JSON.parse(text);
-                        if (result.status === "error") {
+                        if (result.status && result.status.toLowerCase() === "error") {
                             alert("BACKEND SCRIPT ERROR:\n\n" + result.message);
                             throw new Error(result.message);
                         }

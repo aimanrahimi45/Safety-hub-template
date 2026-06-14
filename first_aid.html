@@ -483,7 +483,10 @@
         // Central backend URL loaded from config.js
 
 
-        const CHECKLIST_ITEMS = [
+        let checklistItems = [];
+
+        // Default fallback checklist items
+        const DEFAULT_CHECKLIST_ITEMS = [
             { id: 1, name: "1. Triangular Bandage 100cm", req: "5pcs", group: 1 },
             { id: 2, name: "2. Eye Dressing No 16", req: "3pkt", group: 1 },
             { id: 3, name: "3. Sterile Gamgee Pad 25cm", req: "3pkt", group: 1 },
@@ -499,9 +502,9 @@
             { id: 13, name: "13. Scissors", req: "1pcs", group: 3 },
             { id: 14, name: "14. Adhesive Tape", req: "1pcs", group: 2 },
             { id: 15, name: "15. Bactigras", req: "2pcs", group: 2 },
-            { id: 16, name: "16. Yellow Antiseptic Liquid", req: "1pcs", group: 3, exp: "10/26" },
+            { id: 16, name: "16. Yellow Antiseptic Liquid", req: "1pcs", group: 3 },
             { id: 17, name: "17. Cotton Bud 100pcs", req: "1pkt", group: 2 },
-            { id: 18, name: "18. CPR Face Shield", req: "3pcs", group: 1, exp: "08/28" },
+            { id: 18, name: "18. CPR Face Shield", req: "3pcs", group: 1 },
             { id: 19, name: "19. Adhesive Plaster", req: "60pcs", group: 1 },
             { id: 20, name: "20. Safety Pin", req: "36pcs", group: 1 },
             { id: 21, name: "21. Thermometer", req: "1pcs", group: 3 },
@@ -509,9 +512,43 @@
             { id: 23, name: "23. First Aid Manual", req: "1pcs", group: 3 }
         ];
 
+        async function fetchChecklistItems() {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId || typeof GOOGLE_SCRIPT_URL === "undefined" || GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                checklistItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+                renderItems();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getFirstAidItems&spreadsheetId=${sheetId}`);
+                const resJson = await response.json();
+                if (resJson.status === "SUCCESS" && resJson.data && resJson.data.length > 0) {
+                    checklistItems = resJson.data.map(item => ({
+                        id: parseInt(item["Item ID"], 10),
+                        name: `${item["Item ID"]}. ${item["Item Name"]}`,
+                        req: item["Required Std"] || "1pcs",
+                        group: parseInt(item["Category Group"], 10) || 1
+                    }));
+                } else {
+                    throw new Error("No inventory items found in spreadsheet.");
+                }
+            } catch (err) {
+                console.warn("Failed to load database items, using defaults:", err);
+                checklistItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+            } finally {
+                renderItems();
+            }
+        }
+
         // --- Render Items ---
         function renderItems() {
-            CHECKLIST_ITEMS.forEach(item => {
+            // Clear existing elements in accordion sections
+            document.getElementById('group-1-items').innerHTML = '';
+            document.getElementById('group-2-items').innerHTML = '';
+            document.getElementById('group-3-items').innerHTML = '';
+
+            checklistItems.forEach(item => {
                 const target = document.getElementById(`group-${item.group}-items`);
                 if (!target) return;
 
@@ -615,14 +652,16 @@
 
         // --- Quick Standard Fill ---
         function quickFill() {
-            CHECKLIST_ITEMS.forEach(item => {
+            checklistItems.forEach(item => {
                 const numericQty = parseInt(item.req, 10) || 0;
-                document.getElementById(`item-${item.id}-avail`).value = numericQty;
-                if (item.exp) {
-                    document.getElementById(`item-${item.id}-exp`).value = item.exp;
+                const inputEl = document.getElementById(`item-${item.id}-avail`);
+                if (inputEl) inputEl.value = numericQty;
+                const expEl = document.getElementById(`item-${item.id}-exp`);
+                if (expEl && item.exp) {
+                    expEl.value = item.exp;
                 }
             });
-            alert("✅ Standard quantities and standard expiries autofilled successfully!");
+            alert("✅ Standard quantities autofilled successfully!");
         }
 
         // --- Submit ---
@@ -653,6 +692,23 @@
             submitBtn.disabled = true;
             overlay.style.display = 'flex';
 
+            // Gather items dynamically
+            const itemsData = [];
+            checklistItems.forEach(item => {
+                const availEl = document.getElementById(`item-${item.id}-avail`);
+                const expEl = document.getElementById(`item-${item.id}-exp`);
+                const remarksEl = document.getElementById(`item-${item.id}-remarks`);
+
+                itemsData.push({
+                    id: item.id,
+                    name: item.name.replace(/^\d+\.\s*/, ''), // remove leading ID prefix from display name
+                    req: item.req,
+                    avail: availEl ? availEl.value : "-",
+                    exp: expEl ? expEl.value || "-" : "-",
+                    remarks: remarksEl ? remarksEl.value || "-" : "-"
+                });
+            });
+
             // Gather standard metadata
             const formData = {
                 action: "firstAidForm",
@@ -667,19 +723,11 @@
                 officerName: document.getElementById('officer-name').value,
                 officerPos: document.getElementById('officer-pos').value,
                 signature: sigData, // base64 string
-                instantRestock: document.getElementById('instant-restock-check').checked
+                instantRestock: document.getElementById('instant-restock-check').checked,
+                cleanliness: document.getElementById('item-24-avail').value,
+                cleanlinessRemarks: document.getElementById('item-24-remarks').value.trim() || "-",
+                items: itemsData
             };
-
-            // Gather items 1 to 24
-            for (let i = 1; i <= 24; i++) {
-                const availEl = document.getElementById(`item-${i}-avail`);
-                const expEl = document.getElementById(`item-${i}-exp`);
-                const remarksEl = document.getElementById(`item-${i}-remarks`);
-
-                formData[`item_${i}_avail`] = availEl ? availEl.value : "-";
-                formData[`item_${i}_exp`] = expEl ? expEl.value || "-" : "-";
-                formData[`item_${i}_remarks`] = remarksEl ? remarksEl.value || "-" : "-";
-            }
 
             try {
 
@@ -720,7 +768,7 @@
         }
 
         // Run rendering on start
-        renderItems();
+        fetchChecklistItems();
         initSignature();
         loadBoxIds();
     </script>

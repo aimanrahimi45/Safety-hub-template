@@ -188,36 +188,36 @@ function initializeFirstAidSheets(ss) {
  
   // 3. Central Inventory
   let invSheet = ss.getSheetByName("First Aid Central Inventory") || ss.insertSheet("First Aid Central Inventory");
-  const invHeaders = ["Item ID", "Item Name", "Unit", "Current Stock", "Min Alert Level", "Last Updated"];
+  const invHeaders = ["Item ID", "Item Name", "Unit", "Current Stock", "Min Alert Level", "Required Std", "Category Group", "Last Updated"];
   invSheet.getRange(1, 1, 1, invHeaders.length).setValues([invHeaders]);
   invSheet.getRange(1, 1, 1, invHeaders.length).setFontWeight("bold").setBackground("#0f766e").setFontColor("#ffffff");
   invSheet.setFrozenRows(1);
  
   if (invSheet.getLastRow() <= 1) {
     const defaultInventory = [
-      [1, "Triangular Bandage 100cm", "pcs", 0, 10, new Date()],
-      [2, "Eye Dressing No 16", "pkt", 0, 5, new Date()],
-      [3, "Sterile Gamgee Pad 25cm", "pkt", 0, 5, new Date()],
-      [4, "Sterile Gauze Pad 7.5cm", "pkt", 0, 10, new Date()],
-      [5, "Sterile Gauze Pad 10cm", "pkt", 0, 10, new Date()],
-      [6, "Elastic Bandage", "pkt", 0, 5, new Date()],
-      [7, "W.O.W Bandage 2.5cm", "pcs", 0, 15, new Date()],
-      [8, "W.O.W Bandage 5.0cm", "pcs", 0, 15, new Date()],
-      [9, "W.O.W Bandage 7.5cm", "pcs", 0, 15, new Date()],
-      [10, "Instant Ice Pack", "pkt", 0, 10, new Date()],
-      [11, "Sterile Non-Adherent Pad", "pkt", 0, 10, new Date()],
-      [12, "Pair of Glove", "pkt", 0, 10, new Date()],
-      [13, "Scissors", "pcs", 0, 2, new Date()],
-      [14, "Adhesive Tape", "pcs", 0, 5, new Date()],
-      [15, "Bactigras", "pcs", 0, 5, new Date()],
-      [16, "Yellow Antiseptic Liquid", "pcs", 0, 2, new Date()],
-      [17, "Cotton Bud 100pcs", "pkt", 0, 5, new Date()],
-      [18, "CPR Face Shield", "pcs", 0, 5, new Date()],
-      [19, "Adhesive Plaster", "pcs", 0, 100, new Date()],
-      [20, "Safety Pin", "pcs", 0, 50, new Date()],
-      [21, "Thermometer", "pcs", 0, 2, new Date()],
-      [22, "Waste Bag", "pcs", 0, 10, new Date()],
-      [23, "First Aid Manual", "pcs", 0, 2, new Date()]
+      [1, "Triangular Bandage 100cm", "pcs", 0, 10, "5pcs", 1, new Date()],
+      [2, "Eye Dressing No 16", "pkt", 0, 5, "3pkt", 1, new Date()],
+      [3, "Sterile Gamgee Pad 25cm", "pkt", 0, 5, "3pkt", 1, new Date()],
+      [4, "Sterile Gauze Pad 7.5cm", "pkt", 0, 10, "6pkt", 1, new Date()],
+      [5, "Sterile Gauze Pad 10cm", "pkt", 0, 10, "6pkt", 1, new Date()],
+      [6, "Elastic Bandage", "pkt", 0, 5, "3pkt", 1, new Date()],
+      [7, "W.O.W Bandage 2.5cm", "pcs", 0, 15, "8pcs", 1, new Date()],
+      [8, "W.O.W Bandage 5.0cm", "pcs", 0, 15, "8pcs", 1, new Date()],
+      [9, "W.O.W Bandage 7.5cm", "pcs", 0, 15, "8pcs", 1, new Date()],
+      [10, "Instant Ice Pack", "pkt", 0, 10, "6pkt", 2, new Date()],
+      [11, "Sterile Non-Adherent Pad", "pkt", 0, 10, "6pkt", 2, new Date()],
+      [12, "Pair of Glove", "pkt", 0, 10, "6pkt", 2, new Date()],
+      [13, "Scissors", "pcs", 0, 2, "1pcs", 3, new Date()],
+      [14, "Adhesive Tape", "pcs", 0, 5, "1pcs", 2, new Date()],
+      [15, "Bactigras", "pcs", 0, 5, "2pcs", 2, new Date()],
+      [16, "Yellow Antiseptic Liquid", "pcs", 0, 2, "1pcs", 3, new Date()],
+      [17, "Cotton Bud 100pcs", "pkt", 0, 5, "1pkt", 2, new Date()],
+      [18, "CPR Face Shield", "pcs", 0, 5, "3pcs", 1, new Date()],
+      [19, "Adhesive Plaster", "pcs", 0, 100, "60pcs", 1, new Date()],
+      [20, "Safety Pin", "pcs", 0, 50, "36pcs", 1, new Date()],
+      [21, "Thermometer", "pcs", 0, 2, "1pcs", 3, new Date()],
+      [22, "Waste Bag", "pcs", 0, 10, "3pcs", 3, new Date()],
+      [23, "First Aid Manual", "pcs", 0, 2, "1pcs", 3, new Date()]
     ];
     invSheet.getRange(2, 1, defaultInventory.length, invHeaders.length).setValues(defaultInventory);
   }
@@ -313,6 +313,17 @@ function doGet(e) {
     if (action === "getBoxIds") {
       const boxIds = settings["BOX_IDS"] || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
       return returnJSON({ status: "SUCCESS", data: boxIds.split(",") });
+    }
+
+    // Public First Aid Items lookup for inspection checklist
+    if (action === "getFirstAidItems") {
+      const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
+      if (!ssId) {
+        return returnJSON({ status: "ERROR", message: "First Aid database not provisioned." });
+      }
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = targetSS.getSheetByName("First Aid Central Inventory");
+      return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
     // Look up Contractor Induction Status
@@ -565,8 +576,8 @@ function doPost(e) {
         }
         
         const auditId = "FA-" + String(logsSheet.getLastRow()).padStart(5, '0');
-        const cleanCond = data[`item_24_avail`] || "Good";
-        const cleanRem = data[`item_24_remarks`] || "-";
+        const cleanCond = data.cleanliness || data[`item_24_avail`] || "Good";
+        const cleanRem = data.cleanlinessRemarks || data[`item_24_remarks`] || "-";
    
         logsSheet.appendRow([
           auditId, new Date(), data.inspectDate, data.company, data.department, data.section,
@@ -574,40 +585,56 @@ function doPost(e) {
           data.officerName || "-", data.officerPos || "-", signatureUrl
         ]);
         
-        const itemsList = [
-          { id: 1, name: "Triangular Bandage 100cm", req: "5pcs" },
-          { id: 2, name: "Eye Dressing No 16", req: "3pkt" },
-          { id: 3, name: "Sterile Gamgee Pad 25cm", req: "3pkt" },
-          { id: 4, name: "Sterile Gauze Pad 7.5cm", req: "6pkt" },
-          { id: 5, name: "Sterile Gauze Pad 10cm", req: "6pkt" },
-          { id: 6, name: "Elastic Bandage", req: "3pkt" },
-          { id: 7, name: "W.O.W Bandage 2.5cm", req: "8pcs" },
-          { id: 8, name: "W.O.W Bandage 5.0cm", req: "8pcs" },
-          { id: 9, name: "W.O.W Bandage 7.5cm", req: "8pcs" },
-          { id: 10, name: "Instant Ice Pack", req: "6pkt" },
-          { id: 11, name: "Sterile Non-Adherent Pad", req: "6pkt" },
-          { id: 12, name: "Pair of Glove", req: "6pkt" },
-          { id: 13, name: "Scissors", req: "1pcs" },
-          { id: 14, name: "Adhesive Tape", req: "1pcs" },
-          { id: 15, name: "Bactigras", req: "2pcs" },
-          { id: 16, name: "Yellow Antiseptic Liquid", req: "1pcs" },
-          { id: 17, name: "Cotton Bud 100pcs", req: "1pkt" },
-          { id: 18, name: "CPR Face Shield", req: "3pcs" },
-          { id: 19, name: "Adhesive Plaster", req: "60pcs" },
-          { id: 20, name: "Safety Pin", req: "36pcs" },
-          { id: 21, name: "Thermometer", req: "1pcs" },
-          { id: 22, name: "Waste Bag", req: "3pcs" },
-          { id: 23, name: "First Aid Manual", req: "1pcs" }
-        ];
+        let submissionItems = [];
+        if (data.items && Array.isArray(data.items)) {
+          submissionItems = data.items;
+        } else {
+          // Fallback to support older frontend flat-parameters format
+          const defaultItems = [
+            { id: 1, name: "Triangular Bandage 100cm", req: "5pcs" },
+            { id: 2, name: "Eye Dressing No 16", req: "3pkt" },
+            { id: 3, name: "Sterile Gamgee Pad 25cm", req: "3pkt" },
+            { id: 4, name: "Sterile Gauze Pad 7.5cm", req: "6pkt" },
+            { id: 5, name: "Sterile Gauze Pad 10cm", req: "6pkt" },
+            { id: 6, name: "Elastic Bandage", req: "3pkt" },
+            { id: 7, name: "W.O.W Bandage 2.5cm", req: "8pcs" },
+            { id: 8, name: "W.O.W Bandage 5.0cm", req: "8pcs" },
+            { id: 9, name: "W.O.W Bandage 7.5cm", req: "8pcs" },
+            { id: 10, name: "Instant Ice Pack", req: "6pkt" },
+            { id: 11, name: "Sterile Non-Adherent Pad", req: "6pkt" },
+            { id: 12, name: "Pair of Glove", req: "6pkt" },
+            { id: 13, name: "Scissors", req: "1pcs" },
+            { id: 14, name: "Adhesive Tape", req: "1pcs" },
+            { id: 15, name: "Bactigras", req: "2pcs" },
+            { id: 16, name: "Yellow Antiseptic Liquid", req: "1pcs" },
+            { id: 17, name: "Cotton Bud 100pcs", req: "1pkt" },
+            { id: 18, name: "CPR Face Shield", req: "3pcs" },
+            { id: 19, name: "Adhesive Plaster", req: "60pcs" },
+            { id: 20, name: "Safety Pin", req: "36pcs" },
+            { id: 21, name: "Thermometer", req: "1pcs" },
+            { id: 22, name: "Waste Bag", req: "3pcs" },
+            { id: 23, name: "First Aid Manual", req: "1pcs" }
+          ];
+          defaultItems.forEach(item => {
+            submissionItems.push({
+              id: item.id,
+              name: item.name,
+              req: item.req,
+              avail: data[`item_${item.id}_avail`],
+              exp: data[`item_${item.id}_exp`],
+              remarks: data[`item_${item.id}_remarks`]
+            });
+          });
+        }
    
         const stockMap = getCentralStockMap(targetSS);
         const instantRestock = data.instantRestock === true;
         
-        itemsList.forEach(item => {
-          const inputVal = parseInt(data[`item_${item.id}_avail`], 10) || 0;
+        submissionItems.forEach(item => {
+          const inputVal = parseInt(item.avail, 10) || 0;
           const reqVal = parseInt(item.req.match(/^(\d+)/)[1], 10) || 0;
-          const exp = data[`item_${item.id}_exp`] || "-";
-          const remarksValue = data[`item_${item.id}_remarks`] || "-";
+          const exp = item.exp || "-";
+          const remarksValue = item.remarks || "-";
           let finalAvail = inputVal;
    
           if (instantRestock && inputVal < reqVal) {

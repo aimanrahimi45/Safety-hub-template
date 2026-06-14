@@ -435,7 +435,12 @@ function doGet(e) {
       
       const targetSS = SpreadsheetApp.openById(ssId);
       const sheet = targetSS.getSheetByName(sheetName);
-      return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
+      return returnJSON({ 
+        status: "SUCCESS", 
+        data: fetchSheetDataAsJSON(sheet),
+        spreadsheetId: ssId,
+        spreadsheetUrl: targetSS.getUrl()
+      });
     }
     
     // Get First Aid logs details

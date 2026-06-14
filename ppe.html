@@ -485,6 +485,9 @@
             <!-- Filter Options -->
             <div class="card">
                 <h2>Manage PPE Transactions</h2>
+                <p id="ppe-db-status" style="font-size:0.8rem; color:var(--text-muted); margin-top: -10px; margin-bottom: 20px; display: none;">
+                    🗄️ Connected Database: <a id="ppe-db-link" href="#" target="_blank" style="color:var(--primary); text-decoration:underline; font-weight:600;">Open PPE System Google Sheet 🔗</a>
+                </p>
                 <div class="search-bar" style="margin-bottom: 20px;">
                     <input type="text" id="search-query" placeholder="Search by Staff Name or ID..." oninput="filterData()">
                     <button type="button" class="secondary-btn" style="width:auto;" onclick="loadDatabaseData()">🔄 Refresh</button>
@@ -662,6 +665,15 @@
         return localStorage.getItem("safety_hub_pin") || "";
     }
 
+    function updateDatabaseLink(url) {
+        const statusEl = document.getElementById('ppe-db-status');
+        const linkEl = document.getElementById('ppe-db-link');
+        if (statusEl && linkEl && url) {
+            linkEl.href = url;
+            statusEl.style.display = 'block';
+        }
+    }
+
     async function verifyPinState() {
         const pin = getDashboardPin();
         if (pin) {
@@ -681,6 +693,9 @@
                     alert("❌ Session expired or PIN invalid. Please unlock again.");
                 } else {
                     ppeData = resJson.data || [];
+                    if (resJson.spreadsheetUrl) {
+                        updateDatabaseLink(resJson.spreadsheetUrl);
+                    }
                     document.getElementById('lock-screen').style.display = 'none';
                     document.getElementById('dashboard-content').style.display = 'block';
                     filterData();
@@ -715,6 +730,9 @@
                 } else {
                     localStorage.setItem("safety_hub_pin", pin);
                     ppeData = resJson.data || [];
+                    if (resJson.spreadsheetUrl) {
+                        updateDatabaseLink(resJson.spreadsheetUrl);
+                    }
                     document.getElementById('lock-screen').style.display = 'none';
                     document.getElementById('dashboard-content').style.display = 'block';
                     filterData();
@@ -1657,6 +1675,9 @@
             }
 
             ppeData = resJson.data || [];
+            if (resJson.spreadsheetUrl) {
+                updateDatabaseLink(resJson.spreadsheetUrl);
+            }
             filterData();
 
         } catch (err) {

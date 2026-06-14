@@ -89,16 +89,6 @@ body {
     /* Wobbly style B as default */
     border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px !important;
     margin-bottom: 24px;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                box-shadow 0.2s ease, 
-                border-radius 0.3s ease-in-out !important;
-}
-
-.card:hover {
-    transform: translate(-3px, -3px);
-    box-shadow: 9px 9px 0px var(--border) !important;
-    border-color: var(--primary) !important;
-    border-radius: 220px 20px 240px 20px / 20px 240px 20px 220px !important;
 }
 
 /* Headings */
@@ -321,29 +311,17 @@ body.in-iframe .container {
 .wobbly-style-a {
     border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
 }
-.wobbly-style-a:hover {
-    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
-}
 
 .wobbly-style-b {
     border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px !important;
-}
-.wobbly-style-b:hover {
-    border-radius: 220px 20px 240px 20px / 20px 240px 20px 220px !important;
 }
 
 .wobbly-style-c {
     border-radius: 15px 255px 15px 225px / 225px 15px 255px 15px !important;
 }
-.wobbly-style-c:hover {
-    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
-}
 
 .wobbly-style-d {
     border-radius: 240px 20px 220px 20px / 20px 220px 20px 240px !important;
-}
-.wobbly-style-d:hover {
-    border-radius: 20px 220px 20px 240px / 240px 20px 220px 20px !important;
 }
 
 /* Wobbly Card Base */
@@ -352,8 +330,7 @@ body.in-iframe .container {
     border: 3px solid var(--border) !important;
     box-shadow: var(--shadow-md) !important;
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                box-shadow 0.2s ease, 
-                border-radius 0.3s ease-in-out !important;
+                box-shadow 0.2s ease !important;
     transform: rotate(var(--rotate, 0deg));
     translate: 0px 0px;
     scale: 1;
@@ -378,9 +355,6 @@ body.in-iframe .container {
     border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
     transition: all 0.2s ease !important;
 }
-.wobbly-btn:hover {
-    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
-}
 
 /* ==========================================
    SHARED DESIGN SYSTEM BUTTONS
@@ -397,7 +371,7 @@ body.in-iframe .container {
     box-shadow: var(--shadow-sm) !important;
     border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
     cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.1s ease, border-radius 0.2s ease !important;
+    transition: transform 0.1s ease, box-shadow 0.1s ease !important;
     text-decoration: none;
     gap: 8px;
     box-sizing: border-box;
@@ -409,7 +383,6 @@ body.in-iframe .container {
 }
 .submit-btn:hover {
     background: var(--primary-hover) !important;
-    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
     transform: translate(-2px, -2px) !important;
     box-shadow: 5px 5px 0px var(--border) !important;
 }
@@ -430,7 +403,6 @@ body.in-iframe .container {
 }
 .secondary-btn:hover, .signature-button:hover {
     background: var(--bg) !important;
-    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
     transform: translate(-2px, -2px) !important;
     box-shadow: 5px 5px 0px var(--border) !important;
 }
@@ -446,7 +418,6 @@ body.in-iframe .container {
 .clear-btn:hover {
     background: #E2E8F0 !important;
     color: var(--text-main) !important;
-    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
     transform: translate(-2px, -2px) !important;
     box-shadow: 5px 5px 0px var(--border) !important;
 }

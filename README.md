@@ -14,8 +14,7 @@ This repository contains the complete frontend web portal package and the automa
 5. **Contractor Induction (`contractor.html`)**: Brief, verify, and approve contractor safety logs with live photo capture and SHO sign-off.
 6. **Contractor Self-Registration (`contractor_self.html`)**: Mobile-ready portal allowing workers to register and capture signatures on their own devices.
 7. **Contractor Handbook (`contractor_handbook.html`)**: Digital handbook booklet with built-in acknowledgment form.
-8. **HIRARC Risk Approvals (`hirarc.html`)**: Yearly hazard identification and risk control review digital sign-off.
-9. **Secure Audit Dashboard (`audit.html`)**: Consolidated log search, filtering, and export logs panel.
+8. **Secure Audit Dashboard (`audit.html`)**: Consolidated log search, filtering, and export logs panel.
 
 ---
 

@@ -459,11 +459,6 @@
                 name: "Contractor Handbook Acknowledgment",
                 dbKey: "Handbook",
                 isSecure: true
-            },
-            {
-                name: "HIRARC Yearly Approvals",
-                dbKey: "HIRARC",
-                isSecure: true
             }
         ];
 
@@ -591,7 +586,7 @@
                                 item["Signature URL"]
                             ]);
                         } else {
-                            // Non-relational secure databases (HIRARC, Contractor Inductions, Contractor Handbook)
+                            // Non-relational secure databases (Contractor Inductions, Contractor Handbook)
                             const logsRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=${db.dbKey}&spreadsheetId=${sheetId}&pin=${pin}`);
                             const logsJson = await logsRes.json();
 

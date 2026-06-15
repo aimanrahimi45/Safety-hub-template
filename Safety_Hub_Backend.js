@@ -127,26 +127,6 @@ function setupWorkspace() {
     setSystemSetting(ss, "CONTRACTOR_SPREADSHEET_ID", newSS.getId());
   }
   initializeContractorSheets(contractorFile);
- 
-  // E. Setup HIRARC Spreadsheet
-  let hirarcId = settings["HIRARC_SPREADSHEET_ID"];
-  let hirarcFile;
-  if (hirarcId) {
-    try {
-      hirarcFile = SpreadsheetApp.openById(hirarcId);
-    } catch (err) {
-      hirarcId = null;
-    }
-  }
-  if (!hirarcId) {
-    const newSS = SpreadsheetApp.create("HIRARC System");
-    const file = DriveApp.getFileById(newSS.getId());
-    folder.addFile(file);
-    DriveApp.getRootFolder().removeFile(file);
-    hirarcFile = newSS;
-    setSystemSetting(ss, "HIRARC_SPREADSHEET_ID", newSS.getId());
-  }
-  initializeHirarcSheets(hirarcFile);
   
   // Format master control tab
   let masterSheet = ss.getSheetByName("Dashboard Links");
@@ -157,7 +137,6 @@ function setupWorkspace() {
   masterSheet.appendRow(["First Aid Database", faFile.getUrl()]);
   masterSheet.appendRow(["PPE Database", ppeFile.getUrl()]);
   masterSheet.appendRow(["Contractor Database", contractorFile.getUrl()]);
-  masterSheet.appendRow(["HIRARC Database", hirarcFile.getUrl()]);
   masterSheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   masterSheet.autoResizeColumns(1, 2);
  
@@ -263,32 +242,6 @@ function initializeContractorSheets(ss) {
   if (defSheet) ss.deleteSheet(defSheet);
 }
  
-function initializeHirarcSheets(ss) {
-  const defSheet = ss.getSheetByName("Sheet1");
-  
-  // 1. Signed Approvals
-  let appSheet = ss.getSheetByName("Signed Approvals") || ss.insertSheet("Signed Approvals");
-  const appHeaders = ["Timestamp", "Department", "Area Owner Name", "Employee ID", "Review Date", "Document Version", "ISO Acknowledgment", "Signature"];
-  appSheet.getRange(1, 1, 1, appHeaders.length).setValues([appHeaders]);
-  appSheet.getRange(1, 1, 1, appHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
-  appSheet.setFrozenRows(1);
- 
-  // 2. Master List Tab
-  let masterSheet = ss.getSheetByName("HIRARC Master List") || ss.insertSheet("HIRARC Master List");
-  if (masterSheet.getLastRow() <= 1) {
-    const defaultMaster = [
-      ["Department", "Document Version ID", "Revision Date"],
-      ["Production", "HIRARC-PROD-2026-V2", "2026-01-15"],
-      ["Maintenance", "HIRARC-MAINT-2026-V1", "2026-02-10"],
-      ["Warehouse", "HIRARC-WH-2026-V3", "2026-03-01"],
-      ["Logistics", "HIRARC-LOG-2026-V1", "2026-03-12"]
-    ];
-    masterSheet.getRange(1, 1, defaultMaster.length, 3).setValues(defaultMaster);
-    masterSheet.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#374151").setFontColor("#ffffff");
-  }
-  
-  if (defSheet) ss.deleteSheet(defSheet);
-}
  
 // ========================================================
 // 3. UNIFIED GET ROUTER (READ API - MULTI-TENANT)
@@ -351,16 +304,6 @@ function doGet(e) {
       }
     }
     
-    // Get HIRARC Master List Dropdowns
-    if (action === "getMasterList") {
-      const ssId = settings["HIRARC_SPREADSHEET_ID"];
-      if (!ssId) return returnJSON({ status: "ERROR", message: "HIRARC database not provisioned." });
-      const hirarcSS = SpreadsheetApp.openById(ssId);
-      const sheet = hirarcSS.getSheetByName("HIRARC Master List") || hirarcSS.getSheets()[0];
-      const rows = sheet.getDataRange().getValues();
-      const data = rows.map(r => [String(r[0]).trim(), r[1] ? String(r[1]).trim() : "", r[2] ? String(r[2]).trim() : ""]);
-      return returnJSON({ status: "SUCCESS", data: data });
-    }
  
     // Smart 6-Month PPE Issue warning check
     if (action === "checkLastIssue") {
@@ -441,9 +384,6 @@ function doGet(e) {
       } else if (db === "Handbook") {
         ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Contractor Acknowledgments";
-      } else if (db === "HIRARC") {
-        ssId = settings["HIRARC_SPREADSHEET_ID"];
-        sheetName = "Signed Approvals";
       }
       
       if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
@@ -825,16 +765,7 @@ function doPost(e) {
       });
     }
    
-    // H. HIRARC Signature Submission
-    if (data.action === "hirarcForm") {
-      return runTransaction(() => {
-        const ssId = settings["HIRARC_SPREADSHEET_ID"];
-        const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("Signed Approvals") || targetSS.getSheets()[0];
-        sheet.appendRow([new Date(), data.department, data.owner_name, data.employee_id, data.date, data.document_version, data.declaration, data.signature]);
-        return returnJSON({ status: "success" });
-      });
-    }
+
    
     return returnJSON({ status: "ERROR", message: "Invalid action type" });
   } catch (err) {

@@ -29,6 +29,7 @@ function onOpen(e) {
   ui.createMenu('🛡️ Safety Hub')
       .addItem('⚡ Initialize Workspace', 'setupWorkspace')
       .addItem('⚙️ Settings & Configuration', 'showSettingsSidebar')
+      .addItem('🎨 Format Settings Tab', 'manualFormatSettings')
       .addToUi();
 }
 
@@ -966,6 +967,9 @@ function updateClientSettings(config) {
     setSystemSetting(ss, "BOX_IDS", config.boxIds || "");
     setSystemSetting(ss, "LICENSE_KEY", config.licenseKey || "");
     
+    // 3. Format the settings tab
+    formatSystemSettingsSheet(ss);
+    
     return { status: "success", message: "🎉 Configuration saved successfully!" };
   } catch (err) {
     return { status: "error", message: "Error: " + err.message };
@@ -1043,8 +1047,8 @@ function getSystemSettings(ss) {
   let sheet = ss.getSheetByName("System Settings");
   if (!sheet) {
     sheet = ss.insertSheet("System Settings");
-    sheet.hideSheet();
     const defaults = [
+      ["Setting Key", "Setting Value"],
       ["SYSTEM_NAME", "Safety Hub"],
       ["LOGO_URL", ""],
       ["DASHBOARD_PIN", "9911"],
@@ -1055,6 +1059,7 @@ function getSystemSettings(ss) {
       ["CONTRACTOR_DECLARATION", "Agreed: Emergency Evac, PPE Rules, Incident Reporting"]
     ];
     sheet.getRange(1, 1, defaults.length, 2).setValues(defaults);
+    formatSystemSettingsSheet(ss);
   }
   const rows = sheet.getDataRange().getValues();
   const settings = {};
@@ -1106,5 +1111,91 @@ function runTransaction(callback, timeoutMs) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Manual formatting menu trigger
+function manualFormatSettings() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  formatSystemSettingsSheet(ss);
+  SpreadsheetApp.getUi().alert("🎨 System Settings Formatted", "The 'System Settings' sheet has been formatted as a beautiful table successfully.", SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+// Format the System Settings tab into a beautiful, clean form table
+function formatSystemSettingsSheet(ss) {
+  let sheet = ss.getSheetByName("System Settings");
+  if (!sheet) return;
+  
+  // Ensure the sheet is visible
+  sheet.showSheet();
+  
+  // Check if header is already "Setting Key"
+  const lastRow = sheet.getLastRow();
+  if (lastRow === 0) return;
+  
+  const firstCell = sheet.getRange(1, 1).getValue();
+  if (firstCell !== "Setting Key") {
+    sheet.insertRowBefore(1);
+    sheet.getRange(1, 1).setValue("Setting Key");
+    sheet.getRange(1, 2).setValue("Setting Value");
+  }
+  
+  const currentLastRow = sheet.getLastRow();
+  if (currentLastRow <= 1) return;
+  
+  // 1. Clear any existing formatting to start fresh
+  const fullRange = sheet.getRange(1, 1, currentLastRow, 2);
+  fullRange.clearFormat();
+  
+  // 2. Set Row heights: header is 32, others are 28
+  sheet.setRowHeight(1, 32);
+  sheet.setRowHeights(2, currentLastRow - 1, 28);
+  
+  // 3. Font styling: Arial is universally supported in Google Sheets
+  fullRange.setFontFamily("Arial");
+  
+  // Header Formatting (Row 1)
+  const headerRange = sheet.getRange("A1:B1");
+  headerRange.setFontSize(10)
+             .setFontWeight("bold")
+             .setFontColor("#ffffff")
+             .setBackground("#1e293b") // Slate 800
+             .setHorizontalAlignment("left")
+             .setVerticalAlignment("middle");
+             
+  // Data Rows Formatting
+  const keysRange = sheet.getRange(2, 1, currentLastRow - 1, 1);
+  keysRange.setFontSize(9)
+           .setFontWeight("bold")
+           .setFontColor("#334155") // Slate 700
+           .setBackground("#f1f5f9") // Slate 100 for key column (structured look)
+           .setHorizontalAlignment("left")
+           .setVerticalAlignment("middle");
+           
+  const valuesRange = sheet.getRange(2, 2, currentLastRow - 1, 1);
+  valuesRange.setFontSize(9)
+             .setFontColor("#0f172a") // Slate 900
+             .setNumberFormat("@") // Plain Text to preserve leading zeros in PIN
+             .setWrap(true) // Wrap text to show long values nicely
+             .setHorizontalAlignment("left")
+             .setVerticalAlignment("middle");
+             
+  // Apply alternating row backgrounds for Column B to enhance readability
+  for (let r = 2; r <= currentLastRow; r++) {
+    const bg = (r % 2 === 0) ? "#f8fafc" : "#ffffff";
+    sheet.getRange(r, 2).setBackground(bg);
+  }
+  
+  // Apply elegant light slate borders
+  fullRange.setBorder(true, true, true, true, true, true, "#cbd5e1", null);
+  
+  // Auto-resize columns to fit content
+  sheet.autoResizeColumn(1);
+  sheet.autoResizeColumn(2);
+  
+  // Apply minimum widths to make it readable and leave space for new settings
+  const widthA = Math.max(sheet.getColumnWidth(1) + 20, 200);
+  const widthB = Math.max(sheet.getColumnWidth(2) + 40, 500);
+  sheet.setColumnWidth(1, widthA);
+  sheet.setColumnWidth(2, widthB);
 }
 

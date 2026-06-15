@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const path = window.location.pathname.toLowerCase();
     const isHub = path.endsWith("index.html") || path === "/" || path.endsWith("/");
-    const isPublicForm = path.endsWith("contractor_self.html") || path.endsWith("contractor_handbook.html");
+    const isPublicForm = path.endsWith("contractor_self.html");
     const inIframe = (window.self !== window.top);
 
     if (inIframe) {

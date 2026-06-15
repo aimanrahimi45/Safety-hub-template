@@ -454,11 +454,6 @@
                 name: "Contractor Inductions",
                 dbKey: "Contractor",
                 isSecure: true
-            },
-            {
-                name: "Contractor Handbook Acknowledgment",
-                dbKey: "Handbook",
-                isSecure: true
             }
         ];
 
@@ -586,7 +581,7 @@
                                 item["Signature URL"]
                             ]);
                         } else {
-                            // Non-relational secure databases (Contractor Inductions, Contractor Handbook)
+                            // Non-relational secure databases (Contractor Inductions)
                             const logsRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=${db.dbKey}&spreadsheetId=${sheetId}&pin=${pin}`);
                             const logsJson = await logsRes.json();
 

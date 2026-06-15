@@ -231,13 +231,6 @@ function initializeContractorSheets(ss) {
   indSheet.getRange(1, 1, 1, indHeaders.length).setValues([indHeaders]);
   indSheet.getRange(1, 1, 1, indHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   indSheet.setFrozenRows(1);
- 
-  // 2. Acknowledgments Log
-  let ackSheet = ss.getSheetByName("Contractor Acknowledgments") || ss.insertSheet("Contractor Acknowledgments");
-  const ackHeaders = ['Submission Date', 'Company Name', 'Contractor Name', 'Position', 'Email Address', 'Phone Number', 'IC Number (Last 4)', 'Operations Selected', 'Administration Selected', 'Logistics Selected', 'Has Digital Signature', 'Signature Image URL', 'Signature Data Size (chars)', 'IP Address', 'Browser Info', 'Processing Time', 'Status'];
-  ackSheet.getRange(1, 1, 1, ackHeaders.length).setValues([ackHeaders]);
-  ackSheet.getRange(1, 1, 1, ackHeaders.length).setFontWeight("bold").setBackground("#2a5298").setFontColor("#ffffff");
-  ackSheet.setFrozenRows(1);
   
   if (defSheet) ss.deleteSheet(defSheet);
 }
@@ -381,9 +374,6 @@ function doGet(e) {
       } else if (db === "Contractor") {
         ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Safety Inductions";
-      } else if (db === "Handbook") {
-        ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
-        sheetName = "Contractor Acknowledgments";
       }
       
       if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
@@ -727,43 +717,7 @@ function doPost(e) {
       });
     }
    
-    // G. Contractor Handbook Signature Acknowledgment
-    if (data.action === "contractorHandbookForm") {
-      return runTransaction(() => {
-        const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
-        const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("Contractor Acknowledgments");
-        
-        let folderId = settings["SIGNATURE_FOLDER_ID"];
-        let folder;
-        if (folderId) {
-          try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
-        }
-        if (!folderId) {
-          const workspaceId = settings["WORKSPACE_FOLDER_ID"];
-          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-          folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
-          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
-        }
-        
-        let signatureUrl = "";
-        if (data.signature && data.signature.startsWith("data:image/")) {
-          const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/jpeg", "Sig_Handbook_" + new Date().getTime() + ".jpg");
-          const file = folder.createFile(blob);
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          signatureUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
-        }
-        
-        sheet.appendRow([
-          Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"),
-          data.company || '', data.name || '', data.position || '', data.email || '', data.phone || '', data.icNumber || '',
-          data.operations ? 'Yes' : 'No', data.administration ? 'Yes' : 'No', data.logistics ? 'Yes' : 'No',
-          signatureUrl ? 'Yes' : 'No', signatureUrl, data.signature ? data.signature.length : 0,
-          'Browser submission', 'Desktop Portal', Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss"), 'Active'
-        ]);
-        return returnJSON({ status: "success" });
-      });
-    }
+
    
 
    

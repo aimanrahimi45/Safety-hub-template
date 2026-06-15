@@ -13,8 +13,7 @@ This repository contains the complete frontend web portal package and the automa
 4. **PPE Management (`ppe.html`)**: Log PPE requests, complete automatic 6-month duplicate issue intervals, and view visual usage analytics.
 5. **Contractor Induction (`contractor.html`)**: Brief, verify, and approve contractor safety logs with live photo capture and SHO sign-off.
 6. **Contractor Self-Registration (`contractor_self.html`)**: Mobile-ready portal allowing workers to register and capture signatures on their own devices.
-7. **Contractor Handbook (`contractor_handbook.html`)**: Digital handbook booklet with built-in acknowledgment form.
-8. **Secure Audit Dashboard (`audit.html`)**: Consolidated log search, filtering, and export logs panel.
+7. **Secure Audit Dashboard (`audit.html`)**: Consolidated log search, filtering, and export logs panel.
 
 ---
 

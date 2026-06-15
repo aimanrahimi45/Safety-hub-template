@@ -1162,33 +1162,53 @@ function formatSystemSettingsSheet(ss) {
              .setHorizontalAlignment("left")
              .setVerticalAlignment("middle");
              
-  // Data Rows Formatting
-  const keysRange = sheet.getRange(2, 1, currentLastRow - 1, 1);
-  keysRange.setFontSize(9)
-           .setFontWeight("bold")
-           .setFontColor("#334155") // Slate 700
-           .setBackground("#f1f5f9") // Slate 100 for key column (structured look)
-           .setHorizontalAlignment("left")
-           .setVerticalAlignment("middle");
-           
-  const valuesRange = sheet.getRange(2, 2, currentLastRow - 1, 1);
-  valuesRange.setFontSize(9)
-             .setFontColor("#0f172a") // Slate 900
-             .setNumberFormat("@") // Plain Text to preserve leading zeros in PIN
-             .setWrap(true) // Wrap text to show long values nicely
-             .setHorizontalAlignment("left")
-             .setVerticalAlignment("middle");
+  // 4. Clear existing range protections on this sheet to prevent duplicate/stale protections
+  const protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+  for (let i = 0; i < protections.length; i++) {
+    protections[i].remove();
+  }
              
-  // Apply alternating row backgrounds for Column B to enhance readability
+  // 5. Data Rows Formatting
   for (let r = 2; r <= currentLastRow; r++) {
-    const bg = (r % 2 === 0) ? "#f8fafc" : "#ffffff";
-    sheet.getRange(r, 2).setBackground(bg);
+    const keyRange = sheet.getRange(r, 1);
+    const valRange = sheet.getRange(r, 2);
+    const key = String(keyRange.getValue() || "").trim();
+    const isSystemKey = (key.indexOf("_ID") !== -1 || key.indexOf("_KEY") !== -1);
+    
+    keyRange.setFontSize(9)
+            .setFontWeight("bold")
+            .setHorizontalAlignment("left")
+            .setVerticalAlignment("middle");
+            
+    valRange.setFontSize(9)
+            .setNumberFormat("@") // Plain Text to preserve leading zeros in PIN
+            .setWrap(true) // Wrap text to show long values nicely
+            .setHorizontalAlignment("left")
+            .setVerticalAlignment("middle");
+            
+    if (isSystemKey) {
+      // Muted style for system keys (indicates read-only/managed field)
+      keyRange.setFontColor("#64748b").setBackground("#e2e8f0");
+      valRange.setFontColor("#64748b").setBackground("#f1f5f9");
+      
+      // Apply warning-only protection guard to both cells
+      const rowRange = sheet.getRange(r, 1, 1, 2);
+      const protection = rowRange.protect().setDescription("System Managed Configuration");
+      protection.setWarningOnly(true);
+    } else {
+      // Normal editable keys
+      keyRange.setFontColor("#334155").setBackground("#f1f5f9");
+      
+      // Alternating backgrounds for normal values
+      const bg = (r % 2 === 0) ? "#f8fafc" : "#ffffff";
+      valRange.setFontColor("#0f172a").setBackground(bg);
+    }
   }
   
-  // Apply elegant light slate borders
+  // 6. Apply elegant light slate borders
   fullRange.setBorder(true, true, true, true, true, true, "#cbd5e1", null);
   
-  // Auto-resize columns to fit content
+  // 7. Auto-resize columns to fit content
   sheet.autoResizeColumn(1);
   sheet.autoResizeColumn(2);
   

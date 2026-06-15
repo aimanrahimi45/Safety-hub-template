@@ -362,7 +362,7 @@
             company: document.getElementById('company').value,
             date: formattedDate,
             inducted_by: "", // Filled in later by SHO upon sign-off
-            declaration: "Agreed: Emergency Evac, PPE Rules, Incident Reporting",
+            declaration: getContractorDeclaration(),
             signature: signaturePad.toDataURL(),
             photo: finalPhotoData || "", // Optional
             status: "Pending Approval"  // Stored in the new Status column

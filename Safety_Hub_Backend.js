@@ -407,7 +407,10 @@ function doGet(e) {
       return returnJSON({
         status: "SUCCESS",
         systemName: settings["SYSTEM_NAME"] || "Safety Hub",
-        logoUrl: settings["LOGO_URL"] || ""
+        logoUrl: settings["LOGO_URL"] || "",
+        departments: settings["DEPARTMENTS"] || "Production,Maintenance,QA/QC,Warehouse,Safety/HR,Engineering,Electrical,Security,Recycle,DIP,Wire Drawing,Logistic,Finance,Purchasing,MFP,Admin,Contractor,Others",
+        ppeTypes: settings["PPE_TYPES"] || "Safety Shoe,Safety Helmet,Respirator,Earmuff,Filter Cartridge,Other",
+        contractorDeclaration: settings["CONTRACTOR_DECLARATION"] || "Agreed: Emergency Evac, PPE Rules, Incident Reporting"
       });
     }
  
@@ -1046,7 +1049,10 @@ function getSystemSettings(ss) {
       ["LOGO_URL", ""],
       ["DASHBOARD_PIN", "9911"],
       ["BOX_IDS", "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07"],
-      ["LICENSE_KEY", ""]
+      ["LICENSE_KEY", ""],
+      ["DEPARTMENTS", "Production,Maintenance,QA/QC,Warehouse,Safety/HR,Engineering,Electrical,Security,Recycle,DIP,Wire Drawing,Logistic,Finance,Purchasing,MFP,Admin,Contractor,Others"],
+      ["PPE_TYPES", "Safety Shoe,Safety Helmet,Respirator,Earmuff,Filter Cartridge,Other"],
+      ["CONTRACTOR_DECLARATION", "Agreed: Emergency Evac, PPE Rules, Incident Reporting"]
     ];
     sheet.getRange(1, 1, defaults.length, 2).setValues(defaults);
   }

@@ -118,7 +118,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.status === "SUCCESS") {
                     const newName = data.systemName || "Safety Hub";
                     const newLogo = data.logoUrl || "";
-                    
+                    const newDepts = data.departments || "";
+                    const newPpe = data.ppeTypes || "";
+                    const newDecl = data.contractorDeclaration || "";
+
+                    if (newDepts) localStorage.setItem("safety_hub_departments", newDepts);
+                    if (newPpe) localStorage.setItem("safety_hub_ppe_types", newPpe);
+                    if (newDecl) localStorage.setItem("safety_hub_contractor_declaration", newDecl);
+
                     // If backend branding changed, update cache and refresh UI
                     if (newName !== systemName || newLogo !== logoUrl) {
                         localStorage.setItem("safety_hub_logo_url", newLogo);
@@ -203,6 +210,9 @@ function showConnectionSetupOverlay() {
             localStorage.setItem("safety_hub_spreadsheet_id", inputVal);
             if (data.systemName) localStorage.setItem("safety_hub_system_name", data.systemName);
             if (data.logoUrl) localStorage.setItem("safety_hub_logo_url", data.logoUrl);
+            if (data.departments) localStorage.setItem("safety_hub_departments", data.departments);
+            if (data.ppeTypes) localStorage.setItem("safety_hub_ppe_types", data.ppeTypes);
+            if (data.contractorDeclaration) localStorage.setItem("safety_hub_contractor_declaration", data.contractorDeclaration);
             location.reload();
         } catch (err) {
             alert(`❌ Connection Failed:\n\n${err.message}\n\nPlease check the Spreadsheet ID and ensure your Google Apps Script has access to it.`);
@@ -211,3 +221,20 @@ function showConnectionSetupOverlay() {
         }
     });
 }
+
+// Global System Configuration Accessors
+window.getSystemDepartments = function() {
+    const cached = localStorage.getItem("safety_hub_departments");
+    if (cached) return cached.split(",").map(d => d.trim());
+    return ["Production", "Maintenance", "QA/QC", "Warehouse", "Safety/HR", "Engineering", "Electrical", "Security", "Recycle", "DIP", "Wire Drawing", "Logistic", "Finance", "Purchasing", "MFP", "Admin", "Contractor", "Others"];
+};
+
+window.getSystemPpeTypes = function() {
+    const cached = localStorage.getItem("safety_hub_ppe_types");
+    if (cached) return cached.split(",").map(t => t.trim());
+    return ["Safety Shoe", "Safety Helmet", "Respirator", "Earmuff", "Filter Cartridge", "Other"];
+};
+
+window.getContractorDeclaration = function() {
+    return localStorage.getItem("safety_hub_contractor_declaration") || "Agreed: Emergency Evac, PPE Rules, Incident Reporting";
+};

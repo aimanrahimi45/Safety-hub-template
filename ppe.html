@@ -402,24 +402,6 @@
                             <label>Department <span style="color:var(--danger)">*</span></label>
                             <select id="req-dept" required>
                                 <option value="" disabled selected>Select Department</option>
-                                <option value="Production">Production</option>
-                                <option value="Maintenance">Maintenance</option>
-                                <option value="QA/QC">QA/QC</option>
-                                <option value="Warehouse">Warehouse</option>
-                                <option value="Safety/HR">Safety/HR</option>
-                                <option value="Engineering">Engineering</option>
-                                <option value="Electrical">Electrical</option>
-                                <option value="Security">Security</option>
-                                <option value="Recycle">Recycle</option>
-                                <option value="DIP">DIP</option>
-                                <option value="Wire Drawing">Wire Drawing</option>
-                                <option value="Logistic">Logistic</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Purchasing">Purchasing</option>
-                                <option value="MFP">MFP</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Contractor">Contractor</option>
-                                <option value="Others">Others</option>
                             </select>
                         </div>
                     </div>
@@ -429,12 +411,6 @@
                             <label>PPE Type <span style="color:var(--danger)">*</span></label>
                             <select id="req-ppe-type" required>
                                 <option value="" disabled selected>Select PPE Type</option>
-                                <option value="Safety Shoe">Safety Shoe</option>
-                                <option value="Safety Helmet">Safety Helmet</option>
-                                <option value="Respirator">Respirator</option>
-                                <option value="Earmuff">Earmuff</option>
-                                <option value="Filter Cartridge">Filter Cartridge</option>
-                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="input-group">
@@ -506,35 +482,12 @@
                         <label style="margin-top:0; font-size:0.75rem;">Department Filter</label>
                         <select id="filter-dept" onchange="filterData()">
                             <option value="All">All Departments</option>
-                            <option value="Production">Production</option>
-                            <option value="Maintenance">Maintenance</option>
-                            <option value="QA/QC">QA/QC</option>
-                            <option value="Warehouse">Warehouse</option>
-                            <option value="Safety/HR">Safety/HR</option>
-                            <option value="Engineering">Engineering</option>
-                            <option value="Electrical">Electrical</option>
-                            <option value="Security">Security</option>
-                            <option value="Recycle">Recycle</option>
-                            <option value="DIP">DIP</option>
-                            <option value="Wire Drawing">Wire Drawing</option>
-                            <option value="Logistic">Logistic</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Purchasing">Purchasing</option>
-                            <option value="MFP">MFP</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Contractor">Contractor</option>
-                            <option value="Others">Others</option>
                         </select>
                     </div>
                     <div class="input-group">
                         <label style="margin-top:0; font-size:0.75rem;">PPE Type Filter</label>
                         <select id="filter-ppe" onchange="filterData()">
                             <option value="All">All PPE Types</option>
-                            <option value="Safety Shoe">Safety Shoe</option>
-                            <option value="Safety Helmet">Safety Helmet</option>
-                            <option value="Respirator">Respirator</option>
-                            <option value="Earmuff">Earmuff</option>
-                            <option value="Filter Cartridge">Filter Cartridge</option>
                         </select>
                     </div>
                     <div class="input-group" style="justify-content: flex-end; display: flex; align-items: flex-end;">
@@ -671,6 +624,43 @@
         if (statusEl && linkEl && url) {
             linkEl.href = url;
             statusEl.style.display = 'block';
+        }
+    }
+
+    function populateDynamicDropdowns() {
+        const depts = getSystemDepartments();
+        const ppeTypes = getSystemPpeTypes();
+
+        const reqDept = document.getElementById("req-dept");
+        if (reqDept) {
+            reqDept.innerHTML = '<option value="" disabled selected>Select Department</option>';
+            depts.forEach(d => {
+                reqDept.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+        }
+
+        const filterDept = document.getElementById("filter-dept");
+        if (filterDept) {
+            filterDept.innerHTML = '<option value="All">All Departments</option>';
+            depts.forEach(d => {
+                filterDept.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+        }
+
+        const reqPpeType = document.getElementById("req-ppe-type");
+        if (reqPpeType) {
+            reqPpeType.innerHTML = '<option value="" disabled selected>Select PPE Type</option>';
+            ppeTypes.forEach(t => {
+                reqPpeType.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+
+        const filterPpe = document.getElementById("filter-ppe");
+        if (filterPpe) {
+            filterPpe.innerHTML = '<option value="All">All PPE Types</option>';
+            ppeTypes.forEach(t => {
+                filterPpe.innerHTML += `<option value="${t}">${t}</option>`;
+            });
         }
     }
 
@@ -2047,6 +2037,7 @@
 
     // Initialize checking
     document.getElementById('req-date').value = formatDateToYmd(new Date());
+    populateDynamicDropdowns();
     verifyPinState();
 </script>
 </body>

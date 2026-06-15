@@ -128,6 +128,26 @@ function setupWorkspace() {
   }
   initializeContractorSheets(contractorFile);
   
+  // E. Setup Incident Spreadsheet
+  let incidentId = settings["INCIDENT_SPREADSHEET_ID"];
+  let incidentFile;
+  if (incidentId) {
+    try {
+      incidentFile = SpreadsheetApp.openById(incidentId);
+    } catch (err) {
+      incidentId = null;
+    }
+  }
+  if (!incidentId) {
+    const newSS = SpreadsheetApp.create("Incident System");
+    const file = DriveApp.getFileById(newSS.getId());
+    folder.addFile(file);
+    DriveApp.getRootFolder().removeFile(file);
+    incidentFile = newSS;
+    setSystemSetting(ss, "INCIDENT_SPREADSHEET_ID", newSS.getId());
+  }
+  initializeIncidentSheets(incidentFile);
+  
   // Format master control tab
   let masterSheet = ss.getSheetByName("Dashboard Links");
   if (!masterSheet) masterSheet = ss.insertSheet("Dashboard Links");
@@ -137,6 +157,7 @@ function setupWorkspace() {
   masterSheet.appendRow(["First Aid Database", faFile.getUrl()]);
   masterSheet.appendRow(["PPE Database", ppeFile.getUrl()]);
   masterSheet.appendRow(["Contractor Database", contractorFile.getUrl()]);
+  masterSheet.appendRow(["Incident Database", incidentFile.getUrl()]);
   masterSheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   masterSheet.autoResizeColumns(1, 2);
  
@@ -233,6 +254,19 @@ function initializeContractorSheets(ss) {
   indSheet.setFrozenRows(1);
   
   if (defSheet) ss.deleteSheet(defSheet);
+}
+
+function initializeIncidentSheets(ss) {
+  const defSheet = ss.getSheetByName("Sheet1");
+  let logsSheet = ss.getSheetByName("Incidents") || ss.insertSheet("Incidents");
+  const logHeaders = ["Incident ID", "Timestamp", "Date & Time", "Victim Name", "Location / Dept", "Body Part Injured", "Man-days Lost", "Reported to JKKP?", "Severity Type", "Incident Investigation Submitted?", "Description"];
+  logsSheet.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
+  logsSheet.getRange(1, 1, 1, logHeaders.length).setFontWeight("bold").setBackground("#991b1b").setFontColor("#ffffff");
+  logsSheet.setFrozenRows(1);
+  
+  if (defSheet) {
+    try { ss.deleteSheet(defSheet); } catch(e) {}
+  }
 }
  
  
@@ -374,6 +408,9 @@ function doGet(e) {
       } else if (db === "Contractor") {
         ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Safety Inductions";
+      } else if (db === "Incident") {
+        ssId = settings["INCIDENT_SPREADSHEET_ID"];
+        sheetName = "Incidents";
       }
       
       if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
@@ -718,8 +755,115 @@ function doPost(e) {
     }
    
 
-   
-
+    // G. Save Incident (Create or Update)
+    if (data.action === "saveIncident") {
+      if (String(data.pin).trim() !== String(systemPIN).trim()) {
+        return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
+      }
+      return runTransaction(() => {
+        const ssId = settings["INCIDENT_SPREADSHEET_ID"];
+        if (!ssId) {
+          return returnJSON({ status: "ERROR", message: "Incident database not provisioned." });
+        }
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("Incidents");
+        const rows = sheet.getDataRange().getValues();
+        
+        let incidentId = data.incidentId;
+        let foundRowIdx = -1;
+        
+        if (incidentId) {
+          // Edit operation: look for existing ID
+          for (let i = 1; i < rows.length; i++) {
+            if (String(rows[i][0]).trim() === String(incidentId).trim()) {
+              foundRowIdx = i + 1;
+              break;
+            }
+          }
+        }
+        
+        const timestamp = new Date();
+        const dateTime = data.dateTime;
+        const victimName = data.victimName;
+        const locationDept = data.locationDept;
+        const bodyPart = data.bodyPart;
+        const mandaysLost = Number(data.mandaysLost || 0);
+        const reportedJkkp = data.reportedJkkp || "No";
+        const severityType = data.severityType || "First Aid";
+        const investigationSubmitted = data.investigationSubmitted || "No";
+        const description = data.description || "";
+        
+        if (foundRowIdx !== -1) {
+          // Update row cells (1-indexed columns)
+          sheet.getRange(foundRowIdx, 3).setValue(dateTime);
+          sheet.getRange(foundRowIdx, 4).setValue(victimName);
+          sheet.getRange(foundRowIdx, 5).setValue(locationDept);
+          sheet.getRange(foundRowIdx, 6).setValue(bodyPart);
+          sheet.getRange(foundRowIdx, 7).setValue(mandaysLost);
+          sheet.getRange(foundRowIdx, 8).setValue(reportedJkkp);
+          sheet.getRange(foundRowIdx, 9).setValue(severityType);
+          sheet.getRange(foundRowIdx, 10).setValue(investigationSubmitted);
+          sheet.getRange(foundRowIdx, 11).setValue(description);
+        } else {
+          // Create operation: generate a serial ID INC-YYYY-XXXX
+          const year = dateTime ? dateTime.substring(0, 4) : String(new Date().getFullYear());
+          // Count logs matching the same year to generate serial sequence
+          let yearCount = 0;
+          for (let i = 1; i < rows.length; i++) {
+            const rowDate = String(rows[i][2] || "");
+            if (rowDate.startsWith(year)) {
+              yearCount++;
+            }
+          }
+          const seq = String(yearCount + 1).padStart(4, '0');
+          incidentId = `INC-${year}-${seq}`;
+          
+          sheet.appendRow([
+            incidentId,
+            timestamp,
+            dateTime,
+            victimName,
+            locationDept,
+            bodyPart,
+            mandaysLost,
+            reportedJkkp,
+            severityType,
+            investigationSubmitted,
+            description
+          ]);
+        }
+        
+        return returnJSON({ status: "SUCCESS", incidentId: incidentId });
+      });
+    }
+    
+    // H. Delete Incident
+    if (data.action === "deleteIncident") {
+      if (String(data.pin).trim() !== String(systemPIN).trim()) {
+        return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
+      }
+      return runTransaction(() => {
+        const ssId = settings["INCIDENT_SPREADSHEET_ID"];
+        if (!ssId) {
+          return returnJSON({ status: "ERROR", message: "Incident database not provisioned." });
+        }
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const sheet = targetSS.getSheetByName("Incidents");
+        const rows = sheet.getDataRange().getValues();
+        let foundRowIdx = -1;
+        for (let i = 1; i < rows.length; i++) {
+          if (String(rows[i][0]).trim() === String(data.incidentId).trim()) {
+            foundRowIdx = i + 1;
+            break;
+          }
+        }
+        if (foundRowIdx !== -1) {
+          sheet.deleteRow(foundRowIdx);
+          return returnJSON({ status: "SUCCESS" });
+        }
+        return returnJSON({ status: "ERROR", message: "Incident ID not found" });
+      });
+    }
    
     return returnJSON({ status: "ERROR", message: "Invalid action type" });
   } catch (err) {
@@ -941,7 +1085,8 @@ function getSystemSettings(ss) {
       ["LICENSE_KEY", ""],
       ["DEPARTMENTS", "Production,Maintenance,QA/QC,Warehouse,Safety/HR,Engineering,Electrical,Security,Recycle,DIP,Wire Drawing,Logistic,Finance,Purchasing,MFP,Admin,Contractor,Others"],
       ["PPE_TYPES", "Safety Shoe,Safety Helmet,Respirator,Earmuff,Filter Cartridge,Other"],
-      ["CONTRACTOR_DECLARATION", "Agreed: Emergency Evac, PPE Rules, Incident Reporting"]
+      ["CONTRACTOR_DECLARATION", "Agreed: Emergency Evac, PPE Rules, Incident Reporting"],
+      ["SEVERITIES", "Near Miss,First Aid,Medical Treatment,Lost Time Injury (LTI),Fatality"]
     ];
     sheet.getRange(1, 1, defaults.length, 2).setValues(defaults);
     formatSystemSettingsSheet(ss);

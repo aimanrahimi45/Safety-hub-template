@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Monitoring Console</title>
+    <link rel="icon" type="image/png" href="safety-logo-v2.png">
+    <link rel="apple-touch-icon" href="safety-logo-v2.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            padding-bottom: 60px;
+        }
+
+        /* Top Controls Grid */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 24px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .select-neo {
+            padding: 10px 16px;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            outline: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .select-neo:focus {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--border);
+            border-color: var(--primary);
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .kpi-card:hover {
+            transform: translate(-3px, -3px) rotate(-0.5deg);
+            box-shadow: 9px 9px 0px var(--border);
+        }
+
+        .kpi-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.1;
+        }
+
+        /* YoY Comparison Badges */
+        .yoy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            width: fit-content;
+            box-shadow: 1px 1px 0px var(--border);
+        }
+
+        .badge-up {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .badge-down {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .badge-neutral {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        /* Charts Layout */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            font-weight: 700;
+            font-size: 1.05rem;
+            border-bottom: 3px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Main Workspace Split */
+        .workspace-split {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .workspace-split {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Form Card */
+        .form-card {
+            background: var(--sidebar-bg);
+            border: 3px solid var(--border);
+            border-radius: 20px 20px 240px 20px / 20px 220px 20px 240px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 20px;
+        }
+
+        .form-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-bottom: 3px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            color: var(--text-main);
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        .input-neo {
+            width: 100%;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            border: 3px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            outline: none;
+            background: var(--surface);
+        }
+
+        .input-neo:focus {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--border);
+            border-color: var(--primary);
+        }
+
+        .btn-neo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1rem;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            background: var(--primary);
+            color: #FFFFFF;
+            transition: all 0.15s ease;
+            gap: 8px;
+        }
+
+        .btn-neo:hover {
+            background: var(--primary-hover);
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px var(--border);
+        }
+
+        .btn-neo:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px var(--border);
+        }
+
+        .btn-cancel {
+            background: #e2e8f0;
+            color: var(--text-main);
+            margin-top: 8px;
+        }
+
+        .btn-cancel:hover {
+            background: #cbd5e1;
+        }
+
+        /* Logs Table Card */
+        .logs-card {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: #FFFFFF;
+            border: 3px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            flex-grow: 1;
+            max-width: 300px;
+        }
+
+        .search-bar input {
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+            margin-left: 6px;
+            font-family: inherit;
+        }
+
+        /* Table Design */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            background: var(--surface);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--text-main);
+            color: #FFFFFF;
+            font-weight: 700;
+            padding: 12px 16px;
+            border-bottom: 3px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #fffdf5;
+        }
+
+        .badge-severity {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+        }
+
+        .severity-fatality { background: #fef2f2; color: #ef4444; }
+        .severity-lti { background: #fff7ed; color: #ea580c; }
+        .severity-medical { background: #fef08a; color: #a16207; }
+        .severity-firstaid { background: #f0fdf4; color: #16a34a; }
+        .severity-nearmiss { background: #f5f3ff; color: #7c3aed; }
+
+        .btn-table {
+            border: 2px solid var(--border);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            background: #FFFFFF;
+            transition: all 0.1s ease;
+        }
+
+        .btn-edit:hover {
+            background: var(--warning);
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px var(--border);
+        }
+
+        .btn-delete:hover {
+            background: var(--primary);
+            color: white;
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px var(--border);
+        }
+
+        .loading-overlay {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .jkkp-yes { color: #16a34a; font-weight: 700; }
+        .jkkp-no { color: #ef4444; font-weight: 700; }
+
+        .inv-submitted-yes { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 6px; border: 1.5px solid var(--border); }
+        .inv-submitted-no { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 6px; border: 1.5px solid var(--border); }
+        .inv-submitted-pending { background: #fef9c3; color: #713f12; padding: 2px 6px; border-radius: 6px; border: 1.5px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- HEADER & FILTER PANEL -->
+        <div class="controls-row">
+            <div class="page-title">
+                <h1>🛡️ Incident Monitoring Console</h1>
+                <p>Log workplace safety occurrences, monitor Lost Time Injuries (LTI), and track JKKP reporting status.</p>
+            </div>
+            <div class="filter-group">
+                <label style="font-weight: 700; margin: 0; font-size: 0.95rem;">Select Calendar Year:</label>
+                <select id="year-filter" class="select-neo" onchange="onYearChange()">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-label">Total Incidents</span>
+                <span class="kpi-value" id="kpi-total-cases">0</span>
+                <div id="yoy-total-cases" class="yoy-badge badge-neutral">-</div>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Man-Days Lost</span>
+                <span class="kpi-value" id="kpi-total-days">0</span>
+                <div id="yoy-total-days" class="yoy-badge badge-neutral">-</div>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">LTI Frequency Cases</span>
+                <span class="kpi-value" id="kpi-lti-cases">0</span>
+                <div id="yoy-lti-cases" class="yoy-badge badge-neutral">-</div>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">JKKP Reports Submitted</span>
+                <span class="kpi-value" id="kpi-jkkp-reports">0</span>
+                <div id="yoy-jkkp-reports" class="yoy-badge badge-neutral">-</div>
+            </div>
+        </div>
+
+        <!-- CHARTS SECTION -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-header">📈 YoY Monthly Incident Trend (Current vs Previous Year)</div>
+                <div class="chart-container">
+                    <canvas id="trendChartCanvas"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">🎯 Injury Body Parts Profile</div>
+                <div class="chart-container">
+                    <canvas id="partsChartCanvas"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">⚡ Severity Classification</div>
+                <div class="chart-container">
+                    <canvas id="severityChartCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- WORKSPACE SPLIT (FORM + LOGS TABLE) -->
+        <div class="workspace-split">
+            <!-- RECORD FORM PANEL -->
+            <div class="form-card">
+                <div class="form-title" id="form-card-title">📝 Record Incident Occurrence</div>
+                <form id="incident-form" onsubmit="handleFormSubmit(event)">
+                    <input type="hidden" id="edit-incident-id" value="">
+                    
+                    <div class="form-group">
+                        <label for="victim-name">Victim Name</label>
+                        <input type="text" id="victim-name" class="input-neo" placeholder="e.g. John Doe / Contractor Name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incident-datetime">Date & Time of Accident</label>
+                        <input type="datetime-local" id="incident-datetime" class="input-neo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location-dept">Location / Department</label>
+                        <input type="text" id="location-dept" class="input-neo" placeholder="e.g. Production Line 3 / Warehouse" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="body-part">Body Part Injured (Free-form fill)</label>
+                        <input type="text" id="body-part" class="input-neo" placeholder="e.g. Right index finger / Left ankle" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mandays-lost">Man-Days Lost</label>
+                        <input type="number" id="mandays-lost" class="input-neo" min="0" placeholder="e.g. 0 for near-miss/first-aid" value="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reported-jkkp">Reported to JKKP?</label>
+                        <select id="reported-jkkp" class="select-neo" style="width:100%;">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="severity-type">Severity Classification</label>
+                        <select id="severity-type" class="select-neo" style="width:100%;">
+                            <option value="Near Miss">Near Miss</option>
+                            <option value="First Aid">First Aid</option>
+                            <option value="Medical Treatment">Medical Treatment</option>
+                            <option value="Lost Time Injury (LTI)">Lost Time Injury (LTI)</option>
+                            <option value="Fatality">Fatality</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="investigation-submitted">Incident Investigation Submitted?</label>
+                        <select id="investigation-submitted" class="select-neo" style="width:100%;">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Brief Accident Description</label>
+                        <textarea id="description" class="input-neo" rows="3" placeholder="Explain how the accident occurred..." required></textarea>
+                    </div>
+
+                    <button type="submit" id="btn-submit-form" class="btn-neo">💾 Save Occurrence</button>
+                    <button type="button" id="btn-cancel-edit" class="btn-neo btn-cancel" style="display:none;" onclick="cancelEditing()">Cancel Edit</button>
+                </form>
+            </div>
+
+            <!-- LOGS TABLE PANEL -->
+            <div class="logs-card">
+                <div class="chart-header">📋 Safety Incident History & Log</div>
+                
+                <div class="table-toolbar">
+                    <div class="search-bar">
+                        🔎 <input type="text" id="search-input" placeholder="Search victim name or location..." oninput="renderTable()">
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <select id="table-filter-severity" class="select-neo" style="padding: 6px 10px; font-size: 0.8rem;" onchange="renderTable()">
+                            <option value="ALL">All Severities</option>
+                            <option value="Near Miss">Near Miss</option>
+                            <option value="First Aid">First Aid</option>
+                            <option value="Medical Treatment">Medical Treatment</option>
+                            <option value="Lost Time Injury (LTI)">Lost Time Injury (LTI)</option>
+                            <option value="Fatality">Fatality</option>
+                        </select>
+                        <select id="table-filter-jkkp" class="select-neo" style="padding: 6px 10px; font-size: 0.8rem;" onchange="renderTable()">
+                            <option value="ALL">All JKKP Status</option>
+                            <option value="Yes">Reported Only</option>
+                            <option value="No">Unreported Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="logs-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date & Time</th>
+                                <th>Victim Name</th>
+                                <th>Location / Dept</th>
+                                <th>Body Part</th>
+                                <th>Days Lost</th>
+                                <th>JKKP?</th>
+                                <th>Severity</th>
+                                <th>Inv?</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="table-loading" class="loading-overlay">⏳ Loading incident records...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allIncidents = [];
+        let trendChart = null;
+        let partsChart = null;
+        let severityChart = null;
+
+        const defaultSeverities = ["Near Miss", "First Aid", "Medical Treatment", "Lost Time Injury (LTI)", "Fatality"];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initializeConsole();
+        });
+
+        // 1. PIN verification and load data
+        async function initializeConsole() {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id");
+            if (!sheetId) {
+                alert("Spreadsheet connection missing. Please configure from the central dashboard.");
+                return;
+            }
+
+            let pin = localStorage.getItem("safety_hub_pin");
+            if (!pin) {
+                pin = prompt("🔐 Access Restricted\n\nPlease enter the Dashboard security PIN to enter Incident Monitoring:");
+                if (!pin) {
+                    document.getElementById("table-loading").innerHTML = '<span style="color:#ef4444;">Access Blocked: Valid PIN required.</span>';
+                    return;
+                }
+                localStorage.setItem("safety_hub_pin", pin);
+            }
+
+            await loadIncidentLogs(sheetId, pin);
+        }
+
+        // 2. Fetch logs from backend
+        async function loadIncidentLogs(sheetId, pin) {
+            document.getElementById("table-loading").style.display = "flex";
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Incident&spreadsheetId=${sheetId}&pin=${pin}`);
+                const json = await response.json();
+                
+                if (json.status === "ERROR") {
+                    localStorage.removeItem("safety_hub_pin");
+                    document.getElementById("table-loading").innerHTML = `<span style="color:#ef4444;">Access Denied: ${json.message}</span>`;
+                    return;
+                }
+
+                allIncidents = json.data || [];
+                buildYearFilter();
+                updateDashboard();
+            } catch(e) {
+                console.error("Error loading incident database:", e);
+                document.getElementById("table-loading").innerHTML = '<span style="color:#ef4444;">Failed to connect to spreadsheet API.</span>';
+            }
+        }
+
+        // 3. Helper to parse year from dates safely
+        function getYearFromVal(dateVal) {
+            if (!dateVal) return new Date().getFullYear();
+            if (dateVal instanceof Date) return dateVal.getFullYear();
+            const str = String(dateVal);
+            if (str.includes("-")) {
+                const parts = str.split("-");
+                if (parts[0].length === 4) return parseInt(parts[0]);
+            }
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime())) return parsed.getFullYear();
+            return new Date().getFullYear();
+        }
+
+        // 4. Helper to parse month from dates safely
+        function getMonthFromVal(dateVal) {
+            if (!dateVal) return 0;
+            if (dateVal instanceof Date) return dateVal.getMonth();
+            const str = String(dateVal);
+            if (str.includes("-")) {
+                const parts = str.split("-");
+                if (parts.length >= 2) {
+                    const m = parseInt(parts[1]);
+                    if (!isNaN(m)) return m - 1;
+                }
+            }
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime())) return parsed.getMonth();
+            return 0;
+        }
+
+        // 5. Populate Year Filter Dropdown
+        function buildYearFilter() {
+            const select = document.getElementById("year-filter");
+            const currentYear = new Date().getFullYear();
+            const yearsSet = new Set([currentYear]);
+            
+            allIncidents.forEach(item => {
+                const yr = getYearFromVal(item["Date & Time"]);
+                if (yr) yearsSet.add(yr);
+            });
+
+            const sortedYears = Array.from(yearsSet).sort((a,b) => b - a);
+            const prevSelected = select.value;
+            
+            select.innerHTML = "";
+            sortedYears.forEach(y => {
+                const opt = document.createElement("option");
+                opt.value = y;
+                opt.textContent = y;
+                select.appendChild(opt);
+            });
+
+            if (prevSelected && sortedYears.includes(parseInt(prevSelected))) {
+                select.value = prevSelected;
+            } else {
+                select.value = currentYear;
+            }
+        }
+
+        // 6. Action on Year Filter Change
+        function onYearChange() {
+            updateDashboard();
+        }
+
+        // 7. Update KPIs, Charts, and Table Logs
+        function updateDashboard() {
+            const select = document.getElementById("year-filter");
+            const selectedYear = parseInt(select.value) || new Date().getFullYear();
+            const prevYear = selectedYear - 1;
+
+            // Filter datasets
+            const currLogs = allIncidents.filter(r => getYearFromVal(r["Date & Time"]) === selectedYear);
+            const prevLogs = allIncidents.filter(r => getYearFromVal(r["Date & Time"]) === prevYear);
+
+            // Compute KPIs
+            const currCount = currLogs.length;
+            const prevCount = prevLogs.length;
+            document.getElementById("kpi-total-cases").innerText = currCount;
+            updateYoYBadge("yoy-total-cases", currCount, prevCount);
+
+            const currDays = currLogs.reduce((sum, r) => sum + Number(r["Man-days Lost"] || 0), 0);
+            const prevDays = prevLogs.reduce((sum, r) => sum + Number(r["Man-days Lost"] || 0), 0);
+            document.getElementById("kpi-total-days").innerText = currDays;
+            updateYoYBadge("yoy-total-days", currDays, prevDays);
+
+            const currLti = currLogs.filter(r => String(r["Severity Type"]).includes("LTI") || Number(r["Man-days Lost"] || 0) > 0).length;
+            const prevLti = prevLogs.filter(r => String(r["Severity Type"]).includes("LTI") || Number(r["Man-days Lost"] || 0) > 0).length;
+            document.getElementById("kpi-lti-cases").innerText = currLti;
+            updateYoYBadge("yoy-lti-cases", currLti, prevLti);
+
+            const currJkkp = currLogs.filter(r => String(r["Reported to JKKP?"]).toLowerCase() === "yes").length;
+            const prevJkkp = prevLogs.filter(r => String(r["Reported to JKKP?"]).toLowerCase() === "yes").length;
+            document.getElementById("kpi-jkkp-reports").innerText = currJkkp;
+            updateYoYBadge("yoy-jkkp-reports", currJkkp, prevJkkp);
+
+            // Update Charts
+            renderYoYChart(selectedYear, currLogs, prevLogs);
+            renderPartsChart(currLogs);
+            renderSeverityChart(currLogs);
+
+            // Update Table
+            renderTable();
+        }
+
+        // 8. Update YoY Comparison Tags
+        function updateYoYBadge(elementId, curr, prev) {
+            const badge = document.getElementById(elementId);
+            if (prev === 0) {
+                if (curr > 0) {
+                    badge.innerHTML = "↑ New Case";
+                    badge.className = "yoy-badge badge-up";
+                } else {
+                    badge.innerHTML = "No change";
+                    badge.className = "yoy-badge badge-neutral";
+                }
+                return;
+            }
+
+            if (curr === prev) {
+                badge.innerHTML = "No change";
+                badge.className = "yoy-badge badge-neutral";
+                return;
+            }
+
+            const pct = Math.round(((curr - prev) / prev) * 100);
+            if (pct > 0) {
+                badge.innerHTML = `↑ ${pct}% vs last yr`;
+                badge.className = "yoy-badge badge-up";
+            } else {
+                badge.innerHTML = `↓ ${Math.abs(pct)}% vs last yr`;
+                badge.className = "yoy-badge badge-down";
+            }
+        }
+
+        // 9. YoY Trend Chart (Chart 1)
+        function renderYoYChart(year, currLogs, prevLogs) {
+            const ctx = document.getElementById('trendChartCanvas').getContext('2d');
+            
+            const currMonths = Array(12).fill(0);
+            const prevMonths = Array(12).fill(0);
+
+            currLogs.forEach(r => {
+                const m = getMonthFromVal(r["Date & Time"]);
+                if (m >= 0 && m < 12) currMonths[m]++;
+            });
+
+            prevLogs.forEach(r => {
+                const m = getMonthFromVal(r["Date & Time"]);
+                if (m >= 0 && m < 12) prevMonths[m]++;
+            });
+
+            if (trendChart) trendChart.destroy();
+
+            Chart.defaults.font.family = "'Fredoka', sans-serif";
+            Chart.defaults.font.weight = "700";
+
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [
+                        {
+                            label: `Year ${year}`,
+                            data: currMonths,
+                            borderColor: '#FF6B6B',
+                            backgroundColor: 'rgba(255, 107, 107, 0.15)',
+                            borderWidth: 4,
+                            pointBackgroundColor: '#FF6B6B',
+                            pointBorderColor: '#2B2D42',
+                            pointBorderWidth: 2,
+                            tension: 0.15,
+                            fill: true
+                        },
+                        {
+                            label: `Year ${year - 1}`,
+                            data: prevMonths,
+                            borderColor: '#2B2D42',
+                            borderWidth: 3,
+                            borderDash: [6, 6],
+                            pointBackgroundColor: '#FFFFFF',
+                            pointBorderColor: '#2B2D42',
+                            pointBorderWidth: 2,
+                            tension: 0.15,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#2B2D42' } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: '#2B2D42' },
+                            grid: { color: 'rgba(43, 45, 66, 0.1)', borderDash: [2, 2] }
+                        },
+                        x: {
+                            ticks: { color: '#2B2D42' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 10. Injury Parts Chart (Chart 2)
+        function renderPartsChart(currLogs) {
+            const ctx = document.getElementById('partsChartCanvas').getContext('2d');
+            
+            const partCounts = {};
+            currLogs.forEach(r => {
+                const part = String(r["Body Part Injured"] || "Other").trim();
+                const titlePart = part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                partCounts[titlePart] = (partCounts[titlePart] || 0) + 1;
+            });
+
+            const labels = Object.keys(partCounts);
+            const data = Object.values(partCounts);
+
+            if (partsChart) partsChart.destroy();
+
+            if (labels.length === 0) {
+                partsChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['No Incidents'],
+                        datasets: [{ data: [1], backgroundColor: ['#E2E8F0'], borderWidth: 2, borderColor: '#2B2D42' }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+                return;
+            }
+
+            partsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#4ECA64', '#FFD166', '#4EA8DE', '#FF6B6B', '#A78BFA', '#F472B6', '#34D399', '#FB7185'],
+                        borderWidth: 3,
+                        borderColor: '#2B2D42'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, color: '#2B2D42' } }
+                    }
+                }
+            });
+        }
+
+        // 11. Severity Chart (Chart 3)
+        function renderSeverityChart(currLogs) {
+            const ctx = document.getElementById('severityChartCanvas').getContext('2d');
+            
+            const counts = { "Near Miss": 0, "First Aid": 0, "Medical Treatment": 0, "Lost Time Injury (LTI)": 0, "Fatality": 0 };
+            currLogs.forEach(r => {
+                const sev = String(r["Severity Type"] || "First Aid").trim();
+                if (counts[sev] !== undefined) counts[sev]++;
+            });
+
+            if (severityChart) severityChart.destroy();
+
+            severityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['NM', 'FA', 'MT', 'LTI', 'FAT'],
+                    datasets: [{
+                        data: [counts["Near Miss"], counts["First Aid"], counts["Medical Treatment"], counts["Lost Time Injury (LTI)"], counts["Fatality"]],
+                        backgroundColor: ['#A78BFA', '#4ECA64', '#FFD166', '#FB923C', '#FF6B6B'],
+                        borderWidth: 3,
+                        borderColor: '#2B2D42',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: '#2B2D42' },
+                            grid: { color: 'rgba(43, 45, 66, 0.1)', borderDash: [2, 2] }
+                        },
+                        x: {
+                            ticks: { color: '#2B2D42' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 12. Render Incident Log Table
+        function renderTable() {
+            const select = document.getElementById("year-filter");
+            const selectedYear = parseInt(select.value) || new Date().getFullYear();
+            
+            const tbody = document.getElementById("logs-table-body");
+            const search = document.getElementById("search-input").value.trim().toLowerCase();
+            const filterSeverity = document.getElementById("table-filter-severity").value;
+            const filterJkkp = document.getElementById("table-filter-jkkp").value;
+
+            document.getElementById("table-loading").style.display = "none";
+            tbody.innerHTML = "";
+
+            // Filter dataset
+            const filtered = allIncidents.filter(r => {
+                if (getYearFromVal(r["Date & Time"]) !== selectedYear) return false;
+
+                const victim = String(r["Victim Name"] || "").toLowerCase();
+                const loc = String(r["Location / Dept"] || "").toLowerCase();
+                const desc = String(r["Description"] || "").toLowerCase();
+                if (search && !victim.includes(search) && !loc.includes(search) && !desc.includes(search)) return false;
+
+                if (filterSeverity !== "ALL" && String(r["Severity Type"]) !== filterSeverity) return false;
+                if (filterJkkp !== "ALL" && String(r["Reported to JKKP?"]) !== filterJkkp) return false;
+
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--text-muted); font-weight:700; padding:30px 10px;">No incidents matching selected filters.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(r => {
+                const tr = document.createElement("tr");
+
+                const id = r["Incident ID"] || "-";
+                
+                let dtStr = String(r["Date & Time"] || "");
+                if (dtStr.includes("T")) {
+                    dtStr = dtStr.replace("T", " ");
+                }
+
+                const victim = r["Victim Name"] || "-";
+                const locationDept = r["Location / Dept"] || "-";
+                const bodyPart = r["Body Part Injured"] || "-";
+                const mandaysLost = r["Man-days Lost"] !== undefined ? r["Man-days Lost"] : "0";
+                
+                const reported = String(r["Reported to JKKP?"] || "No");
+                const reportedClass = (reported === "Yes") ? "jkkp-yes" : "jkkp-no";
+
+                const severity = String(r["Severity Type"] || "First Aid");
+                let severityClass = "severity-firstaid";
+                if (severity === "Fatality") severityClass = "severity-fatality";
+                else if (severity.includes("LTI")) severityClass = "severity-lti";
+                else if (severity.includes("Medical")) severityClass = "severity-medical";
+                else if (severity.includes("Near")) severityClass = "severity-nearmiss";
+
+                const invStatus = String(r["Incident Investigation Submitted?"] || "No");
+                let invClass = "inv-submitted-no";
+                if (invStatus === "Yes") invClass = "inv-submitted-yes";
+                else if (invStatus === "Pending") invClass = "inv-submitted-pending";
+
+                tr.innerHTML = `
+                    <td><strong>${id}</strong></td>
+                    <td><small>${dtStr}</small></td>
+                    <td>${victim}</td>
+                    <td>${locationDept}</td>
+                    <td><small>${bodyPart}</small></td>
+                    <td style="text-align:center;">${mandaysLost}</td>
+                    <td style="text-align:center;"><span class="${reportedClass}">${reported}</span></td>
+                    <td><span class="badge-severity ${severityClass}">${severity}</span></td>
+                    <td style="text-align:center;"><span class="${invClass}">${invStatus}</span></td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn-table btn-edit" onclick="startEditing('${id}')">✏️ Edit</button>
+                        <button class="btn-table btn-delete" onclick="handleDelete('${id}')">🗑️ Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 13. Form Submission (Save/Update)
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id");
+            const pin = localStorage.getItem("safety_hub_pin");
+
+            if (!sheetId || !pin) {
+                alert("Spreadsheet ID or PIN missing.");
+                return;
+            }
+
+            const btn = document.getElementById("btn-submit-form");
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = "⏳ Processing Save...";
+
+            const id = document.getElementById("edit-incident-id").value;
+            const payload = {
+                action: "saveIncident",
+                spreadsheetId: sheetId,
+                pin: pin,
+                incidentId: id ? id : null,
+                victimName: document.getElementById("victim-name").value.trim(),
+                dateTime: document.getElementById("incident-datetime").value,
+                locationDept: document.getElementById("location-dept").value.trim(),
+                bodyPart: document.getElementById("body-part").value.trim(),
+                mandaysLost: document.getElementById("mandays-lost").value,
+                reportedJkkp: document.getElementById("reported-jkkp").value,
+                severityType: document.getElementById("severity-type").value,
+                investigationSubmitted: document.getElementById("investigation-submitted").value,
+                description: document.getElementById("description").value.trim()
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+                const json = await response.json();
+
+                if (json.status === "SUCCESS") {
+                    alert(`🎉 Incident record successfully saved!\nAssigned ID: ${json.incidentId}`);
+                    cancelEditing();
+                    await loadIncidentLogs(sheetId, pin);
+                } else {
+                    alert(`❌ Failed to save: ${json.message}`);
+                }
+            } catch(e) {
+                console.error("Submit Error:", e);
+                alert("❌ Failed to contact Spreadsheet API.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // 14. Trigger Edit Mode
+        function startEditing(id) {
+            const item = allIncidents.find(r => String(r["Incident ID"]).trim() === String(id).trim());
+            if (!item) return;
+
+            document.getElementById("edit-incident-id").value = id;
+            document.getElementById("victim-name").value = item["Victim Name"] || "";
+            document.getElementById("incident-datetime").value = item["Date & Time"] || "";
+            document.getElementById("location-dept").value = item["Location / Dept"] || "";
+            document.getElementById("body-part").value = item["Body Part Injured"] || "";
+            document.getElementById("mandays-lost").value = item["Man-days Lost"] !== undefined ? item["Man-days Lost"] : 0;
+            document.getElementById("reported-jkkp").value = item["Reported to JKKP?"] || "No";
+            document.getElementById("severity-type").value = item["Severity Type"] || "First Aid";
+            document.getElementById("investigation-submitted").value = item["Incident Investigation Submitted?"] || "No";
+            document.getElementById("description").value = item["Description"] || "";
+
+            document.getElementById("form-card-title").innerText = `✏️ Edit Incident Log (ID: ${id})`;
+            document.getElementById("btn-submit-form").innerHTML = "💾 Update Record";
+            document.getElementById("btn-cancel-edit").style.display = "inline-flex";
+
+            document.querySelector(".form-card").scrollIntoView({ behavior: "smooth" });
+        }
+
+        // 15. Cancel Editing and Reset Form
+        function cancelEditing() {
+            document.getElementById("edit-incident-id").value = "";
+            document.getElementById("incident-form").reset();
+            
+            document.getElementById("form-card-title").innerText = "📝 Record Incident Occurrence";
+            document.getElementById("btn-submit-form").innerHTML = "💾 Save Occurrence";
+            document.getElementById("btn-cancel-edit").style.display = "none";
+        }
+
+        // 16. Trigger Delete Row
+        async function handleDelete(id) {
+            const confirmDel = confirm(`⚠️ Danger!\n\nAre you sure you want to permanently delete incident record "${id}"?\nThis action cannot be undone.`);
+            if (!confirmDel) return;
+
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id");
+            const pin = localStorage.getItem("safety_hub_pin");
+
+            if (!sheetId || !pin) return;
+
+            document.getElementById("table-loading").style.display = "flex";
+
+            const payload = {
+                action: "deleteIncident",
+                spreadsheetId: sheetId,
+                pin: pin,
+                incidentId: id
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+                const json = await response.json();
+
+                if (json.status === "SUCCESS") {
+                    alert(`🗑️ Incident record "${id}" deleted successfully.`);
+                    cancelEditing();
+                    await loadIncidentLogs(sheetId, pin);
+                } else {
+                    alert(`❌ Failed to delete: ${json.message}`);
+                    renderTable();
+                }
+            } catch(e) {
+                console.error("Delete Error:", e);
+                alert("❌ Failed to contact Spreadsheet API.");
+                renderTable();
+            }
+        }
+    </script>
+</body>
+</html>

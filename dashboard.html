@@ -361,10 +361,9 @@
                 </div>
             </a>
 
-            <!-- App 7: Incident Reporting (Future) -->
-            <div class="app-card wobbly-card wobbly-style-c coming-soon" style="--rotate: -0.5deg;">
-                <span class="badge">In Development</span>
-                <div class="card-icon icon-gray">
+            <!-- App 7: Incident Monitor -->
+            <a href="incident.html" class="app-card wobbly-card wobbly-style-c" style="--rotate: -0.5deg;">
+                <div class="card-icon icon-red">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
@@ -372,22 +371,28 @@
                         <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
                 </div>
-                <h3>Incident Reporting</h3>
-                <p>Future module for reporting workplace incidents, near misses, and unsafe acts.</p>
-                <div class="launch-btn" style="color: var(--text-muted);">
-                    Coming Soon
+                <h3>Incident Monitor</h3>
+                <p>Record safety occurrences, track Lost Time Injuries (LTI), and monitor JKKP compliance trends.</p>
+                <div class="stat-badge badge-gray" id="badge-incidents">0 Incidents this year</div>
+                <div class="launch-btn">
+                    Launch
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
     <script>
-        // Fetch pending registrations count to show in stats badge in background
+        // Fetch pending registrations and incident stats in background
         document.addEventListener("DOMContentLoaded", async () => {
             const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
             const pin = localStorage.getItem("safety_hub_pin") || "";
             if (sheetId && pin && typeof GOOGLE_SCRIPT_URL !== "undefined" && GOOGLE_SCRIPT_URL) {
                 try {
+                    // 1. Fetch Contractor Pending Sign-offs
                     const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Contractor&spreadsheetId=${sheetId}&pin=${pin}`);
                     const json = await res.json();
                     if (json.status === "SUCCESS") {
@@ -397,6 +402,26 @@
                             const badge = document.getElementById("badge-pending");
                             badge.innerText = `🔴 ${pendingCount} require sign-off`;
                             badge.className = "stat-badge badge-red";
+                        }
+                    }
+                    
+                    // 2. Fetch Incidents Count for Current Year
+                    const incRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Incident&spreadsheetId=${sheetId}&pin=${pin}`);
+                    const incJson = await incRes.json();
+                    if (incJson.status === "SUCCESS") {
+                        const currentYearStr = String(new Date().getFullYear());
+                        const countThisYear = incJson.data.filter(r => {
+                            const dateVal = String(r["Date & Time"] || "");
+                            return dateVal.indexOf(currentYearStr) === 0 || dateVal.includes(currentYearStr);
+                        }).length;
+                        
+                        const incBadge = document.getElementById("badge-incidents");
+                        if (countThisYear > 0) {
+                            incBadge.innerText = `⚠️ ${countThisYear} Incidents in ${currentYearStr}`;
+                            incBadge.className = "stat-badge badge-orange";
+                        } else {
+                            incBadge.innerText = `✅ 0 Incidents in ${currentYearStr}`;
+                            incBadge.className = "stat-badge badge-green";
                         }
                     }
                 } catch(e) {

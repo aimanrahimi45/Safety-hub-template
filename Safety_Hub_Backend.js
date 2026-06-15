@@ -1173,7 +1173,7 @@ function formatSystemSettingsSheet(ss) {
     const keyRange = sheet.getRange(r, 1);
     const valRange = sheet.getRange(r, 2);
     const key = String(keyRange.getValue() || "").trim();
-    const isSystemKey = (key.indexOf("_ID") !== -1 || key.indexOf("_KEY") !== -1);
+    const isSystemKey = key.endsWith("_ID");
     
     keyRange.setFontSize(9)
             .setFontWeight("bold")

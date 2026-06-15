@@ -512,6 +512,15 @@
             window.location.hash = hash;
         }
 
+        window.loadTabFromChild = function(url) {
+            const baseUrl = url.split("?")[0];
+            const selector = `.nav-link[onclick*="${baseUrl}"]`;
+            const link = document.querySelector(selector);
+            if (link) {
+                loadTab(url, link);
+            }
+        };
+
         function disconnectSheet() {
             if (confirm("Are you sure you want to disconnect this portal from the current Google Sheet database?")) {
                 localStorage.clear();

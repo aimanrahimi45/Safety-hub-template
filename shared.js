@@ -238,3 +238,20 @@ window.getSystemPpeTypes = function() {
 window.getContractorDeclaration = function() {
     return localStorage.getItem("safety_hub_contractor_declaration") || "Agreed: Emergency Evac, PPE Rules, Incident Reporting";
 };
+
+// Intercept child iframe links to trigger tab highlight switching on the parent hub
+document.addEventListener("click", (e) => {
+    const anchor = e.target.closest("a");
+    if (anchor) {
+        const href = anchor.getAttribute("href");
+        const target = anchor.getAttribute("target");
+        // Verify it is a local HTML link that is not meant to open in a new window/tab
+        if (href && href.endsWith(".html") && !href.startsWith("http") && !href.startsWith("#") && target !== "_blank") {
+            // Check if we are running inside an iframe and the parent window has the handler
+            if (window.parent && window.parent !== window && typeof window.parent.loadTabFromChild === "function") {
+                e.preventDefault();
+                window.parent.loadTabFromChild(href);
+            }
+        }
+    }
+});

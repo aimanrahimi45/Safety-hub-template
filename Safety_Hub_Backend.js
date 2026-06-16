@@ -341,7 +341,7 @@ function doGet(e) {
         return returnJSON({ status: "ERROR", message: "First Aid database not provisioned." });
       }
       const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("First Aid Central Inventory");
+      const sheet = getSheetSafe(targetSS, "First Aid Central Inventory");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
@@ -454,7 +454,7 @@ function doGet(e) {
       if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
       
       const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName(sheetName);
+      const sheet = getSheetSafe(targetSS, sheetName);
       return returnJSON({ 
         status: "SUCCESS", 
         data: fetchSheetDataAsJSON(sheet),
@@ -467,7 +467,7 @@ function doGet(e) {
     if (action === "getDetails") {
       const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
       const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("First Aid Checklist Details");
+      const sheet = getSheetSafe(targetSS, "First Aid Checklist Details");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
@@ -475,7 +475,7 @@ function doGet(e) {
     if (action === "getInventory") {
       const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
       const targetSS = SpreadsheetApp.openById(ssId);
-      const sheet = targetSS.getSheetByName("First Aid Central Inventory");
+      const sheet = getSheetSafe(targetSS, "First Aid Central Inventory");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
@@ -483,8 +483,8 @@ function doGet(e) {
     if (action === "getShortages") {
       const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
       const targetSS = SpreadsheetApp.openById(ssId);
-      const logsSheet = targetSS.getSheetByName("First Aid Checklist Logs");
-      const detailsSheet = targetSS.getSheetByName("First Aid Checklist Details");
+      const logsSheet = getSheetSafe(targetSS, "First Aid Checklist Logs");
+      const detailsSheet = getSheetSafe(targetSS, "First Aid Checklist Details");
       
       const logRows = logsSheet.getDataRange().getValues();
       const detailRows = detailsSheet.getDataRange().getValues();
@@ -558,10 +558,10 @@ function doPost(e) {
       return runTransaction(() => {
         const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);
-        const logsSheet = targetSS.getSheetByName("First Aid Checklist Logs");
-        const detailsSheet = targetSS.getSheetByName("First Aid Checklist Details");
-        const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
-        const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
+        const logsSheet = getSheetSafe(targetSS, "First Aid Checklist Logs");
+        const detailsSheet = getSheetSafe(targetSS, "First Aid Checklist Details");
+        const invSheet = getSheetSafe(targetSS, "First Aid Central Inventory");
+        const transSheet = getSheetSafe(targetSS, "First Aid Inventory Transactions");
         
         // Auto folder setup for signatures
         let folderId = settings["SIGNATURE_FOLDER_ID"];
@@ -669,8 +669,8 @@ function doPost(e) {
       return runTransaction(() => {
         const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);
-        const invSheet = targetSS.getSheetByName("First Aid Central Inventory");
-        const transSheet = targetSS.getSheetByName("First Aid Inventory Transactions");
+        const invSheet = getSheetSafe(targetSS, "First Aid Central Inventory");
+        const transSheet = getSheetSafe(targetSS, "First Aid Inventory Transactions");
         const stockMap = getCentralStockMap(targetSS);
         
         data.adjustments.forEach(adj => {
@@ -691,7 +691,7 @@ function doPost(e) {
       return runTransaction(() => {
         const ssId = settings["PPE_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("PPE Requests");
+        const sheet = getSheetSafe(targetSS, "PPE Requests");
         const requestId = "REQ-" + String(sheet.getLastRow()).padStart(5, '0');
         const status = data.status || "Approved / Dispatched";
         const actionDate = (status !== "Pending Approval") ? Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd") : "";
@@ -714,7 +714,7 @@ function doPost(e) {
       return runTransaction(() => {
         const ssId = settings["PPE_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("PPE Requests");
+        const sheet = getSheetSafe(targetSS, "PPE Requests");
         const rows = sheet.getDataRange().getValues();
         let foundRow = -1;
         for (let i = 1; i < rows.length; i++) {
@@ -738,7 +738,7 @@ function doPost(e) {
       return runTransaction(() => {
         const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("Safety Inductions");
+        const sheet = getSheetSafe(targetSS, "Safety Inductions");
         
         let folderId = settings["PHOTO_FOLDER_ID"];
         let folder;
@@ -771,7 +771,7 @@ function doPost(e) {
       return runTransaction(() => {
         const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("Safety Inductions");
+        const sheet = getSheetSafe(targetSS, "Safety Inductions");
         const rows = sheet.getDataRange().getValues();
         let count = 0;
         
@@ -804,7 +804,7 @@ function doPost(e) {
           return returnJSON({ status: "ERROR", message: "Incident database not provisioned." });
         }
         const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("Incidents");
+        const sheet = getSheetSafe(targetSS, "Incidents");
         const rows = sheet.getDataRange().getValues();
         
         let incidentId = data.incidentId;
@@ -886,7 +886,7 @@ function doPost(e) {
           return returnJSON({ status: "ERROR", message: "Incident database not provisioned." });
         }
         const targetSS = SpreadsheetApp.openById(ssId);
-        const sheet = targetSS.getSheetByName("Incidents");
+        const sheet = getSheetSafe(targetSS, "Incidents");
         const rows = sheet.getDataRange().getValues();
         let foundRowIdx = -1;
         for (let i = 1; i < rows.length; i++) {
@@ -1092,6 +1092,18 @@ function returnText(val) {
 // Return JSON response
 function returnJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Safely get a sheet by name. Returns a clear error JSON if sheet is missing.
+ * Prevents silent crashes when user renames database sheets.
+ */
+function getSheetSafe(ss, sheetName) {
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    throw new Error("Sheet '" + sheetName + "' not found. Please check your database sheet names.");
+  }
+  return sheet;
 }
  
 // Fetch central stock map

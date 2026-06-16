@@ -493,6 +493,47 @@ function doGet(e) {
       return returnJSON({ status: "SUCCESS", shortages: shortages });
     }
  
+    // License validation (called via Web App - runs as developer)
+    if (action === "validateLicense") {
+      const key = e.parameter.key || "";
+      const cleanKey = String(key).trim();
+      
+      if (!cleanKey) {
+        return returnJSON({ status: "SUCCESS", valid: false, message: "License key is required." });
+      }
+      
+      try {
+        const licenseSS = SpreadsheetApp.openById(LICENSE_SHEET_ID);
+        const sheet = licenseSS.getSheets()[0];
+        const rows = sheet.getDataRange().getValues();
+        
+        for (let i = 1; i < rows.length; i++) {
+          const rowKey = String(rows[i][0] || "").trim();
+          const status = String(rows[i][1] || "").trim().toLowerCase();
+          
+          if (rowKey === cleanKey) {
+            if (status === "active") {
+              return returnJSON({
+                status: "SUCCESS",
+                valid: true,
+                planType: rows[i][3] || "standard",
+                expiry: rows[i][5] || ""
+              });
+            } else if (status === "revoked" || status === "expired") {
+              return returnJSON({ status: "SUCCESS", valid: false, message: "License key has been " + status + "." });
+            } else {
+              return returnJSON({ status: "SUCCESS", valid: false, message: "License key status: " + status });
+            }
+          }
+        }
+        
+        return returnJSON({ status: "SUCCESS", valid: false, message: "License key not found." });
+      } catch (err) {
+        Logger.log("License validation error: " + err.message);
+        return returnJSON({ status: "SUCCESS", valid: false, message: "Unable to verify license." });
+      }
+    }
+
     return returnJSON({ status: "ERROR", message: "Invalid Action" });
   } catch (err) {
     return returnJSON({ status: "ERROR", message: err.message });
@@ -1006,11 +1047,12 @@ function updateClientSettings(config) {
 }
  
 // ========================================================
-// LICENSE KEY VALIDATION (Live Google Sheet Database)
+// LICENSE KEY VALIDATION (via Web App running as Developer)
 // ========================================================
-// License Sheet ID — only the developer (you) can edit this sheet.
-// Columns: License Key | Status | Tenant Email | Plan Type | Created Date | Expiry Date
+// License Sheet ID — private, only accessible by developer's Web App
 const LICENSE_SHEET_ID = "1FH75rDHPZniZUXbO3BpK1Lku1lA-RiNbgEQgihaNF_M";
+// Web App URL — deployed as "Execute as: Me" so it can access the private license sheet
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRcQY0C-lOXpkxlkz9bVcwEQ9hGAUdKnyt7Mw5K9UDVk45juA/exec";
 
 function validateLicenseKey(key) {
   if (!key) {
@@ -1019,35 +1061,19 @@ function validateLicenseKey(key) {
   
   const cleanKey = String(key).trim();
   
+  // Call Web App (runs as developer) to validate against private license sheet
   try {
-    const licenseSS = SpreadsheetApp.openById(LICENSE_SHEET_ID);
-    const sheet = licenseSS.getSheets()[0];
-    const rows = sheet.getDataRange().getValues();
+    const url = WEB_APP_URL + "?action=validateLicense&key=" + encodeURIComponent(cleanKey);
+    const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    const result = JSON.parse(response.getContentText());
     
-    // Skip header row, search for matching key
-    for (let i = 1; i < rows.length; i++) {
-      const rowKey = String(rows[i][0] || "").trim();
-      const status = String(rows[i][1] || "").trim().toLowerCase();
-      
-      if (rowKey === cleanKey) {
-        if (status === "active") {
-          return {
-            valid: true,
-            planType: rows[i][3] || "standard",
-            expiry: rows[i][5] || ""
-          };
-        } else if (status === "revoked" || status === "expired") {
-          return { valid: false, reason: "License key has been " + status + "." };
-        } else {
-          return { valid: false, reason: "License key status: " + status };
-        }
-      }
+    if (result.status === "SUCCESS") {
+      return { valid: result.valid, planType: result.planType, expiry: result.expiry };
+    } else {
+      return { valid: false, reason: result.message || "License validation failed." };
     }
-    
-    return { valid: false, reason: "License key not found." };
   } catch (err) {
     Logger.log("License validation error: " + err.message);
-    // Fallback: allow setup to proceed with a warning
     return { valid: false, reason: "Unable to verify license. Please contact support." };
   }
 }

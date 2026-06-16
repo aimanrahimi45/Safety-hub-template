@@ -1005,18 +1005,51 @@ function updateClientSettings(config) {
   }
 }
  
+// ========================================================
+// LICENSE KEY VALIDATION (Live Google Sheet Database)
+// ========================================================
+// License Sheet ID — only the developer (you) can edit this sheet.
+// Columns: License Key | Status | Tenant Email | Plan Type | Created Date | Expiry Date
+const LICENSE_SHEET_ID = "1FH75rDHPZniZUXbO3BpK1Lku1lA-RiNbgEQgihaNF_M";
+
 function validateLicenseKey(key) {
   if (!key) {
     return { valid: false, reason: "License key is required." };
   }
   
   const cleanKey = String(key).trim();
-  // Validates standard mock template key formatting
-  if (cleanKey.startsWith("SAFETY-") && cleanKey.length >= 12) {
-    return { valid: true };
-  }
   
-  return { valid: false, reason: "Invalid format. Key format is 'SAFETY-XXXX-XXXX'" };
+  try {
+    const licenseSS = SpreadsheetApp.openById(LICENSE_SHEET_ID);
+    const sheet = licenseSS.getSheets()[0];
+    const rows = sheet.getDataRange().getValues();
+    
+    // Skip header row, search for matching key
+    for (let i = 1; i < rows.length; i++) {
+      const rowKey = String(rows[i][0] || "").trim();
+      const status = String(rows[i][1] || "").trim().toLowerCase();
+      
+      if (rowKey === cleanKey) {
+        if (status === "active") {
+          return {
+            valid: true,
+            planType: rows[i][3] || "standard",
+            expiry: rows[i][5] || ""
+          };
+        } else if (status === "revoked" || status === "expired") {
+          return { valid: false, reason: "License key has been " + status + "." };
+        } else {
+          return { valid: false, reason: "License key status: " + status };
+        }
+      }
+    }
+    
+    return { valid: false, reason: "License key not found." };
+  } catch (err) {
+    Logger.log("License validation error: " + err.message);
+    // Fallback: allow setup to proceed with a warning
+    return { valid: false, reason: "Unable to verify license. Please contact support." };
+  }
 }
  
 // ========================================================

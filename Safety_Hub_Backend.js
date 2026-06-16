@@ -45,9 +45,9 @@ function setupWorkspace() {
   const licenseCheck = validateLicenseKey(licenseKey);
   if (!licenseCheck.valid) {
     try {
-      SpreadsheetApp.getUi().alert("❌ Setup Blocked", "Please enter a valid License Key in the Settings sidebar first before initializing the workspace.", SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert("❌ Setup Blocked", "Please enter a valid License Key in the Settings sidebar first before initializing the workspace.\n\nReason: " + (licenseCheck.reason || "Invalid license key."), SpreadsheetApp.getUi().ButtonSet.OK);
     } catch(e) {
-      Logger.log("❌ Setup Blocked: Invalid License Key.");
+      Logger.log("❌ Setup Blocked: Invalid License Key. Reason: " + (licenseCheck.reason || "Invalid key"));
     }
     return;
   }
@@ -1068,7 +1068,12 @@ function validateLicenseKey(key) {
     const result = JSON.parse(response.getContentText());
     
     if (result.status === "SUCCESS") {
-      return { valid: result.valid, planType: result.planType, expiry: result.expiry };
+      return { 
+        valid: result.valid, 
+        planType: result.planType, 
+        expiry: result.expiry,
+        reason: result.message || (result.valid ? "" : "Invalid license key.")
+      };
     } else {
       return { valid: false, reason: result.message || "License validation failed." };
     }

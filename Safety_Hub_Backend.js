@@ -276,11 +276,49 @@ function initializeIncidentSheets(ss) {
 function doGet(e) {
   try {
     const action = e.parameter.action;
-    const spreadsheetId = e.parameter.spreadsheetId;
-
-    if (!spreadsheetId) {
-      return returnJSON({ status: "ERROR", message: "Missing Spreadsheet ID" });
+    
+    // License validation — does NOT need spreadsheetId (runs as developer)
+    if (action === "validateLicense") {
+      const key = e.parameter.key || "";
+      const cleanKey = String(key).trim();
+      
+      if (!cleanKey) {
+        return returnJSON({ status: "SUCCESS", valid: false, message: "License key is required." });
+      }
+      
+      try {
+        const licenseSS = SpreadsheetApp.openById(LICENSE_SHEET_ID);
+        const sheet = licenseSS.getSheets()[0];
+        const rows = sheet.getDataRange().getValues();
+        
+        for (let i = 1; i < rows.length; i++) {
+          const rowKey = String(rows[i][0] || "").trim();
+          const status = String(rows[i][1] || "").trim().toLowerCase();
+          
+          if (rowKey === cleanKey) {
+            if (status === "active") {
+              return returnJSON({
+                status: "SUCCESS",
+                valid: true,
+                planType: rows[i][3] || "standard",
+                expiry: rows[i][5] || ""
+              });
+            } else if (status === "revoked" || status === "expired") {
+              return returnJSON({ status: "SUCCESS", valid: false, message: "License key has been " + status + "." });
+            } else {
+              return returnJSON({ status: "SUCCESS", valid: false, message: "License key status: " + status });
+            }
+          }
+        }
+        
+        return returnJSON({ status: "SUCCESS", valid: false, message: "License key not found." });
+      } catch (err) {
+        Logger.log("License validation error: " + err.message);
+        return returnJSON({ status: "SUCCESS", valid: false, message: "Unable to verify license." });
+      }
     }
+
+    const spreadsheetId = e.parameter.spreadsheetId;
 
     const ss = SpreadsheetApp.openById(spreadsheetId);
     const settings = getSystemSettings(ss);
@@ -476,7 +514,7 @@ function doGet(e) {
         const boxId = Object.keys(boxLatestAudit).find(key => boxLatestAudit[key] === auditId);
         
         if (boxId) {
-          const reqVal = parseInt(reqStr.match(/^(\d+)/)[1], 10) || 0;
+          const reqVal = parseInt((reqStr.match(/^(\d+)/) || ["0"])[1], 10) || 0;
           if (availVal < reqVal) {
             shortages.push({
               boxId: boxId,
@@ -491,47 +529,6 @@ function doGet(e) {
         }
       }
       return returnJSON({ status: "SUCCESS", shortages: shortages });
-    }
- 
-    // License validation (called via Web App - runs as developer)
-    if (action === "validateLicense") {
-      const key = e.parameter.key || "";
-      const cleanKey = String(key).trim();
-      
-      if (!cleanKey) {
-        return returnJSON({ status: "SUCCESS", valid: false, message: "License key is required." });
-      }
-      
-      try {
-        const licenseSS = SpreadsheetApp.openById(LICENSE_SHEET_ID);
-        const sheet = licenseSS.getSheets()[0];
-        const rows = sheet.getDataRange().getValues();
-        
-        for (let i = 1; i < rows.length; i++) {
-          const rowKey = String(rows[i][0] || "").trim();
-          const status = String(rows[i][1] || "").trim().toLowerCase();
-          
-          if (rowKey === cleanKey) {
-            if (status === "active") {
-              return returnJSON({
-                status: "SUCCESS",
-                valid: true,
-                planType: rows[i][3] || "standard",
-                expiry: rows[i][5] || ""
-              });
-            } else if (status === "revoked" || status === "expired") {
-              return returnJSON({ status: "SUCCESS", valid: false, message: "License key has been " + status + "." });
-            } else {
-              return returnJSON({ status: "SUCCESS", valid: false, message: "License key status: " + status });
-            }
-          }
-        }
-        
-        return returnJSON({ status: "SUCCESS", valid: false, message: "License key not found." });
-      } catch (err) {
-        Logger.log("License validation error: " + err.message);
-        return returnJSON({ status: "SUCCESS", valid: false, message: "Unable to verify license." });
-      }
     }
 
     return returnJSON({ status: "ERROR", message: "Invalid Action" });
@@ -580,7 +577,7 @@ function doPost(e) {
         }
         
         let signatureUrl = "";
-        if (data.signature) {
+        if (data.signature && data.signature.includes(",")) {
           const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", `Sig_${data.boxId.replace(/\//g, '_')}_${data.inspectDate}.png`);
           const file = folder.createFile(blob);
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -668,7 +665,7 @@ function doPost(e) {
    
     // B. First Aid Inventory Adjustment
     if (data.action === "updateInventory") {
-      if (data.pin !== systemPIN) return returnText("ERROR: Unauthorized");
+      if (String(data.pin).trim() !== String(systemPIN).trim()) return returnText("ERROR: Unauthorized");
       return runTransaction(() => {
         const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);
@@ -756,7 +753,7 @@ function doPost(e) {
         }
         
         let photoUrl = "";
-        if (data.photo) {
+        if (data.photo && data.photo.includes(",")) {
           const blob = Utilities.newBlob(Utilities.base64Decode(data.photo.split(",")[1]), "image/jpeg", "Induction_" + data.name + "_" + new Date().getTime() + ".jpg");
           const file = folder.createFile(blob);
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -770,7 +767,7 @@ function doPost(e) {
    
     // F. Contractor Approval
     if (data.action === "approveWorkers") {
-      if (data.pin !== systemPIN) return returnJSON({ status: "error", message: "Unauthorized PIN" });
+      if (String(data.pin).trim() !== String(systemPIN).trim()) return returnJSON({ status: "error", message: "Unauthorized PIN" });
       return runTransaction(() => {
         const ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         const targetSS = SpreadsheetApp.openById(ssId);

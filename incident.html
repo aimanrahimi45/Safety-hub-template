@@ -1101,7 +1101,7 @@
 
             document.getElementById("edit-incident-id").value = id;
             document.getElementById("victim-name").value = item["Victim Name"] || "";
-            document.getElementById("incident-datetime").value = item["Date & Time"] || "";
+            document.getElementById("incident-datetime").value = (item["Date & Time"] || "").replace(" ", "T").substring(0, 16);
             document.getElementById("location-dept").value = item["Location / Dept"] || "";
             document.getElementById("body-part").value = item["Body Part Injured"] || "";
             document.getElementById("mandays-lost").value = item["Man-days Lost"] !== undefined ? item["Man-days Lost"] : 0;

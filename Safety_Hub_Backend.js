@@ -45,7 +45,7 @@ function setupWorkspace() {
   let licenseCheck = { valid: false, planType: "Free", reason: "No key supplied" };
   
   if (licenseKey) {
-    licenseCheck = validateLicenseKey(licenseKey);
+    licenseCheck = validateLicenseKey(licenseKey, ss.getId());
   }
   
   // Instead of blocking, we initialize in Free Mode if license is invalid/missing
@@ -295,6 +295,7 @@ function doGet(e) {
     if (action === "validateLicense") {
       const key = e.parameter.key || "";
       const cleanKey = String(key).trim();
+      const callingId = String(e.parameter.spreadsheetId || "").trim();
       
       if (!cleanKey) {
         return returnJSON({ status: "SUCCESS", valid: false, message: "License key is required." });
@@ -311,6 +312,25 @@ function doGet(e) {
           
           if (rowKey === cleanKey) {
             if (status === "active") {
+              // Retrieve registered spreadsheet ID from Column E (index 4)
+              let registeredSheetId = String(rows[i][4] || "").trim();
+              
+              if (!registeredSheetId) {
+                // First use: Lock to the calling spreadsheet ID
+                if (callingId) {
+                  registeredSheetId = callingId;
+                  sheet.getRange(i + 1, 5).setValue(callingId);
+                }
+              }
+              
+              if (registeredSheetId && callingId && registeredSheetId !== callingId) {
+                return returnJSON({
+                  status: "SUCCESS",
+                  valid: false,
+                  message: "License key is already registered to another spreadsheet."
+                });
+              }
+              
               return returnJSON({
                 status: "SUCCESS",
                 valid: true,
@@ -428,7 +448,7 @@ function doGet(e) {
     // Get Portal Branding Configuration
     if (action === "getBranding") {
       const licenseKey = settings["LICENSE_KEY"] || "";
-      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
+      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
       return returnJSON({
         status: "SUCCESS",
         systemName: settings["SYSTEM_NAME"] || "Safety Hub",
@@ -465,7 +485,7 @@ function doGet(e) {
         sheetName = "Safety Inductions";
       } else if (db === "Incident") {
         const licenseKey = settings["LICENSE_KEY"] || "";
-        const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
+        const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
         if (!licenseCheck.valid) {
           return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
         }
@@ -839,7 +859,7 @@ function doPost(e) {
     // G. Save Incident (Create or Update)
     if (data.action === "saveIncident") {
       const licenseKey = settings["LICENSE_KEY"] || "";
-      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
+      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
       if (!licenseCheck.valid) {
         return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
       }
@@ -926,7 +946,7 @@ function doPost(e) {
     // H. Delete Incident
     if (data.action === "deleteIncident") {
       const licenseKey = settings["LICENSE_KEY"] || "";
-      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
+      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
       if (!licenseCheck.valid) {
         return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
       }
@@ -1079,7 +1099,7 @@ function updateClientSettings(config) {
     
     if (licenseKey) {
       // License Check Validation
-      const licenseResult = validateLicenseKey(licenseKey);
+      const licenseResult = validateLicenseKey(licenseKey, ss.getId());
       if (!licenseResult.valid) {
         return { status: "error", message: "❌ Invalid License Key: " + licenseResult.reason };
       }
@@ -1111,16 +1131,17 @@ const LICENSE_SHEET_ID = "1FH75rDHPZniZUXbO3BpK1Lku1lA-RiNbgEQgihaNF_M";
 // Web App URL — deployed as "Execute as: Me" so it can access the private license sheet
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRcQY0C-lOXpkxlkz9bVcwEQ9hGAUdKnyt7Mw5K9UDVk45juA/exec";
 
-function validateLicenseKey(key) {
+function validateLicenseKey(key, spreadsheetId) {
   if (!key) {
     return { valid: false, reason: "License key is required." };
   }
   
   const cleanKey = String(key).trim();
+  const callingId = String(spreadsheetId || "").trim();
   
   // Call Web App (runs as developer) to validate against private license sheet
   try {
-    const url = WEB_APP_URL + "?action=validateLicense&key=" + encodeURIComponent(cleanKey);
+    const url = WEB_APP_URL + "?action=validateLicense&key=" + encodeURIComponent(cleanKey) + "&spreadsheetId=" + encodeURIComponent(callingId);
     const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
     const result = JSON.parse(response.getContentText());
     

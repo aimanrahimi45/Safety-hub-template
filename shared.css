@@ -311,6 +311,9 @@ body.in-iframe .container {
         padding: 16px !important;
         padding-bottom: 40px !important;
     }
+    body.in-iframe .container {
+        padding: 12px 16px !important;
+    }
     .card {
         padding: 16px !important;
         margin-bottom: 16px !important;

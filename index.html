@@ -65,6 +65,11 @@
             letter-spacing: -0.5px;
         }
 
+        /* Mobile scroll hint on sidebar */
+        .sidebar-scroll-hint {
+            display: none;
+        }
+
         /* Navigation List */
         .nav-list {
             display: flex;
@@ -337,10 +342,25 @@
                 border-bottom: 3px solid var(--border);
                 overflow-x: auto;
                 gap: 8px;
+                position: relative;
+                padding-right: 32px;
+            }
+            .sidebar::after {
+                content: '';
+                position: absolute;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 40px;
+                background: linear-gradient(to right, transparent, var(--sidebar-bg) 85%);
+                pointer-events: none;
+                z-index: 2;
             }
             .brand {
                 flex-shrink: 0;
                 margin-bottom: 0;
+                padding-right: 4px;
+                z-index: 3;
             }
             .brand span {
                 font-size: 1rem;
@@ -360,6 +380,8 @@
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
                 padding: 2px 0;
+                mask-image: linear-gradient(to right, black 85%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
             }
             .nav-list::-webkit-scrollbar {
                 display: none;
@@ -373,15 +395,16 @@
                 gap: 2px;
             }
             .nav-link {
-                padding: 6px 10px;
-                font-size: 0.75rem;
+                padding: 8px 12px;
+                font-size: 0.8rem;
                 white-space: nowrap;
-                gap: 4px;
+                gap: 6px;
                 border-width: 2px;
+                min-height: 40px;
             }
             .nav-link svg {
-                width: 14px;
-                height: 14px;
+                width: 16px;
+                height: 16px;
             }
             .nav-link.active {
                 transform: translate(-1px, -1px) rotate(-1deg);
@@ -394,24 +417,69 @@
             .iframe-container {
                 height: calc(100% - 52px);
             }
+            /* Mobile breadcrumb bar */
+            .mobile-breadcrumb {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                height: 44px;
+                background: var(--surface);
+                border-bottom: 3px solid var(--border);
+                padding: 0 16px;
+                flex-shrink: 0;
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: var(--text-main);
+            }
+            .mobile-breadcrumb .connected-dot {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #E8F5E9;
+                color: #2E7D32;
+                border: 2px solid var(--border);
+                font-size: 0.7rem;
+                padding: 2px 8px;
+                border-radius: 10px;
+                box-shadow: 1px 1px 0px var(--border);
+            }
+            .mobile-breadcrumb .connected-dot span {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #4CAF50;
+            }
         }
 
         /* Small phones */
         @media (max-width: 480px) {
             .sidebar {
-                padding: 6px 8px;
-                gap: 4px;
+                padding: 6px 10px;
+                padding-right: 28px;
+                gap: 6px;
+            }
+            .sidebar::after {
+                width: 32px;
             }
             .brand span {
-                font-size: 0.85rem;
+                font-size: 0.9rem;
             }
             .nav-link {
-                padding: 4px 8px;
-                font-size: 0.7rem;
+                padding: 6px 10px;
+                font-size: 0.75rem;
+                min-height: 36px;
             }
             .nav-link svg {
-                width: 12px;
-                height: 12px;
+                width: 14px;
+                height: 14px;
+            }
+            .mobile-breadcrumb {
+                height: 40px;
+                padding: 0 12px;
+                font-size: 0.8rem;
+            }
+            .mobile-breadcrumb .connected-dot {
+                font-size: 0.65rem;
             }
         }
     </style>
@@ -420,8 +488,8 @@
 
     <!-- LEFT SIDEBAR -->
     <div class="sidebar">
-        <div class="brand">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eb5757" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="background: #fef2f2; padding: 4px; border-radius: 6px;">
+        <div class="brand" id="sidebar-brand">
+            <svg id="sidebar-brand-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eb5757" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="background: #fef2f2; padding: 4px; border-radius: 6px;">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
             <span id="sidebar-brand-name">Safety Hub</span>
@@ -535,6 +603,12 @@
 
     <!-- MAIN WORKSPACE -->
     <div class="workspace">
+        <!-- MOBILE BREADCRUMB BAR -->
+        <div class="mobile-breadcrumb" id="mobile-breadcrumb">
+            <span id="mobile-page-title">Dashboard Overview</span>
+            <span class="connected-dot"><span></span>Connected</span>
+        </div>
+
         <!-- TOP HEADER PANEL -->
         <div class="top-bar">
             <div class="top-bar-left" id="breadcrumb-text">
@@ -582,6 +656,8 @@
             // Update Breadcrumb text
             const title = element.innerText.trim();
             document.getElementById("breadcrumb-text").innerText = `Safety records > ${title}`;
+            const mobileTitle = document.getElementById("mobile-page-title");
+            if (mobileTitle) mobileTitle.innerText = title;
 
             // Save URL hash to preserve state on refresh
             const hash = url.replace(".html", "");

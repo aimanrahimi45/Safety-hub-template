@@ -70,6 +70,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 hubHeader.innerHTML = getLogoHTML();
             }
 
+            // Update hub sidebar brand with custom logo if available
+            const sidebarBrandIcon = document.getElementById("sidebar-brand-icon");
+            if (sidebarBrandIcon) {
+                if (logo) {
+                    sidebarBrandIcon.outerHTML = `<img id="sidebar-brand-icon" src="${logo}" alt="${name} Logo" style="height: 32px; object-fit: contain;">`;
+                } else {
+                    // keep default SVG; it already exists
+                }
+            }
+
             // Inject clear connection option in footer
             let adminFooter = document.querySelector(".admin-footer");
             if (adminFooter && !document.getElementById("btn-disconnect")) {

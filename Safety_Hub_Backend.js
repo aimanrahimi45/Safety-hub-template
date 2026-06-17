@@ -58,11 +58,11 @@ function setupWorkspace() {
     }
   } else {
     // Valid license key
-    setSystemSetting(ss, "PLAN_TYPE", licenseCheck.planType || "Premium");
+    setSystemSetting(ss, "PLAN_TYPE", "Premium");
     try {
-      SpreadsheetApp.getUi().alert("✅ Workspace Setup - " + (licenseCheck.planType || "Premium") + " Mode", "Valid license key detected. The workspace will be initialized under the " + (licenseCheck.planType || "Premium") + " plan.", SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert("✅ Workspace Setup - Premium Mode", "Valid license key detected. The workspace will be initialized under the Premium plan.", SpreadsheetApp.getUi().ButtonSet.OK);
     } catch(e) {
-      Logger.log("Workspace Setup: Initializing under " + (licenseCheck.planType || "Premium") + " plan.");
+      Logger.log("Workspace Setup: Initializing under Premium plan.");
     }
   }
   
@@ -433,7 +433,8 @@ function doGet(e) {
         logoUrl: settings["LOGO_URL"] || "",
         departments: settings["DEPARTMENTS"] || "Production,Maintenance,QA/QC,Warehouse,Safety/HR,Engineering,Electrical,Security,Recycle,DIP,Wire Drawing,Logistic,Finance,Purchasing,MFP,Admin,Contractor,Others",
         ppeTypes: settings["PPE_TYPES"] || "Safety Shoe,Safety Helmet,Respirator,Earmuff,Filter Cartridge,Other",
-        contractorDeclaration: settings["CONTRACTOR_DECLARATION"] || "Agreed: Emergency Evac, PPE Rules, Incident Reporting"
+        contractorDeclaration: settings["CONTRACTOR_DECLARATION"] || "Agreed: Emergency Evac, PPE Rules, Incident Reporting",
+        planType: settings["PLAN_TYPE"] || "Free"
       });
     }
  
@@ -461,6 +462,9 @@ function doGet(e) {
         ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Safety Inductions";
       } else if (db === "Incident") {
+        if ((settings["PLAN_TYPE"] || "Free").toLowerCase() !== "premium") {
+          return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
+        }
         ssId = settings["INCIDENT_SPREADSHEET_ID"];
         sheetName = "Incidents";
       }
@@ -754,6 +758,19 @@ function doPost(e) {
         const targetSS = SpreadsheetApp.openById(ssId);
         const sheet = getSheetSafe(targetSS, "Safety Inductions");
         
+        // Auto folder setup for signatures
+        let sigFolderId = settings["SIGNATURE_FOLDER_ID"];
+        let sigFolder;
+        if (sigFolderId) {
+          try { sigFolder = DriveApp.getFolderById(sigFolderId); } catch (err) { sigFolderId = null; }
+        }
+        if (!sigFolderId) {
+          const workspaceId = settings["WORKSPACE_FOLDER_ID"];
+          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
+          sigFolder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
+          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", sigFolder.getId());
+        }
+
         let folderId = settings["PHOTO_FOLDER_ID"];
         let folder;
         if (folderId) {
@@ -774,7 +791,15 @@ function doPost(e) {
           photoUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
         }
         
-        sheet.appendRow([new Date(), data.name, data.ic, data.company, data.date, data.inducted_by, data.declaration, data.signature, photoUrl, data.status || "Pending Approval"]);
+        let signatureUrl = "";
+        if (data.signature && data.signature.includes(",")) {
+          const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", "Sig_Induction_" + data.name.replace(/\s+/g, '_') + "_" + new Date().getTime() + ".png");
+          const file = sigFolder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          signatureUrl = file.getUrl();
+        }
+        
+        sheet.appendRow([new Date(), data.name, data.ic, data.company, data.date, data.inducted_by, data.declaration, signatureUrl, photoUrl, data.status || "Pending Approval"]);
         return returnJSON({ status: "success" });
       });
     }
@@ -809,6 +834,9 @@ function doPost(e) {
 
     // G. Save Incident (Create or Update)
     if (data.action === "saveIncident") {
+      if ((settings["PLAN_TYPE"] || "Free").toLowerCase() !== "premium") {
+        return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
+      }
       if (String(data.pin).trim() !== String(systemPIN).trim()) {
         return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
       }
@@ -891,6 +919,9 @@ function doPost(e) {
     
     // H. Delete Incident
     if (data.action === "deleteIncident") {
+      if ((settings["PLAN_TYPE"] || "Free").toLowerCase() !== "premium") {
+        return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
+      }
       if (String(data.pin).trim() !== String(systemPIN).trim()) {
         return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
       }
@@ -1044,7 +1075,7 @@ function updateClientSettings(config) {
       if (!licenseResult.valid) {
         return { status: "error", message: "❌ Invalid License Key: " + licenseResult.reason };
       }
-      planType = licenseResult.planType || "Premium";
+      planType = "Premium";
     }
     
     // Save configurations
@@ -1144,6 +1175,8 @@ function getCentralStockMap(ss) {
  
 // Convert sheet values to clean JSON Array
 function fetchSheetDataAsJSON(sheet) {
+  const ss = sheet.getParent();
+  const timezone = ss ? ss.getSpreadsheetTimeZone() : "GMT+8";
   const rows = sheet.getDataRange().getValues();
   const headers = rows[0];
   const data = [];
@@ -1153,9 +1186,9 @@ function fetchSheetDataAsJSON(sheet) {
       let val = rows[i][j];
       if (val instanceof Date) {
         if (headers[j].toLowerCase().indexOf("timestamp") !== -1 || headers[j].toLowerCase().indexOf("date") !== -1) {
-          val = Utilities.formatDate(val, "GMT+8", "yyyy-MM-dd HH:mm:ss");
+          val = Utilities.formatDate(val, timezone, "yyyy-MM-dd HH:mm:ss");
         } else {
-          val = Utilities.formatDate(val, "GMT+8", "yyyy-MM-dd");
+          val = Utilities.formatDate(val, timezone, "yyyy-MM-dd");
         }
       }
       obj[headers[j]] = val;

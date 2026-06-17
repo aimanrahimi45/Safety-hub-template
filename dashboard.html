@@ -423,6 +423,10 @@
                             incBadge.innerText = `✅ 0 Incidents in ${currentYearStr}`;
                             incBadge.className = "stat-badge badge-green";
                         }
+                    } else if (incJson.message && incJson.message.includes("Premium")) {
+                        const incBadge = document.getElementById("badge-incidents");
+                        incBadge.innerText = `🔒 Premium Locked`;
+                        incBadge.className = "stat-badge badge-gray";
                     }
                 } catch(e) {
                     console.log("Error loading dashboard stats count:", e);

@@ -135,6 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (newDepts) localStorage.setItem("safety_hub_departments", newDepts);
                     if (newPpe) localStorage.setItem("safety_hub_ppe_types", newPpe);
                     if (newDecl) localStorage.setItem("safety_hub_contractor_declaration", newDecl);
+                    if (data.planType) localStorage.setItem("safety_hub_plan_type", data.planType);
 
                     // If backend branding changed, update cache and refresh UI
                     if (newName !== systemName || newLogo !== logoUrl) {
@@ -223,6 +224,7 @@ function showConnectionSetupOverlay() {
             if (data.departments) localStorage.setItem("safety_hub_departments", data.departments);
             if (data.ppeTypes) localStorage.setItem("safety_hub_ppe_types", data.ppeTypes);
             if (data.contractorDeclaration) localStorage.setItem("safety_hub_contractor_declaration", data.contractorDeclaration);
+            if (data.planType) localStorage.setItem("safety_hub_plan_type", data.planType);
             location.reload();
         } catch (err) {
             alert(`❌ Connection Failed:\n\n${err.message}\n\nPlease check the Spreadsheet ID and ensure your Google Apps Script has access to it.`);

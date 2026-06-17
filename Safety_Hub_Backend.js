@@ -427,6 +427,8 @@ function doGet(e) {
     
     // Get Portal Branding Configuration
     if (action === "getBranding") {
+      const licenseKey = settings["LICENSE_KEY"] || "";
+      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
       return returnJSON({
         status: "SUCCESS",
         systemName: settings["SYSTEM_NAME"] || "Safety Hub",
@@ -434,7 +436,7 @@ function doGet(e) {
         departments: settings["DEPARTMENTS"] || "Production,Maintenance,QA/QC,Warehouse,Safety/HR,Engineering,Electrical,Security,Recycle,DIP,Wire Drawing,Logistic,Finance,Purchasing,MFP,Admin,Contractor,Others",
         ppeTypes: settings["PPE_TYPES"] || "Safety Shoe,Safety Helmet,Respirator,Earmuff,Filter Cartridge,Other",
         contractorDeclaration: settings["CONTRACTOR_DECLARATION"] || "Agreed: Emergency Evac, PPE Rules, Incident Reporting",
-        planType: settings["PLAN_TYPE"] || "Free"
+        planType: licenseCheck.valid ? "Premium" : "Free"
       });
     }
  
@@ -462,7 +464,9 @@ function doGet(e) {
         ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Safety Inductions";
       } else if (db === "Incident") {
-        if ((settings["PLAN_TYPE"] || "Free").toLowerCase() !== "premium") {
+        const licenseKey = settings["LICENSE_KEY"] || "";
+        const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
+        if (!licenseCheck.valid) {
           return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
         }
         ssId = settings["INCIDENT_SPREADSHEET_ID"];
@@ -834,7 +838,9 @@ function doPost(e) {
 
     // G. Save Incident (Create or Update)
     if (data.action === "saveIncident") {
-      if ((settings["PLAN_TYPE"] || "Free").toLowerCase() !== "premium") {
+      const licenseKey = settings["LICENSE_KEY"] || "";
+      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
+      if (!licenseCheck.valid) {
         return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
       }
       if (String(data.pin).trim() !== String(systemPIN).trim()) {
@@ -919,7 +925,9 @@ function doPost(e) {
     
     // H. Delete Incident
     if (data.action === "deleteIncident") {
-      if ((settings["PLAN_TYPE"] || "Free").toLowerCase() !== "premium") {
+      const licenseKey = settings["LICENSE_KEY"] || "";
+      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey) : { valid: false };
+      if (!licenseCheck.valid) {
         return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
       }
       if (String(data.pin).trim() !== String(systemPIN).trim()) {

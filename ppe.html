@@ -332,6 +332,52 @@
             background: rgba(0, 0, 0, 0.05);
             color: var(--text-main);
         }
+
+        /* Mobile overrides for PPE */
+        @media (max-width: 768px) {
+            .tabs-nav {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                gap: 4px !important;
+                padding-bottom: 6px !important;
+            }
+            .tab-btn {
+                padding: 8px 12px !important;
+                font-size: 0.8rem !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+            }
+            .kpi-card {
+                padding: 14px !important;
+            }
+            .kpi-val {
+                font-size: 1.4rem !important;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .chart-box {
+                padding: 14px !important;
+                min-height: 200px !important;
+            }
+            .chart-container {
+                height: 180px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .tab-btn {
+                padding: 6px 10px !important;
+                font-size: 0.75rem !important;
+            }
+        }
     </style>
 </head>
 <body>

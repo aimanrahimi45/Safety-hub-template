@@ -323,6 +323,30 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Mobile overrides for stock */
+        @media (max-width: 768px) {
+            .inventory-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .inv-card {
+                padding: 12px !important;
+            }
+            .inv-name {
+                font-size: 0.85rem !important;
+                white-space: normal !important;
+            }
+            .inv-info {
+                max-width: 60% !important;
+            }
+            .inv-stock-badge {
+                min-width: 55px !important;
+                padding: 6px 10px !important;
+            }
+            .badge-stock-val {
+                font-size: 1rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -675,6 +699,3 @@
     </script>
 </body>
 </html>
-
-
-

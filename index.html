@@ -331,26 +331,87 @@
                 width: 100%;
                 height: auto;
                 flex-direction: row;
-                justify-content: space-between;
-                padding: 12px 20px;
+                align-items: center;
+                padding: 8px 12px;
                 border-right: none;
                 border-bottom: 3px solid var(--border);
                 overflow-x: auto;
+                gap: 8px;
             }
-            .brand, .nav-group-header, .upgrade-card, .top-bar, .nav-group:not(:first-child) {
+            .brand {
+                flex-shrink: 0;
+                margin-bottom: 0;
+            }
+            .brand span {
+                font-size: 1rem;
+            }
+            .brand img, .brand svg {
+                height: 24px;
+                width: 24px;
+            }
+            .nav-group-header, .upgrade-card, .top-bar {
                 display: none !important;
             }
             .nav-list {
                 flex-direction: row;
-                width: 100%;
-                justify-content: space-around;
+                gap: 2px;
+                flex-grow: 1;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding: 2px 0;
+            }
+            .nav-list::-webkit-scrollbar {
+                display: none;
+            }
+            .nav-group {
+                margin-bottom: 0;
+                flex-shrink: 0;
+            }
+            .nav-group-items {
+                flex-direction: row;
+                gap: 2px;
             }
             .nav-link {
-                padding: 8px;
-                font-size: 0.8rem;
+                padding: 6px 10px;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                gap: 4px;
+                border-width: 2px;
+            }
+            .nav-link svg {
+                width: 14px;
+                height: 14px;
+            }
+            .nav-link.active {
+                transform: translate(-1px, -1px) rotate(-1deg);
+                border-width: 2px !important;
+                outline-width: 2px !important;
+            }
+            .sidebar > div:last-child {
+                display: none !important;
             }
             .iframe-container {
-                height: calc(100% - 60px);
+                height: calc(100% - 52px);
+            }
+        }
+
+        /* Small phones */
+        @media (max-width: 480px) {
+            .sidebar {
+                padding: 6px 8px;
+                gap: 4px;
+            }
+            .brand span {
+                font-size: 0.85rem;
+            }
+            .nav-link {
+                padding: 4px 8px;
+                font-size: 0.7rem;
+            }
+            .nav-link svg {
+                width: 12px;
+                height: 12px;
             }
         }
     </style>

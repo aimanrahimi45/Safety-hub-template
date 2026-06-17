@@ -215,6 +215,77 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Mobile overrides for contractor */
+        @media (max-width: 768px) {
+            .search-bar {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            .search-bar input {
+                width: 100% !important;
+            }
+            .search-bar button {
+                width: 100% !important;
+            }
+            .camera-btn-group {
+                flex-direction: column !important;
+            }
+            .camera-btn-group button {
+                width: 100% !important;
+            }
+            #video-feed, #captured-photo {
+                max-width: 100% !important;
+            }
+            #signature-pad {
+                height: 140px !important;
+            }
+            .btn-group {
+                flex-direction: column !important;
+            }
+            .btn-group button {
+                width: 100% !important;
+            }
+            .checklist-group {
+                padding: 12px !important;
+            }
+            .checkbox-text {
+                font-size: 0.8rem !important;
+            }
+            .batch-item {
+                flex-direction: column !important;
+                gap: 8px !important;
+                align-items: flex-start !important;
+            }
+            .batch-item-info {
+                width: 100% !important;
+            }
+            .btn-remove {
+                width: 100% !important;
+                text-align: center !important;
+            }
+            #pending-list {
+                max-height: 180px !important;
+            }
+            #qr-modal .card {
+                max-width: 280px !important;
+                padding: 16px !important;
+            }
+            #qr-code-img {
+                width: 160px !important;
+                height: 160px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #signature-pad {
+                height: 120px !important;
+            }
+            .batch-item {
+                padding: 8px 10px !important;
+                font-size: 0.8rem !important;
+            }
+        }
     </style>
 </head>
 <body>

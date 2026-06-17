@@ -304,8 +304,137 @@ body.in-iframe .container {
 }
 
 /* ==========================================
-   HAND-DRAWN WOBBLY BORDERS (ORGANIC ASYMMETRY)
+   MOBILE RESPONSIVE OVERRIDES
    ========================================== */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px !important;
+        padding-bottom: 40px !important;
+    }
+    .card {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+        border-width: 2px !important;
+        box-shadow: 3px 3px 0px var(--border) !important;
+        border-radius: 16px 200px 16px 180px / 180px 16px 200px 16px !important;
+    }
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    h2 {
+        font-size: 1.2rem !important;
+        margin-bottom: 14px !important;
+        padding-bottom: 8px !important;
+        border-width: 2px !important;
+    }
+    h3 {
+        font-size: 1rem !important;
+    }
+    .page-title h1 {
+        font-size: 1.5rem !important;
+    }
+    .page-title p {
+        font-size: 0.85rem !important;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    textarea {
+        padding: 10px 12px !important;
+        font-size: 0.9rem !important;
+        border-width: 2px !important;
+        box-shadow: 1px 1px 0px var(--border) !important;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="email"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+        transform: translate(0px, 0px) !important;
+        box-shadow: 2px 2px 0px var(--border) !important;
+    }
+    label {
+        margin-top: 14px !important;
+        font-size: 0.8rem !important;
+    }
+    .submit-btn, .secondary-btn, .clear-btn, .btn, .signature-button {
+        padding: 10px 18px !important;
+        font-size: 0.85rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0px var(--border) !important;
+    }
+    .submit-btn:hover, .secondary-btn:hover, .clear-btn:hover {
+        transform: translate(-1px, -1px) !important;
+        box-shadow: 3px 3px 0px var(--border) !important;
+    }
+    .back-link {
+        padding: 6px 10px !important;
+        font-size: 0.85rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0px var(--border) !important;
+    }
+    .back-link svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    .toggle-container {
+        padding: 10px 12px !important;
+        border-width: 2px !important;
+    }
+    .header-bar-shared {
+        padding: 10px 16px !important;
+    }
+    .header-bar-shared img {
+        height: 32px !important;
+    }
+    .wobbly-card {
+        border-width: 2px !important;
+        box-shadow: 3px 3px 0px var(--border) !important;
+    }
+    .wobbly-card:hover {
+        translate: 0px -4px !important;
+        scale: 1.02 !important;
+        box-shadow: 5px 5px 0px var(--border) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 12px !important;
+        padding-bottom: 30px !important;
+    }
+    .card {
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+        border-radius: 12px 160px 12px 140px / 140px 12px 160px 12px !important;
+    }
+    h1 {
+        font-size: 1.3rem !important;
+    }
+    h2 {
+        font-size: 1.05rem !important;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    textarea {
+        padding: 8px 10px !important;
+        font-size: 0.85rem !important;
+    }
+    .submit-btn, .secondary-btn, .clear-btn, .btn, .signature-button {
+        padding: 8px 14px !important;
+        font-size: 0.8rem !important;
+    }
+    label {
+        margin-top: 12px !important;
+        font-size: 0.75rem !important;
+    }
+}
 
 /* Alternating wobbly border radius styles to look hand-sketched */
 .wobbly-style-a {

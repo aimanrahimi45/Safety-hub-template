@@ -156,6 +156,47 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Mobile overrides for contractor_self */
+        @media (max-width: 768px) {
+            .camera-btn-group {
+                flex-direction: column !important;
+            }
+            .camera-btn-group button {
+                width: 100% !important;
+                min-width: unset !important;
+            }
+            #video-feed, #captured-photo {
+                max-width: 100% !important;
+            }
+            #signature-pad {
+                height: 140px !important;
+            }
+            .btn-group {
+                flex-direction: column !important;
+            }
+            .btn-group button {
+                width: 100% !important;
+            }
+            .checklist-group {
+                padding: 12px !important;
+            }
+            .checkbox-text {
+                font-size: 0.8rem !important;
+            }
+            .success-title {
+                font-size: 1.4rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #signature-pad {
+                height: 120px !important;
+            }
+            .container {
+                padding: 12px !important;
+            }
+        }
     </style>
 </head>
 <body>

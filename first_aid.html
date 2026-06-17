@@ -246,6 +246,73 @@
             }
         }
 
+        /* Mobile overrides for first_aid */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 16px !important;
+                margin: -16px -16px 16px -16px !important;
+                border-radius: 16px 200px 0px 0px / 180px 16px 0px 0px !important;
+            }
+            .header h1 {
+                font-size: 1.4rem !important;
+            }
+            .header p {
+                font-size: 0.85rem !important;
+            }
+            .autofill-bar {
+                flex-direction: column !important;
+                text-align: center !important;
+                padding: 12px 16px !important;
+            }
+            .autofill-bar p {
+                font-size: 0.85rem !important;
+            }
+            .btn-autofill {
+                width: 100% !important;
+                text-align: center !important;
+            }
+            .accordion-header {
+                padding: 12px 14px !important;
+            }
+            .accordion-content {
+                padding: 14px !important;
+            }
+            .accordion-title {
+                font-size: 0.85rem !important;
+            }
+            .item-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 4px !important;
+            }
+            .item-req {
+                font-size: 0.7rem !important;
+                padding: 2px 8px !important;
+            }
+            .item-row {
+                padding: 12px 0 !important;
+            }
+            .signature-container {
+                height: 140px !important;
+            }
+            .form-section-title {
+                font-size: 1rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 16px 12px !important;
+                margin: -12px -12px 12px -12px !important;
+            }
+            .header h1 {
+                font-size: 1.2rem !important;
+            }
+            .signature-container {
+                height: 120px !important;
+            }
+        }
+
         /* Signature block cartoon look */
         .signature-container {
             border: 3px dashed var(--border);

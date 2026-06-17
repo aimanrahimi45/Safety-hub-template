@@ -184,6 +184,54 @@
             }
         }
 
+        /* Mobile overrides for incident */
+        @media (max-width: 768px) {
+            .controls-row {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            .filter-group {
+                flex-wrap: wrap !important;
+            }
+            .select-neo {
+                width: 100% !important;
+                padding: 8px 12px !important;
+                font-size: 0.85rem !important;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+            }
+            .kpi-card {
+                padding: 14px !important;
+            }
+            .kpi-val {
+                font-size: 1.5rem !important;
+            }
+            .charts-row {
+                grid-template-columns: 1fr !important;
+            }
+            .chart-card {
+                padding: 14px !important;
+                min-height: 240px !important;
+            }
+            .chart-container {
+                height: 200px !important;
+            }
+            .form-card {
+                padding: 16px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .kpi-val {
+                font-size: 1.3rem !important;
+            }
+        }
+
         /* Form Card */
         .form-card {
             background: var(--sidebar-bg);

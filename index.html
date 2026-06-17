@@ -65,6 +65,13 @@
             letter-spacing: -0.5px;
         }
 
+        /* Mobile-only elements hidden by default */
+        .disconnect-btn,
+        .scroll-hint,
+        .mobile-breadcrumb {
+            display: none;
+        }
+
         /* Mobile scroll hint on sidebar */
         .sidebar-scroll-hint {
             display: none;
@@ -335,15 +342,16 @@
             .sidebar {
                 width: 100%;
                 height: auto;
+                min-height: 56px;
                 flex-direction: row;
                 align-items: center;
-                padding: 8px 12px;
+                padding: 6px 8px;
                 border-right: none;
                 border-bottom: 3px solid var(--border);
                 overflow-x: auto;
-                gap: 8px;
+                overflow-y: hidden;
+                gap: 6px;
                 position: relative;
-                padding-right: 32px;
             }
             .sidebar::after {
                 content: '';
@@ -351,23 +359,28 @@
                 right: 0;
                 top: 0;
                 bottom: 0;
-                width: 40px;
-                background: linear-gradient(to right, transparent, var(--sidebar-bg) 85%);
+                width: 36px;
+                background: linear-gradient(to right, transparent, var(--sidebar-bg) 80%);
                 pointer-events: none;
                 z-index: 2;
             }
             .brand {
                 flex-shrink: 0;
                 margin-bottom: 0;
-                padding-right: 4px;
+                padding: 4px 6px;
+                gap: 6px;
                 z-index: 3;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .brand span {
-                font-size: 1rem;
+                font-size: 0.95rem;
+                white-space: nowrap;
             }
             .brand img, .brand svg {
-                height: 24px;
-                width: 24px;
+                height: 22px;
+                width: 22px;
             }
             .nav-group-header, .upgrade-card, .top-bar {
                 display: none !important;
@@ -376,12 +389,13 @@
                 flex-direction: row;
                 gap: 2px;
                 flex-grow: 1;
+                flex-shrink: 1;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
                 padding: 2px 0;
-                mask-image: linear-gradient(to right, black 85%, transparent 100%);
-                -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+                mask-image: linear-gradient(to right, black 90%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
             }
             .nav-list::-webkit-scrollbar {
                 display: none;
@@ -395,16 +409,17 @@
                 gap: 2px;
             }
             .nav-link {
-                padding: 8px 12px;
-                font-size: 0.8rem;
+                padding: 6px 10px;
+                font-size: 0.78rem;
                 white-space: nowrap;
-                gap: 6px;
+                gap: 5px;
                 border-width: 2px;
-                min-height: 40px;
+                min-height: 38px;
+                border-radius: 10px;
             }
             .nav-link svg {
-                width: 16px;
-                height: 16px;
+                width: 15px;
+                height: 15px;
             }
             .nav-link.active {
                 transform: translate(-1px, -1px) rotate(-1deg);
@@ -414,6 +429,61 @@
             .sidebar > div:last-child {
                 display: none !important;
             }
+
+            /* Icon-only disconnect button fixed on right */
+            .disconnect-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 38px;
+                flex-shrink: 0;
+                background: var(--surface);
+                border: 2px solid var(--border);
+                border-radius: 10px;
+                box-shadow: 2px 2px 0px var(--border);
+                cursor: pointer;
+                z-index: 3;
+                transition: all 0.1s ease;
+            }
+            .disconnect-btn:hover {
+                transform: translate(-1px, -1px);
+                box-shadow: 3px 3px 0px var(--border);
+            }
+            .disconnect-btn svg {
+                width: 18px;
+                height: 18px;
+                color: var(--text-muted);
+            }
+
+            /* Scroll chevron hint */
+            .scroll-hint {
+                display: none;
+                position: absolute;
+                right: 48px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 24px;
+                height: 24px;
+                align-items: center;
+                justify-content: center;
+                background: var(--sidebar-bg);
+                border: 2px solid var(--border);
+                border-radius: 50%;
+                box-shadow: 2px 2px 0px var(--border);
+                z-index: 3;
+                pointer-events: none;
+                opacity: 0.85;
+            }
+            .scroll-hint.visible {
+                display: flex;
+            }
+            .scroll-hint svg {
+                width: 14px;
+                height: 14px;
+                color: var(--text-main);
+            }
+
             .iframe-container {
                 height: calc(100% - 52px);
             }
@@ -454,24 +524,50 @@
         /* Small phones */
         @media (max-width: 480px) {
             .sidebar {
-                padding: 6px 10px;
-                padding-right: 28px;
-                gap: 6px;
+                padding: 5px 6px;
+                gap: 4px;
+                min-height: 52px;
             }
             .sidebar::after {
-                width: 32px;
+                width: 28px;
+            }
+            .brand {
+                padding: 3px 5px;
+                gap: 5px;
             }
             .brand span {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
+            }
+            .brand img, .brand svg {
+                height: 20px;
+                width: 20px;
             }
             .nav-link {
-                padding: 6px 10px;
-                font-size: 0.75rem;
-                min-height: 36px;
+                padding: 5px 8px;
+                font-size: 0.72rem;
+                min-height: 34px;
+                gap: 4px;
             }
             .nav-link svg {
-                width: 14px;
-                height: 14px;
+                width: 13px;
+                height: 13px;
+            }
+            .disconnect-btn {
+                width: 34px;
+                height: 34px;
+            }
+            .disconnect-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+            .scroll-hint {
+                right: 42px;
+                width: 20px;
+                height: 20px;
+            }
+            .scroll-hint svg {
+                width: 12px;
+                height: 12px;
             }
             .mobile-breadcrumb {
                 height: 40px;
@@ -517,7 +613,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
                         </svg>
-                        Inspections
+                        Inspect
                     </div>
                     <div class="nav-link" onclick="loadTab('stock.html', this)">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -526,13 +622,13 @@
                             <polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"></polygon>
                             <polygon points="12 12 21 6.92 12 1.92 3 6.92 12 12"></polygon>
                         </svg>
-                        Stock Monitor
+                        Stock
                     </div>
                     <div class="nav-link" onclick="loadTab('ppe.html', this)">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
-                        PPE Requests
+                        PPE
                     </div>
                 </div>
             </div>
@@ -547,7 +643,7 @@
                             <line x1="12" y1="9" x2="12" y2="13"></line>
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
-                        Incident Monitor
+                        Incident
                     </div>
                 </div>
             </div>
@@ -563,7 +659,7 @@
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
-                        Inductions
+                        Induct
                     </div>
 
                 </div>
@@ -580,17 +676,25 @@
                             <line x1="9" y1="13" x2="15" y2="13"></line>
                             <line x1="9" y1="17" x2="15" y2="17"></line>
                         </svg>
-                        Database Logs
+                        Logs
                     </div>
                 </div>
             </div>
         </ul>
 
-        <!-- Connection Settings in Sidebar Footer -->
-        <div style="border-top: 3px solid var(--border); padding-top: 15px; margin-top: auto;">
-            <div class="nav-link" style="color: var(--text-muted); font-size: 0.85rem;" onclick="disconnectSheet()">
-                ⚙️ Disconnect Sheet
-            </div>
+        <!-- Icon-only disconnect button (visible on mobile) -->
+        <button class="disconnect-btn" id="disconnect-btn" onclick="disconnectSheet()" title="Disconnect Sheet" aria-label="Disconnect Sheet">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
+
+        <!-- Scroll hint indicator (visible on mobile when overflow) -->
+        <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
         </div>
 
         <!-- Upgrade Card -->
@@ -700,6 +804,22 @@
             } else {
                 const homeLink = document.querySelector('.nav-link[onclick*="dashboard.html"]');
                 loadTab("dashboard.html", homeLink);
+            }
+
+            // Mobile scroll hint: show chevron when nav-list overflows
+            const navList = document.querySelector(".nav-list");
+            const scrollHint = document.getElementById("scroll-hint");
+            if (navList && scrollHint) {
+                const updateHint = () => {
+                    const canScrollRight = navList.scrollWidth > navList.clientWidth + 2;
+                    const atEnd = navList.scrollLeft + navList.clientWidth >= navList.scrollWidth - 2;
+                    scrollHint.classList.toggle("visible", canScrollRight && !atEnd);
+                };
+                updateHint();
+                navList.addEventListener("scroll", updateHint, { passive: true });
+                window.addEventListener("resize", updateHint, { passive: true });
+                // Recheck after fonts/layout settle
+                setTimeout(updateHint, 300);
             }
         });
     </script>

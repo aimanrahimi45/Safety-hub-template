@@ -399,6 +399,21 @@ body.in-iframe .container {
         scale: 1.02 !important;
         box-shadow: 5px 5px 0px var(--border) !important;
     }
+    .card[style*="padding: 0"], .card[style*="padding:0"] {
+        padding: 0 !important;
+    }
+    .wobbly-style-a {
+        border-radius: 120px 12px 100px 12px / 12px 100px 12px 120px !important;
+    }
+    .wobbly-style-b {
+        border-radius: 14px 110px 14px 100px / 100px 14px 110px 14px !important;
+    }
+    .wobbly-style-c {
+        border-radius: 12px 120px 12px 100px / 100px 12px 120px 12px !important;
+    }
+    .wobbly-style-d {
+        border-radius: 110px 14px 100px 14px / 14px 100px 14px 110px !important;
+    }
 }
 
 @media (max-width: 480px) {

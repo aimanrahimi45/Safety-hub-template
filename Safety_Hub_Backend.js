@@ -42,14 +42,28 @@ function setupWorkspace() {
   
   // Verify License Key before creating workspace
   const licenseKey = settings["LICENSE_KEY"] || "";
-  const licenseCheck = validateLicenseKey(licenseKey);
+  let licenseCheck = { valid: false, planType: "Free", reason: "No key supplied" };
+  
+  if (licenseKey) {
+    licenseCheck = validateLicenseKey(licenseKey);
+  }
+  
+  // Instead of blocking, we initialize in Free Mode if license is invalid/missing
   if (!licenseCheck.valid) {
+    setSystemSetting(ss, "PLAN_TYPE", "Free");
     try {
-      SpreadsheetApp.getUi().alert("❌ Setup Blocked", "Please enter a valid License Key in the Settings sidebar first before initializing the workspace.\n\nReason: " + (licenseCheck.reason || "Invalid license key."), SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert("ℹ️ Workspace Setup - Free Mode", "No valid license key was detected. The workspace will be initialized under the FREE tier plan.\n\nAdvanced features (such as custom branding) will require entering a valid key in the Settings sidebar.", SpreadsheetApp.getUi().ButtonSet.OK);
     } catch(e) {
-      Logger.log("❌ Setup Blocked: Invalid License Key. Reason: " + (licenseCheck.reason || "Invalid key"));
+      Logger.log("Workspace Setup: Initializing under FREE tier.");
     }
-    return;
+  } else {
+    // Valid license key
+    setSystemSetting(ss, "PLAN_TYPE", licenseCheck.planType || "Premium");
+    try {
+      SpreadsheetApp.getUi().alert("✅ Workspace Setup - " + (licenseCheck.planType || "Premium") + " Mode", "Valid license key detected. The workspace will be initialized under the " + (licenseCheck.planType || "Premium") + " plan.", SpreadsheetApp.getUi().ButtonSet.OK);
+    } catch(e) {
+      Logger.log("Workspace Setup: Initializing under " + (licenseCheck.planType || "Premium") + " plan.");
+    }
   }
   
   // A. Create/Find central Drive folder
@@ -1020,24 +1034,31 @@ function showSettingsSidebar() {
 function updateClientSettings(config) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const licenseKey = config.licenseKey || "";
     
-    // 1. License Check Validation
-    const licenseResult = validateLicenseKey(config.licenseKey);
-    if (!licenseResult.valid) {
-      return { status: "error", message: "❌ Invalid License Key: " + licenseResult.reason };
+    let planType = "Free";
+    
+    if (licenseKey) {
+      // License Check Validation
+      const licenseResult = validateLicenseKey(licenseKey);
+      if (!licenseResult.valid) {
+        return { status: "error", message: "❌ Invalid License Key: " + licenseResult.reason };
+      }
+      planType = licenseResult.planType || "Premium";
     }
     
-    // 2. Save configurations
+    // Save configurations
     setSystemSetting(ss, "SYSTEM_NAME", config.systemName || "Safety Hub");
     setSystemSetting(ss, "LOGO_URL", config.logoUrl || "");
     setSystemSetting(ss, "DASHBOARD_PIN", config.pin || "9911");
     setSystemSetting(ss, "BOX_IDS", config.boxIds || "");
-    setSystemSetting(ss, "LICENSE_KEY", config.licenseKey || "");
+    setSystemSetting(ss, "LICENSE_KEY", licenseKey);
+    setSystemSetting(ss, "PLAN_TYPE", planType);
     
-    // 3. Format the settings tab
+    // Format the settings tab
     formatSystemSettingsSheet(ss);
     
-    return { status: "success", message: "🎉 Configuration saved successfully!" };
+    return { status: "success", message: "🎉 Configuration saved successfully! (Plan: " + planType + ")" };
   } catch (err) {
     return { status: "error", message: "Error: " + err.message };
   }

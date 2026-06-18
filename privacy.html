@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - AmerisPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --primary: #2563eb;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            border: 1px solid var(--border);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-top: 0;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+        }
+        h2 {
+            font-size: 1.25rem;
+            margin-top: 30px;
+            color: var(--primary);
+        }
+        p, li {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p><strong>Effective Date: June 18, 2026</strong></p>
+        
+        <p>This Privacy Policy explains how AmerisPro ("we," "our," or "us") handles data when you use the AmerisPro Google Sheets Add-on and its associated web portals (collectively, the "Service").</p>
+        
+        <h2>1. Data Ownership and Storage</h2>
+        <p>AmerisPro is built on a serverless, multi-tenant architecture designed to prioritize your privacy:</p>
+        <ul>
+            <li><strong>Your Sheets, Your Data:</strong> All safety records, inventory quantities, PPE check logs, contractor signatures, and system configurations are stored directly within <strong>your own Google Drive</strong> and <strong>your own Google Sheets</strong>.</li>
+            <li><strong>No Central Database Hosting:</strong> We do not host your safety data on external central servers. We cannot access, view, or modify your safety logs or files unless explicitly authorized within your own Google account context.</li>
+        </ul>
+
+        <h2>2. Information We Access</h2>
+        <p>To function properly, the Service requests access to the following Google Workspace permissions (OAuth Scopes):</p>
+        <ul>
+            <li><strong>Google Sheets:</strong> Used to read and write safety checklist data, PPE logs, and contractor registrations to the database spreadsheets you own.</li>
+            <li><strong>Google Drive:</strong> Used to safely upload contractor/visitor signatures and photos to a folder inside your own Google Drive.</li>
+            <li><strong>External Requests:</strong> Used to communicate with our secure licensing server to validate your premium purchase license key.</li>
+        </ul>
+
+        <h2>3. License Validation</h2>
+        <p>When you register a license key within your system settings, the add-on sends the license key and your active Spreadsheet ID to our secure validation server to verify the validity of your subscription. This validation does not transmit any of your safety records, employee details, or personal files.</p>
+
+        <h2>4. Data Sharing and Disclosure</h2>
+        <p>We do not sell, rent, trade, or share your data with third parties. Your data remains entirely within your Google account and under your control.</p>
+
+        <h2>5. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated effective date.</p>
+
+        <h2>6. Contact Us</h2>
+        <p>If you have any questions about this Privacy Policy, please contact us at your support email address.</p>
+
+        <div class="footer">
+            &copy; 2026 AmerisPro. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

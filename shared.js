@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
     applyBranding(systemName, logoUrl);
 
     // 4. Fetch latest branding settings from central backend in background
-    if (typeof GOOGLE_SCRIPT_URL !== "undefined" && GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("YOUR_WEB_APP_URL")) {
+    if (typeof GOOGLE_SCRIPT_URL !== "undefined" && GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("YOUR_WEB_APP_URL") && spreadsheetId) {
         fetch(`${GOOGLE_SCRIPT_URL}?action=getBranding&spreadsheetId=${spreadsheetId}`)
             .then(res => res.json())
             .then(data => {

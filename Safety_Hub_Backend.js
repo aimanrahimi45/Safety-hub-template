@@ -26,7 +26,7 @@ function onInstall(e) {
 
 function onOpen(e) {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu('🛡️ Safety Hub')
+  ui.createMenu('🛡️ AmerisPro')
       .addItem('⚡ Initialize Workspace', 'setupWorkspace')
       .addItem('⚙️ Settings & Configuration', 'showSettingsSidebar')
       .addItem('🎨 Format Settings Tab', 'manualFormatSettings')
@@ -93,7 +93,7 @@ function setupWorkspace() {
     }
   }
   if (!faId) {
-    const newSS = SpreadsheetApp.create("First Aid System");
+    const newSS = SpreadsheetApp.create("AmerisPro First Aid Database");
     const file = DriveApp.getFileById(newSS.getId());
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
@@ -113,7 +113,7 @@ function setupWorkspace() {
     }
   }
   if (!ppeId) {
-    const newSS = SpreadsheetApp.create("PPE System");
+    const newSS = SpreadsheetApp.create("AmerisPro PPE Database");
     const file = DriveApp.getFileById(newSS.getId());
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
@@ -133,7 +133,7 @@ function setupWorkspace() {
     }
   }
   if (!contractorId) {
-    const newSS = SpreadsheetApp.create("Contractor System");
+    const newSS = SpreadsheetApp.create("AmerisPro Contractor Database");
     const file = DriveApp.getFileById(newSS.getId());
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
@@ -153,7 +153,7 @@ function setupWorkspace() {
     }
   }
   if (!incidentId) {
-    const newSS = SpreadsheetApp.create("Incident System");
+    const newSS = SpreadsheetApp.create("AmerisPro Incident Database");
     const file = DriveApp.getFileById(newSS.getId());
     folder.addFile(file);
     DriveApp.getRootFolder().removeFile(file);
@@ -176,9 +176,9 @@ function setupWorkspace() {
   masterSheet.autoResizeColumns(1, 2);
  
   try {
-    SpreadsheetApp.getUi().alert("🎉 Safety Hub Workspace Ready!", "Created folder '" + settings["SYSTEM_NAME"] + " Workspace' and initialized all database sheets inside it.\n\nConnection URL settings are fully configured.", SpreadsheetApp.getUi().ButtonSet.OK);
+    SpreadsheetApp.getUi().alert("🎉 AmerisPro Workspace Ready!", "Created folder '" + settings["SYSTEM_NAME"] + " Workspace' and initialized all database sheets inside it.\n\nConnection URL settings are fully configured.", SpreadsheetApp.getUi().ButtonSet.OK);
   } catch (err) {
-    Logger.log("🎉 Safety Hub Workspace Ready!");
+    Logger.log("🎉 AmerisPro Workspace Ready!");
   }
 }
  
@@ -451,7 +451,7 @@ function doGet(e) {
       const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
       return returnJSON({
         status: "SUCCESS",
-        systemName: settings["SYSTEM_NAME"] || "Safety Hub",
+        systemName: settings["SYSTEM_NAME"] || "AmerisPro",
         logoUrl: settings["LOGO_URL"] || "",
         departments: settings["DEPARTMENTS"] || "Production,Maintenance,QA/QC,Warehouse,Safety/HR,Engineering,Electrical,Security,Recycle,DIP,Wire Drawing,Logistic,Finance,Purchasing,MFP,Admin,Contractor,Others",
         ppeTypes: settings["PPE_TYPES"] || "Safety Shoe,Safety Helmet,Respirator,Earmuff,Filter Cartridge,Other",
@@ -991,7 +991,7 @@ function showSettingsSidebar() {
   
   const currentPin = settings["DASHBOARD_PIN"] || "9911";
   const currentLogo = settings["LOGO_URL"] || "";
-  const currentName = settings["SYSTEM_NAME"] || "Safety Hub";
+  const currentName = settings["SYSTEM_NAME"] || "AmerisPro";
   const licenseKey = settings["LICENSE_KEY"] || "";
   const boxIds = settings["BOX_IDS"] || "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07";
   
@@ -1016,12 +1016,7 @@ function showSettingsSidebar() {
       </style>
     </head>
     <body>
-      <h3>Safety Hub Settings</h3>
-      
-      <div class="form-group">
-        <label for="systemName">System Brand Name</label>
-        <input type="text" id="systemName" value="${currentName}" placeholder="e.g. Acme Safety Hub">
-      </div>
+      <h3>AmerisPro Settings</h3>
       
       <div class="form-group">
         <label for="logoUrl">Company Logo Image URL</label>
@@ -1055,7 +1050,6 @@ function showSettingsSidebar() {
           statusBox.style.display = "none";
           
           const config = {
-            systemName: document.getElementById("systemName").value,
             logoUrl: document.getElementById("logoUrl").value,
             pin: document.getElementById("pin").value,
             boxIds: document.getElementById("boxIds").value,
@@ -1085,7 +1079,7 @@ function showSettingsSidebar() {
   `;
   
   const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
-      .setTitle('Safety Hub Settings')
+      .setTitle('AmerisPro Settings')
       .setWidth(300);
   SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
@@ -1107,7 +1101,7 @@ function updateClientSettings(config) {
     }
     
     // Save configurations
-    setSystemSetting(ss, "SYSTEM_NAME", config.systemName || "Safety Hub");
+    setSystemSetting(ss, "SYSTEM_NAME", "AmerisPro");
     setSystemSetting(ss, "LOGO_URL", config.logoUrl || "");
     setSystemSetting(ss, "DASHBOARD_PIN", config.pin || "9911");
     setSystemSetting(ss, "BOX_IDS", config.boxIds || "");
@@ -1234,7 +1228,7 @@ function getSystemSettings(ss) {
     sheet = ss.insertSheet("System Settings");
     const defaults = [
       ["Setting Key", "Setting Value"],
-      ["SYSTEM_NAME", "Safety Hub"],
+      ["SYSTEM_NAME", "AmerisPro"],
       ["LOGO_URL", ""],
       ["DASHBOARD_PIN", "9911"],
       ["BOX_IDS", "OSH/FAB/01,OSH/FAB/02,OSH/FAB/03,OSH/FAB/04,OSH/FAB/05,OSH/FAB/06,OSH/FAB/07"],
@@ -1252,6 +1246,7 @@ function getSystemSettings(ss) {
   rows.forEach(r => {
     if (r[0]) settings[r[0]] = String(r[1] || "").trim();
   });
+  settings["SYSTEM_NAME"] = "AmerisPro"; // Force to "AmerisPro" to prevent any user override
   return settings;
 }
 
@@ -1359,7 +1354,13 @@ function formatSystemSettingsSheet(ss) {
     const keyRange = sheet.getRange(r, 1);
     const valRange = sheet.getRange(r, 2);
     const key = String(keyRange.getValue() || "").trim();
-    const isSystemKey = key.endsWith("_ID");
+    
+    // Reset SYSTEM_NAME if it was altered
+    if (key === "SYSTEM_NAME" && String(valRange.getValue()).trim() !== "AmerisPro") {
+      valRange.setValue("AmerisPro");
+    }
+    
+    const isSystemKey = key.endsWith("_ID") || key === "SYSTEM_NAME" || key === "PLAN_TYPE";
     
     keyRange.setFontSize(9)
             .setFontWeight("bold")

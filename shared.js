@@ -191,6 +191,15 @@ function showConnectionSetupOverlay() {
             <button id="btn-save-connection" style="width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;">
                 Save Connection
             </button>
+            
+            <div style="margin-top: 20px; text-align: center; font-size: 0.75rem; color: #64748b; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                <div>© 2026 AmerisPro</div>
+                <div style="margin-top: 6px; display: flex; justify-content: center; gap: 10px;">
+                    <a href="privacy.html" target="_blank" style="color: #2563eb; font-weight: 600; text-decoration: none; border-bottom: 1px dotted #2563eb;">Privacy Policy</a>
+                    <span style="color: #cbd5e1;">•</span>
+                    <a href="terms.html" target="_blank" style="color: #2563eb; font-weight: 600; text-decoration: none; border-bottom: 1px dotted #2563eb;">Terms of Service</a>
+                </div>
+            </div>
         </div>
     `;
 

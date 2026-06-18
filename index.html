@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safety Hub Console</title>
+    <title>AmerisPro Console</title>
     <link rel="icon" type="image/png" href="safety-logo-v2.png">
     <link rel="apple-touch-icon" href="safety-logo-v2.png">
     <link rel="manifest" href="manifest.json">
@@ -588,7 +588,7 @@
             <svg id="sidebar-brand-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eb5757" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="background: #fef2f2; padding: 4px; border-radius: 6px;">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
-            <span id="sidebar-brand-name">Safety Hub</span>
+            <span id="sidebar-brand-name">AmerisPro</span>
         </div>
 
         <ul class="nav-list">
@@ -699,7 +699,7 @@
 
         <!-- Upgrade Card -->
         <div class="upgrade-card">
-            <h4>Safety Hub Pro</h4>
+            <h4>AmerisPro Pro</h4>
             <p>Unlock incident reports, advanced analytics, and PDF exports.</p>
             <a href="#" class="upgrade-btn holographic">Upgrade Now</a>
         </div>
@@ -830,7 +830,7 @@
 
         // Initialize dynamic tab based on hash or default to dashboard
         document.addEventListener("DOMContentLoaded", () => {
-            const systemName = localStorage.getItem("safety_hub_system_name") || "Safety Hub";
+            const systemName = localStorage.getItem("safety_hub_system_name") || "AmerisPro";
             document.getElementById("sidebar-brand-name").innerText = systemName;
 
             const hash = window.location.hash.replace("#", "");

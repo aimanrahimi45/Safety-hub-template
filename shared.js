@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Load cached connection and branding settings
     let spreadsheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
     let logoUrl = localStorage.getItem("safety_hub_logo_url") || "";
-    let systemName = localStorage.getItem("safety_hub_system_name") || "Safety Hub";
+    let systemName = localStorage.getItem("safety_hub_system_name") || "AmerisPro";
 
     const path = window.location.pathname.toLowerCase();
     const isHub = path.endsWith("index.html") || path === "/" || path.endsWith("/");
@@ -35,8 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Helper function to update the DOM elements with branding
     const applyBranding = (name, logo) => {
         // Update document title if it contains default branding
-        if (originalTitle.includes("Safety Hub")) {
-            document.title = originalTitle.replace(/Safety Hub/g, name);
+        if (originalTitle.includes("Safety Hub") || originalTitle.includes("AmerisPro")) {
+            document.title = originalTitle.replace(/Safety Hub/g, name).replace(/AmerisPro/g, name);
         } else if (document.title.includes(systemName)) {
             document.title = document.title.replace(new RegExp(systemName, 'g'), name);
         }
@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.json())
             .then(data => {
                 if (data.status === "SUCCESS") {
-                    const newName = data.systemName || "Safety Hub";
+                    const newName = data.systemName || "AmerisPro";
                     const newLogo = data.logoUrl || "";
                     const newDepts = data.departments || "";
                     const newPpe = data.ppeTypes || "";
@@ -174,8 +174,11 @@ function showConnectionSetupOverlay() {
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 </svg>
             </div>
-            <h2 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0 0 10px 0; border: none; padding: 0;">🛡️ Connect Safety Hub</h2>
-            <p style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin: 0 0 25px 0;">Enter your master Google Spreadsheet ID below to connect this portal dashboard to your secure cloud database.</p>
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0 0 10px 0; border: none; padding: 0;">🛡️ Connect AmerisPro</h2>
+            <p style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">Enter your master Google Spreadsheet ID below to connect this portal dashboard to your secure cloud database.</p>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; font-size: 0.82rem; color: #475569; text-align: left; margin-bottom: 20px; line-height: 1.45;">
+                <strong>About AmerisPro:</strong> This application serves as a digital Occupational Safety and Health (OSH) management dashboard. It reads and writes safety inspections, PPE checks, and contractor induction records directly to the spreadsheets inside the user's account. No data is stored externally.
+            </div>
             
             <div style="text-align: left; margin-bottom: 20px;">
                 <label style="font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: #475569; display: block; margin-bottom: 6px;">Google Spreadsheet ID</label>

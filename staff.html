@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmerisPro Staff Database</title>
+    <link rel="icon" type="image/png" href="amerispro_128x128.png">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+            padding-bottom: 60px;
+        }
+
+        .header {
+            background: var(--info); /* Sky Blue theme for Staff */
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            border-bottom: 3px solid var(--border);
+            margin: -24px -24px 24px -24px;
+            border-radius: 20px 240px 0px 0px / 220px 20px 0px 0px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: #FFFFFF;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 14px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.1s ease;
+        }
+
+        .tab-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+
+        .tab-btn.active {
+            background: var(--warning);
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--info);
+        }
+
+        .btn-submit {
+            background: var(--success);
+            color: var(--text-main);
+            border: 3px solid var(--border);
+            padding: 12px;
+            border-radius: 14px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.1s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-submit:active {
+            transform: translate(1px, 1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Import Wizard Styling */
+        .upload-area {
+            border: 3px dashed var(--border);
+            background: #fafafa;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+
+        .upload-area:hover {
+            background: #f0fdfa;
+        }
+
+        .upload-area svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        /* Preview Scroll Table */
+        .preview-wrapper {
+            margin-top: 20px;
+            border: 3px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .preview-header-bar {
+            background: var(--sidebar-bg);
+            padding: 10px 15px;
+            border-bottom: 3px solid var(--border);
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        .preview-scroll {
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .preview-table tr {
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .preview-table tr:hover {
+            background: #eff6ff;
+        }
+
+        .preview-table tr.selected-header {
+            background: var(--warning) !important;
+        }
+
+        .preview-table td {
+            padding: 8px 12px;
+            border-right: 1px solid #e2e8f0;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .preview-table td.row-num-col {
+            background: #f1f5f9;
+            text-align: center;
+            font-weight: 700;
+            width: 40px;
+            border-right: 3px solid var(--border);
+        }
+
+        /* Mapping Section */
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            border-top: 3px dashed var(--border);
+            padding-top: 20px;
+        }
+
+        .mapping-card {
+            background: #f8fafc;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mapping-card span {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Search and Table */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+        }
+
+        .roster-table-wrapper {
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .roster-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .roster-table th {
+            background: var(--border);
+            color: #FFFFFF;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .roster-table td {
+            padding: 12px 16px;
+            border-bottom: 3px solid var(--border);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .roster-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: 1px 1px 0px var(--border);
+        }
+
+        .badge-status.active {
+            background: var(--success);
+            color: var(--text-main);
+        }
+
+        .badge-status.inactive {
+            background: #cbd5e1;
+            color: #475569;
+        }
+
+        .btn-edit {
+            background: var(--warning);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.75rem;
+            box-shadow: 1px 1px 0px var(--border);
+        }
+        .btn-edit:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>Staff Database</h1>
+            <p>Manage and import your employee roster to dynamically sync with EHS incident logging</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('roster')">📋 Staff Roster</button>
+            <button class="tab-btn" onclick="switchTab('add')">➕ Add Member</button>
+            <button class="tab-btn" onclick="switchTab('import')">📥 Import Excel/CSV</button>
+        </div>
+
+        <!-- TAB: ROSTER LIST -->
+        <div id="roster-panel" class="tab-panel active">
+            <div class="card">
+                <div class="controls-row">
+                    <input type="text" id="searchBox" class="search-input" placeholder="🔍 Search by Staff ID, Name, or Department..." oninput="filterRoster()">
+                    <select id="statusFilter" style="width: 160px;" onchange="filterRoster()">
+                        <option value="ALL">All Statuses</option>
+                        <option value="Active">Active Only</option>
+                        <option value="Inactive">Inactive Only</option>
+                    </select>
+                </div>
+
+                <div class="roster-table-wrapper">
+                    <table class="roster-table">
+                        <thead>
+                            <tr>
+                                <th>Staff ID</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Position</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rosterTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading staff database...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: ADD/EDIT FORM -->
+        <div id="add-panel" class="tab-panel">
+            <div class="card">
+                <h2 id="formTitle">Add New Staff Member</h2>
+                <form id="staffForm" onsubmit="handleFormSubmit(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="staffId">Staff ID (Unique) *</label>
+                            <input type="text" id="staffId" required placeholder="e.g. EMP1002">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffName">Full Name *</label>
+                            <input type="text" id="staffName" required placeholder="e.g. John Doe">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="staffDept">Department *</label>
+                            <input type="text" id="staffDept" required placeholder="e.g. Production">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffPos">Position / Job Title</label>
+                            <input type="text" id="staffPos" placeholder="e.g. Operator">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="staffEmail">Email Address</label>
+                            <input type="email" id="staffEmail" placeholder="e.g. john@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffStatus">Status</label>
+                            <select id="staffStatus">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">💾 Save Staff Record</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: IMPORT EXCEL/CSV WIZARD -->
+        <div id="import-panel" class="tab-panel">
+            <div class="card">
+                <h2>Import Staff List from Excel (CSV)</h2>
+                <p>Upload a standard CSV file exported from your HR portal. You can choose which row represents the headers, and skip any columns you don't need.</p>
+                
+                <div class="upload-area" onclick="document.getElementById('csvFileInput').click()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p id="uploadText">Click to select or drag & drop CSV File</p>
+                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- Step 1: Preview Grid (30 Rows) -->
+                <div id="wizardStep1" style="display: none;">
+                    <div class="preview-wrapper">
+                        <div class="preview-header-bar">
+                            👉 STEP 1: Click on the row that contains the Column Headers (Default is Row 1)
+                        </div>
+                        <div class="preview-scroll">
+                            <table class="preview-table">
+                                <tbody id="previewTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Columns Mapping Grid -->
+                <div id="wizardStep2" style="display: none;">
+                    <h3 style="margin-top: 24px; font-size: 1.1rem; color: var(--text-main);">👉 STEP 2: Map file columns to Staff Roster fields</h3>
+                    <p style="font-size: 0.8rem; margin-bottom: 12px;">Unmapped columns (set to Skip Column) will not be imported.</p>
+                    <div class="mapping-grid" id="mappingFieldsContainer"></div>
+                    <button class="btn-submit" onclick="executeImport()" style="margin-top: 24px; background: var(--info);">📥 Confirm Import & Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allStaff = [];
+        let parsedRows = [];
+        let selectedHeaderRowIndex = 0; // index in parsedRows
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadStaffRoster();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.innerText.toLowerCase().includes(tabId));
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            document.getElementById(tabId + '-panel').classList.add('active');
+            
+            if (tabId === 'roster') {
+                loadStaffRoster();
+            } else if (tabId === 'add') {
+                resetForm();
+            }
+        }
+
+        // --- BACKEND CALLS ---
+        function loadStaffRoster() {
+            const tbody = document.getElementById("rosterTableBody");
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.status === "success") {
+                        allStaff = response.data;
+                        renderRoster(allStaff);
+                    } else {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Error: ${response.message}</td></tr>`;
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Connection Failed: ${err}</td></tr>`;
+                })
+                .getStaffList();
+        }
+
+        function renderRoster(staffArray) {
+            const tbody = document.getElementById("rosterTableBody");
+            if (staffArray.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No staff records found in the database. Add some manually or import a CSV file!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = staffArray.map(item => `
+                <tr>
+                    <td style="font-family:var(--font-heading); font-weight:700;">${item["Staff ID"] || "-"}</td>
+                    <td>${item["Name"] || "-"}</td>
+                    <td>${item["Department"] || "-"}</td>
+                    <td>${item["Position"] || "-"}</td>
+                    <td style="font-size:0.8rem; color:var(--text-muted);">${item["Email"] || "-"}</td>
+                    <td>
+                        <span class="badge-status ${String(item["Status"]).toLowerCase() === 'active' ? 'active' : 'inactive'}">
+                            ${item["Status"] || "Active"}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-edit" onclick="editStaffMember('${item["Staff ID"]}')">✏️ Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterRoster() {
+            const query = document.getElementById("searchBox").value.toLowerCase();
+            const status = document.getElementById("statusFilter").value;
+
+            const filtered = allStaff.filter(item => {
+                const matchesSearch = 
+                    String(item["Staff ID"]).toLowerCase().includes(query) ||
+                    String(item["Name"]).toLowerCase().includes(query) ||
+                    String(item["Department"]).toLowerCase().includes(query) ||
+                    String(item["Position"]).toLowerCase().includes(query);
+                
+                const matchesStatus = 
+                    status === "ALL" || 
+                    String(item["Status"]).toLowerCase() === status.toLowerCase();
+
+                return matchesSearch && matchesStatus;
+            });
+            renderRoster(filtered);
+        }
+
+        function editStaffMember(staffId) {
+            const member = allStaff.find(item => item["Staff ID"] === staffId);
+            if (!member) return;
+
+            document.getElementById("staffId").value = member["Staff ID"];
+            document.getElementById("staffId").disabled = true; // Block editing ID
+            document.getElementById("staffName").value = member["Name"];
+            document.getElementById("staffDept").value = member["Department"];
+            document.getElementById("staffPos").value = member["Position"] || "";
+            document.getElementById("staffEmail").value = member["Email"] || "";
+            document.getElementById("staffStatus").value = member["Status"] || "Active";
+
+            document.getElementById("formTitle").innerText = "Edit Staff Member Details";
+            switchTab('add');
+        }
+
+        function resetForm() {
+            document.getElementById("staffForm").reset();
+            document.getElementById("staffId").disabled = false;
+            document.getElementById("formTitle").innerText = "Add New Staff Member";
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const saveBtn = event.target.querySelector("button");
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving Record...";
+
+            const staffData = {
+                "Staff ID": document.getElementById("staffId").value,
+                "Name": document.getElementById("staffName").value,
+                "Department": document.getElementById("staffDept").value,
+                "Position": document.getElementById("staffPos").value,
+                "Email": document.getElementById("staffEmail").value,
+                "Status": document.getElementById("staffStatus").value
+            };
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "💾 Save Staff Record";
+                    if (response.status === "success") {
+                        alert("✅ Success: " + response.message);
+                        resetForm();
+                        switchTab('roster');
+                    } else {
+                        alert("❌ Error: " + response.message);
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "💾 Save Staff Record";
+                    alert("❌ Connection Failed: " + err);
+                })
+                .addOrUpdateStaff(staffData);
+        }
+
+        // --- EXCEL/CSV IMPORT SYSTEM ---
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById("uploadText").innerText = "Selected: " + file.name + " (" + Math.round(file.size / 1024) + " KB)";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parsedRows = parseCSV(text);
+                if (parsedRows.length === 0) {
+                    alert("⚠️ Error: Uploaded file is empty.");
+                    return;
+                }
+                
+                // Show Step 1 wizard preview
+                document.getElementById("wizardStep1").style.display = "block";
+                document.getElementById("wizardStep2").style.display = "none";
+                selectedHeaderRowIndex = 0;
+                renderImportPreview();
+            };
+            reader.readAsText(file);
+        }
+
+        function renderImportPreview() {
+            const tbody = document.getElementById("previewTableBody");
+            // Show up to 30 rows in the preview
+            const previewLimit = Math.min(parsedRows.length, 30);
+            
+            let html = "";
+            for (let i = 0; i < previewLimit; i++) {
+                const row = parsedRows[i];
+                const isSelected = i === selectedHeaderRowIndex;
+                html += `
+                    <tr class="${isSelected ? 'selected-header' : ''}" onclick="selectHeaderRow(${i})">
+                        <td class="row-num-col">Row ${i + 1}</td>
+                        ${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+            generateMappingFields();
+        }
+
+        function selectHeaderRow(index) {
+            selectedHeaderRowIndex = index;
+            
+            // Highlight the selected row
+            const rows = document.querySelectorAll("#previewTableBody tr");
+            rows.forEach((row, i) => {
+                if (i === index) {
+                    row.classList.add("selected-header");
+                } else {
+                    row.classList.remove("selected-header");
+                }
+            });
+
+            generateMappingFields();
+        }
+
+        function generateMappingFields() {
+            const container = document.getElementById("mappingFieldsContainer");
+            const headerRow = parsedRows[selectedHeaderRowIndex];
+            
+            if (!headerRow) return;
+
+            // System Predefined Fields
+            const predefinedFields = [
+                { name: "Staff ID", keys: ["id", "staff id", "employee id", "no card", "no. card", "no. kad", "no kad"] },
+                { name: "Name", keys: ["name", "full name", "nama", "employee name"] },
+                { name: "Department", keys: ["dept", "department", "bahagian", "unit"] },
+                { name: "Position", keys: ["role", "position", "designation", "job title", "jawatan"] },
+                { name: "Email", keys: ["email", "e-mail", "email address"] }
+            ];
+
+            let html = "";
+            headerRow.forEach((columnHeader, colIdx) => {
+                const cleanHeader = String(columnHeader).toLowerCase().trim();
+                
+                // Smart auto-matching logic
+                let matchedField = "SKIP";
+                for (let field of predefinedFields) {
+                    if (field.keys.some(k => cleanHeader.includes(k) || k.includes(cleanHeader))) {
+                        matchedField = field.name;
+                        break;
+                    }
+                }
+
+                html += `
+                    <div class="mapping-card">
+                        <span>CSV Column ${colIdx + 1}</span>
+                        <div style="font-weight:700; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${columnHeader}">
+                            "${escapeHtml(columnHeader)}"
+                        </div>
+                        <select id="map-col-${colIdx}" style="padding:6px; border-radius:8px; font-size:0.8rem; font-weight:600;">
+                            <option value="SKIP" ${matchedField === 'SKIP' ? 'selected' : ''}>❌ [Skip Column]</option>
+                            <option value="Staff ID" ${matchedField === 'Staff ID' ? 'selected' : ''}>🆔 Staff ID</option>
+                            <option value="Name" ${matchedField === 'Name' ? 'selected' : ''}>👤 Name</option>
+                            <option value="Department" ${matchedField === 'Department' ? 'selected' : ''}>🏢 Department</option>
+                            <option value="Position" ${matchedField === 'Position' ? 'selected' : ''}>🛠️ Position</option>
+                            <option value="Email" ${matchedField === 'Email' ? 'selected' : ''}>✉️ Email</option>
+                        </select>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            document.getElementById("wizardStep2").style.display = "block";
+        }
+
+        function executeImport() {
+            const headerRow = parsedRows[selectedHeaderRowIndex];
+            
+            // 1. Compile column mapping configurations
+            const mappings = {};
+            let hasStaffId = false;
+            let hasName = false;
+
+            headerRow.forEach((col, idx) => {
+                const selectedVal = document.getElementById("map-col-" + idx).value;
+                if (selectedVal !== "SKIP") {
+                    mappings[selectedVal] = idx;
+                    if (selectedVal === "Staff ID") hasStaffId = true;
+                    if (selectedVal === "Name") hasName = true;
+                }
+            });
+
+            // 2. Validate essential fields mapped
+            if (!hasStaffId || !hasName) {
+                alert("⚠️ Validation Error: You must map both 'Staff ID' and 'Name' columns to import records successfully.");
+                return;
+            }
+
+            // 3. Parse all rows from header row + 1 downward
+            const importData = [];
+            for (let i = selectedHeaderRowIndex + 1; i < parsedRows.length; i++) {
+                const row = parsedRows[i];
+                // Check if row is empty or has mismatched length
+                if (row.length === 0 || (row.length === 1 && row[0] === "")) continue;
+
+                const staffRecord = {
+                    "Staff ID": String(row[mappings["Staff ID"]] || "").trim(),
+                    "Name": String(row[mappings["Name"]] || "").trim(),
+                    "Department": mappings["Department"] !== undefined ? String(row[mappings["Department"]] || "").trim() : "General",
+                    "Position": mappings["Position"] !== undefined ? String(row[mappings["Position"]] || "").trim() : "-",
+                    "Email": mappings["Email"] !== undefined ? String(row[mappings["Email"]] || "").trim() : "-",
+                    "Status": "Active" // Default imported staff to Active
+                };
+
+                if (staffRecord["Staff ID"] && staffRecord["Name"]) {
+                    importData.push(staffRecord);
+                }
+            }
+
+            if (importData.length === 0) {
+                alert("⚠️ Error: No valid data rows found below the selected header row.");
+                return;
+            }
+
+            const confirmBtn = document.querySelector("#wizardStep2 .btn-submit");
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = "Processing Import (" + importData.length + " rows)...";
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerText = "📥 Confirm Import & Save";
+                    if (response.status === "success") {
+                        alert("🎉 Import Successful!\n\n" + response.message);
+                        resetImportWizard();
+                        switchTab('roster');
+                    } else {
+                        alert("❌ Import Failed: " + response.message);
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerText = "📥 Confirm Import & Save";
+                    alert("❌ Connection Failed: " + err);
+                })
+                .importStaffRows(importData);
+        }
+
+        function resetImportWizard() {
+            document.getElementById("csvFileInput").value = "";
+            document.getElementById("uploadText").innerText = "Click to select or drag & drop CSV File";
+            document.getElementById("wizardStep1").style.display = "none";
+            document.getElementById("wizardStep2").style.display = "none";
+            parsedRows = [];
+        }
+
+        // --- RFC 4180 COMPLIANT CSV PARSER ---
+        function parseCSV(text) {
+            let lines = [];
+            let row = [""];
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                let c = text[i];
+                let next = text[i+1];
+                if (c === '"') {
+                    if (inQuotes && next === '"') {
+                        row[row.length - 1] += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (c === ',' && !inQuotes) {
+                    row.push("");
+                } else if ((c === '\r' || c === '\n') && !inQuotes) {
+                    if (c === '\r' && next === '\n') { i++; }
+                    lines.push(row);
+                    row = [""];
+                } else {
+                    row[row.length - 1] += c;
+                }
+            }
+            if (row.length > 1 || row[0] !== "") {
+                lines.push(row);
+            }
+            return lines;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

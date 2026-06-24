@@ -162,6 +162,26 @@ function setupWorkspace() {
   }
   initializeIncidentSheets(incidentFile);
   
+  // F. Setup Staff Spreadsheet
+  let staffId = settings["STAFF_SPREADSHEET_ID"];
+  let staffFile;
+  if (staffId) {
+    try {
+      staffFile = SpreadsheetApp.openById(staffId);
+    } catch (err) {
+      staffId = null;
+    }
+  }
+  if (!staffId) {
+    const newSS = SpreadsheetApp.create("AmerisPro Staff Database");
+    const file = DriveApp.getFileById(newSS.getId());
+    folder.addFile(file);
+    DriveApp.getRootFolder().removeFile(file);
+    staffFile = newSS;
+    setSystemSetting(ss, "STAFF_SPREADSHEET_ID", newSS.getId());
+  }
+  initializeStaffSheets(staffFile);
+  
   // Format master control tab
   let masterSheet = ss.getSheetByName("Dashboard Links");
   if (!masterSheet) masterSheet = ss.insertSheet("Dashboard Links");
@@ -172,9 +192,10 @@ function setupWorkspace() {
   masterSheet.appendRow(["PPE Database", ppeFile.getUrl()]);
   masterSheet.appendRow(["Contractor Database", contractorFile.getUrl()]);
   masterSheet.appendRow(["Incident Database", incidentFile.getUrl()]);
+  masterSheet.appendRow(["Staff Database", staffFile.getUrl()]);
   masterSheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   masterSheet.autoResizeColumns(1, 2);
- 
+  
   try {
     SpreadsheetApp.getUi().alert("🎉 AmerisPro Workspace Ready!", "Created folder '" + settings["SYSTEM_NAME"] + " Workspace' and initialized all database sheets inside it.\n\nConnection URL settings are fully configured.", SpreadsheetApp.getUi().ButtonSet.OK);
   } catch (err) {
@@ -277,6 +298,19 @@ function initializeIncidentSheets(ss) {
   logsSheet.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
   logsSheet.getRange(1, 1, 1, logHeaders.length).setFontWeight("bold").setBackground("#991b1b").setFontColor("#ffffff");
   logsSheet.setFrozenRows(1);
+  
+  if (defSheet) {
+    try { ss.deleteSheet(defSheet); } catch(e) {}
+  }
+}
+
+function initializeStaffSheets(ss) {
+  const defSheet = ss.getSheetByName("Sheet1");
+  let rosterSheet = ss.getSheetByName("Staff Roster") || ss.insertSheet("Staff Roster");
+  const headers = ["Staff ID", "Name", "Department", "Position", "Email", "Status"];
+  rosterSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  rosterSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  rosterSheet.setFrozenRows(1);
   
   if (defSheet) {
     try { ss.deleteSheet(defSheet); } catch(e) {}
@@ -1404,5 +1438,139 @@ function formatSystemSettingsSheet(ss) {
   const widthB = Math.max(sheet.getColumnWidth(2) + 40, 500);
   sheet.setColumnWidth(1, widthA);
   sheet.setColumnWidth(2, widthB);
+}
+
+// ========================================================
+// 16. STAFF DATABASE MODULE APIS
+// ========================================================
+function getStaffList() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const settings = getSystemSettings(ss);
+    const staffId = settings["STAFF_SPREADSHEET_ID"];
+    if (!staffId) return { status: "error", message: "Staff Database not initialized." };
+    
+    const staffSS = SpreadsheetApp.openById(staffId);
+    const sheet = staffSS.getSheetByName("Staff Roster");
+    if (!sheet) return { status: "success", data: [] };
+    
+    const values = sheet.getDataRange().getValues();
+    if (values.length <= 1) return { status: "success", data: [] };
+    
+    const headers = values[0];
+    const data = [];
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i];
+      const item = {};
+      headers.forEach((header, index) => {
+        item[header] = row[index];
+      });
+      data.push(item);
+    }
+    return { status: "success", data: data };
+  } catch (err) {
+    return { status: "error", message: err.toString() };
+  }
+}
+
+function addOrUpdateStaff(staffData) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const settings = getSystemSettings(ss);
+    const staffId = settings["STAFF_SPREADSHEET_ID"];
+    if (!staffId) return { status: "error", message: "Staff Database not initialized." };
+    
+    const staffSS = SpreadsheetApp.openById(staffId);
+    let sheet = staffSS.getSheetByName("Staff Roster");
+    if (!sheet) {
+      initializeStaffSheets(staffSS);
+      sheet = staffSS.getSheetByName("Staff Roster");
+    }
+    
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    
+    // Find if Staff ID already exists (Column A is Staff ID)
+    let rowIndex = -1;
+    for (let i = 1; i < values.length; i++) {
+      if (String(values[i][0]).trim() === String(staffData["Staff ID"]).trim()) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    
+    const rowValues = headers.map(header => staffData[header] !== undefined ? staffData[header] : "");
+    
+    if (rowIndex > -1) {
+      sheet.getRange(rowIndex, 1, 1, headers.length).setValues([rowValues]);
+      return { status: "success", message: "Staff record updated successfully." };
+    } else {
+      sheet.appendRow(rowValues);
+      return { status: "success", message: "Staff record added successfully." };
+    }
+  } catch (err) {
+    return { status: "error", message: err.toString() };
+  }
+}
+
+function importStaffRows(mappedRows) {
+  try {
+    if (!Array.isArray(mappedRows) || mappedRows.length === 0) {
+      return { status: "error", message: "No data rows provided for import." };
+    }
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const settings = getSystemSettings(ss);
+    const staffId = settings["STAFF_SPREADSHEET_ID"];
+    if (!staffId) return { status: "error", message: "Staff Database not initialized." };
+    
+    const staffSS = SpreadsheetApp.openById(staffId);
+    let sheet = staffSS.getSheetByName("Staff Roster");
+    if (!sheet) {
+      initializeStaffSheets(staffSS);
+      sheet = staffSS.getSheetByName("Staff Roster");
+    }
+    
+    // Read current data to do upsert (prevent duplicates)
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0];
+    const staffIdColIndex = headers.indexOf("Staff ID");
+    
+    // Create lookup map of Staff ID -> row number (1-indexed)
+    const idRowMap = {};
+    for (let i = 1; i < values.length; i++) {
+      const id = String(values[i][staffIdColIndex]).trim();
+      if (id) {
+        idRowMap[id] = i + 1;
+      }
+    }
+    
+    let addedCount = 0;
+    let updatedCount = 0;
+    
+    mappedRows.forEach(row => {
+      const staffIdVal = String(row["Staff ID"] || "").trim();
+      if (!staffIdVal) return;
+      
+      const rowValues = headers.map(header => row[header] !== undefined ? row[header] : "");
+      
+      if (idRowMap[staffIdVal]) {
+        const targetRow = idRowMap[staffIdVal];
+        sheet.getRange(targetRow, 1, 1, headers.length).setValues([rowValues]);
+        updatedCount++;
+      } else {
+        sheet.appendRow(rowValues);
+        addedCount++;
+        idRowMap[staffIdVal] = sheet.getLastRow();
+      }
+    });
+    
+    return { 
+      status: "success", 
+      message: "Import completed successfully. Added " + addedCount + " new records, updated " + updatedCount + " existing records." 
+    };
+  } catch (err) {
+    return { status: "error", message: err.toString() };
+  }
 }
 

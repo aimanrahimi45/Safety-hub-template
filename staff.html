@@ -505,7 +505,7 @@
             loadStaffRoster();
         });
 
-        function switchTab(tabId) {
+        function switchTab(tabId, preventReset) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
             
@@ -516,7 +516,7 @@
             
             if (tabId === 'roster') {
                 loadStaffRoster();
-            } else if (tabId === 'add') {
+            } else if (tabId === 'add' && !preventReset) {
                 resetForm();
             }
         }
@@ -617,7 +617,7 @@
             document.getElementById("staffStatus").value = member["Status"] || "Active";
 
             document.getElementById("formTitle").innerText = "Edit Staff Member Details";
-            switchTab('add');
+            switchTab('add', true);
         }
 
         function resetForm() {

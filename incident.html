@@ -740,9 +740,19 @@
             const staffIdInput = document.getElementById("victim-staff-id");
             const deptInput = document.getElementById("location-dept");
 
+            const badge = document.getElementById("victim-premium-badge");
             if (localStorage.getItem("safety_hub_plan_type") === "Premium") {
-                const badge = document.getElementById("victim-premium-badge");
-                if (badge) badge.style.display = "inline-block";
+                if (badge) {
+                    badge.style.display = "inline-block";
+                    badge.innerHTML = "💡 Premium Lookup Active";
+                    badge.style.color = "#16a34a";
+                }
+            } else {
+                if (badge) {
+                    badge.style.display = "inline-block";
+                    badge.innerHTML = "⭐ Upgrade to Premium for Auto-Lookup";
+                    badge.style.color = "var(--text-muted)";
+                }
             }
 
             // Dynamically create suggestions container for Staff ID if not exists

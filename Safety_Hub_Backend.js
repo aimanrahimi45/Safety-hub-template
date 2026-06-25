@@ -544,11 +544,6 @@ function doGet(e) {
         ssId = settings["CONTRACTOR_SPREADSHEET_ID"];
         sheetName = "Safety Inductions";
       } else if (db === "Incident") {
-        const licenseKey = settings["LICENSE_KEY"] || "";
-        const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
-        if (!licenseCheck.valid) {
-          return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
-        }
         ssId = settings["INCIDENT_SPREADSHEET_ID"];
         sheetName = "Incidents";
       } else if (db === "Staff") {
@@ -957,11 +952,6 @@ function doPost(e) {
 
     // G. Save Incident (Create or Update)
     if (data.action === "saveIncident") {
-      const licenseKey = settings["LICENSE_KEY"] || "";
-      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
-      if (!licenseCheck.valid) {
-        return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
-      }
       if (String(data.pin).trim() !== String(systemPIN).trim()) {
         return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
       }
@@ -1048,11 +1038,6 @@ function doPost(e) {
     
     // H. Delete Incident
     if (data.action === "deleteIncident") {
-      const licenseKey = settings["LICENSE_KEY"] || "";
-      const licenseCheck = licenseKey ? validateLicenseKey(licenseKey, spreadsheetId) : { valid: false };
-      if (!licenseCheck.valid) {
-        return returnJSON({ status: "ERROR", message: "Incident Monitoring is a Premium feature. Please enter your Premium license key in Settings to unlock." });
-      }
       if (String(data.pin).trim() !== String(systemPIN).trim()) {
         return returnJSON({ status: "ERROR", message: "Unauthorized PIN" });
       }
@@ -1249,6 +1234,13 @@ function updateClientSettings(config) {
 const LICENSE_SHEET_ID = "1FH75rDHPZniZUXbO3BpK1Lku1lA-RiNbgEQgihaNF_M";
 // Web App URL — deployed as "Execute as: Me" so it can access the private license sheet
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRcQY0C-lOXpkxlkz9bVcwEQ9hGAUdKnyt7Mw5K9UDVk45juA/exec";
+
+function isPremiumUser(settings, spreadsheetId) {
+  const licenseKey = settings["LICENSE_KEY"] || "";
+  if (!licenseKey) return false;
+  const check = validateLicenseKey(licenseKey, spreadsheetId);
+  return !!check.valid;
+}
 
 function validateLicenseKey(key, spreadsheetId) {
   if (!key) {

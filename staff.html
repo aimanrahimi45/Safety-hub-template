@@ -392,6 +392,17 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- Pagination Controls -->
+                <div id="pagination-controls" style="display: none; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.02); flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Showing <span id="pag-start">0</span>-<span id="pag-end">0</span> of <span id="pag-total">0</span> staff members
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="clear-btn btn-mini" id="btn-prev-page" style="padding: 6px 12px; width: auto; font-size: 0.75rem; background:transparent; border:1px solid var(--border); color:var(--text-main); border-radius:6px; cursor:pointer;">◀ Previous</button>
+                        <span id="page-num-display" style="font-size: 0.85rem; font-weight: 600; padding: 4px 10px; background: rgba(14, 165, 233, 0.08); border-radius: 6px; color: var(--info);">Page 1 of 1</span>
+                        <button type="button" class="submit-btn btn-mini" id="btn-next-page" style="padding: 6px 12px; width: auto; font-size: 0.75rem; background: var(--info); color: white; border: none; border-radius:6px; cursor:pointer;">Next ▶</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -481,8 +492,16 @@
         let allStaff = [];
         let parsedRows = [];
         let selectedHeaderRowIndex = 0; // index in parsedRows
+        let paginator;
 
         document.addEventListener("DOMContentLoaded", () => {
+            paginator = new PaginationHelper({
+                data: [],
+                rowsPerPage: 15,
+                renderCallback: function(pagedData) {
+                    renderRosterRows(pagedData);
+                }
+            });
             loadStaffRoster();
         });
 
@@ -528,7 +547,7 @@
                 
                 if (json.status === "SUCCESS") {
                     allStaff = json.data || [];
-                    renderRoster(allStaff);
+                    paginator.updateData(allStaff);
                 } else {
                     localStorage.removeItem("safety_hub_pin");
                     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Error: ${json.message}</td></tr>`;
@@ -539,10 +558,10 @@
             }
         }
 
-        function renderRoster(staffArray) {
+        function renderRosterRows(staffArray) {
             const tbody = document.getElementById("rosterTableBody");
             if (staffArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No staff records found in the database. Add some manually or import a CSV file!</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No staff records found in the database. Add some manually or import an Excel/CSV file!</td></tr>`;
                 return;
             }
 
@@ -582,7 +601,7 @@
 
                 return matchesSearch && matchesStatus;
             });
-            renderRoster(filtered);
+            paginator.updateData(filtered);
         }
 
         function editStaffMember(staffId) {

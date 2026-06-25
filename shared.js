@@ -279,3 +279,103 @@ document.addEventListener("click", (e) => {
         }
     }
 });
+
+/* ========================================================
+   Safety Hub - Reusable Pagination Helper
+   ======================================================== */
+window.PaginationHelper = class {
+    constructor(options) {
+        this.data = options.data || [];
+        this.rowsPerPage = options.rowsPerPage || 10;
+        this.currentPage = 1;
+        this.renderCallback = options.renderCallback;
+        
+        // DOM Elements
+        this.elements = {
+            controlsContainer: document.getElementById(options.controlsContainerId || "pagination-controls"),
+            start: document.getElementById(options.startId || "pag-start"),
+            end: document.getElementById(options.endId || "pag-end"),
+            total: document.getElementById(options.totalId || "pag-total"),
+            display: document.getElementById(options.displayId || "page-num-display"),
+            prevBtn: document.getElementById(options.prevBtnId || "btn-prev-page"),
+            nextBtn: document.getElementById(options.nextBtnId || "btn-next-page")
+        };
+
+        // Bind events if elements exist
+        if (this.elements.prevBtn) {
+            this.elements.prevBtn.onclick = () => this.prevPage();
+        }
+        if (this.elements.nextBtn) {
+            this.elements.nextBtn.onclick = () => this.nextPage();
+        }
+    }
+
+    updateData(newData) {
+        this.data = newData;
+        this.currentPage = 1;
+        this.update();
+    }
+
+    setPage(page) {
+        const totalPages = Math.ceil(this.data.length / this.rowsPerPage) || 1;
+        if (page > totalPages) page = totalPages;
+        if (page < 1) page = 1;
+        this.currentPage = page;
+        this.update();
+    }
+
+    prevPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.update();
+        }
+    }
+
+    nextPage() {
+        const totalPages = Math.ceil(this.data.length / this.rowsPerPage) || 1;
+        if (this.currentPage < totalPages) {
+            this.currentPage++;
+            this.update();
+        }
+    }
+
+    update() {
+        const totalRecords = this.data.length;
+        const totalPages = Math.ceil(totalRecords / this.rowsPerPage) || 1;
+
+        if (this.currentPage > totalPages) this.currentPage = totalPages;
+        if (this.currentPage < 1) this.currentPage = 1;
+
+        const startIndex = totalRecords === 0 ? 0 : (this.currentPage - 1) * this.rowsPerPage + 1;
+        const endIndex = Math.min(this.currentPage * this.rowsPerPage, totalRecords);
+
+        // Update DOM if elements exist
+        if (this.elements.start) this.elements.start.innerText = startIndex;
+        if (this.elements.end) this.elements.end.innerText = endIndex;
+        if (this.elements.total) this.elements.total.innerText = totalRecords;
+        if (this.elements.display) this.elements.display.innerText = `Page ${this.currentPage} of ${totalPages}`;
+
+        if (this.elements.prevBtn) {
+            this.elements.prevBtn.disabled = (this.currentPage === 1);
+            this.elements.prevBtn.style.opacity = (this.currentPage === 1) ? "0.5" : "1";
+            this.elements.prevBtn.style.cursor = (this.currentPage === 1) ? "not-allowed" : "pointer";
+        }
+        if (this.elements.nextBtn) {
+            this.elements.nextBtn.disabled = (this.currentPage === totalPages);
+            this.elements.nextBtn.style.opacity = (this.currentPage === totalPages) ? "0.5" : "1";
+            this.elements.nextBtn.style.cursor = (this.currentPage === totalPages) ? "not-allowed" : "pointer";
+        }
+
+        if (this.elements.controlsContainer) {
+            this.elements.controlsContainer.style.display = totalRecords > 0 ? "flex" : "none";
+        }
+
+        // Trigger callback with current page data slice
+        if (typeof this.renderCallback === "function") {
+            const startIdx = (this.currentPage - 1) * this.rowsPerPage;
+            const endIdx = startIdx + this.rowsPerPage;
+            const pageDataSlice = this.data.slice(startIdx, endIdx);
+            this.renderCallback(pageDataSlice);
+        }
+    }
+};

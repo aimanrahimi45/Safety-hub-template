@@ -304,7 +304,23 @@ function initializeContractorSheets(ss) {
 function initializeIncidentSheets(ss) {
   const defSheet = ss.getSheetByName("Sheet1");
   let logsSheet = ss.getSheetByName("Incidents") || ss.insertSheet("Incidents");
-  const logHeaders = ["Incident ID", "Timestamp", "Date & Time", "Victim Name", "Location / Dept", "Body Part Injured", "Man-days Lost", "Reported to JKKP?", "Severity Type", "Incident Investigation Submitted?", "Description"];
+  
+  let headers = [];
+  if (logsSheet.getLastColumn() > 0) {
+    headers = logsSheet.getRange(1, 1, 1, logsSheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+  }
+  
+  const staffIdIndex = headers.indexOf("Staff ID");
+  if (staffIdIndex === -1 && headers.length > 0) {
+    const victimNameIndex = headers.indexOf("Victim Name");
+    if (victimNameIndex !== -1) {
+      logsSheet.insertColumnAfter(victimNameIndex + 1);
+    } else {
+      logsSheet.insertColumnAfter(logsSheet.getLastColumn());
+    }
+  }
+  
+  const logHeaders = ["Incident ID", "Timestamp", "Date & Time", "Victim Name", "Staff ID", "Location / Dept", "Body Part Injured", "Man-days Lost", "Reported to JKKP?", "Severity Type", "Incident Investigation Submitted?", "Description"];
   logsSheet.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
   logsSheet.getRange(1, 1, 1, logHeaders.length).setFontWeight("bold").setBackground("#991b1b").setFontColor("#ffffff");
   logsSheet.setFrozenRows(1);
@@ -955,6 +971,7 @@ function doPost(e) {
           return returnJSON({ status: "ERROR", message: "Incident database not provisioned." });
         }
         const targetSS = SpreadsheetApp.openById(ssId);
+        initializeIncidentSheets(targetSS); // Transparent schema migration/creation
         const sheet = getSheetSafe(targetSS, "Incidents");
         const rows = sheet.getDataRange().getValues();
         
@@ -974,6 +991,7 @@ function doPost(e) {
         const timestamp = new Date();
         const dateTime = data.dateTime;
         const victimName = data.victimName;
+        const staffId = data.staffId || "";
         const locationDept = data.locationDept;
         const bodyPart = data.bodyPart;
         const mandaysLost = Number(data.mandaysLost || 0);
@@ -986,13 +1004,14 @@ function doPost(e) {
           // Update row cells (1-indexed columns)
           sheet.getRange(foundRowIdx, 3).setValue(dateTime);
           sheet.getRange(foundRowIdx, 4).setValue(victimName);
-          sheet.getRange(foundRowIdx, 5).setValue(locationDept);
-          sheet.getRange(foundRowIdx, 6).setValue(bodyPart);
-          sheet.getRange(foundRowIdx, 7).setValue(mandaysLost);
-          sheet.getRange(foundRowIdx, 8).setValue(reportedJkkp);
-          sheet.getRange(foundRowIdx, 9).setValue(severityType);
-          sheet.getRange(foundRowIdx, 10).setValue(investigationSubmitted);
-          sheet.getRange(foundRowIdx, 11).setValue(description);
+          sheet.getRange(foundRowIdx, 5).setValue(staffId);
+          sheet.getRange(foundRowIdx, 6).setValue(locationDept);
+          sheet.getRange(foundRowIdx, 7).setValue(bodyPart);
+          sheet.getRange(foundRowIdx, 8).setValue(mandaysLost);
+          sheet.getRange(foundRowIdx, 9).setValue(reportedJkkp);
+          sheet.getRange(foundRowIdx, 10).setValue(severityType);
+          sheet.getRange(foundRowIdx, 11).setValue(investigationSubmitted);
+          sheet.getRange(foundRowIdx, 12).setValue(description);
         } else {
           // Create operation: generate a serial ID INC-YYYY-XXXX
           const year = dateTime ? dateTime.substring(0, 4) : String(new Date().getFullYear());
@@ -1012,6 +1031,7 @@ function doPost(e) {
             timestamp,
             dateTime,
             victimName,
+            staffId,
             locationDept,
             bodyPart,
             mandaysLost,

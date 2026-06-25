@@ -466,6 +466,54 @@
         .inv-submitted-yes { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 6px; border: 1.5px solid var(--border); }
         .inv-submitted-no { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 6px; border: 1.5px solid var(--border); }
         .inv-submitted-pending { background: #fef9c3; color: #713f12; padding: 2px 6px; border-radius: 6px; border: 1.5px solid var(--border); }
+
+        /* Suggestions Autocomplete Dropdown */
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 4px 4px 0px var(--border);
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 6px;
+        }
+
+        .suggestion-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-bottom: 2px solid #e2e8f0;
+            color: var(--text-main);
+            transition: background 0.1s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background: #fffdf5;
+            color: var(--primary);
+        }
+
+        .suggestion-item .dept-badge {
+            font-size: 0.75rem;
+            background: #e2e8f0;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1.5px solid var(--border);
+        }
     </style>
 </head>
 <body>
@@ -539,9 +587,19 @@
                 <form id="incident-form" onsubmit="handleFormSubmit(event)">
                     <input type="hidden" id="edit-incident-id" value="">
                     
+                    <div class="form-group" style="position: relative;">
+                        <label for="victim-name" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Victim Name</span>
+                            <span id="victim-premium-badge" style="font-size: 0.75rem; color: var(--accent-orange); display: none;">💡 Premium Lookup</span>
+                        </label>
+                        <input type="text" id="victim-name" class="input-neo" placeholder="e.g. John Doe / Contractor Name" required autocomplete="off">
+                        <!-- Autocomplete Suggestions Dropdown -->
+                        <div id="staff-suggestions" class="suggestions-dropdown" style="display: none;"></div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="victim-name">Victim Name</label>
-                        <input type="text" id="victim-name" class="input-neo" placeholder="e.g. John Doe / Contractor Name" required>
+                        <label for="victim-staff-id">Staff ID <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Optional)</span></label>
+                        <input type="text" id="victim-staff-id" class="input-neo" placeholder="e.g. STF-0012">
                     </div>
 
                     <div class="form-group">
@@ -608,7 +666,7 @@
                 
                 <div class="table-toolbar">
                     <div class="search-bar">
-                        🔎 <input type="text" id="search-input" placeholder="Search victim name or location..." oninput="renderTable()">
+                        🔎 <input type="text" id="search-input" placeholder="Search name, ID or location..." oninput="renderTable()">
                     </div>
                     <div style="display:flex; gap:8px;">
                         <select id="table-filter-severity" class="select-neo" style="padding: 6px 10px; font-size: 0.8rem;" onchange="renderTable()">
@@ -634,6 +692,7 @@
                                 <th>ID</th>
                                 <th>Date & Time</th>
                                 <th>Victim Name</th>
+                                <th>Staff ID</th>
                                 <th>Location / Dept</th>
                                 <th>Body Part</th>
                                 <th>Days Lost</th>
@@ -662,6 +721,90 @@
 
         const defaultSeverities = ["Near Miss", "First Aid", "Medical Treatment", "Lost Time Injury (LTI)", "Fatality"];
 
+        let staffRoster = [];
+
+        async function loadStaffRoster(sheetId, pin) {
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Staff&spreadsheetId=${sheetId}&pin=${pin}`);
+                const json = await response.json();
+                if (json.status === "SUCCESS") {
+                    staffRoster = (json.data || []).filter(item => String(item["Status"]).trim().toLowerCase() !== "inactive");
+                }
+            } catch(e) {
+                console.error("Error loading staff roster:", e);
+            }
+        }
+
+        function setupAutocomplete() {
+            const victimInput = document.getElementById("victim-name");
+            const suggestionsDiv = document.getElementById("staff-suggestions");
+            const staffIdInput = document.getElementById("victim-staff-id");
+            const deptInput = document.getElementById("location-dept");
+
+            if (localStorage.getItem("safety_hub_plan_type") === "Premium") {
+                const badge = document.getElementById("victim-premium-badge");
+                if (badge) badge.style.display = "inline-block";
+            }
+
+            victimInput.addEventListener("input", () => {
+                if (localStorage.getItem("safety_hub_plan_type") !== "Premium") {
+                    suggestionsDiv.style.display = "none";
+                    return;
+                }
+
+                const query = victimInput.value.trim().toLowerCase();
+                if (!query || query.length < 1) {
+                    suggestionsDiv.style.display = "none";
+                    return;
+                }
+
+                const matches = staffRoster.filter(s => {
+                    const name = String(s["Name"] || "").toLowerCase();
+                    const id = String(s["Staff ID"] || "").toLowerCase();
+                    return name.includes(query) || id.includes(query);
+                }).slice(0, 5);
+
+                if (matches.length === 0) {
+                    suggestionsDiv.style.display = "none";
+                    return;
+                }
+
+                suggestionsDiv.innerHTML = "";
+                matches.forEach(s => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion-item";
+                    
+                    const nameStr = s["Name"] || "";
+                    const idStr = s["Staff ID"] || "";
+                    const deptStr = s["Department"] || "";
+
+                    div.innerHTML = `
+                        <div>
+                            <strong>${nameStr}</strong> <span style="font-size:0.8rem; color:var(--text-muted);">(${idStr})</span>
+                        </div>
+                        <span class="dept-badge">${deptStr}</span>
+                    `;
+
+                    div.addEventListener("click", () => {
+                        victimInput.value = nameStr;
+                        staffIdInput.value = idStr;
+                        deptInput.value = deptStr;
+                        suggestionsDiv.style.display = "none";
+                    });
+
+                    suggestionsDiv.appendChild(div);
+                });
+
+                suggestionsDiv.style.display = "block";
+            });
+
+            document.addEventListener("click", (e) => {
+                if (e.target !== victimInput && e.target !== suggestionsDiv && !suggestionsDiv.contains(e.target)) {
+                    suggestionsDiv.style.display = "none";
+                }
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             initializeConsole();
         });
@@ -685,6 +828,12 @@
             }
 
             await loadIncidentLogs(sheetId, pin);
+
+            const planType = localStorage.getItem("safety_hub_plan_type");
+            if (planType === "Premium") {
+                await loadStaffRoster(sheetId, pin);
+            }
+            setupAutocomplete();
         }
 
         // 2. Fetch logs from backend
@@ -1028,9 +1177,10 @@
                 if (getYearFromVal(r["Date & Time"]) !== selectedYear) return false;
 
                 const victim = String(r["Victim Name"] || "").toLowerCase();
+                const staffId = String(r["Staff ID"] || "").toLowerCase();
                 const loc = String(r["Location / Dept"] || "").toLowerCase();
                 const desc = String(r["Description"] || "").toLowerCase();
-                if (search && !victim.includes(search) && !loc.includes(search) && !desc.includes(search)) return false;
+                if (search && !victim.includes(search) && !staffId.includes(search) && !loc.includes(search) && !desc.includes(search)) return false;
 
                 if (filterSeverity !== "ALL" && String(r["Severity Type"]) !== filterSeverity) return false;
                 if (filterJkkp !== "ALL" && String(r["Reported to JKKP?"]) !== filterJkkp) return false;
@@ -1039,7 +1189,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--text-muted); font-weight:700; padding:30px 10px;">No incidents matching selected filters.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:var(--text-muted); font-weight:700; padding:30px 10px;">No incidents matching selected filters.</td></tr>';
                 return;
             }
 
@@ -1054,6 +1204,7 @@
                 }
 
                 const victim = r["Victim Name"] || "-";
+                const staffId = r["Staff ID"] || "-";
                 const locationDept = r["Location / Dept"] || "-";
                 const bodyPart = r["Body Part Injured"] || "-";
                 const mandaysLost = r["Man-days Lost"] !== undefined ? r["Man-days Lost"] : "0";
@@ -1077,6 +1228,7 @@
                     <td><strong>${id}</strong></td>
                     <td><small>${dtStr}</small></td>
                     <td>${victim}</td>
+                    <td><small>${staffId}</small></td>
                     <td>${locationDept}</td>
                     <td><small>${bodyPart}</small></td>
                     <td style="text-align:center;">${mandaysLost}</td>
@@ -1116,6 +1268,7 @@
                 pin: pin,
                 incidentId: id ? id : null,
                 victimName: document.getElementById("victim-name").value.trim(),
+                staffId: document.getElementById("victim-staff-id").value.trim(),
                 dateTime: document.getElementById("incident-datetime").value,
                 locationDept: document.getElementById("location-dept").value.trim(),
                 bodyPart: document.getElementById("body-part").value.trim(),
@@ -1157,6 +1310,7 @@
 
             document.getElementById("edit-incident-id").value = id;
             document.getElementById("victim-name").value = item["Victim Name"] || "";
+            document.getElementById("victim-staff-id").value = item["Staff ID"] || "";
             document.getElementById("incident-datetime").value = (item["Date & Time"] || "").replace(" ", "T").substring(0, 16);
             document.getElementById("location-dept").value = item["Location / Dept"] || "";
             document.getElementById("body-part").value = item["Body Part Injured"] || "";

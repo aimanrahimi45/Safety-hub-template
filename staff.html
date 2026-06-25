@@ -501,21 +501,40 @@
         }
 
         // --- BACKEND CALLS ---
-        function loadStaffRoster() {
+        async function loadStaffRoster() {
             const tbody = document.getElementById("rosterTableBody");
-            google.script.run
-                .withSuccessHandler(function(response) {
-                    if (response.status === "success") {
-                        allStaff = response.data;
-                        renderRoster(allStaff);
-                    } else {
-                        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Error: ${response.message}</td></tr>`;
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Connection Failed: ${err}</td></tr>`;
-                })
-                .getStaffList();
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            let pin = localStorage.getItem("safety_hub_pin");
+            
+            if (!sheetId || typeof GOOGLE_SCRIPT_URL === "undefined" || GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">⚠️ Portal not connected. Connect sheet to load roster.</td></tr>`;
+                return;
+            }
+
+            if (!pin) {
+                pin = prompt("🔑 Enter System Authorization PIN to fetch data:");
+                if (!pin) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ PIN verification required.</td></tr>`;
+                    return;
+                }
+                localStorage.setItem("safety_hub_pin", pin);
+            }
+
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Staff&spreadsheetId=${sheetId}&pin=${pin}`);
+                const json = await response.json();
+                
+                if (json.status === "SUCCESS") {
+                    allStaff = json.data || [];
+                    renderRoster(allStaff);
+                } else {
+                    localStorage.removeItem("safety_hub_pin");
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Error: ${json.message}</td></tr>`;
+                }
+            } catch(err) {
+                console.error("Error loading staff roster:", err);
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Connection Failed: ${err}</td></tr>`;
+            }
         }
 
         function renderRoster(staffArray) {
@@ -586,11 +605,19 @@
             document.getElementById("formTitle").innerText = "Add New Staff Member";
         }
 
-        function handleFormSubmit(event) {
+        async function handleFormSubmit(event) {
             event.preventDefault();
             const saveBtn = event.target.querySelector("button");
             saveBtn.disabled = true;
             saveBtn.innerText = "Saving Record...";
+
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId) {
+                alert("❌ Error: Master Spreadsheet ID is missing.");
+                saveBtn.disabled = false;
+                saveBtn.innerText = "💾 Save Staff Record";
+                return;
+            }
 
             const staffData = {
                 "Staff ID": document.getElementById("staffId").value,
@@ -601,24 +628,36 @@
                 "Status": document.getElementById("staffStatus").value
             };
 
-            google.script.run
-                .withSuccessHandler(function(response) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerText = "💾 Save Staff Record";
-                    if (response.status === "success") {
-                        alert("✅ Success: " + response.message);
-                        resetForm();
-                        switchTab('roster');
-                    } else {
-                        alert("❌ Error: " + response.message);
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerText = "💾 Save Staff Record";
-                    alert("❌ Connection Failed: " + err);
-                })
-                .addOrUpdateStaff(staffData);
+            const payload = {
+                action: "saveStaff",
+                spreadsheetId: sheetId,
+                staffData: staffData
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+                const json = await response.json();
+
+                saveBtn.disabled = false;
+                saveBtn.innerText = "💾 Save Staff Record";
+
+                if (json.status === "SUCCESS") {
+                    alert("✅ Success: " + json.message);
+                    resetForm();
+                    switchTab('roster');
+                } else {
+                    alert("❌ Error: " + json.message);
+                }
+            } catch(err) {
+                console.error("Save Error:", err);
+                saveBtn.disabled = false;
+                saveBtn.innerText = "💾 Save Staff Record";
+                alert("❌ Connection Failed: " + err);
+            }
         }
 
         // --- EXCEL/CSV IMPORT SYSTEM ---
@@ -732,7 +771,7 @@
             document.getElementById("wizardStep2").style.display = "block";
         }
 
-        function executeImport() {
+        async function executeImport() {
             const headerRow = parsedRows[selectedHeaderRowIndex];
             
             // 1. Compile column mapping configurations
@@ -785,24 +824,44 @@
             confirmBtn.disabled = true;
             confirmBtn.innerText = "Processing Import (" + importData.length + " rows)...";
 
-            google.script.run
-                .withSuccessHandler(function(response) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerText = "📥 Confirm Import & Save";
-                    if (response.status === "success") {
-                        alert("🎉 Import Successful!\n\n" + response.message);
-                        resetImportWizard();
-                        switchTab('roster');
-                    } else {
-                        alert("❌ Import Failed: " + response.message);
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerText = "📥 Confirm Import & Save";
-                    alert("❌ Connection Failed: " + err);
-                })
-                .importStaffRows(importData);
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId) {
+                alert("❌ Error: Master Spreadsheet ID is missing.");
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "📥 Confirm Import & Save";
+                return;
+            }
+
+            const payload = {
+                action: "importStaff",
+                spreadsheetId: sheetId,
+                mappedRows: importData
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+                const json = await response.json();
+
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "📥 Confirm Import & Save";
+
+                if (json.status === "SUCCESS") {
+                    alert("🎉 Import Successful!\n\n" + json.message);
+                    resetImportWizard();
+                    switchTab('roster');
+                } else {
+                    alert("❌ Import Failed: " + json.message);
+                }
+            } catch(err) {
+                console.error("Import Error:", err);
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "📥 Confirm Import & Save";
+                alert("❌ Connection Failed: " + err);
+            }
         }
 
         function resetImportWizard() {

@@ -68,17 +68,22 @@ function setupWorkspace() {
   
   // A. Create/Find central Drive folder
   let folderId = settings["WORKSPACE_FOLDER_ID"];
-  let folder;
+  let folderUrl = "";
   if (folderId) {
     try {
-      folder = DriveApp.getFolderById(folderId);
+      const folderObj = Drive.Files.get(folderId);
+      folderUrl = folderObj.alternateLink;
     } catch (err) {
       folderId = null;
     }
   }
   if (!folderId) {
-    folder = DriveApp.createFolder(settings["SYSTEM_NAME"] + " Workspace");
-    folderId = folder.getId();
+    const folderObj = Drive.Files.insert({
+      title: settings["SYSTEM_NAME"] + " Workspace",
+      mimeType: "application/vnd.google-apps.folder"
+    });
+    folderId = folderObj.id;
+    folderUrl = folderObj.alternateLink;
     setSystemSetting(ss, "WORKSPACE_FOLDER_ID", folderId);
   }
   
@@ -93,12 +98,13 @@ function setupWorkspace() {
     }
   }
   if (!faId) {
-    const newSS = SpreadsheetApp.create("AmerisPro First Aid Database");
-    const file = DriveApp.getFileById(newSS.getId());
-    folder.addFile(file);
-    DriveApp.getRootFolder().removeFile(file);
-    faFile = newSS;
-    setSystemSetting(ss, "FIRST_AID_SPREADSHEET_ID", newSS.getId());
+    const newSS = Drive.Files.insert({
+      title: "AmerisPro First Aid Database",
+      mimeType: "application/vnd.google-apps.spreadsheet",
+      parents: [{id: folderId}]
+    });
+    faFile = SpreadsheetApp.openById(newSS.id);
+    setSystemSetting(ss, "FIRST_AID_SPREADSHEET_ID", newSS.id);
   }
   initializeFirstAidSheets(faFile);
  
@@ -113,12 +119,13 @@ function setupWorkspace() {
     }
   }
   if (!ppeId) {
-    const newSS = SpreadsheetApp.create("AmerisPro PPE Database");
-    const file = DriveApp.getFileById(newSS.getId());
-    folder.addFile(file);
-    DriveApp.getRootFolder().removeFile(file);
-    ppeFile = newSS;
-    setSystemSetting(ss, "PPE_SPREADSHEET_ID", newSS.getId());
+    const newSS = Drive.Files.insert({
+      title: "AmerisPro PPE Database",
+      mimeType: "application/vnd.google-apps.spreadsheet",
+      parents: [{id: folderId}]
+    });
+    ppeFile = SpreadsheetApp.openById(newSS.id);
+    setSystemSetting(ss, "PPE_SPREADSHEET_ID", newSS.id);
   }
   initializePpeSheets(ppeFile);
  
@@ -133,12 +140,13 @@ function setupWorkspace() {
     }
   }
   if (!contractorId) {
-    const newSS = SpreadsheetApp.create("AmerisPro Contractor Database");
-    const file = DriveApp.getFileById(newSS.getId());
-    folder.addFile(file);
-    DriveApp.getRootFolder().removeFile(file);
-    contractorFile = newSS;
-    setSystemSetting(ss, "CONTRACTOR_SPREADSHEET_ID", newSS.getId());
+    const newSS = Drive.Files.insert({
+      title: "AmerisPro Contractor Database",
+      mimeType: "application/vnd.google-apps.spreadsheet",
+      parents: [{id: folderId}]
+    });
+    contractorFile = SpreadsheetApp.openById(newSS.id);
+    setSystemSetting(ss, "CONTRACTOR_SPREADSHEET_ID", newSS.id);
   }
   initializeContractorSheets(contractorFile);
   
@@ -153,12 +161,13 @@ function setupWorkspace() {
     }
   }
   if (!incidentId) {
-    const newSS = SpreadsheetApp.create("AmerisPro Incident Database");
-    const file = DriveApp.getFileById(newSS.getId());
-    folder.addFile(file);
-    DriveApp.getRootFolder().removeFile(file);
-    incidentFile = newSS;
-    setSystemSetting(ss, "INCIDENT_SPREADSHEET_ID", newSS.getId());
+    const newSS = Drive.Files.insert({
+      title: "AmerisPro Incident Database",
+      mimeType: "application/vnd.google-apps.spreadsheet",
+      parents: [{id: folderId}]
+    });
+    incidentFile = SpreadsheetApp.openById(newSS.id);
+    setSystemSetting(ss, "INCIDENT_SPREADSHEET_ID", newSS.id);
   }
   initializeIncidentSheets(incidentFile);
   
@@ -173,12 +182,13 @@ function setupWorkspace() {
     }
   }
   if (!staffId) {
-    const newSS = SpreadsheetApp.create("AmerisPro Staff Database");
-    const file = DriveApp.getFileById(newSS.getId());
-    folder.addFile(file);
-    DriveApp.getRootFolder().removeFile(file);
-    staffFile = newSS;
-    setSystemSetting(ss, "STAFF_SPREADSHEET_ID", newSS.getId());
+    const newSS = Drive.Files.insert({
+      title: "AmerisPro Staff Database",
+      mimeType: "application/vnd.google-apps.spreadsheet",
+      parents: [{id: folderId}]
+    });
+    staffFile = SpreadsheetApp.openById(newSS.id);
+    setSystemSetting(ss, "STAFF_SPREADSHEET_ID", newSS.id);
   }
   initializeStaffSheets(staffFile);
   
@@ -187,7 +197,7 @@ function setupWorkspace() {
   if (!masterSheet) masterSheet = ss.insertSheet("Dashboard Links");
   masterSheet.clear();
   masterSheet.appendRow(["System Configuration Panel", "Values / Links"]);
-  masterSheet.appendRow(["Workspace Parent Folder", folder.getUrl()]);
+  masterSheet.appendRow(["Workspace Parent Folder", folderUrl]);
   masterSheet.appendRow(["First Aid Database", faFile.getUrl()]);
   masterSheet.appendRow(["PPE Database", ppeFile.getUrl()]);
   masterSheet.appendRow(["Contractor Database", contractorFile.getUrl()]);
@@ -525,6 +535,9 @@ function doGet(e) {
         }
         ssId = settings["INCIDENT_SPREADSHEET_ID"];
         sheetName = "Incidents";
+      } else if (db === "Staff") {
+        ssId = settings["STAFF_SPREADSHEET_ID"];
+        sheetName = "Staff Roster";
       }
       
       if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
@@ -641,23 +654,35 @@ function doPost(e) {
         
         // Auto folder setup for signatures
         let folderId = settings["SIGNATURE_FOLDER_ID"];
-        let folder;
         if (folderId) {
-          try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
+          try { Drive.Files.get(folderId); } catch (err) { folderId = null; }
         }
         if (!folderId) {
           const workspaceId = settings["WORKSPACE_FOLDER_ID"];
-          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-          folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
-          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folder.getId());
+          const parentFolderId = workspaceId || "root";
+          const folderObj = Drive.Files.insert({
+            title: settings["SYSTEM_NAME"] + " Signatures",
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [{id: parentFolderId}]
+          });
+          folderId = folderObj.id;
+          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folderId);
         }
         
         let signatureUrl = "";
         if (data.signature && data.signature.includes(",")) {
           const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", `Sig_${data.boxId.replace(/\//g, '_')}_${data.inspectDate}.png`);
-          const file = folder.createFile(blob);
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          signatureUrl = file.getUrl();
+          const fileObj = Drive.Files.insert({
+            title: blob.getName(),
+            mimeType: blob.getContentType(),
+            parents: [{id: folderId}]
+          }, blob);
+          Drive.Permissions.insert({
+            role: "reader",
+            type: "anyone",
+            withLink: true
+          }, fileObj.id);
+          signatureUrl = fileObj.alternateLink;
         }
         
         const auditId = "FA-" + String(logsSheet.getLastRow()).padStart(5, '0');
@@ -818,43 +843,67 @@ function doPost(e) {
         
         // Auto folder setup for signatures
         let sigFolderId = settings["SIGNATURE_FOLDER_ID"];
-        let sigFolder;
         if (sigFolderId) {
-          try { sigFolder = DriveApp.getFolderById(sigFolderId); } catch (err) { sigFolderId = null; }
+          try { Drive.Files.get(sigFolderId); } catch (err) { sigFolderId = null; }
         }
         if (!sigFolderId) {
           const workspaceId = settings["WORKSPACE_FOLDER_ID"];
-          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-          sigFolder = workspace.createFolder(settings["SYSTEM_NAME"] + " Signatures");
-          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", sigFolder.getId());
+          const parentFolderId = workspaceId || "root";
+          const folderObj = Drive.Files.insert({
+            title: settings["SYSTEM_NAME"] + " Signatures",
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [{id: parentFolderId}]
+          });
+          sigFolderId = folderObj.id;
+          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", sigFolderId);
         }
 
         let folderId = settings["PHOTO_FOLDER_ID"];
-        let folder;
         if (folderId) {
-          try { folder = DriveApp.getFolderById(folderId); } catch (err) { folderId = null; }
+          try { Drive.Files.get(folderId); } catch (err) { folderId = null; }
         }
         if (!folderId) {
           const workspaceId = settings["WORKSPACE_FOLDER_ID"];
-          const workspace = workspaceId ? DriveApp.getFolderById(workspaceId) : DriveApp.getRootFolder();
-          folder = workspace.createFolder(settings["SYSTEM_NAME"] + " Photos");
-          setSystemSetting(ss, "PHOTO_FOLDER_ID", folder.getId());
+          const parentFolderId = workspaceId || "root";
+          const folderObj = Drive.Files.insert({
+            title: settings["SYSTEM_NAME"] + " Photos",
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [{id: parentFolderId}]
+          });
+          folderId = folderObj.id;
+          setSystemSetting(ss, "PHOTO_FOLDER_ID", folderId);
         }
         
         let photoUrl = "";
         if (data.photo && data.photo.includes(",")) {
           const blob = Utilities.newBlob(Utilities.base64Decode(data.photo.split(",")[1]), "image/jpeg", "Induction_" + data.name + "_" + new Date().getTime() + ".jpg");
-          const file = folder.createFile(blob);
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          photoUrl = "https://lh3.googleusercontent.com/d/" + file.getId();
+          const fileObj = Drive.Files.insert({
+            title: blob.getName(),
+            mimeType: blob.getContentType(),
+            parents: [{id: folderId}]
+          }, blob);
+          Drive.Permissions.insert({
+            role: "reader",
+            type: "anyone",
+            withLink: true
+          }, fileObj.id);
+          photoUrl = "https://lh3.googleusercontent.com/d/" + fileObj.id;
         }
         
         let signatureUrl = "";
         if (data.signature && data.signature.includes(",")) {
           const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", "Sig_Induction_" + data.name.replace(/\s+/g, '_') + "_" + new Date().getTime() + ".png");
-          const file = sigFolder.createFile(blob);
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          signatureUrl = file.getUrl();
+          const fileObj = Drive.Files.insert({
+            title: blob.getName(),
+            mimeType: blob.getContentType(),
+            parents: [{id: sigFolderId}]
+          }, blob);
+          Drive.Permissions.insert({
+            role: "reader",
+            type: "anyone",
+            withLink: true
+          }, fileObj.id);
+          signatureUrl = fileObj.alternateLink;
         }
         
         sheet.appendRow([new Date(), data.name, data.ic, data.company, data.date, data.inducted_by, data.declaration, signatureUrl, photoUrl, data.status || "Pending Approval"]);
@@ -1007,6 +1056,28 @@ function doPost(e) {
           return returnJSON({ status: "SUCCESS" });
         }
         return returnJSON({ status: "ERROR", message: "Incident ID not found" });
+      });
+    }
+
+    // I. Save Staff Record
+    if (data.action === "saveStaff") {
+      return runTransaction(() => {
+        const result = addOrUpdateStaff(data.staffData, ss);
+        if (result.status === "error") {
+          return returnJSON({ status: "ERROR", message: result.message });
+        }
+        return returnJSON({ status: "SUCCESS", message: result.message });
+      });
+    }
+
+    // J. Import Staff Records
+    if (data.action === "importStaff") {
+      return runTransaction(() => {
+        const result = importStaffRows(data.mappedRows, ss);
+        if (result.status === "error") {
+          return returnJSON({ status: "ERROR", message: result.message });
+        }
+        return returnJSON({ status: "SUCCESS", message: result.message });
       });
     }
    
@@ -1473,9 +1544,9 @@ function getStaffList() {
   }
 }
 
-function addOrUpdateStaff(staffData) {
+function addOrUpdateStaff(staffData, ss) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
     const settings = getSystemSettings(ss);
     const staffId = settings["STAFF_SPREADSHEET_ID"];
     if (!staffId) return { status: "error", message: "Staff Database not initialized." };
@@ -1513,13 +1584,13 @@ function addOrUpdateStaff(staffData) {
   }
 }
 
-function importStaffRows(mappedRows) {
+function importStaffRows(mappedRows, ss) {
   try {
     if (!Array.isArray(mappedRows) || mappedRows.length === 0) {
       return { status: "error", message: "No data rows provided for import." };
     }
     
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
     const settings = getSystemSettings(ss);
     const staffId = settings["STAFF_SPREADSHEET_ID"];
     if (!staffId) return { status: "error", message: "Staff Database not initialized." };

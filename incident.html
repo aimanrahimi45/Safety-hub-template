@@ -737,7 +737,6 @@
 
         function setupAutocomplete() {
             const victimInput = document.getElementById("victim-name");
-            const suggestionsDiv = document.getElementById("staff-suggestions");
             const staffIdInput = document.getElementById("victim-staff-id");
             const deptInput = document.getElementById("location-dept");
 
@@ -746,13 +745,26 @@
                 if (badge) badge.style.display = "inline-block";
             }
 
-            victimInput.addEventListener("input", () => {
+            // Dynamically create suggestions container for Staff ID if not exists
+            let idSuggestions = document.getElementById("staff-id-suggestions");
+            if (!idSuggestions) {
+                idSuggestions = document.createElement("div");
+                idSuggestions.id = "staff-id-suggestions";
+                idSuggestions.className = "suggestions-dropdown";
+                idSuggestions.style.display = "none";
+                staffIdInput.parentNode.appendChild(idSuggestions);
+                staffIdInput.parentNode.style.position = "relative";
+            }
+
+            const nameSuggestions = document.getElementById("staff-suggestions");
+
+            function handleInput(inputEl, suggestionsDiv) {
                 if (localStorage.getItem("safety_hub_plan_type") !== "Premium") {
                     suggestionsDiv.style.display = "none";
                     return;
                 }
 
-                const query = victimInput.value.trim().toLowerCase();
+                const query = inputEl.value.trim().toLowerCase();
                 if (!query || query.length < 1) {
                     suggestionsDiv.style.display = "none";
                     return;
@@ -796,11 +808,23 @@
                 });
 
                 suggestionsDiv.style.display = "block";
+            }
+
+            victimInput.addEventListener("input", () => {
+                handleInput(victimInput, nameSuggestions);
             });
 
+            staffIdInput.addEventListener("input", () => {
+                handleInput(staffIdInput, idSuggestions);
+            });
+
+            // Close suggestions on clicking outside
             document.addEventListener("click", (e) => {
-                if (e.target !== victimInput && e.target !== suggestionsDiv && !suggestionsDiv.contains(e.target)) {
-                    suggestionsDiv.style.display = "none";
+                if (e.target !== victimInput && e.target !== nameSuggestions && !nameSuggestions.contains(e.target)) {
+                    nameSuggestions.style.display = "none";
+                }
+                if (e.target !== staffIdInput && e.target !== idSuggestions && !idSuggestions.contains(e.target)) {
+                    idSuggestions.style.display = "none";
                 }
             });
         }

@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="shared.css">
     <script src="config.js"></script>
     <script src="shared.js" defer></script>
+    <!-- SheetJS Excel parser library -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         .container {
             max-width: 900px;
@@ -439,15 +441,15 @@
         <!-- TAB: IMPORT EXCEL/CSV WIZARD -->
         <div id="import-panel" class="tab-panel">
             <div class="card">
-                <h2>Import Staff List from Excel (CSV)</h2>
-                <p>Upload a standard CSV file exported from your HR portal. You can choose which row represents the headers, and skip any columns you don't need.</p>
+                <h2>Import Staff List from Excel/CSV</h2>
+                <p>Upload a standard Excel file (.xlsx, .xls) or CSV file exported from your HR portal. You can choose which row represents the headers, and skip any columns you don't need.</p>
                 
                 <div class="upload-area" onclick="document.getElementById('csvFileInput').click()">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p id="uploadText">Click to select or drag & drop CSV File</p>
-                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
+                    <p id="uploadText">Click to select or drag & drop Excel/CSV File</p>
+                    <input type="file" id="csvFileInput" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleFileSelect(event)">
                 </div>
 
                 <!-- Step 1: Preview Grid (30 Rows) -->
@@ -665,24 +667,61 @@
             const file = event.target.files[0];
             if (!file) return;
 
+            const fileName = file.name.toLowerCase();
+            const isExcel = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+            const isCsv = fileName.endsWith(".csv");
+
+            if (!isExcel && !isCsv) {
+                alert("❌ Error: Unsupported file format. Please upload a .csv, .xlsx, or .xls file.");
+                return;
+            }
+
             document.getElementById("uploadText").innerText = "Selected: " + file.name + " (" + Math.round(file.size / 1024) + " KB)";
 
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                parsedRows = parseCSV(text);
-                if (parsedRows.length === 0) {
-                    alert("⚠️ Error: Uploaded file is empty.");
-                    return;
-                }
-                
-                // Show Step 1 wizard preview
-                document.getElementById("wizardStep1").style.display = "block";
-                document.getElementById("wizardStep2").style.display = "none";
-                selectedHeaderRowIndex = 0;
-                renderImportPreview();
-            };
-            reader.readAsText(file);
+            if (isExcel) {
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        // Convert sheet data to 2D array of rows
+                        parsedRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                        
+                        if (parsedRows.length === 0) {
+                            alert("⚠️ Error: Uploaded Excel sheet is empty.");
+                            return;
+                        }
+                        
+                        // Show Step 1 wizard preview
+                        document.getElementById("wizardStep1").style.display = "block";
+                        document.getElementById("wizardStep2").style.display = "none";
+                        selectedHeaderRowIndex = 0;
+                        renderImportPreview();
+                    } catch (err) {
+                        console.error("Excel Read Error:", err);
+                        alert("❌ Error reading Excel file: " + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    parsedRows = parseCSV(text);
+                    if (parsedRows.length === 0) {
+                        alert("⚠️ Error: Uploaded file is empty.");
+                        return;
+                    }
+                    
+                    // Show Step 1 wizard preview
+                    document.getElementById("wizardStep1").style.display = "block";
+                    document.getElementById("wizardStep2").style.display = "none";
+                    selectedHeaderRowIndex = 0;
+                    renderImportPreview();
+                };
+                reader.readAsText(file);
+            }
         }
 
         function renderImportPreview() {

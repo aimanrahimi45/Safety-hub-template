@@ -379,3 +379,46 @@ window.PaginationHelper = class {
         }
     }
 };
+
+// --- CENTRALIZED PREMIUM PLAN HELPERS ---
+function isPremiumPlan() {
+    const planType = localStorage.getItem("safety_hub_plan_type") || "Free";
+    return planType.toLowerCase() === "premium";
+}
+
+function showPremiumUpgradeModal(featureName) {
+    let modal = document.getElementById("upgrade-modal-shared");
+    if (modal) {
+        modal.style.display = "flex";
+        return;
+    }
+    
+    modal = document.createElement("div");
+    modal.id = "upgrade-modal-shared";
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.background = "rgba(15, 23, 42, 0.6)";
+    modal.style.backdropFilter = "blur(12px)";
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+    modal.style.zIndex = "1000000";
+    modal.style.padding = "20px";
+    
+    modal.innerHTML = `
+        <div style="background: white; padding: 35px 30px; border-radius: 20px; border: 3px solid #000000; box-shadow: 8px 8px 0px #000000; width: 100%; max-width: 440px; text-align: center; font-family: 'Fredoka', sans-serif;">
+            <div style="font-size: 3.5rem; margin-bottom: 15px; display: inline-block;">🔒</div>
+            <h2 style="font-size: 1.6rem; font-weight: 700; color: #000000; margin: 0 0 10px 0; border: none; padding: 0;">Premium Feature Locked</h2>
+            <p style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin: 0 0 25px 0;">
+                <strong>${featureName}</strong> is a premium feature. Please enter your valid license key in the settings sidebar inside your Google Sheet to unlock this console.
+            </p>
+            <button onclick="document.getElementById('upgrade-modal-shared').style.display='none'" style="width: 100%; padding: 12px; background: #fbbf24; color: #000000; border: 3px solid #000000; border-radius: 10px; font-weight: 700; cursor: pointer; box-shadow: 3px 3px 0px #000000; transition: transform 0.1s;">
+                Got It
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}

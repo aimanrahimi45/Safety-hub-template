@@ -605,7 +605,7 @@
         }
 
         function editStaffMember(staffId) {
-            const member = allStaff.find(item => item["Staff ID"] === staffId);
+            const member = allStaff.find(item => String(item["Staff ID"]).trim() === String(staffId).trim());
             if (!member) return;
 
             document.getElementById("staffId").value = member["Staff ID"];

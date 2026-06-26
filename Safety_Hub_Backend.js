@@ -191,6 +191,27 @@ function setupWorkspace() {
     setSystemSetting(ss, "STAFF_SPREADSHEET_ID", newSS.id);
   }
   initializeStaffSheets(staffFile);
+
+  // G. Setup Inspection Spreadsheet
+  let inspectionId = settings["INSPECTION_SPREADSHEET_ID"];
+  let inspectionFile;
+  if (inspectionId) {
+    try {
+      inspectionFile = SpreadsheetApp.openById(inspectionId);
+    } catch (err) {
+      inspectionId = null;
+    }
+  }
+  if (!inspectionId) {
+    const newSS = Drive.Files.insert({
+      title: "AmerisPro Inspection Database",
+      mimeType: "application/vnd.google-apps.spreadsheet",
+      parents: [{id: folderId}]
+    });
+    inspectionFile = SpreadsheetApp.openById(newSS.id);
+    setSystemSetting(ss, "INSPECTION_SPREADSHEET_ID", newSS.id);
+  }
+  initializeInspectionSheets(inspectionFile);
   
   // Format master control tab
   let masterSheet = ss.getSheetByName("Dashboard Links");
@@ -203,6 +224,7 @@ function setupWorkspace() {
   masterSheet.appendRow(["Contractor Database", contractorFile.getUrl()]);
   masterSheet.appendRow(["Incident Database", incidentFile.getUrl()]);
   masterSheet.appendRow(["Staff Database", staffFile.getUrl()]);
+  masterSheet.appendRow(["Inspection Database", inspectionFile.getUrl()]);
   masterSheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   masterSheet.autoResizeColumns(1, 2);
   
@@ -342,6 +364,46 @@ function initializeStaffSheets(ss) {
     try { ss.deleteSheet(defSheet); } catch(e) {}
   }
 }
+
+function initializeInspectionSheets(ss) {
+  const defSheet = ss.getSheetByName("Sheet1");
+  
+  // 1. Inspection Checklist Templates
+  let templatesSheet = ss.getSheetByName("InspectionTemplates") || ss.insertSheet("InspectionTemplates");
+  const templateHeaders = ["Checklist ID", "Question ID", "Safety Question", "Category", "Risk Level"];
+  templatesSheet.getRange(1, 1, 1, templateHeaders.length).setValues([templateHeaders]);
+  templatesSheet.getRange(1, 1, 1, templateHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  templatesSheet.setFrozenRows(1);
+  
+  if (templatesSheet.getLastRow() <= 1) {
+    const defaultTemplate = [
+      ["CL-01", "Q-01", "Are all emergency exits, fire doors, and escape routes completely unobstructed?", "Fire Safety", "High"],
+      ["CL-01", "Q-02", "Are fire extinguishers and fire hoses fully accessible, inspected, and in-date?", "Fire Safety", "High"],
+      ["CL-01", "Q-03", "Are work floors, aisles, and walkways clean, dry, and free of slip/trip hazards?", "Housekeeping", "Medium"],
+      ["CL-01", "Q-04", "Are electrical panels and switches clear of storage, and are cables free of damage?", "Electrical Safety", "Medium"],
+      ["CL-01", "Q-05", "Are moving parts and danger zones on active machinery fully guarded?", "Machine Guarding", "High"]
+    ];
+    templatesSheet.getRange(2, 1, defaultTemplate.length, templateHeaders.length).setValues(defaultTemplate);
+  }
+
+  // 2. Inspection Logs
+  let logsSheet = ss.getSheetByName("InspectionLogs") || ss.insertSheet("InspectionLogs");
+  const logHeaders = ["Audit ID", "Timestamp", "Date of Inspection", "Auditor Name", "Auditor Position", "Area/Dept", "Overall Findings", "Signature URL"];
+  logsSheet.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
+  logsSheet.getRange(1, 1, 1, logHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  logsSheet.setFrozenRows(1);
+
+  // 3. Inspection Details
+  let detailsSheet = ss.getSheetByName("InspectionDetails") || ss.insertSheet("InspectionDetails");
+  const detailHeaders = ["Audit ID", "Question ID", "Safety Question", "Answer", "Remarks"];
+  detailsSheet.getRange(1, 1, 1, detailHeaders.length).setValues([detailHeaders]);
+  detailsSheet.getRange(1, 1, 1, detailHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+  detailsSheet.setFrozenRows(1);
+
+  if (defSheet) {
+    try { ss.deleteSheet(defSheet); } catch(e) {}
+  }
+}
  
  
 // ========================================================
@@ -436,6 +498,17 @@ function doGet(e) {
       }
       const targetSS = SpreadsheetApp.openById(ssId);
       const sheet = getSheetSafe(targetSS, "First Aid Central Inventory");
+      return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
+    }
+
+    // Get Workplace Inspection Checklist Templates
+    if (action === "getInspectionTemplates") {
+      const ssId = settings["INSPECTION_SPREADSHEET_ID"];
+      if (!ssId) {
+        return returnJSON({ status: "ERROR", message: "Inspection database not provisioned." });
+      }
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = getSheetSafe(targetSS, "InspectionTemplates");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
@@ -549,6 +622,9 @@ function doGet(e) {
       } else if (db === "Staff") {
         ssId = settings["STAFF_SPREADSHEET_ID"];
         sheetName = "Staff Roster";
+      } else if (db === "Inspection") {
+        ssId = settings["INSPECTION_SPREADSHEET_ID"];
+        sheetName = "InspectionLogs";
       }
       
       if (!ssId) return returnJSON({ status: "ERROR", message: "Database ID missing for " + db });
@@ -568,6 +644,14 @@ function doGet(e) {
       const ssId = settings["FIRST_AID_SPREADSHEET_ID"];
       const targetSS = SpreadsheetApp.openById(ssId);
       const sheet = getSheetSafe(targetSS, "First Aid Checklist Details");
+      return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
+    }
+
+    // Get Workplace Inspection details
+    if (action === "getInspectionDetails") {
+      const ssId = settings["INSPECTION_SPREADSHEET_ID"];
+      const targetSS = SpreadsheetApp.openById(ssId);
+      const sheet = getSheetSafe(targetSS, "InspectionDetails");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
     }
     
@@ -772,6 +856,82 @@ function doPost(e) {
           detailsSheet.appendRow([auditId, item.id, item.name, item.req, finalAvail, exp, remarksValue, data.boxId, data.inspectDate]);
         });
         return returnText("SUCCESS");
+      });
+    }
+
+    // A.5 Workplace Inspection Audit Submission
+    if (data.action === "saveInspectionAudit") {
+      return runTransaction(() => {
+        const ssId = settings["INSPECTION_SPREADSHEET_ID"];
+        const targetSS = SpreadsheetApp.openById(ssId);
+        const logsSheet = getSheetSafe(targetSS, "InspectionLogs");
+        const detailsSheet = getSheetSafe(targetSS, "InspectionDetails");
+        
+        // Auto folder setup for signatures
+        let folderId = settings["SIGNATURE_FOLDER_ID"];
+        if (folderId) {
+          try { Drive.Files.get(folderId); } catch (err) { folderId = null; }
+        }
+        if (!folderId) {
+          const workspaceId = settings["WORKSPACE_FOLDER_ID"];
+          const parentFolderId = workspaceId || "root";
+          const folderObj = Drive.Files.insert({
+            title: settings["SYSTEM_NAME"] + " Signatures",
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [{id: parentFolderId}]
+          });
+          folderId = folderObj.id;
+          setSystemSetting(ss, "SIGNATURE_FOLDER_ID", folderId);
+        }
+        
+        let signatureUrl = "";
+        if (data.signature && data.signature.includes(",")) {
+          const blob = Utilities.newBlob(Utilities.base64Decode(data.signature.split(",")[1]), "image/png", `Sig_Inspection_${data.areaDept.replace(/\//g, '_')}_${data.inspectDate}.png`);
+          const fileObj = Drive.Files.insert({
+            title: blob.getName(),
+            mimeType: blob.getContentType(),
+            parents: [{id: folderId}]
+          }, blob);
+          Drive.Permissions.insert({
+            role: "reader",
+            type: "anyone",
+            withLink: true
+          }, fileObj.id);
+          signatureUrl = fileObj.alternateLink;
+        }
+        
+        // Generate Audit ID
+        const nextId = logsSheet.getLastRow() > 0 ? logsSheet.getLastRow() : 1;
+        const auditId = "INS-" + String(nextId).padStart(5, '0');
+        
+        // 1. Write Log metadata row
+        const logRow = [
+          auditId,
+          new Date(),
+          data.inspectDate,
+          data.auditorName,
+          data.auditorPosition,
+          data.areaDept,
+          data.overallFindings,
+          signatureUrl
+        ];
+        logsSheet.appendRow(logRow);
+        
+        // 2. Write Details rows
+        if (Array.isArray(data.details)) {
+          data.details.forEach(item => {
+            const detailRow = [
+              auditId,
+              item.questionId,
+              item.safetyQuestion,
+              item.answer,
+              item.remarks || ""
+            ];
+            detailsSheet.appendRow(detailRow);
+          });
+        }
+        
+        return returnJSON({ status: "SUCCESS", message: "Workplace Inspection log successfully submitted!", auditId: auditId });
       });
     }
    

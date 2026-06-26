@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workplace Inspection & Audits</title>
+    <link rel="icon" type="image/png" href="amerispro_128x128.png">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <!-- Signature Pad library -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+            padding-bottom: 60px;
+        }
+
+        .header {
+            background: #8B5CF6; /* Elegant violet theme for Audits & Inspections */
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            border-bottom: 3px solid var(--border);
+            margin: -24px -24px 24px -24px;
+            border-radius: 20px 240px 0px 0px / 220px 20px 0px 0px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: #FFFFFF;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 14px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.1s ease;
+        }
+
+        .tab-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+
+        .tab-btn.active {
+            background: var(--warning);
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+            background: var(--surface);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #8B5CF6;
+        }
+
+        /* Category Header block */
+        .category-section {
+            margin-top: 24px;
+            margin-bottom: 24px;
+        }
+
+        .category-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-main);
+            padding-bottom: 6px;
+            border-bottom: 3px dashed var(--border);
+        }
+
+        /* Question Card Style */
+        .question-item {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.15s ease;
+        }
+
+        .question-item:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .question-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        /* Custom Segment Choice Buttons */
+        .choice-btn {
+            flex: 1;
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.1s ease;
+            box-shadow: 2px 2px 0px var(--border);
+            user-select: none;
+        }
+
+        .choice-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
+        }
+
+        .choice-btn.active-yes {
+            background: var(--success) !important;
+            color: var(--text-main) !important;
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        .choice-btn.active-no {
+            background: var(--primary) !important;
+            color: var(--text-main) !important;
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        .choice-btn.active-na {
+            background: #e2e8f0 !important;
+            color: var(--text-muted) !important;
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        /* Badges */
+        .badge-risk {
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        .badge-risk.high { background: var(--primary); color: var(--text-main); }
+        .badge-risk.medium { background: var(--warning); color: var(--text-main); }
+        .badge-risk.low { background: var(--info); color: var(--text-main); }
+
+        /* Signature area */
+        .signature-container {
+            border: 3px dashed var(--border);
+            border-radius: 14px;
+            background: #f8fafc;
+            position: relative;
+            margin-top: 8px;
+            height: 180px;
+        }
+
+        .signature-pad {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            cursor: crosshair;
+        }
+
+        /* Upload Excel area */
+        .upload-zone {
+            border: 3px dashed var(--border);
+            background: var(--surface);
+            border-radius: 18px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            margin-bottom: 24px;
+        }
+
+        .upload-zone:hover {
+            background: var(--sidebar-bg);
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .upload-zone svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        /* Details Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(43, 45, 66, 0.4);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 100%;
+            position: relative;
+            animation: modalSlideUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .close-modal:hover {
+            color: var(--primary);
+        }
+
+        /* Detail badging */
+        .badge-ans {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+        }
+        .badge-ans.yes { background: var(--success); }
+        .badge-ans.no { background: var(--primary); }
+        .badge-ans.na { background: #e2e8f0; color: var(--text-muted); }
+
+        .btn-submit {
+            background: var(--success);
+            color: var(--text-main);
+            border: 3px solid var(--border);
+            padding: 12px;
+            border-radius: 14px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.1s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-submit:active {
+            transform: translate(1px, 1px);
+            box-shadow: var(--shadow-sm);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Workplace Inspections</h1>
+            <p>Conduct safety audits, manage checklists templates, and track compliance compliance history.</p>
+        </div>
+
+        <!-- Offline Status Notification -->
+        <div id="offline-banner" class="card" style="background:var(--warning); border-color:var(--border); display:none; padding:12px 20px; margin-bottom:20px; border-radius:12px; font-weight:700; font-size:0.9rem;">
+            💡 Playing Offline: Spreadsheet is not connected. Custom imports and cloud saves are disabled.
+        </div>
+
+        <!-- Tabs Nav -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('conduct')">Conduct Inspection</button>
+            <button class="tab-btn" onclick="switchTab('templates')">Manage Checklists</button>
+            <button class="tab-btn" onclick="switchTab('logs')">History Logs</button>
+        </div>
+
+        <!-- Tab 1: Conduct Inspection -->
+        <div id="panel-conduct" class="tab-panel active">
+            <form id="inspection-form" onsubmit="handleAuditSubmit(event)">
+                <div class="card">
+                    <h2>Auditor & Area Metadata</h2>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="inspect-date">Date of Inspection <span style="color:var(--primary)">*</span></label>
+                            <input type="date" id="inspect-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inspect-checklist">Checklist Template <span style="color:var(--primary)">*</span></label>
+                            <select id="inspect-checklist" onchange="loadChecklistTemplate(this.value)" required>
+                                <option value="" disabled selected>Select Checklist...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="inspect-auditor">Auditor Name <span style="color:var(--primary)">*</span></label>
+                            <input type="text" id="inspect-auditor" placeholder="Enter full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inspect-position">Auditor Position <span style="color:var(--primary)">*</span></label>
+                            <input type="text" id="inspect-position" value="Safety Officer" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inspect-area">Department / Area <span style="color:var(--primary)">*</span></label>
+                        <input type="text" id="inspect-area" placeholder="e.g. Warehouse A, Kitchen Section 3" required>
+                    </div>
+                </div>
+
+                <!-- Dynamic Checklist Form Section -->
+                <div class="card" id="checklist-card" style="display: none;">
+                    <h2 id="checklist-card-title">Safety Inspection Checklist</h2>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-weight:600;">Assess each check item below and provide comments where appropriate.</p>
+                    
+                    <div id="checklist-container">
+                        <!-- Categories and questions will render here dynamically -->
+                    </div>
+                </div>
+
+                <!-- Overall Sign-off -->
+                <div class="card" id="signoff-card" style="display: none;">
+                    <h2>Overall Review & Digital Verification</h2>
+                    <div class="form-group">
+                        <label for="inspect-findings">Overall Findings / Corrective Action</label>
+                        <textarea id="inspect-findings" rows="3" placeholder="Summarize any urgent items or general safety compliance findings..."></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Auditor Digital Sign-off <span style="color:var(--primary)">*</span></label>
+                        <div class="signature-container">
+                            <canvas class="signature-pad" id="sig-pad"></canvas>
+                        </div>
+                        <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="save-sig-check" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--primary);">
+                                <label for="save-sig-check" style="margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); cursor: pointer; user-select: none;">Save signature on this device</label>
+                            </div>
+                            <button type="button" class="tab-btn" style="padding: 6px 12px; margin:0; font-size: 0.8rem;" onclick="clearSignature()">Clear Signature</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="btn-submit-audit">💾 Submit Safety Inspection</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tab 2: Manage Checklists -->
+        <div id="panel-templates" class="tab-panel">
+            <div class="card">
+                <h2>Import Checklist Templates</h2>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px; font-weight:600;">You can customize the checklist categories and questions by uploading a standard Excel sheet. Mapped rows will overwrite template definitions.</p>
+                
+                <div class="upload-zone" onclick="launchExcelImport()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <h3 style="font-family:var(--font-heading); margin-bottom:6px;">Upload Excel Checklist Template</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted);">Required Excel Headers: <strong>Checklist ID, Question ID, Safety Question, Category, Risk Level</strong></p>
+                </div>
+            </div>
+
+            <!-- Question Inventory Card -->
+            <div class="card">
+                <h2>Active Checklist Questions</h2>
+                <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="searchQuestions" placeholder="Search questions or categories..." style="flex:1; min-width: 200px;" oninput="filterTemplatesTable()">
+                    <select id="filterChecklistId" style="width: auto; min-width: 150px;" onchange="filterTemplatesTable()">
+                        <option value="ALL">All Checklists</option>
+                    </select>
+                </div>
+
+                <div style="overflow-x: auto; border: 3px solid var(--border); border-radius: 12px; background: white;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: var(--sidebar-bg); border-bottom: 3px solid var(--border);">
+                                <th style="padding: 10px; font-weight: 700;">Checklist ID</th>
+                                <th style="padding: 10px; font-weight: 700;">Question ID</th>
+                                <th style="padding: 10px; font-weight: 700;">Safety Question</th>
+                                <th style="padding: 10px; font-weight: 700;">Category</th>
+                                <th style="padding: 10px; font-weight: 700; text-align: center;">Risk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="templatesTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Templates Pagination -->
+                <div id="templates-pagination-controls" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; gap:10px;">
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">
+                        Showing <span id="temp-pag-start">0</span> to <span id="temp-pag-end">0</span> of <span id="temp-pag-total">0</span> questions
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button id="temp-btn-prev" class="tab-btn" style="padding:5px 10px; margin:0; font-size:0.75rem;">&larr; Prev</button>
+                        <span id="temp-page-display" style="font-weight:700; font-size:0.8rem;">Page 1</span>
+                        <button id="temp-btn-next" class="tab-btn" style="padding:5px 10px; margin:0; font-size:0.75rem;">Next &rarr;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: History Logs -->
+        <div id="panel-logs" class="tab-panel">
+            <div class="card">
+                <h2>Inspection Audit History</h2>
+                <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="searchLogs" placeholder="Search auditor name, area, findings..." style="flex:1; min-width: 200px;" oninput="filterLogsTable()">
+                    <input type="date" id="filterLogsDate" style="width: auto; min-width: 150px;" onchange="filterLogsTable()">
+                </div>
+
+                <div style="overflow-x: auto; border: 3px solid var(--border); border-radius: 12px; background: white;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: var(--sidebar-bg); border-bottom: 3px solid var(--border);">
+                                <th style="padding: 10px; font-weight: 700;">Audit ID</th>
+                                <th style="padding: 10px; font-weight: 700;">Date</th>
+                                <th style="padding: 10px; font-weight: 700;">Auditor</th>
+                                <th style="padding: 10px; font-weight: 700;">Area/Dept</th>
+                                <th style="padding: 10px; font-weight: 700;">Overall Findings</th>
+                                <th style="padding: 10px; font-weight: 700; text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Logs Pagination -->
+                <div id="logs-pagination-controls" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; gap:10px;">
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">
+                        Showing <span id="log-pag-start">0</span> to <span id="log-pag-end">0</span> of <span id="log-pag-total">0</span> audits
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button id="log-btn-prev" class="tab-btn" style="padding:5px 10px; margin:0; font-size:0.75rem;">&larr; Prev</button>
+                        <span id="log-page-display" style="font-weight:700; font-size:0.8rem;">Page 1</span>
+                        <button id="log-btn-next" class="tab-btn" style="padding:5px 10px; margin:0; font-size:0.75rem;">Next &rarr;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content card">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title" style="margin-top: 0; font-family: var(--font-heading);">Inspection Audit Details</h2>
+            
+            <div id="modal-metadata" style="margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <!-- Populated dynamically -->
+            </div>
+            
+            <div id="modal-sig-box" style="margin-bottom: 20px; display: none; background: #f8fafc; border: 3px solid var(--border); border-radius: 12px; padding: 12px;">
+                <label>Verification Signature</label>
+                <div style="margin-top: 8px;">
+                    <img id="modal-signature-img" style="max-height: 80px; border: 1px solid var(--border); border-radius: 6px; background: white; object-fit: contain;" alt="Digital Sign-off">
+                </div>
+            </div>
+
+            <div style="overflow-x: auto; border: 3px solid var(--border); border-radius: 12px; background: white;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background: var(--sidebar-bg); border-bottom: 3px solid var(--border);">
+                            <th style="padding: 10px; font-weight: 700; width: 80px;">ID</th>
+                            <th style="padding: 10px; font-weight: 700;">Question</th>
+                            <th style="padding: 10px; font-weight: 700; text-align: center; width: 100px;">Answer</th>
+                            <th style="padding: 10px; font-weight: 700;">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalDetailsBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Actions -->
+    <script>
+        // --- Offline/Fallback Defaults ---
+        const DEFAULT_TEMPLATES = [
+            { "Checklist ID": "CL-01", "Question ID": "Q-01", "Safety Question": "Are all emergency exits, fire doors, and escape routes completely unobstructed?", "Category": "Fire Safety", "Risk Level": "High" },
+            { "Checklist ID": "CL-01", "Question ID": "Q-02", "Safety Question": "Are fire extinguishers and fire hoses fully accessible, inspected, and in-date?", "Category": "Fire Safety", "Risk Level": "High" },
+            { "Checklist ID": "CL-01", "Question ID": "Q-03", "Safety Question": "Are work floors, aisles, and walkways clean, dry, and free of slip/trip hazards?", "Category": "Housekeeping", "Risk Level": "Medium" },
+            { "Checklist ID": "CL-01", "Question ID": "Q-04", "Safety Question": "Are electrical panels and switches clear of storage, and are cables free of damage?", "Category": "Electrical Safety", "Risk Level": "Medium" },
+            { "Checklist ID": "CL-01", "Question ID": "Q-05", "Safety Question": "Are moving parts and danger zones on active machinery fully guarded?", "Category": "Machine Guarding", "Risk Level": "High" }
+        ];
+
+        // --- Global State variables ---
+        let allTemplates = [];
+        let allLogs = [];
+        let answers = {}; // Maps questionId -> { safetyQuestion, answer, remarks }
+        let signaturePad = null;
+        let templatesPaginator = null;
+        let logsPaginator = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById("inspect-date").value = today;
+
+            // Check connection status
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId || typeof GOOGLE_SCRIPT_URL === "undefined" || GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                document.getElementById("offline-banner").style.display = "block";
+            }
+
+            // Initialize signature
+            initSignature();
+
+            // Load templates from local or cloud
+            loadAllChecklistsData();
+        });
+
+        // Toggle Tabs
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            // Match active button by text contents
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => {
+                if (tabId === 'conduct') return btn.innerText.includes('Conduct');
+                if (tabId === 'templates') return btn.innerText.includes('Checklists');
+                if (tabId === 'logs') return btn.innerText.includes('Logs');
+            });
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const targetPanel = document.getElementById(`panel-${tabId}`);
+            if (targetPanel) targetPanel.classList.add('active');
+
+            if (tabId === 'conduct') {
+                // Ensure canvas renders correctly on tab toggle
+                setTimeout(resizeSignatureCanvas, 100);
+            } else if (tabId === 'templates') {
+                if (!templatesPaginator) {
+                    templatesPaginator = new PaginationHelper({
+                        data: allTemplates,
+                        rowsPerPage: 10,
+                        controlsContainerId: "templates-pagination-controls",
+                        startId: "temp-pag-start",
+                        endId: "temp-pag-end",
+                        totalId: "temp-pag-total",
+                        displayId: "temp-page-display",
+                        prevBtnId: "temp-btn-prev",
+                        nextBtnId: "temp-btn-next",
+                        renderCallback: function(pagedData) {
+                            renderTemplatesRows(pagedData);
+                        }
+                    });
+                }
+                filterTemplatesTable();
+            } else if (tabId === 'logs') {
+                if (!logsPaginator) {
+                    logsPaginator = new PaginationHelper({
+                        data: allLogs,
+                        rowsPerPage: 10,
+                        controlsContainerId: "logs-pagination-controls",
+                        startId: "log-pag-start",
+                        endId: "log-pag-end",
+                        totalId: "log-pag-total",
+                        displayId: "log-page-display",
+                        prevBtnId: "log-btn-prev",
+                        nextBtnId: "log-btn-next",
+                        renderCallback: function(pagedData) {
+                            renderLogsRows(pagedData);
+                        }
+                    });
+                }
+                fetchLogsFromCloud();
+            }
+        }
+
+        // --- Signature Pad Logic ---
+        function initSignature() {
+            const canvas = document.getElementById('sig-pad');
+            if (!canvas) return;
+
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(248, 250, 252)',
+                penColor: 'rgb(15, 23, 42)'
+            });
+
+            resizeSignatureCanvas();
+            window.addEventListener("resize", resizeSignatureCanvas);
+            canvas.addEventListener('pointerdown', resizeSignatureCanvas);
+
+            // Load saved signature if checked before
+            const savedSig = localStorage.getItem('inspection_saved_sig');
+            if (savedSig) {
+                setTimeout(() => {
+                    signaturePad.fromDataURL(savedSig);
+                }, 150);
+                const check = document.getElementById('save-sig-check');
+                if (check) check.checked = true;
+            }
+        }
+
+        function resizeSignatureCanvas() {
+            const canvas = document.getElementById('sig-pad');
+            if (!canvas || !signaturePad) return;
+
+            if (canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const targetWidth = canvas.offsetWidth * ratio;
+                const targetHeight = canvas.offsetHeight * ratio;
+                if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    canvas.getContext("2d").scale(ratio, ratio);
+                    signaturePad.clear();
+                }
+            }
+        }
+
+        function clearSignature() {
+            if (signaturePad) {
+                signaturePad.clear();
+                localStorage.removeItem('inspection_saved_sig');
+                const check = document.getElementById('save-sig-check');
+                if (check) check.checked = false;
+            }
+        }
+
+        // --- Fetch Active Templates ---
+        async function loadAllChecklistsData() {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId || typeof GOOGLE_SCRIPT_URL === "undefined" || GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                allTemplates = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
+                populateChecklistDropdown();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getInspectionTemplates&spreadsheetId=${sheetId}`);
+                const json = await response.json();
+                if (json.status === "SUCCESS" && json.data && json.data.length > 0) {
+                    allTemplates = json.data;
+                } else {
+                    allTemplates = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
+                }
+            } catch(e) {
+                console.warn("Failed to load templates from cloud, using offline default checklist:", e);
+                allTemplates = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
+            } finally {
+                populateChecklistDropdown();
+            }
+        }
+
+        function populateChecklistDropdown() {
+            const selectEl = document.getElementById("inspect-checklist");
+            const checklistIds = [...new Set(allTemplates.map(t => t["Checklist ID"]))];
+            
+            selectEl.innerHTML = '<option value="" disabled selected>Select Checklist...</option>';
+            checklistIds.forEach(id => {
+                const opt = document.createElement("option");
+                opt.value = id;
+                opt.innerText = `${id} Checklist (${allTemplates.filter(t => t["Checklist ID"] === id).length} questions)`;
+                selectEl.appendChild(opt);
+            });
+
+            // Populate the templates checklist selector filter in panel 2
+            const filterEl = document.getElementById("filterChecklistId");
+            if (filterEl) {
+                filterEl.innerHTML = '<option value="ALL">All Checklists</option>';
+                checklistIds.forEach(id => {
+                    const opt = document.createElement("option");
+                    opt.value = id;
+                    opt.innerText = id;
+                    filterEl.appendChild(opt);
+                });
+            }
+        }
+
+        // --- Dynamic Form Generation ---
+        function loadChecklistTemplate(checklistId) {
+            const container = document.getElementById("checklist-container");
+            container.innerHTML = "";
+            answers = {}; // Reset
+
+            const questions = allTemplates.filter(t => t["Checklist ID"] === checklistId);
+            if (questions.length === 0) {
+                document.getElementById("checklist-card").style.display = "none";
+                document.getElementById("signoff-card").style.display = "none";
+                return;
+            }
+
+            // Group by Category
+            const grouped = {};
+            questions.forEach(q => {
+                const cat = q["Category"] || "General Safety";
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(q);
+            });
+
+            // Render categories and questions
+            for (const category in grouped) {
+                const section = document.createElement("div");
+                section.className = "category-section";
+                
+                section.innerHTML = `
+                    <div class="category-title">
+                        <span>📂 ${category}</span>
+                    </div>
+                `;
+
+                grouped[category].forEach(q => {
+                    const qId = q["Question ID"];
+                    const safetyQText = q["Safety Question"];
+                    const risk = q["Risk Level"] || "Medium";
+                    
+                    // Initialize answers state
+                    answers[qId] = {
+                        questionId: qId,
+                        safetyQuestion: safetyQText,
+                        answer: "",
+                        remarks: ""
+                    };
+
+                    const item = document.createElement("div");
+                    item.className = "question-item";
+                    item.innerHTML = `
+                        <div class="question-header">
+                            <span class="question-text"><strong>${qId}:</strong> ${safetyQText}</span>
+                            <span class="badge-risk ${risk.toLowerCase()}">${risk}</span>
+                        </div>
+                        <div class="question-actions">
+                            <div class="choice-btn" id="choice-${qId}-yes" onclick="setQuestionChoice('${qId}', 'Yes')">Yes</div>
+                            <div class="choice-btn" id="choice-${qId}-no" onclick="setQuestionChoice('${qId}', 'No')">No</div>
+                            <div class="choice-btn" id="choice-${qId}-na" onclick="setQuestionChoice('${qId}', 'N/A')">N/A</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <input type="text" placeholder="Remarks / Corrective Action (Optional)" oninput="setQuestionRemark('${qId}', this.value)">
+                        </div>
+                    `;
+                    section.appendChild(item);
+                });
+
+                container.appendChild(section);
+            }
+
+            document.getElementById("checklist-card").style.display = "block";
+            document.getElementById("signoff-card").style.display = "block";
+            setTimeout(resizeSignatureCanvas, 100);
+        }
+
+        function setQuestionChoice(qId, val) {
+            // Update value in answers object
+            if (answers[qId]) {
+                answers[qId].answer = val;
+            }
+
+            // Remove active classes
+            const yesBtn = document.getElementById(`choice-${qId}-yes`);
+            const noBtn = document.getElementById(`choice-${qId}-no`);
+            const naBtn = document.getElementById(`choice-${qId}-na`);
+
+            if (yesBtn) yesBtn.className = "choice-btn";
+            if (noBtn) noBtn.className = "choice-btn";
+            if (naBtn) naBtn.className = "choice-btn";
+
+            // Add active color classes
+            const btn = document.getElementById(`choice-${qId}-${val.toLowerCase().replace('/', '')}`);
+            if (btn) {
+                btn.classList.add(`active-${val.toLowerCase().replace('/', '')}`);
+            }
+        }
+
+        function setQuestionRemark(qId, val) {
+            if (answers[qId]) {
+                answers[qId].remarks = val;
+            }
+        }
+
+        // --- Save Audit Submit ---
+        async function handleAuditSubmit(event) {
+            event.preventDefault();
+
+            // Validate answers are complete
+            const unanswered = Object.values(answers).filter(a => a.answer === "");
+            if (unanswered.length > 0) {
+                alert(`⚠️ Please answer all checklist questions before submitting. (${unanswered.length} unanswered remaining)`);
+                return;
+            }
+
+            // Validate Signature
+            if (!signaturePad || signaturePad.isEmpty()) {
+                alert("✍️ Please provide a digital signature to verify this safety audit.");
+                return;
+            }
+
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId || typeof GOOGLE_SCRIPT_URL === "undefined" || GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                alert("❌ Cannot save audit logs: Master Spreadsheet is not connected.");
+                return;
+            }
+
+            const submitBtn = document.getElementById("btn-submit-audit");
+            submitBtn.disabled = true;
+            submitBtn.innerText = "⏳ Saving Audit Log...";
+
+            // Check signature persistence preference
+            const saveCheck = document.getElementById('save-sig-check');
+            const signatureDataUrl = signaturePad.toDataURL('image/png');
+            if (saveCheck && saveCheck.checked) {
+                localStorage.setItem('inspection_saved_sig', signatureDataUrl);
+            } else {
+                localStorage.removeItem('inspection_saved_sig');
+            }
+
+            const payload = {
+                action: "saveInspectionAudit",
+                spreadsheetId: sheetId,
+                inspectDate: document.getElementById("inspect-date").value,
+                auditorName: document.getElementById("inspect-auditor").value,
+                auditorPosition: document.getElementById("inspect-position").value,
+                areaDept: document.getElementById("inspect-area").value,
+                overallFindings: document.getElementById("inspect-findings").value,
+                signature: signatureDataUrl,
+                details: Object.values(answers)
+            };
+
+            // Loading overlay
+            const loadingOverlay = document.createElement("div");
+            loadingOverlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(43,45,66,0.6); display:flex; align-items:center; justify-content:center; z-index:99999; color:white; font-family:'Fredoka',sans-serif; font-size:1.5rem; font-weight:700;";
+            loadingOverlay.innerHTML = `⏳ Uploading audit logs to spreadsheet database...`;
+            document.body.appendChild(loadingOverlay);
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+                const json = await response.json();
+                loadingOverlay.remove();
+                submitBtn.disabled = false;
+                submitBtn.innerText = "💾 Submit Safety Inspection";
+
+                if (json.status === "SUCCESS") {
+                    alert("🎉 Success: Safety Inspection Audit Log has been saved!\nAudit ID: " + json.auditId);
+                    
+                    // Clear signature if not persistent
+                    if (!saveCheck || !saveCheck.checked) {
+                        signaturePad.clear();
+                    }
+                    
+                    document.getElementById("inspection-form").reset();
+                    document.getElementById("inspect-date").value = new Date().toISOString().split('T')[0];
+                    document.getElementById("checklist-card").style.display = "none";
+                    document.getElementById("signoff-card").style.display = "none";
+                    
+                    switchTab('logs');
+                } else {
+                    alert("❌ Save Failed: " + json.message);
+                }
+            } catch(err) {
+                loadingOverlay.remove();
+                submitBtn.disabled = false;
+                submitBtn.innerText = "💾 Submit Safety Inspection";
+                console.error("Save Error:", err);
+                alert("❌ Cloud Connection Failed: " + err);
+            }
+        }
+
+        // --- Template Manager Tab ---
+        function filterTemplatesTable() {
+            if (!templatesPaginator) return;
+            const query = document.getElementById("searchQuestions").value.toLowerCase();
+            const checklistIdFilter = document.getElementById("filterChecklistId").value;
+
+            const filtered = allTemplates.filter(item => {
+                const matchesSearch = 
+                    String(item["Question ID"]).toLowerCase().includes(query) ||
+                    String(item["Safety Question"]).toLowerCase().includes(query) ||
+                    String(item["Category"]).toLowerCase().includes(query);
+                
+                const matchesChecklist = 
+                    checklistIdFilter === "ALL" || 
+                    String(item["Checklist ID"]).trim() === checklistIdFilter.trim();
+
+                return matchesSearch && matchesChecklist;
+            });
+
+            templatesPaginator.updateData(filtered);
+        }
+
+        function renderTemplatesRows(pagedData) {
+            const tbody = document.getElementById("templatesTableBody");
+            if (pagedData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No matching checklist questions found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = pagedData.map(item => `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px; font-weight:700;">${item["Checklist ID"]}</td>
+                    <td style="padding: 10px; font-weight:600; color:#8B5CF6;">${item["Question ID"]}</td>
+                    <td style="padding: 10px;">${item["Safety Question"]}</td>
+                    <td style="padding: 10px; font-weight:600; color:var(--text-muted);">${item["Category"]}</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <span class="badge-risk ${String(item["Risk Level"] || 'Medium').toLowerCase()}">${item["Risk Level"] || 'Medium'}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Centralized Excel Import Wizard call ---
+        function launchExcelImport() {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId) {
+                alert("❌ Connection required: Master Spreadsheet ID must be configured.");
+                return;
+            }
+
+            openExcelImportWizard({
+                title: "Import Checklist Template",
+                fields: [
+                    { id: "Checklist ID", label: "Checklist ID", required: true, autoMatches: ["checklist id", "checklist_id", "checklist", "cl id", "id checklist"] },
+                    { id: "Question ID", label: "Question ID", required: true, autoMatches: ["question id", "question_id", "id", "q_id", "qid", "no"] },
+                    { id: "Safety Question", label: "Safety Question", required: true, autoMatches: ["safety question", "safety_question", "question", "soal", "soalan", "item"] },
+                    { id: "Category", label: "Category", required: false, autoMatches: ["category", "kategori", "section", "group", "bahagian"] },
+                    { id: "Risk Level", label: "Risk Level", required: false, autoMatches: ["risk level", "risk_level", "risk", "tahap risiko", "risiko", "level"] }
+                ],
+                onComplete: async (mappedRows) => {
+                    // Normalize Risk Level
+                    mappedRows.forEach(r => {
+                        if (!r["Risk Level"]) r["Risk Level"] = "Medium";
+                        if (!r["Category"]) r["Category"] = "General Safety";
+                    });
+
+                    // Loading overlay
+                    const loadingOverlay = document.createElement("div");
+                    loadingOverlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(43,45,66,0.6); display:flex; align-items:center; justify-content:center; z-index:99999; color:white; font-family:'Fredoka',sans-serif; font-size:1.5rem; font-weight:700;";
+                    loadingOverlay.innerHTML = `⏳ Saving ${mappedRows.length} checklist template records...`;
+                    document.body.appendChild(loadingOverlay);
+
+                    try {
+                        const response = await fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain" },
+                            body: JSON.stringify({
+                                action: "importRows",
+                                sheetName: "InspectionTemplates",
+                                keyColumn: "Question ID",
+                                dbSpreadsheetKey: "INSPECTION_SPREADSHEET_ID",
+                                spreadsheetId: sheetId,
+                                mappedRows: mappedRows
+                            })
+                        });
+                        const json = await response.json();
+                        loadingOverlay.remove();
+
+                        if (json.status === "SUCCESS") {
+                            alert("🎉 Import Successful!\n\n" + json.message);
+                            loadAllChecklistsData();
+                            switchTab('templates');
+                        } else {
+                            alert("❌ Import Failed: " + json.message);
+                        }
+                    } catch(err) {
+                        loadingOverlay.remove();
+                        console.error("Import Error:", err);
+                        alert("❌ Cloud Connection Failed: " + err);
+                    }
+                }
+            });
+        }
+
+        // --- History Logs Tab ---
+        async function fetchLogsFromCloud() {
+            const tbody = document.getElementById("logsTableBody");
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            let pin = localStorage.getItem("safety_hub_pin");
+
+            if (!sheetId || typeof GOOGLE_SCRIPT_URL === "undefined" || GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">⚠️ Spreadsheet disconnected. Connect database to view logs.</td></tr>`;
+                return;
+            }
+
+            if (!pin) {
+                pin = prompt("🔑 Enter System Authorization PIN to fetch logs:");
+                if (!pin) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--primary); padding:20px;">⚠️ PIN verification required.</td></tr>`;
+                    return;
+                }
+                localStorage.setItem("safety_hub_pin", pin);
+            }
+
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">⏳ Loading history log logs from spreadsheet...</td></tr>`;
+
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Inspection&spreadsheetId=${sheetId}&pin=${pin}`);
+                const json = await response.json();
+                if (json.status === "SUCCESS") {
+                    allLogs = json.data;
+                    filterLogsTable();
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--primary); padding:20px;">❌ Error: ${json.message}</td></tr>`;
+                }
+            } catch(e) {
+                console.error("Error loading logs:", e);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--primary); padding:20px;">❌ Failed to load logs from server.</td></tr>`;
+            }
+        }
+
+        function filterLogsTable() {
+            if (!logsPaginator) return;
+            const query = document.getElementById("searchLogs").value.toLowerCase();
+            const dateFilter = document.getElementById("filterLogsDate").value;
+
+            const filtered = allLogs.filter(item => {
+                const matchesSearch = 
+                    String(item["Audit ID"]).toLowerCase().includes(query) ||
+                    String(item["Auditor Name"]).toLowerCase().includes(query) ||
+                    String(item["Area/Dept"]).toLowerCase().includes(query) ||
+                    String(item["Overall Findings"]).toLowerCase().includes(query);
+                
+                const matchesDate = 
+                    !dateFilter || 
+                    String(item["Date of Inspection"]).includes(dateFilter);
+
+                return matchesSearch && matchesDate;
+            });
+
+            // Sort logs with newest first
+            filtered.sort((a, b) => String(b["Audit ID"]).localeCompare(String(a["Audit ID"])));
+            logsPaginator.updateData(filtered);
+        }
+
+        function renderLogsRows(pagedData) {
+            const tbody = document.getElementById("logsTableBody");
+            if (pagedData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">No historical audit logs found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = pagedData.map((item, idx) => {
+                // Find global index in allLogs
+                const globalIndex = allLogs.indexOf(item);
+                return `
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 10px; font-weight:700; color:#8B5CF6;">${item["Audit ID"]}</td>
+                        <td style="padding: 10px; font-weight:500;">${item["Date of Inspection"] || '-'}</td>
+                        <td style="padding: 10px; font-weight:600;">${item["Auditor Name"] || '-'}</td>
+                        <td style="padding: 10px;">${item["Area/Dept"] || '-'}</td>
+                        <td style="padding: 10px; color:var(--text-muted); font-size:0.85rem;">
+                            ${item["Overall Findings"] ? (item["Overall Findings"].length > 50 ? item["Overall Findings"].substring(0, 50) + "..." : item["Overall Findings"]) : '-'}
+                        </td>
+                        <td style="padding: 10px; text-align: center;">
+                            <button class="tab-btn" style="padding:5px 10px; margin:0; font-size:0.75rem;" onclick="openAuditDetails(${globalIndex})">👁️ Details</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // --- Audit Log Detail Modal popup ---
+        async function openAuditDetails(globalIndex) {
+            const log = allLogs[globalIndex];
+            if (!log) return;
+
+            const modal = document.getElementById("details-modal");
+            const modalTitle = document.getElementById("modal-title");
+            const modalMetadata = document.getElementById("modal-metadata");
+            const detailsBody = document.getElementById("modalDetailsBody");
+            const sigBox = document.getElementById("modal-sig-box");
+            const sigImg = document.getElementById("modal-signature-img");
+
+            modalTitle.innerText = `Inspection Audit Details - ${log["Audit ID"]}`;
+            detailsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">⏳ Loading check item responses...</td></tr>`;
+            
+            // Set metadata boxes
+            modalMetadata.innerHTML = `
+                <div style="background: #f8fafc; border: 3px solid var(--border); border-radius: 10px; padding: 8px 12px;">
+                    <strong>Date of Inspection</strong>
+                    <div>${log["Date of Inspection"] || '-'}</div>
+                </div>
+                <div style="background: #f8fafc; border: 3px solid var(--border); border-radius: 10px; padding: 8px 12px;">
+                    <strong>Auditor</strong>
+                    <div>${log["Auditor Name"] || '-'} (${log["Auditor Position"] || '-'})</div>
+                </div>
+                <div style="background: #f8fafc; border: 3px solid var(--border); border-radius: 10px; padding: 8px 12px;">
+                    <strong>Area / Department</strong>
+                    <div>${log["Area/Dept"] || '-'}</div>
+                </div>
+                <div style="background: #f8fafc; border: 3px solid var(--border); border-radius: 10px; padding: 8px 12px; grid-column: 1 / -1;">
+                    <strong>Overall Findings / Corrective Action</strong>
+                    <div style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">${log["Overall Findings"] || 'No overall findings recorded.'}</div>
+                </div>
+            `;
+
+            // Signature Display
+            const sigUrl = log["Signature URL"] || "";
+            if (sigUrl) {
+                let finalSigUrl = sigUrl;
+                // Convert Google Drive view links to direct high-res CDN stream links
+                if (sigUrl.includes('drive.google.com/uc')) {
+                    const match = sigUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                        finalSigUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                    }
+                } else if (sigUrl.includes('drive.google.com/file/d/')) {
+                    const match = sigUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                        finalSigUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+                    }
+                }
+                sigImg.src = finalSigUrl;
+                sigBox.style.display = "block";
+            } else {
+                sigBox.style.display = "none";
+            }
+
+            modal.style.display = "flex";
+
+            // Fetch detail rows for this specific audit ID from cloud
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            const pin = localStorage.getItem("safety_hub_pin") || "";
+            
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getInspectionDetails&spreadsheetId=${sheetId}&pin=${pin}`);
+                const json = await response.json();
+                if (json.status === "SUCCESS") {
+                    const auditDetails = json.data.filter(r => String(r["Audit ID"]).trim() === String(log["Audit ID"]).trim());
+                    if (auditDetails.length === 0) {
+                        detailsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">No check item answers recorded for this audit.</td></tr>`;
+                    } else {
+                        detailsBody.innerHTML = auditDetails.map(item => `
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 10px; font-weight:700; color:var(--text-muted);">${item["Question ID"]}</td>
+                                <td style="padding: 10px; font-weight:500;">${item["Safety Question"]}</td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <span class="badge-ans ${String(item["Answer"]).toLowerCase().replace('/', '')}">${item["Answer"]}</span>
+                                </td>
+                                <td style="padding: 10px; color:var(--text-muted); font-size:0.85rem;">${item["Remarks"] || '-'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                } else {
+                    detailsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--primary); padding:20px;">❌ Failed to load details: ${json.message}</td></tr>`;
+                }
+            } catch(e) {
+                console.error("Error loading inspection details:", e);
+                detailsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--primary); padding:20px;">❌ Cloud connection error loading details.</td></tr>`;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("details-modal").style.display = "none";
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener("click", (event) => {
+            const modal = document.getElementById("details-modal");
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>

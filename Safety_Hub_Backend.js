@@ -405,26 +405,62 @@ function initializeInspectionSheets(ss) {
   }
 }
 
-function getOrProvisionInspectionSpreadsheet(ss, settings) {
+function getOrProvisionDatabase(ss, settings, dbKey) {
   if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!settings) settings = getSystemSettings(ss);
   
-  let inspectionId = settings["INSPECTION_SPREADSHEET_ID"];
-  if (inspectionId) {
+  const dbConfigs = {
+    "First Aid": {
+      settingKey: "FIRST_AID_SPREADSHEET_ID",
+      title: "AmerisPro First Aid Database",
+      initializer: initializeFirstAidSheets
+    },
+    "PPE": {
+      settingKey: "PPE_SPREADSHEET_ID",
+      title: "AmerisPro PPE Database",
+      initializer: initializePpeSheets
+    },
+    "Contractor": {
+      settingKey: "CONTRACTOR_SPREADSHEET_ID",
+      title: "AmerisPro Contractor Database",
+      initializer: initializeContractorSheets
+    },
+    "Incident": {
+      settingKey: "INCIDENT_SPREADSHEET_ID",
+      title: "AmerisPro Incident Database",
+      initializer: initializeIncidentSheets
+    },
+    "Staff": {
+      settingKey: "STAFF_SPREADSHEET_ID",
+      title: "AmerisPro Staff Database",
+      initializer: initializeStaffSheets
+    },
+    "Inspection": {
+      settingKey: "INSPECTION_SPREADSHEET_ID",
+      title: "AmerisPro Inspection Database",
+      initializer: initializeInspectionSheets
+    }
+  };
+  
+  const config = dbConfigs[dbKey];
+  if (!config) throw new Error("Unknown database module key: " + dbKey);
+  
+  let dbId = settings[config.settingKey];
+  if (dbId) {
     try {
-      SpreadsheetApp.openById(inspectionId);
-      return inspectionId;
+      SpreadsheetApp.openById(dbId);
+      return dbId;
     } catch (err) {
-      inspectionId = null;
+      dbId = null;
     }
   }
 
   // Re-fetch settings directly in case a concurrent request created it
   const currentSettings = getSystemSettings(ss);
-  if (currentSettings["INSPECTION_SPREADSHEET_ID"]) {
+  if (currentSettings[config.settingKey]) {
     try {
-      SpreadsheetApp.openById(currentSettings["INSPECTION_SPREADSHEET_ID"]);
-      return currentSettings["INSPECTION_SPREADSHEET_ID"];
+      SpreadsheetApp.openById(currentSettings[config.settingKey]);
+      return currentSettings[config.settingKey];
     } catch (err) {}
   }
 
@@ -440,20 +476,23 @@ function getOrProvisionInspectionSpreadsheet(ss, settings) {
   }
 
   const newSS = Drive.Files.insert({
-    title: "AmerisPro Inspection Database",
+    title: config.title,
     mimeType: "application/vnd.google-apps.spreadsheet",
     parents: [{id: folderId}]
   });
   
-  const inspectionFile = SpreadsheetApp.openById(newSS.id);
-  setSystemSetting(ss, "INSPECTION_SPREADSHEET_ID", newSS.id);
-  initializeInspectionSheets(inspectionFile);
+  const dbFile = SpreadsheetApp.openById(newSS.id);
+  setSystemSetting(ss, config.settingKey, newSS.id);
+  
+  if (typeof config.initializer === "function") {
+    config.initializer(dbFile);
+  }
 
   // Append link to Dashboard Links tab if available
   let masterSheet = ss.getSheetByName("Dashboard Links");
   if (masterSheet) {
     try {
-      masterSheet.appendRow(["Inspection Database", inspectionFile.getUrl()]);
+      masterSheet.appendRow([dbKey + " Database", dbFile.getUrl()]);
     } catch (e) {}
   }
   
@@ -558,7 +597,7 @@ function doGet(e) {
 
     // Get Workplace Inspection Checklist Templates
     if (action === "getInspectionTemplates") {
-      const ssId = getOrProvisionInspectionSpreadsheet(ss, settings);
+      const ssId = getOrProvisionDatabase(ss, settings, "Inspection");
       const targetSS = SpreadsheetApp.openById(ssId);
       const sheet = getSheetSafe(targetSS, "InspectionTemplates");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
@@ -675,7 +714,7 @@ function doGet(e) {
         ssId = settings["STAFF_SPREADSHEET_ID"];
         sheetName = "Staff Roster";
       } else if (db === "Inspection") {
-        ssId = getOrProvisionInspectionSpreadsheet(ss, settings);
+        ssId = getOrProvisionDatabase(ss, settings, "Inspection");
         sheetName = "InspectionLogs";
       }
       
@@ -701,7 +740,7 @@ function doGet(e) {
 
     // Get Workplace Inspection details
     if (action === "getInspectionDetails") {
-      const ssId = getOrProvisionInspectionSpreadsheet(ss, settings);
+      const ssId = getOrProvisionDatabase(ss, settings, "Inspection");
       const targetSS = SpreadsheetApp.openById(ssId);
       const sheet = getSheetSafe(targetSS, "InspectionDetails");
       return returnJSON({ status: "SUCCESS", data: fetchSheetDataAsJSON(sheet) });
@@ -914,7 +953,7 @@ function doPost(e) {
     // A.5 Workplace Inspection Audit Submission
     if (data.action === "saveInspectionAudit") {
       return runTransaction(() => {
-        const ssId = getOrProvisionInspectionSpreadsheet(ss, settings);
+        const ssId = getOrProvisionDatabase(ss, settings, "Inspection");
         const targetSS = SpreadsheetApp.openById(ssId);
         const logsSheet = getSheetSafe(targetSS, "InspectionLogs");
         const detailsSheet = getSheetSafe(targetSS, "InspectionDetails");
@@ -1832,15 +1871,17 @@ function importRowsGeneral(options, ss) {
     // Resolve target spreadsheet database from settings if key is specified
     if (dbSpreadsheetKey) {
       const settings = getSystemSettings(ss);
-      let targetId = settings[dbSpreadsheetKey];
-      if (!targetId) {
-        if (dbSpreadsheetKey === "INSPECTION_SPREADSHEET_ID") {
-          targetId = getOrProvisionInspectionSpreadsheet(ss, settings);
-        } else {
-          return { status: "error", message: "Database key '" + dbSpreadsheetKey + "' not configured." };
-        }
-      }
-      targetSS = SpreadsheetApp.openById(targetId);
+      const keyToDbMap = {
+        "FIRST_AID_SPREADSHEET_ID": "First Aid",
+        "PPE_SPREADSHEET_ID": "PPE",
+        "CONTRACTOR_SPREADSHEET_ID": "Contractor",
+        "INCIDENT_SPREADSHEET_ID": "Incident",
+        "STAFF_SPREADSHEET_ID": "Staff",
+        "INSPECTION_SPREADSHEET_ID": "Inspection"
+      };
+      const dbKey = keyToDbMap[dbSpreadsheetKey];
+      if (!dbKey) return { status: "error", message: "Database key '" + dbSpreadsheetKey + "' not configured." };
+      targetSS = SpreadsheetApp.openById(getOrProvisionDatabase(ss, settings, dbKey));
     }
     
     let sheet = targetSS.getSheetByName(sheetName);

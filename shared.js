@@ -422,3 +422,658 @@ function showPremiumUpgradeModal(featureName) {
     `;
     document.body.appendChild(modal);
 }
+
+// --- CENTRALIZED EXCEL/CSV IMPORT SYSTEM ---
+function openExcelImportWizard(options) {
+    if (!options) options = {};
+    const title = options.title || "Import Excel/CSV";
+    const fields = options.fields || []; // e.g. [{ id: "Staff ID", label: "Staff ID", required: true, autoMatches: [...] }]
+    const onComplete = options.onComplete || (() => {});
+
+    // 1. Inject Styles
+    if (!document.getElementById("excel-import-wizard-styles")) {
+        const style = document.createElement("style");
+        style.id = "excel-import-wizard-styles";
+        style.innerHTML = `
+            .excel-import-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(43, 45, 66, 0.4);
+                backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 11000;
+                padding: 20px;
+                font-family: 'Fredoka', sans-serif;
+            }
+
+            .excel-import-modal {
+                background: var(--bg);
+                border: 3px solid var(--border);
+                border-radius: 24px;
+                box-shadow: 8px 8px 0px var(--border);
+                width: 100%;
+                max-width: 1000px;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                animation: excelImportSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+
+            @keyframes excelImportSlideUp {
+                from { transform: translateY(30px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+
+            .excel-import-header {
+                background: var(--sidebar-bg);
+                padding: 16px 24px;
+                border-bottom: 3px solid var(--border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .excel-import-header h3 {
+                margin: 0;
+                font-family: var(--font-heading);
+                font-weight: 700;
+                font-size: 1.3rem;
+                color: var(--text-main);
+            }
+
+            .excel-import-close-btn {
+                background: var(--surface);
+                border: 2px solid var(--border);
+                border-radius: 8px;
+                width: 32px;
+                height: 32px;
+                font-size: 1.2rem;
+                font-weight: 700;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.1s ease;
+                color: var(--text-main);
+            }
+
+            .excel-import-close-btn:hover {
+                background: var(--primary);
+                color: white;
+                transform: translate(-1px, -1px);
+                box-shadow: 2px 2px 0px var(--border);
+            }
+
+            .excel-import-body {
+                padding: 24px;
+                overflow-y: auto;
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .excel-import-upload-zone {
+                border: 3px dashed var(--border);
+                background: var(--surface);
+                border-radius: 16px;
+                padding: 40px 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                box-shadow: var(--shadow-sm);
+            }
+
+            .excel-import-upload-zone:hover {
+                background: var(--sidebar-bg);
+                transform: translate(-2px, -2px);
+                box-shadow: 5px 5px 0px var(--border);
+            }
+
+            .excel-import-upload-zone.dragover {
+                background: var(--sidebar-bg);
+                border-color: var(--primary);
+            }
+
+            .excel-import-preview-wrapper {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .excel-import-preview-wrapper label {
+                font-weight: 700;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                color: var(--text-main);
+            }
+
+            .excel-import-table-container {
+                width: 100%;
+                overflow-x: auto;
+                border: 3px solid var(--border);
+                border-radius: 12px;
+                box-shadow: var(--shadow-sm);
+                background: var(--surface);
+                max-height: 250px;
+            }
+
+            .excel-import-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.85rem;
+                text-align: left;
+            }
+
+            .excel-import-table th {
+                background: var(--text-main);
+                color: white;
+                padding: 10px 14px;
+                border-bottom: 3px solid var(--border);
+                font-weight: 700;
+                white-space: nowrap;
+            }
+
+            .excel-import-table td {
+                padding: 10px 14px;
+                border-bottom: 2px solid #e2e8f0;
+                white-space: nowrap;
+            }
+
+            .excel-import-table tr.selected-header td {
+                background: var(--warning) !important;
+                font-weight: 700;
+                border-top: 2px dashed var(--border);
+                border-bottom: 2px dashed var(--border);
+            }
+
+            .excel-import-table tr:hover td {
+                background: #fffdf5;
+                cursor: pointer;
+            }
+
+            .excel-import-mapping-wrapper {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .excel-import-mapping-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 16px;
+            }
+
+            .excel-import-mapping-card {
+                background: var(--surface);
+                border: 3px solid var(--border);
+                border-radius: 12px;
+                padding: 12px;
+                box-shadow: var(--shadow-sm);
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .excel-import-mapping-card span {
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                font-weight: 700;
+            }
+
+            .excel-import-mapping-card select {
+                padding: 6px 10px;
+                border-radius: 8px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                font-family: inherit;
+                border: 2px solid var(--border);
+                background: var(--surface);
+                color: var(--text-main);
+                outline: none;
+                cursor: pointer;
+            }
+
+            .excel-import-footer {
+                padding: 16px 24px;
+                border-top: 3px solid var(--border);
+                background: var(--surface);
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+
+            .excel-import-btn {
+                padding: 10px 20px;
+                font-family: var(--font-heading);
+                font-weight: 700;
+                font-size: 0.95rem;
+                border: 3px solid var(--border);
+                border-radius: 10px;
+                cursor: pointer;
+                box-shadow: var(--shadow-sm);
+                transition: all 0.15s ease;
+            }
+
+            .excel-import-btn:hover {
+                transform: translate(-2px, -2px);
+                box-shadow: 5px 5px 0px var(--border);
+            }
+
+            .excel-import-btn:active {
+                transform: translate(2px, 2px);
+                box-shadow: 0px 0px 0px var(--border);
+            }
+
+            .excel-import-btn-cancel {
+                background: #e2e8f0;
+                color: var(--text-main);
+            }
+
+            .excel-import-btn-cancel:hover {
+                background: #cbd5e1;
+            }
+
+            .excel-import-btn-confirm {
+                background: var(--info);
+                color: white;
+            }
+
+            .excel-import-btn-confirm:hover {
+                background: var(--primary);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 2. State Variables
+    let parsedRows = [];
+    let selectedHeaderRowIndex = 0;
+    let dynamicFieldsMode = fields.length === 0;
+    let targetFields = [...fields];
+
+    // 3. Create Overlay Elements
+    const overlay = document.createElement("div");
+    overlay.className = "excel-import-modal-overlay";
+    overlay.id = "excel-import-wizard-overlay";
+
+    overlay.innerHTML = `
+        <div class="excel-import-modal">
+            <div class="excel-import-header">
+                <h3>${escapeHtml(title)}</h3>
+                <button class="excel-import-close-btn" id="excel-import-close-x">&times;</button>
+            </div>
+            <div class="excel-import-body">
+                <!-- Step 0: Upload Drop Zone -->
+                <div class="excel-import-upload-zone" id="excel-import-drop-zone">
+                    <input type="file" id="excel-import-file-input" accept=".csv, .xlsx, .xls" style="display: none;">
+                    <div id="excel-import-upload-text" style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">📥 Click or Drag & Drop Excel/CSV File Here</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">Supports .csv, .xlsx, .xls formats</div>
+                </div>
+
+                <!-- Step 1: Select Header Row -->
+                <div class="excel-import-preview-wrapper" id="excel-import-step-preview" style="display: none;">
+                    <label>👉 Step 1: Click the row that contains the column headers</label>
+                    <div class="excel-import-table-container">
+                        <table class="excel-import-table">
+                            <thead id="excel-import-table-head"></thead>
+                            <tbody id="excel-import-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Step 2: Mapping Fields -->
+                <div class="excel-import-mapping-wrapper" id="excel-import-step-mapping" style="display: none;">
+                    <label id="excel-import-mapping-instruction">👉 Step 2: Match Excel columns to target system fields</label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: -6px; margin-bottom: 8px;">Skip columns you do not wish to import.</p>
+                    <div class="excel-import-mapping-grid" id="excel-import-mapping-container"></div>
+                </div>
+            </div>
+            <div class="excel-import-footer">
+                <button class="excel-import-btn excel-import-btn-cancel" id="excel-import-btn-close">Cancel</button>
+                <button class="excel-import-btn excel-import-btn-confirm" id="excel-import-btn-submit" style="display: none;">Confirm & Import</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 4. Hook Event Listeners
+    const closeBtnX = document.getElementById("excel-import-close-x");
+    const closeBtnLower = document.getElementById("excel-import-btn-close");
+    const dropZone = document.getElementById("excel-import-drop-zone");
+    const fileInput = document.getElementById("excel-import-file-input");
+    const submitBtn = document.getElementById("excel-import-btn-submit");
+
+    const closeModal = () => {
+        overlay.remove();
+    };
+
+    closeBtnX.addEventListener("click", closeModal);
+    closeBtnLower.addEventListener("click", closeModal);
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+    });
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    // Drag-and-drop support
+    dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("dragover");
+    });
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+    });
+    dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+        if (e.dataTransfer.files.length > 0) {
+            processFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+            processFile(e.target.files[0]);
+        }
+    });
+
+    // 5. File Processing & Parsing
+    async function processFile(file) {
+        if (!file) return;
+        const fileName = file.name.toLowerCase();
+        const isExcel = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+        const isCsv = fileName.endsWith(".csv");
+
+        if (!isExcel && !isCsv) {
+            alert("❌ Error: Unsupported file format. Please upload a .csv, .xlsx, or .xls file.");
+            return;
+        }
+
+        document.getElementById("excel-import-upload-text").innerHTML = `Selected: <strong>${escapeHtml(file.name)}</strong> (${Math.round(file.size / 1024)} KB)`;
+
+        const reader = new FileReader();
+        if (isExcel) {
+            try {
+                // Ensure SheetJS is loaded dynamically
+                await loadSheetJS();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        parsedRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+                        if (parsedRows.length === 0) {
+                            alert("⚠️ Error: Uploaded sheet is empty.");
+                            return;
+                        }
+                        selectedHeaderRowIndex = 0;
+                        showStep1();
+                    } catch (err) {
+                        console.error("Excel Read Error:", err);
+                        alert("❌ Error reading Excel file: " + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } catch (err) {
+                alert("❌ Loading Excel Library Failed: " + err.message);
+            }
+        } else {
+            reader.onload = function(e) {
+                parsedRows = parseCSV(e.target.result);
+                if (parsedRows.length === 0) {
+                    alert("⚠️ Error: Uploaded file is empty.");
+                    return;
+                }
+                selectedHeaderRowIndex = 0;
+                showStep1();
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    // Dynamic SheetJS script injector helper
+    function loadSheetJS() {
+        return new Promise((resolve, reject) => {
+            if (window.XLSX) {
+                resolve();
+                return;
+            }
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+            script.onload = () => resolve();
+            script.onerror = (e) => reject(new Error("Failed to load SheetJS library"));
+            document.head.appendChild(script);
+        });
+    }
+
+    // Step 1 UI Setup
+    function showStep1() {
+        document.getElementById("excel-import-step-preview").style.display = "flex";
+        renderPreview();
+    }
+
+    function renderPreview() {
+        const tbody = document.getElementById("excel-import-table-body");
+        const thead = document.getElementById("excel-import-table-head");
+        tbody.innerHTML = "";
+        thead.innerHTML = "";
+
+        if (parsedRows.length === 0) return;
+
+        // Generate columns layout preview
+        const maxCols = Math.max(...parsedRows.slice(0, 15).map(r => r.length));
+        let headerHtml = "<th>Row No</th>";
+        for (let j = 0; j < maxCols; j++) {
+            headerHtml += `<th>Column ${j + 1}</th>`;
+        }
+        thead.innerHTML = `<tr>${headerHtml}</tr>`;
+
+        const previewLimit = Math.min(parsedRows.length, 15);
+        for (let i = 0; i < previewLimit; i++) {
+            const row = parsedRows[i];
+            const isSelected = i === selectedHeaderRowIndex;
+            const tr = document.createElement("tr");
+            tr.className = isSelected ? "selected-header" : "";
+            tr.onclick = () => selectHeader(i);
+
+            let rowHtml = `<td style="font-weight: 700; color: var(--text-muted);">Row ${i + 1}</td>`;
+            for (let j = 0; j < maxCols; j++) {
+                rowHtml += `<td>${escapeHtml(row[j] || "")}</td>`;
+            }
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        }
+
+        generateMappingFields();
+    }
+
+    function selectHeader(idx) {
+        selectedHeaderRowIndex = idx;
+        const rows = document.querySelectorAll("#excel-import-table-body tr");
+        rows.forEach((r, i) => {
+            if (i === idx) r.className = "selected-header";
+            else r.className = "";
+        });
+        generateMappingFields();
+    }
+
+    // Step 2 Mapping Setup
+    function generateMappingFields() {
+        const container = document.getElementById("excel-import-mapping-container");
+        container.innerHTML = "";
+        const headerRow = parsedRows[selectedHeaderRowIndex];
+        if (!headerRow) return;
+
+        if (dynamicFieldsMode) {
+            targetFields = headerRow.map((h, colIdx) => {
+                const headerText = String(h || "").trim();
+                return {
+                    id: headerText || `Column_${colIdx + 1}`,
+                    label: headerText || `Column ${colIdx + 1}`,
+                    required: false,
+                    autoMatches: [headerText]
+                };
+            }).filter(f => f.id !== "");
+            
+            document.getElementById("excel-import-mapping-instruction").innerText = "👉 Step 2: Choose which columns to import as fields";
+        } else {
+            targetFields = fields;
+        }
+
+        let html = "";
+        headerRow.forEach((colHeader, colIdx) => {
+            if (colHeader === undefined || colHeader === null) colHeader = "";
+            const cleanHeader = String(colHeader).toLowerCase().trim();
+
+            // Auto Matching Selection
+            let selectedVal = "SKIP";
+            if (dynamicFieldsMode) {
+                selectedVal = String(colHeader || "").trim() || `Column_${colIdx + 1}`;
+            } else {
+                for (let f of targetFields) {
+                    if (f.autoMatches && f.autoMatches.some(m => cleanHeader.includes(m.toLowerCase()) || m.toLowerCase().includes(cleanHeader))) {
+                        selectedVal = f.id;
+                        break;
+                    }
+                }
+            }
+
+            // Create selector dropdown
+            let optionsHtml = `<option value="SKIP" ${selectedVal === 'SKIP' ? 'selected' : ''}>❌ [Skip Column]</option>`;
+            targetFields.forEach(f => {
+                optionsHtml += `<option value="${f.id}" ${selectedVal === f.id ? 'selected' : ''}>${f.required ? '⭐ ' : ''}${f.label}</option>`;
+            });
+
+            html += `
+                <div class="excel-import-mapping-card">
+                    <span>Column ${colIdx + 1}</span>
+                    <div style="font-weight:700; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color: var(--text-main);" title="${colHeader || ''}">
+                        "${escapeHtml(colHeader || '[Empty Header]')}"
+                    </div>
+                    <select id="excel-import-map-${colIdx}">
+                        ${optionsHtml}
+                    </select>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        document.getElementById("excel-import-step-mapping").style.display = "block";
+        submitBtn.style.display = "inline-block";
+    }
+
+    // Submit Validation and Processing
+    submitBtn.onclick = () => {
+        const headerRow = parsedRows[selectedHeaderRowIndex];
+        if (!headerRow) return;
+
+        // 1. Gather mapped indexes
+        const mappedCols = {};
+        headerRow.forEach((col, idx) => {
+            const val = document.getElementById("excel-import-map-" + idx).value;
+            if (val !== "SKIP") {
+                mappedCols[val] = idx;
+            }
+        });
+
+        // 2. Validate required fields
+        const missingFields = [];
+        targetFields.forEach(f => {
+            if (f.required && mappedCols[f.id] === undefined) {
+                missingFields.push(f.label);
+            }
+        });
+
+        if (missingFields.length > 0) {
+            alert("⚠️ Missing Required Mappings:\n\nPlease map columns to these required fields:\n" + missingFields.map(m => "- " + m).join("\n"));
+            return;
+        }
+
+        // 3. Compile data
+        const mappedRows = [];
+        for (let i = selectedHeaderRowIndex + 1; i < parsedRows.length; i++) {
+            const row = parsedRows[i];
+            if (!row || row.length === 0 || (row.length === 1 && row[0] === "")) continue;
+
+            const record = {};
+            let hasAnyValue = false;
+            // Populate fields based on mappings
+            targetFields.forEach(f => {
+                const colIdx = mappedCols[f.id];
+                if (colIdx !== undefined) {
+                    const cellVal = String(row[colIdx] || "").trim();
+                    record[f.id] = cellVal;
+                    if (cellVal !== "") hasAnyValue = true;
+                } else {
+                    record[f.id] = "";
+                }
+            });
+
+            // Ensure we have at least one non-empty value in target fields before saving row
+            const hasRequiredData = targetFields.filter(f => f.required).every(f => record[f.id] !== "");
+            if (hasAnyValue && hasRequiredData) {
+                mappedRows.push(record);
+            }
+        }
+
+        if (mappedRows.length === 0) {
+            alert("⚠️ Error: No valid rows found below the header row containing values.");
+            return;
+        }
+
+        // 4. Return results and close
+        onComplete(mappedRows);
+        closeModal();
+    };
+
+    // Helper functions inside the closure
+    function parseCSV(text) {
+        let lines = [];
+        let row = [""];
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            let c = text[i];
+            let next = text[i+1];
+            if (c === '"') {
+                if (inQuotes && next === '"') {
+                    row[row.length - 1] += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c === ',' && !inQuotes) {
+                row.push("");
+            } else if ((c === '\r' || c === '\n') && !inQuotes) {
+                if (c === '\r' && next === '\n') { i++; }
+                lines.push(row);
+                row = [""];
+            } else {
+                row[row.length - 1] += c;
+            }
+        }
+        if (row.length > 1 || row[0] !== "") {
+            lines.push(row);
+        }
+        return lines;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+}

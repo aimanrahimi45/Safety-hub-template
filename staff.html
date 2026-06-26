@@ -451,47 +451,21 @@
 
         <!-- TAB: IMPORT EXCEL/CSV WIZARD -->
         <div id="import-panel" class="tab-panel">
-            <div class="card">
-                <h2>Import Staff List from Excel/CSV</h2>
-                <p>Upload a standard Excel file (.xlsx, .xls) or CSV file exported from your HR portal. You can choose which row represents the headers, and skip any columns you don't need.</p>
-                
-                <div class="upload-area" onclick="document.getElementById('csvFileInput').click()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p id="uploadText">Click to select or drag & drop Excel/CSV File</p>
-                    <input type="file" id="csvFileInput" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleFileSelect(event)">
-                </div>
-
-                <!-- Step 1: Preview Grid (30 Rows) -->
-                <div id="wizardStep1" style="display: none;">
-                    <div class="preview-wrapper">
-                        <div class="preview-header-bar">
-                            👉 STEP 1: Click on the row that contains the Column Headers (Default is Row 1)
-                        </div>
-                        <div class="preview-scroll">
-                            <table class="preview-table">
-                                <tbody id="previewTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2: Columns Mapping Grid -->
-                <div id="wizardStep2" style="display: none;">
-                    <h3 style="margin-top: 24px; font-size: 1.1rem; color: var(--text-main);">👉 STEP 2: Map file columns to Staff Roster fields</h3>
-                    <p style="font-size: 0.8rem; margin-bottom: 12px;">Unmapped columns (set to Skip Column) will not be imported.</p>
-                    <div class="mapping-grid" id="mappingFieldsContainer"></div>
-                    <button class="btn-submit" onclick="executeImport()" style="margin-top: 24px; background: var(--info);">📥 Confirm Import & Save</button>
-                </div>
+            <div class="card" style="text-align: center; padding: 50px 20px;">
+                <div style="font-size: 4.5rem; margin-bottom: 16px;">📥</div>
+                <h2 style="border: none; padding: 0; margin-bottom: 8px;">Import Staff List from Excel/CSV</h2>
+                <p style="max-width: 550px; margin: 0 auto 30px auto; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                    Upload a standard Excel file (.xlsx, .xls) or CSV file exported from your HR database. The wizard will let you select the header row and map columns to target database fields (Staff ID, Name, Department, etc.).
+                </p>
+                <button class="btn-submit" onclick="launchRosterImportWizard()" style="width: auto; padding: 14px 28px; background: var(--info); font-size: 1.1rem; display: inline-flex; align-items: center; gap: 10px; margin: 0 auto;">
+                    ⚡ Launch Import Wizard
+                </button>
             </div>
         </div>
     </div>
 
     <script>
         let allStaff = [];
-        let parsedRows = [];
-        let selectedHeaderRowIndex = 0; // index in parsedRows
         let paginator;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -681,294 +655,61 @@
             }
         }
 
-        // --- EXCEL/CSV IMPORT SYSTEM ---
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        // --- CENTRALIZED EXCEL/CSV IMPORT SYSTEM CALL ---
+        function launchRosterImportWizard() {
+            openExcelImportWizard({
+                title: "Import Staff Roster",
+                fields: [
+                    { id: "Staff ID", label: "Staff ID", required: true, autoMatches: ["id", "staff id", "employee id", "no card", "no. card", "no. kad", "no kad"] },
+                    { id: "Name", label: "Name", required: true, autoMatches: ["name", "full name", "nama", "employee name"] },
+                    { id: "Department", label: "Department", required: false, autoMatches: ["dept", "department", "bahagian", "unit"] },
+                    { id: "Position", label: "Position", required: false, autoMatches: ["role", "position", "designation", "job title", "jawatan"] },
+                    { id: "Email", label: "Email", required: false, autoMatches: ["email", "e-mail", "email address"] }
+                ],
+                onComplete: async (mappedRows) => {
+                    mappedRows.forEach(r => {
+                        r["Status"] = "Active"; // Default status
+                    });
 
-            const fileName = file.name.toLowerCase();
-            const isExcel = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
-            const isCsv = fileName.endsWith(".csv");
-
-            if (!isExcel && !isCsv) {
-                alert("❌ Error: Unsupported file format. Please upload a .csv, .xlsx, or .xls file.");
-                return;
-            }
-
-            document.getElementById("uploadText").innerText = "Selected: " + file.name + " (" + Math.round(file.size / 1024) + " KB)";
-
-            const reader = new FileReader();
-            if (isExcel) {
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        // Convert sheet data to 2D array of rows
-                        parsedRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-                        
-                        if (parsedRows.length === 0) {
-                            alert("⚠️ Error: Uploaded Excel sheet is empty.");
-                            return;
-                        }
-                        
-                        // Show Step 1 wizard preview
-                        document.getElementById("wizardStep1").style.display = "block";
-                        document.getElementById("wizardStep2").style.display = "none";
-                        selectedHeaderRowIndex = 0;
-                        renderImportPreview();
-                    } catch (err) {
-                        console.error("Excel Read Error:", err);
-                        alert("❌ Error reading Excel file: " + err.message);
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            } else {
-                reader.onload = function(e) {
-                    const text = e.target.result;
-                    parsedRows = parseCSV(text);
-                    if (parsedRows.length === 0) {
-                        alert("⚠️ Error: Uploaded file is empty.");
+                    const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+                    if (!sheetId) {
+                        alert("❌ Error: Master Spreadsheet ID is missing.");
                         return;
                     }
-                    
-                    // Show Step 1 wizard preview
-                    document.getElementById("wizardStep1").style.display = "block";
-                    document.getElementById("wizardStep2").style.display = "none";
-                    selectedHeaderRowIndex = 0;
-                    renderImportPreview();
-                };
-                reader.readAsText(file);
-            }
-        }
 
-        function renderImportPreview() {
-            const tbody = document.getElementById("previewTableBody");
-            // Show up to 30 rows in the preview
-            const previewLimit = Math.min(parsedRows.length, 30);
-            
-            let html = "";
-            for (let i = 0; i < previewLimit; i++) {
-                const row = parsedRows[i];
-                const isSelected = i === selectedHeaderRowIndex;
-                html += `
-                    <tr class="${isSelected ? 'selected-header' : ''}" onclick="selectHeaderRow(${i})">
-                        <td class="row-num-col">Row ${i + 1}</td>
-                        ${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}
-                    </tr>
-                `;
-            }
-            tbody.innerHTML = html;
-            generateMappingFields();
-        }
+                    // Loading overlay
+                    const loadingOverlay = document.createElement("div");
+                    loadingOverlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(43,45,66,0.6); display:flex; align-items:center; justify-content:center; z-index:99999; color:white; font-family:'Fredoka',sans-serif; font-size:1.5rem; font-weight:700;";
+                    loadingOverlay.innerHTML = `⏳ Saving ${mappedRows.length} imported staff records...`;
+                    document.body.appendChild(loadingOverlay);
 
-        function selectHeaderRow(index) {
-            selectedHeaderRowIndex = index;
-            
-            // Highlight the selected row
-            const rows = document.querySelectorAll("#previewTableBody tr");
-            rows.forEach((row, i) => {
-                if (i === index) {
-                    row.classList.add("selected-header");
-                } else {
-                    row.classList.remove("selected-header");
-                }
-            });
+                    try {
+                        const response = await fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain" },
+                            body: JSON.stringify({
+                                action: "importStaff",
+                                spreadsheetId: sheetId,
+                                mappedRows: mappedRows
+                            })
+                        });
+                        const json = await response.json();
+                        loadingOverlay.remove();
 
-            generateMappingFields();
-        }
-
-        function generateMappingFields() {
-            const container = document.getElementById("mappingFieldsContainer");
-            const headerRow = parsedRows[selectedHeaderRowIndex];
-            
-            if (!headerRow) return;
-
-            // System Predefined Fields
-            const predefinedFields = [
-                { name: "Staff ID", keys: ["id", "staff id", "employee id", "no card", "no. card", "no. kad", "no kad"] },
-                { name: "Name", keys: ["name", "full name", "nama", "employee name"] },
-                { name: "Department", keys: ["dept", "department", "bahagian", "unit"] },
-                { name: "Position", keys: ["role", "position", "designation", "job title", "jawatan"] },
-                { name: "Email", keys: ["email", "e-mail", "email address"] }
-            ];
-
-            let html = "";
-            headerRow.forEach((columnHeader, colIdx) => {
-                const cleanHeader = String(columnHeader).toLowerCase().trim();
-                
-                // Smart auto-matching logic
-                let matchedField = "SKIP";
-                for (let field of predefinedFields) {
-                    if (field.keys.some(k => cleanHeader.includes(k) || k.includes(cleanHeader))) {
-                        matchedField = field.name;
-                        break;
+                        if (json.status === "SUCCESS") {
+                            alert("🎉 Import Successful!\n\n" + json.message);
+                            loadStaffRoster();
+                            switchTab('roster');
+                        } else {
+                            alert("❌ Import Failed: " + json.message);
+                        }
+                    } catch(err) {
+                        loadingOverlay.remove();
+                        console.error("Import Error:", err);
+                        alert("❌ Connection Failed: " + err);
                     }
                 }
-
-                html += `
-                    <div class="mapping-card">
-                        <span>CSV Column ${colIdx + 1}</span>
-                        <div style="font-weight:700; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${columnHeader}">
-                            "${escapeHtml(columnHeader)}"
-                        </div>
-                        <select id="map-col-${colIdx}" style="padding:6px; border-radius:8px; font-size:0.8rem; font-weight:600;">
-                            <option value="SKIP" ${matchedField === 'SKIP' ? 'selected' : ''}>❌ [Skip Column]</option>
-                            <option value="Staff ID" ${matchedField === 'Staff ID' ? 'selected' : ''}>🆔 Staff ID</option>
-                            <option value="Name" ${matchedField === 'Name' ? 'selected' : ''}>👤 Name</option>
-                            <option value="Department" ${matchedField === 'Department' ? 'selected' : ''}>🏢 Department</option>
-                            <option value="Position" ${matchedField === 'Position' ? 'selected' : ''}>🛠️ Position</option>
-                            <option value="Email" ${matchedField === 'Email' ? 'selected' : ''}>✉️ Email</option>
-                        </select>
-                    </div>
-                `;
             });
-
-            container.innerHTML = html;
-            document.getElementById("wizardStep2").style.display = "block";
-        }
-
-        async function executeImport() {
-            const headerRow = parsedRows[selectedHeaderRowIndex];
-            
-            // 1. Compile column mapping configurations
-            const mappings = {};
-            let hasStaffId = false;
-            let hasName = false;
-
-            headerRow.forEach((col, idx) => {
-                const selectedVal = document.getElementById("map-col-" + idx).value;
-                if (selectedVal !== "SKIP") {
-                    mappings[selectedVal] = idx;
-                    if (selectedVal === "Staff ID") hasStaffId = true;
-                    if (selectedVal === "Name") hasName = true;
-                }
-            });
-
-            // 2. Validate essential fields mapped
-            if (!hasStaffId || !hasName) {
-                alert("⚠️ Validation Error: You must map both 'Staff ID' and 'Name' columns to import records successfully.");
-                return;
-            }
-
-            // 3. Parse all rows from header row + 1 downward
-            const importData = [];
-            for (let i = selectedHeaderRowIndex + 1; i < parsedRows.length; i++) {
-                const row = parsedRows[i];
-                // Check if row is empty or has mismatched length
-                if (row.length === 0 || (row.length === 1 && row[0] === "")) continue;
-
-                const staffRecord = {
-                    "Staff ID": String(row[mappings["Staff ID"]] || "").trim(),
-                    "Name": String(row[mappings["Name"]] || "").trim(),
-                    "Department": mappings["Department"] !== undefined ? String(row[mappings["Department"]] || "").trim() : "General",
-                    "Position": mappings["Position"] !== undefined ? String(row[mappings["Position"]] || "").trim() : "-",
-                    "Email": mappings["Email"] !== undefined ? String(row[mappings["Email"]] || "").trim() : "-",
-                    "Status": "Active" // Default imported staff to Active
-                };
-
-                if (staffRecord["Staff ID"] && staffRecord["Name"]) {
-                    importData.push(staffRecord);
-                }
-            }
-
-            if (importData.length === 0) {
-                alert("⚠️ Error: No valid data rows found below the selected header row.");
-                return;
-            }
-
-            const confirmBtn = document.querySelector("#wizardStep2 .btn-submit");
-            confirmBtn.disabled = true;
-            confirmBtn.innerText = "Processing Import (" + importData.length + " rows)...";
-
-            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
-            if (!sheetId) {
-                alert("❌ Error: Master Spreadsheet ID is missing.");
-                confirmBtn.disabled = false;
-                confirmBtn.innerText = "📥 Confirm Import & Save";
-                return;
-            }
-
-            const payload = {
-                action: "importStaff",
-                spreadsheetId: sheetId,
-                mappedRows: importData
-            };
-
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(payload)
-                });
-                const json = await response.json();
-
-                confirmBtn.disabled = false;
-                confirmBtn.innerText = "📥 Confirm Import & Save";
-
-                if (json.status === "SUCCESS") {
-                    alert("🎉 Import Successful!\n\n" + json.message);
-                    resetImportWizard();
-                    switchTab('roster');
-                } else {
-                    alert("❌ Import Failed: " + json.message);
-                }
-            } catch(err) {
-                console.error("Import Error:", err);
-                confirmBtn.disabled = false;
-                confirmBtn.innerText = "📥 Confirm Import & Save";
-                alert("❌ Connection Failed: " + err);
-            }
-        }
-
-        function resetImportWizard() {
-            document.getElementById("csvFileInput").value = "";
-            document.getElementById("uploadText").innerText = "Click to select or drag & drop CSV File";
-            document.getElementById("wizardStep1").style.display = "none";
-            document.getElementById("wizardStep2").style.display = "none";
-            parsedRows = [];
-        }
-
-        // --- RFC 4180 COMPLIANT CSV PARSER ---
-        function parseCSV(text) {
-            let lines = [];
-            let row = [""];
-            let inQuotes = false;
-            for (let i = 0; i < text.length; i++) {
-                let c = text[i];
-                let next = text[i+1];
-                if (c === '"') {
-                    if (inQuotes && next === '"') {
-                        row[row.length - 1] += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (c === ',' && !inQuotes) {
-                    row.push("");
-                } else if ((c === '\r' || c === '\n') && !inQuotes) {
-                    if (c === '\r' && next === '\n') { i++; }
-                    lines.push(row);
-                    row = [""];
-                } else {
-                    row[row.length - 1] += c;
-                }
-            }
-            if (row.length > 1 || row[0] !== "") {
-                lines.push(row);
-            }
-            return lines;
-        }
-
-        function escapeHtml(str) {
-            if (!str) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
         }
     </script>
 </body>

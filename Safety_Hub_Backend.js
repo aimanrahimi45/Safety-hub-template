@@ -1091,21 +1091,7 @@ function doPost(e) {
       });
     }
 
-    // Keep legacy support for staff import
-    if (data.action === "importStaff") {
-      return runTransaction(() => {
-        const result = importRowsGeneral({
-          mappedRows: data.mappedRows,
-          sheetName: "Staff Roster",
-          keyColumn: "Staff ID",
-          dbSpreadsheetKey: "STAFF_SPREADSHEET_ID"
-        }, ss);
-        if (result.status === "error") {
-          return returnJSON({ status: "ERROR", message: result.message });
-        }
-        return returnJSON({ status: "SUCCESS", message: result.message });
-      });
-    }
+
    
     return returnJSON({ status: "ERROR", message: "Invalid action type" });
   } catch (err) {

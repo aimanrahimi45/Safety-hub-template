@@ -173,7 +173,7 @@
         /* Main Workspace Split */
         .workspace-split {
             display: grid;
-            grid-template-columns: 350px 1fr;
+            grid-template-columns: 450px 1fr;
             gap: 24px;
             align-items: start;
         }
@@ -262,6 +262,24 @@
 
         .form-group {
             margin-bottom: 14px;
+        }
+
+        .form-row-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .form-row-2col .form-group {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 576px) {
+            .form-row-2col {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
         }
 
         .form-group label {
@@ -602,32 +620,28 @@
                         <input type="text" id="victim-staff-id" class="input-neo" placeholder="e.g. STF-0012">
                     </div>
 
-                    <div class="form-group">
-                        <label for="incident-datetime">Date & Time of Accident</label>
-                        <input type="datetime-local" id="incident-datetime" class="input-neo" required>
+                    <div class="form-row-2col">
+                        <div class="form-group">
+                            <label for="incident-datetime">Date & Time of Accident</label>
+                            <input type="datetime-local" id="incident-datetime" class="input-neo" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location-dept">Location / Department</label>
+                            <input type="text" id="location-dept" class="input-neo" placeholder="e.g. Production Line 3 / Warehouse" required>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="location-dept">Location / Department</label>
-                        <input type="text" id="location-dept" class="input-neo" placeholder="e.g. Production Line 3 / Warehouse" required>
-                    </div>
+                    <div class="form-row-2col">
+                        <div class="form-group">
+                            <label for="body-part">Body Part Injured (Free-form fill)</label>
+                            <input type="text" id="body-part" class="input-neo" placeholder="e.g. Right index finger / Left ankle" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="body-part">Body Part Injured (Free-form fill)</label>
-                        <input type="text" id="body-part" class="input-neo" placeholder="e.g. Right index finger / Left ankle" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="mandays-lost">Man-Days Lost</label>
-                        <input type="number" id="mandays-lost" class="input-neo" min="0" placeholder="e.g. 0 for near-miss/first-aid" value="0" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reported-jkkp">Reported to JKKP?</label>
-                        <select id="reported-jkkp" class="select-neo" style="width:100%;">
-                            <option value="No">No</option>
-                            <option value="Yes">Yes</option>
-                        </select>
+                        <div class="form-group">
+                            <label for="mandays-lost">Man-Days Lost</label>
+                            <input type="number" id="mandays-lost" class="input-neo" min="0" placeholder="e.g. 0 for near-miss/first-aid" value="0" required>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -641,13 +655,23 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="investigation-submitted">Incident Investigation Submitted?</label>
-                        <select id="investigation-submitted" class="select-neo" style="width:100%;">
-                            <option value="No">No</option>
-                            <option value="Yes">Yes</option>
-                            <option value="Pending">Pending</option>
-                        </select>
+                    <div class="form-row-2col">
+                        <div class="form-group">
+                            <label for="reported-jkkp">Reported to JKKP?</label>
+                            <select id="reported-jkkp" class="select-neo" style="width:100%;">
+                                <option value="No">No</option>
+                                <option value="Yes">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="investigation-submitted">Incident Investigation Submitted?</label>
+                            <select id="investigation-submitted" class="select-neo" style="width:100%;">
+                                <option value="No">No</option>
+                                <option value="Yes">Yes</option>
+                                <option value="Pending">Pending</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">

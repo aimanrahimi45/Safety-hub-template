@@ -688,7 +688,10 @@
                             method: "POST",
                             headers: { "Content-Type": "text/plain" },
                             body: JSON.stringify({
-                                action: "importStaff",
+                                action: "importRows",
+                                sheetName: "Staff Roster",
+                                keyColumn: "Staff ID",
+                                dbSpreadsheetKey: "STAFF_SPREADSHEET_ID",
                                 spreadsheetId: sheetId,
                                 mappedRows: mappedRows
                             })

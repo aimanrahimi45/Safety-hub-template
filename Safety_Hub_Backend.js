@@ -1075,10 +1075,31 @@ function doPost(e) {
       });
     }
 
-    // J. Import Staff Records
+    // J. Generic Row Import System
+    if (data.action === "importRows") {
+      return runTransaction(() => {
+        const result = importRowsGeneral({
+          mappedRows: data.mappedRows,
+          sheetName: data.sheetName,
+          keyColumn: data.keyColumn,
+          dbSpreadsheetKey: data.dbSpreadsheetKey
+        }, ss);
+        if (result.status === "error") {
+          return returnJSON({ status: "ERROR", message: result.message });
+        }
+        return returnJSON({ status: "SUCCESS", message: result.message });
+      });
+    }
+
+    // Keep legacy support for staff import
     if (data.action === "importStaff") {
       return runTransaction(() => {
-        const result = importStaffRows(data.mappedRows, ss);
+        const result = importRowsGeneral({
+          mappedRows: data.mappedRows,
+          sheetName: "Staff Roster",
+          keyColumn: "Staff ID",
+          dbSpreadsheetKey: "STAFF_SPREADSHEET_ID"
+        }, ss);
         if (result.status === "error") {
           return returnJSON({ status: "ERROR", message: result.message });
         }
@@ -1596,35 +1617,54 @@ function addOrUpdateStaff(staffData, ss) {
   }
 }
 
-function importStaffRows(mappedRows, ss) {
+function importRowsGeneral(options, ss) {
   try {
+    const mappedRows = options.mappedRows;
+    const sheetName = options.sheetName;
+    const keyColumn = options.keyColumn;
+    const dbSpreadsheetKey = options.dbSpreadsheetKey;
+
     if (!Array.isArray(mappedRows) || mappedRows.length === 0) {
       return { status: "error", message: "No data rows provided for import." };
     }
     
     if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
-    const settings = getSystemSettings(ss);
-    const staffId = settings["STAFF_SPREADSHEET_ID"];
-    if (!staffId) return { status: "error", message: "Staff Database not initialized." };
+    let targetSS = ss;
     
-    const staffSS = SpreadsheetApp.openById(staffId);
-    let sheet = staffSS.getSheetByName("Staff Roster");
-    if (!sheet) {
-      initializeStaffSheets(staffSS);
-      sheet = staffSS.getSheetByName("Staff Roster");
+    // Resolve target spreadsheet database from settings if key is specified
+    if (dbSpreadsheetKey) {
+      const settings = getSystemSettings(ss);
+      const targetId = settings[dbSpreadsheetKey];
+      if (!targetId) return { status: "error", message: "Database key '" + dbSpreadsheetKey + "' not configured." };
+      targetSS = SpreadsheetApp.openById(targetId);
     }
     
-    // Read current data to do upsert (prevent duplicates)
+    let sheet = targetSS.getSheetByName(sheetName);
+    if (!sheet) {
+      // If sheet doesn't exist, create it dynamically
+      sheet = targetSS.insertSheet(sheetName);
+      // Auto-set headers based on keys of the first row
+      const initialHeaders = Object.keys(mappedRows[0]);
+      sheet.appendRow(initialHeaders);
+    }
+    
+    // Read current data to do upsert or insert
     const values = sheet.getDataRange().getValues();
     const headers = values[0];
-    const staffIdColIndex = headers.indexOf("Staff ID");
     
-    // Create lookup map of Staff ID -> row number (1-indexed)
+    let keyColIndex = -1;
+    if (keyColumn) {
+      keyColIndex = headers.indexOf(keyColumn);
+    }
+    
+    // Create lookup map of Key -> row number (1-indexed)
     const idRowMap = {};
-    for (let i = 1; i < values.length; i++) {
-      const id = String(values[i][staffIdColIndex]).trim();
-      if (id) {
-        idRowMap[id] = i + 1;
+    if (keyColIndex !== -1) {
+      for (let i = 1; i < values.length; i++) {
+        const idVal = String(values[i][keyColIndex]).trim();
+        if (idVal) {
+          idRowMap[idVal] = i + 1;
+        }
       }
     }
     
@@ -1632,19 +1672,21 @@ function importStaffRows(mappedRows, ss) {
     let updatedCount = 0;
     
     mappedRows.forEach(row => {
-      const staffIdVal = String(row["Staff ID"] || "").trim();
-      if (!staffIdVal) return;
-      
+      // Map row values exactly matching headers order
       const rowValues = headers.map(header => row[header] !== undefined ? row[header] : "");
       
-      if (idRowMap[staffIdVal]) {
-        const targetRow = idRowMap[staffIdVal];
+      const keyVal = keyColIndex !== -1 ? String(row[keyColumn] || "").trim() : "";
+      
+      if (keyColIndex !== -1 && keyVal && idRowMap[keyVal]) {
+        const targetRow = idRowMap[keyVal];
         sheet.getRange(targetRow, 1, 1, headers.length).setValues([rowValues]);
         updatedCount++;
       } else {
         sheet.appendRow(rowValues);
         addedCount++;
-        idRowMap[staffIdVal] = sheet.getLastRow();
+        if (keyColIndex !== -1 && keyVal) {
+          idRowMap[keyVal] = sheet.getLastRow();
+        }
       }
     });
     

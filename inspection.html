@@ -1029,15 +1029,16 @@
             openExcelImportWizard({
                 title: "Import Checklist Template",
                 fields: [
-                    { id: "Checklist ID", label: "Checklist ID", required: true, autoMatches: ["checklist id", "checklist_id", "checklist", "cl id", "id checklist"] },
+                    { id: "Checklist ID", label: "Checklist ID", required: false, autoMatches: ["checklist id", "checklist_id", "checklist", "cl id", "id checklist"] },
                     { id: "Question ID", label: "Question ID", required: true, autoMatches: ["question id", "question_id", "id", "q_id", "qid", "no"] },
                     { id: "Safety Question", label: "Safety Question", required: true, autoMatches: ["safety question", "safety_question", "question", "soal", "soalan", "item"] },
                     { id: "Category", label: "Category", required: false, autoMatches: ["category", "kategori", "section", "group", "bahagian"] },
                     { id: "Risk Level", label: "Risk Level", required: false, autoMatches: ["risk level", "risk_level", "risk", "tahap risiko", "risiko", "level"] }
                 ],
                 onComplete: async (mappedRows) => {
-                    // Normalize Risk Level
+                    // Normalize Checklist ID, Risk Level, Category
                     mappedRows.forEach(r => {
+                        if (!r["Checklist ID"] || r["Checklist ID"].trim() === "") r["Checklist ID"] = "CL-01";
                         if (!r["Risk Level"]) r["Risk Level"] = "Medium";
                         if (!r["Category"]) r["Category"] = "General Safety";
                     });

@@ -1073,6 +1073,7 @@
 
             openExcelImportWizard({
                 title: "Import Checklist Template",
+                enableSectionHeaders: true,
                 fields: [
                     { id: "Question ID", label: "Question ID / No.", required: false, autoMatches: ["no", "no.", "id", "question id", "question_id"] },
                     { id: "Safety Question", label: "Safety Question / Description", required: true, autoMatches: ["description", "safety question", "question", "soal", "soalan", "item"] },
@@ -1089,14 +1090,16 @@
                         const typeVal = String(r["Field Type"] || "Yes/No").trim();
                         const optionsVal = String(r["Options"] || "").trim();
 
-                        // 1. Detect Category Section header (has text, but no row number)
-                        if (descVal !== "" && noVal === "") {
-                            currentCategory = descVal; // Update category context
+                        // 1. Detect Category Section header (explicitly flagged in the wizard)
+                        if (r.isSectionHeader) {
+                            if (descVal !== "") {
+                                currentCategory = descVal; // Update category context
+                            }
                             return;
                         }
 
-                        // 2. Detect Question row (has both row number and question text)
-                        if (descVal !== "" && noVal !== "") {
+                        // 2. Detect Question row (not a section header)
+                        if (descVal !== "") {
                             const qId = "Q-" + String(questionCounter++).padStart(2, '0');
                             finalQuestions.push({
                                 "Checklist ID": "CL-01",
@@ -1111,7 +1114,7 @@
                     });
 
                     if (finalQuestions.length === 0) {
-                        alert("⚠️ Error: No safety questions detected below headers. Ensure your Excel sheet has numbers in the 'No.' column and questions in the 'Description' column.");
+                        alert("⚠️ Error: No safety questions detected. Ensure you map columns correctly and select a row containing column headers.");
                         return;
                     }
 

@@ -593,6 +593,14 @@ function openExcelImportWizard(options) {
                 border-bottom: 2px dashed var(--border);
             }
 
+            .excel-import-table tr.selected-section-header td {
+                background: #F3E8FF !important; /* Soft purple */
+                color: #6B21A8 !important; /* Dark purple text */
+                font-weight: 700;
+                border-top: 2px dashed #C084FC;
+                border-bottom: 2px dashed #C084FC;
+            }
+
             .excel-import-table tr:hover td {
                 background: #fffdf5;
                 cursor: pointer;
@@ -695,6 +703,8 @@ function openExcelImportWizard(options) {
     // 2. State Variables
     let parsedRows = [];
     let selectedHeaderRowIndex = 0;
+    let sectionHeaderRowIndices = new Set();
+    let selectionMode = "HEADER"; // "HEADER" or "SECTION"
     let dynamicFieldsMode = fields.length === 0;
     let targetFields = [...fields];
 
@@ -719,7 +729,14 @@ function openExcelImportWizard(options) {
 
                 <!-- Step 1: Select Header Row -->
                 <div class="excel-import-preview-wrapper" id="excel-import-step-preview" style="display: none;">
-                    <label>👉 Step 1: Click the row that contains the column headers</label>
+                    <label id="excel-import-step1-label">👉 Step 1: Click the row that contains the column headers</label>
+                    
+                    <div id="excel-import-selection-modes" style="display: none; align-items: center; gap: 10px; margin-bottom: 12px; background: var(--sidebar-bg); border: 2px solid var(--border); border-radius: 10px; padding: 8px 12px;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-main);">Click Mode:</span>
+                        <button id="excel-import-mode-header" class="excel-import-btn" style="padding: 6px 12px; font-size: 0.8rem; margin: 0; background: var(--warning); color: var(--text-main); border: 2px solid var(--border); font-weight:700; cursor:pointer;">⭐ Set Main Header</button>
+                        <button id="excel-import-mode-section" class="excel-import-btn" style="padding: 6px 12px; font-size: 0.8rem; margin: 0; background: #e2e8f0; color: var(--text-main); border: 2px solid var(--border); font-weight:700; cursor:pointer;">📂 Toggle Section Headers</button>
+                    </div>
+
                     <div class="excel-import-table-container">
                         <table class="excel-import-table">
                             <thead id="excel-import-table-head"></thead>
@@ -858,6 +875,25 @@ function openExcelImportWizard(options) {
 
     // Step 1 UI Setup
     function showStep1() {
+        if (options.enableSectionHeaders) {
+            document.getElementById("excel-import-selection-modes").style.display = "flex";
+            document.getElementById("excel-import-step1-label").innerText = "👉 Step 1: Set the Main Header Row and highlight Section Headers (optional)";
+            
+            const modeHeaderBtn = document.getElementById("excel-import-mode-header");
+            const modeSectionBtn = document.getElementById("excel-import-mode-section");
+
+            modeHeaderBtn.onclick = () => {
+                selectionMode = "HEADER";
+                modeHeaderBtn.style.background = "var(--warning)";
+                modeSectionBtn.style.background = "#e2e8f0";
+            };
+
+            modeSectionBtn.onclick = () => {
+                selectionMode = "SECTION";
+                modeSectionBtn.style.background = "#C084FC"; // Light purple
+                modeHeaderBtn.style.background = "#e2e8f0";
+            };
+        }
         document.getElementById("excel-import-step-preview").style.display = "flex";
         renderPreview();
     }
@@ -881,10 +917,17 @@ function openExcelImportWizard(options) {
         const previewLimit = Math.min(parsedRows.length, 15);
         for (let i = 0; i < previewLimit; i++) {
             const row = parsedRows[i];
-            const isSelected = i === selectedHeaderRowIndex;
             const tr = document.createElement("tr");
-            tr.className = isSelected ? "selected-header" : "";
-            tr.onclick = () => selectHeader(i);
+            
+            if (i === selectedHeaderRowIndex) {
+                tr.className = "selected-header";
+            } else if (sectionHeaderRowIndices.has(i)) {
+                tr.className = "selected-section-header";
+            } else {
+                tr.className = "";
+            }
+            
+            tr.onclick = () => handleRowClick(i);
 
             let rowHtml = `<td style="font-weight: 700; color: var(--text-muted);">Row ${i + 1}</td>`;
             for (let j = 0; j < maxCols; j++) {
@@ -897,12 +940,35 @@ function openExcelImportWizard(options) {
         generateMappingFields();
     }
 
-    function selectHeader(idx) {
-        selectedHeaderRowIndex = idx;
+    function handleRowClick(idx) {
+        if (selectionMode === "HEADER") {
+            // Cannot make main header a section header
+            sectionHeaderRowIndices.delete(idx);
+            selectedHeaderRowIndex = idx;
+        } else if (selectionMode === "SECTION") {
+            if (idx === selectedHeaderRowIndex) {
+                alert("⚠️ Cannot set the Main Header row as a Section Header.");
+                return;
+            }
+            if (sectionHeaderRowIndices.has(idx)) {
+                sectionHeaderRowIndices.delete(idx);
+            } else {
+                sectionHeaderRowIndices.add(idx);
+            }
+        }
+        updateRowStyles();
+    }
+
+    function updateRowStyles() {
         const rows = document.querySelectorAll("#excel-import-table-body tr");
         rows.forEach((r, i) => {
-            if (i === idx) r.className = "selected-header";
-            else r.className = "";
+            if (i === selectedHeaderRowIndex) {
+                r.className = "selected-header";
+            } else if (sectionHeaderRowIndices.has(i)) {
+                r.className = "selected-section-header";
+            } else {
+                r.className = "";
+            }
         });
         generateMappingFields();
     }
@@ -1082,9 +1148,12 @@ function openExcelImportWizard(options) {
                 }
             });
 
+            // Set section header flag
+            record.isSectionHeader = sectionHeaderRowIndices.has(i);
+
             // Ensure we have at least one non-empty value in target fields before saving row
             const hasRequiredData = targetFields.filter(f => f.required).every(f => record[f.id] !== "");
-            if (hasAnyValue && hasRequiredData) {
+            if (hasAnyValue && (hasRequiredData || record.isSectionHeader)) {
                 mappedRows.push(record);
             }
         }

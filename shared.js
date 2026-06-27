@@ -954,20 +954,72 @@ function openExcelImportWizard(options) {
                 optionsHtml += `<option value="${f.id}" ${selectedVal === f.id ? 'selected' : ''}>${f.required ? '⭐ ' : ''}${f.label}</option>`;
             });
 
+            const selectedField = targetFields.find(f => f.id === selectedVal);
+            const isCustomEnabled = selectedField && selectedField.enableCustomType;
+
             html += `
                 <div class="excel-import-mapping-card">
                     <span>Column ${colIdx + 1}</span>
                     <div style="font-weight:700; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color: var(--text-main);" title="${colHeader || ''}">
                         "${escapeHtml(colHeader || '[Empty Header]')}"
                     </div>
-                    <select id="excel-import-map-${colIdx}">
+                    <select id="excel-import-map-${colIdx}" class="excel-import-map-select" data-colidx="${colIdx}">
                         ${optionsHtml}
                     </select>
+                    
+                    <div class="custom-type-container" id="custom-type-container-${colIdx}" style="display: ${isCustomEnabled ? 'flex' : 'none'}; flex-direction: column; gap: 8px; margin-top: 10px; border-top: 2px dashed var(--border); padding-top: 8px;">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">Field Input Type:</label>
+                        <select id="excel-import-custom-type-${colIdx}" style="padding: 4px; font-size: 0.75rem; font-weight:600; border: 2px solid var(--border); border-radius: 6px;">
+                            <option value="Yes/No">Yes/No (Comply / Non-Comply)</option>
+                            <option value="Dropdown">Dropdown Select</option>
+                            <option value="Text">Text Input</option>
+                            <option value="Number">Numeric Input</option>
+                        </select>
+                        <div id="custom-options-wrapper-${colIdx}" style="display: none; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);">Dropdown Choices (comma-separated):</label>
+                            <input type="text" id="excel-import-custom-options-${colIdx}" placeholder="e.g. Good, Fair, Poor" style="padding: 4px 8px; font-size: 0.75rem; border: 2px solid var(--border); border-radius: 6px;">
+                        </div>
+                    </div>
                 </div>
             `;
         });
 
         container.innerHTML = html;
+
+        // Bind change listeners to dynamically manage UI containers
+        headerRow.forEach((colHeader, colIdx) => {
+            const mapSelect = document.getElementById(`excel-import-map-${colIdx}`);
+            if (mapSelect) {
+                mapSelect.addEventListener("change", (e) => {
+                    const selVal = e.target.value;
+                    const field = targetFields.find(f => f.id === selVal);
+                    const containerDiv = document.getElementById(`custom-type-container-${colIdx}`);
+                    if (containerDiv) {
+                        if (field && field.enableCustomType) {
+                            containerDiv.style.display = "flex";
+                        } else {
+                            containerDiv.style.display = "none";
+                        }
+                    }
+                });
+            }
+
+            const customTypeSelect = document.getElementById(`excel-import-custom-type-${colIdx}`);
+            if (customTypeSelect) {
+                customTypeSelect.addEventListener("change", (e) => {
+                    const type = e.target.value;
+                    const wrapper = document.getElementById(`custom-options-wrapper-${colIdx}`);
+                    if (wrapper) {
+                        if (type === "Dropdown") {
+                            wrapper.style.display = "flex";
+                        } else {
+                            wrapper.style.display = "none";
+                        }
+                    }
+                });
+            }
+        });
+
         document.getElementById("excel-import-step-mapping").style.display = "block";
         submitBtn.style.display = "inline-block";
     }
@@ -1014,8 +1066,19 @@ function openExcelImportWizard(options) {
                     const cellVal = String(row[colIdx] || "").trim();
                     record[f.id] = cellVal;
                     if (cellVal !== "") hasAnyValue = true;
+                    
+                    if (f.enableCustomType) {
+                        const typeVal = document.getElementById("excel-import-custom-type-" + colIdx).value;
+                        const optionsVal = document.getElementById("excel-import-custom-options-" + colIdx).value;
+                        record["Field Type"] = typeVal;
+                        record["Options"] = optionsVal;
+                    }
                 } else {
                     record[f.id] = "";
+                    if (f.enableCustomType) {
+                        record["Field Type"] = "";
+                        record["Options"] = "";
+                    }
                 }
             });
 

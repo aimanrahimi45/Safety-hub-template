@@ -370,18 +370,18 @@ function initializeInspectionSheets(ss) {
   
   // 1. Inspection Checklist Templates
   let templatesSheet = ss.getSheetByName("InspectionTemplates") || ss.insertSheet("InspectionTemplates");
-  const templateHeaders = ["Checklist ID", "Question ID", "Safety Question", "Category", "Risk Level"];
+  const templateHeaders = ["Checklist ID", "Question ID", "Safety Question", "Category", "Risk Level", "Field Type", "Options"];
   templatesSheet.getRange(1, 1, 1, templateHeaders.length).setValues([templateHeaders]);
   templatesSheet.getRange(1, 1, 1, templateHeaders.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
   templatesSheet.setFrozenRows(1);
   
   if (templatesSheet.getLastRow() <= 1) {
     const defaultTemplate = [
-      ["CL-01", "Q-01", "Are all emergency exits, fire doors, and escape routes completely unobstructed?", "Fire Safety", "High"],
-      ["CL-01", "Q-02", "Are fire extinguishers and fire hoses fully accessible, inspected, and in-date?", "Fire Safety", "High"],
-      ["CL-01", "Q-03", "Are work floors, aisles, and walkways clean, dry, and free of slip/trip hazards?", "Housekeeping", "Medium"],
-      ["CL-01", "Q-04", "Are electrical panels and switches clear of storage, and are cables free of damage?", "Electrical Safety", "Medium"],
-      ["CL-01", "Q-05", "Are moving parts and danger zones on active machinery fully guarded?", "Machine Guarding", "High"]
+      ["CL-01", "Q-01", "Are all emergency exits, fire doors, and escape routes completely unobstructed?", "Fire Safety", "High", "Yes/No", ""],
+      ["CL-01", "Q-02", "Are fire extinguishers and fire hoses fully accessible, inspected, and in-date?", "Fire Safety", "High", "Yes/No", ""],
+      ["CL-01", "Q-03", "Are work floors, aisles, and walkways clean, dry, and free of slip/trip hazards?", "Housekeeping", "Medium", "Yes/No", ""],
+      ["CL-01", "Q-04", "Are electrical panels and switches clear of storage, and are cables free of damage?", "Electrical Safety", "Medium", "Yes/No", ""],
+      ["CL-01", "Q-05", "Are moving parts and danger zones on active machinery fully guarded?", "Machine Guarding", "High", "Yes/No", ""]
     ];
     templatesSheet.getRange(2, 1, defaultTemplate.length, templateHeaders.length).setValues(defaultTemplate);
   }

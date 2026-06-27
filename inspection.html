@@ -334,6 +334,8 @@
             font-size: 0.8rem;
             font-weight: 700;
             border: 2px solid var(--border);
+            background: #e2e8f0;
+            color: var(--text-main);
         }
         .badge-ans.yes { background: var(--success); }
         .badge-ans.no { background: var(--primary); }
@@ -489,6 +491,7 @@
                                 <th style="padding: 10px; font-weight: 700;">Question ID</th>
                                 <th style="padding: 10px; font-weight: 700;">Safety Question</th>
                                 <th style="padding: 10px; font-weight: 700;">Category</th>
+                                <th style="padding: 10px; font-weight: 700;">Type</th>
                                 <th style="padding: 10px; font-weight: 700; text-align: center;">Risk</th>
                             </tr>
                         </thead>
@@ -821,6 +824,8 @@
                     const qId = q["Question ID"];
                     const safetyQText = q["Safety Question"];
                     const risk = q["Risk Level"] || "Medium";
+                    const fieldType = String(q["Field Type"] || "Yes/No").trim();
+                    const optionsStr = String(q["Options"] || "").trim();
                     
                     // Initialize answers state
                     answers[qId] = {
@@ -832,18 +837,53 @@
 
                     const item = document.createElement("div");
                     item.className = "question-item";
+                    
+                    // Render action input dynamically based on fieldType
+                    let actionHtml = "";
+                    if (fieldType.toLowerCase() === "dropdown") {
+                        const opts = optionsStr.split(",").map(o => o.trim()).filter(o => o !== "");
+                        let optHtml = `<option value="">-- Choose Option --</option>`;
+                        opts.forEach(o => {
+                            optHtml += `<option value="${o}">${o}</option>`;
+                        });
+                        actionHtml = `
+                            <div style="margin: 8px 0;">
+                                <select class="form-control" style="width: 100%; max-width: 280px; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--border); font-family: inherit; font-size: 0.9rem; font-weight: 600; outline:none; background:var(--surface); color:var(--text-main);" onchange="setQuestionChoice('${qId}', this.value)">
+                                    ${optHtml}
+                                </select>
+                            </div>
+                        `;
+                    } else if (fieldType.toLowerCase() === "text") {
+                        actionHtml = `
+                            <div style="margin: 8px 0;">
+                                <input type="text" class="form-control" placeholder="Write answer here..." style="width: 100%; max-width: 320px; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--border); font-family: inherit; font-size: 0.9rem; outline:none;" oninput="setQuestionChoice('${qId}', this.value)">
+                            </div>
+                        `;
+                    } else if (fieldType.toLowerCase() === "number") {
+                        actionHtml = `
+                            <div style="margin: 8px 0;">
+                                <input type="number" class="form-control" placeholder="Enter number..." style="width: 100%; max-width: 180px; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--border); font-family: inherit; font-size: 0.9rem; outline:none;" oninput="setQuestionChoice('${qId}', this.value)">
+                            </div>
+                        `;
+                    } else {
+                        // Yes/No/NA Buttons
+                        actionHtml = `
+                            <div class="question-actions">
+                                <div class="choice-btn" id="choice-${qId}-yes" onclick="setQuestionChoice('${qId}', 'Yes')">Yes</div>
+                                <div class="choice-btn" id="choice-${qId}-no" onclick="setQuestionChoice('${qId}', 'No')">No</div>
+                                <div class="choice-btn" id="choice-${qId}-na" onclick="setQuestionChoice('${qId}', 'N/A')">N/A</div>
+                            </div>
+                        `;
+                    }
+
                     item.innerHTML = `
                         <div class="question-header">
                             <span class="question-text"><strong>${qId}:</strong> ${safetyQText}</span>
                             <span class="badge-risk ${risk.toLowerCase()}">${risk}</span>
                         </div>
-                        <div class="question-actions">
-                            <div class="choice-btn" id="choice-${qId}-yes" onclick="setQuestionChoice('${qId}', 'Yes')">Yes</div>
-                            <div class="choice-btn" id="choice-${qId}-no" onclick="setQuestionChoice('${qId}', 'No')">No</div>
-                            <div class="choice-btn" id="choice-${qId}-na" onclick="setQuestionChoice('${qId}', 'N/A')">N/A</div>
-                        </div>
+                        ${actionHtml}
                         <div class="form-group" style="margin-bottom: 0;">
-                            <input type="text" placeholder="Remarks / Corrective Action (Optional)" oninput="setQuestionRemark('${qId}', this.value)">
+                            <input type="text" placeholder="Remarks / Corrective Action (Optional)" oninput="setQuestionRemark('${qId}', this.value)" style="border: 2px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 0.85rem; width: 100%;">
                         </div>
                     `;
                     section.appendChild(item);
@@ -872,10 +912,11 @@
             if (noBtn) noBtn.className = "choice-btn";
             if (naBtn) naBtn.className = "choice-btn";
 
-            // Add active color classes
-            const btn = document.getElementById(`choice-${qId}-${val.toLowerCase().replace('/', '')}`);
+            // Add active color classes (only for Yes/No buttons)
+            const safeVal = String(val || "").toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+            const btn = document.getElementById(`choice-${qId}-${safeVal}`);
             if (btn) {
-                btn.classList.add(`active-${val.toLowerCase().replace('/', '')}`);
+                btn.classList.add(`active-${safeVal}`);
             }
         }
 
@@ -1001,7 +1042,7 @@
         function renderTemplatesRows(pagedData) {
             const tbody = document.getElementById("templatesTableBody");
             if (pagedData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No matching checklist questions found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">No matching checklist questions found.</td></tr>`;
                 return;
             }
 
@@ -1011,6 +1052,10 @@
                     <td style="padding: 10px; font-weight:600; color:#8B5CF6;">${item["Question ID"]}</td>
                     <td style="padding: 10px;">${item["Safety Question"]}</td>
                     <td style="padding: 10px; font-weight:600; color:var(--text-muted);">${item["Category"]}</td>
+                    <td style="padding: 10px; font-weight:600; color:var(--text-main); font-size:0.85rem;">
+                        ${item["Field Type"] || "Yes/No"}
+                        ${item["Options"] ? `<span style="display:block; font-size:0.7rem; color:var(--text-muted); font-weight:400; margin-top:2px;">(${item["Options"]})</span>` : ''}
+                    </td>
                     <td style="padding: 10px; text-align: center;">
                         <span class="badge-risk ${String(item["Risk Level"] || 'Medium').toLowerCase()}">${item["Risk Level"] || 'Medium'}</span>
                     </td>
@@ -1029,24 +1074,51 @@
             openExcelImportWizard({
                 title: "Import Checklist Template",
                 fields: [
-                    { id: "Checklist ID", label: "Checklist ID", required: false, autoMatches: ["checklist id", "checklist_id", "checklist", "cl id", "id checklist"] },
-                    { id: "Question ID", label: "Question ID", required: true, autoMatches: ["question id", "question_id", "id", "q_id", "qid", "no"] },
-                    { id: "Safety Question", label: "Safety Question", required: true, autoMatches: ["safety question", "safety_question", "question", "soal", "soalan", "item"] },
-                    { id: "Category", label: "Category", required: false, autoMatches: ["category", "kategori", "section", "group", "bahagian"] },
-                    { id: "Risk Level", label: "Risk Level", required: false, autoMatches: ["risk level", "risk_level", "risk", "tahap risiko", "risiko", "level"] }
+                    { id: "Question ID", label: "Question ID / No.", required: false, autoMatches: ["no", "no.", "id", "question id", "question_id"] },
+                    { id: "Safety Question", label: "Safety Question / Description", required: true, autoMatches: ["description", "safety question", "question", "soal", "soalan", "item"] },
+                    { id: "Input Field", label: "Checklist Answer Field", required: true, enableCustomType: true, autoMatches: ["comply", "compliance", "yes/no", "status", "result"] }
                 ],
                 onComplete: async (mappedRows) => {
-                    // Normalize Checklist ID, Risk Level, Category
+                    let currentCategory = "General Safety";
+                    const finalQuestions = [];
+                    let questionCounter = 1;
+
                     mappedRows.forEach(r => {
-                        if (!r["Checklist ID"] || r["Checklist ID"].trim() === "") r["Checklist ID"] = "CL-01";
-                        if (!r["Risk Level"]) r["Risk Level"] = "Medium";
-                        if (!r["Category"]) r["Category"] = "General Safety";
+                        const noVal = String(r["Question ID"] || "").trim();
+                        const descVal = String(r["Safety Question"] || "").trim();
+                        const typeVal = String(r["Field Type"] || "Yes/No").trim();
+                        const optionsVal = String(r["Options"] || "").trim();
+
+                        // 1. Detect Category Section header (has text, but no row number)
+                        if (descVal !== "" && noVal === "") {
+                            currentCategory = descVal; // Update category context
+                            return;
+                        }
+
+                        // 2. Detect Question row (has both row number and question text)
+                        if (descVal !== "" && noVal !== "") {
+                            const qId = "Q-" + String(questionCounter++).padStart(2, '0');
+                            finalQuestions.push({
+                                "Checklist ID": "CL-01",
+                                "Question ID": qId,
+                                "Safety Question": descVal,
+                                "Category": currentCategory,
+                                "Risk Level": "Medium",
+                                "Field Type": typeVal,
+                                "Options": optionsVal
+                            });
+                        }
                     });
+
+                    if (finalQuestions.length === 0) {
+                        alert("⚠️ Error: No safety questions detected below headers. Ensure your Excel sheet has numbers in the 'No.' column and questions in the 'Description' column.");
+                        return;
+                    }
 
                     // Loading overlay
                     const loadingOverlay = document.createElement("div");
                     loadingOverlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(43,45,66,0.6); display:flex; align-items:center; justify-content:center; z-index:99999; color:white; font-family:'Fredoka',sans-serif; font-size:1.5rem; font-weight:700;";
-                    loadingOverlay.innerHTML = `⏳ Saving ${mappedRows.length} checklist template records...`;
+                    loadingOverlay.innerHTML = `⏳ Saving ${finalQuestions.length} checklist template records...`;
                     document.body.appendChild(loadingOverlay);
 
                     try {
@@ -1059,14 +1131,14 @@
                                 keyColumn: "Question ID",
                                 dbSpreadsheetKey: "INSPECTION_SPREADSHEET_ID",
                                 spreadsheetId: sheetId,
-                                mappedRows: mappedRows
+                                mappedRows: finalQuestions
                             })
                         });
                         const json = await response.json();
                         loadingOverlay.remove();
 
                         if (json.status === "SUCCESS") {
-                            alert("🎉 Import Successful!\n\n" + json.message);
+                            alert(`🎉 Import Successful!\n\nImported ${finalQuestions.length} template questions categorized under various safety sections.`);
                             loadAllChecklistsData();
                             switchTab('templates');
                         } else {

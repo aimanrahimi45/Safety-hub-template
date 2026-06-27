@@ -914,7 +914,7 @@ function openExcelImportWizard(options) {
         }
         thead.innerHTML = `<tr>${headerHtml}</tr>`;
 
-        const previewLimit = Math.min(parsedRows.length, 15);
+        const previewLimit = options.enableSectionHeaders ? parsedRows.length : Math.min(parsedRows.length, 30);
         for (let i = 0; i < previewLimit; i++) {
             const row = parsedRows[i];
             const tr = document.createElement("tr");

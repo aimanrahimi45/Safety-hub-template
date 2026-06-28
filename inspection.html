@@ -1077,7 +1077,7 @@
                 fields: [
                     { id: "Question ID", label: "Question ID / No.", required: false, autoMatches: ["no", "no.", "id", "question id", "question_id"] },
                     { id: "Safety Question", label: "Safety Question / Description", required: true, autoMatches: ["description", "safety question", "question", "soal", "soalan", "item"] },
-                    { id: "Input Field", label: "Checklist Answer Field", required: true, enableCustomType: true, autoMatches: ["comply", "compliance", "yes/no", "status", "result"] }
+                    { id: "Input Field", label: "Checklist Answer Field", required: false, enableCustomType: true, autoMatches: ["comply", "compliance", "yes/no", "status", "result"] }
                 ],
                 onComplete: async (mappedRows) => {
                     let currentCategory = "General Safety";

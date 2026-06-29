@@ -1,865 +1,773 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="BQY2IY-jShUYL4pVtdem5VZLsAJ3jxgM1XFRIFUCjHM" />
-    <meta name="google-site-verification" content="wabUbDneu7wAjIv9ryRnPUosqzqmihU96eRkA-hOt5Y" />
-    <title>AmerisPro Console</title>
-    <link rel="icon" type="image/png" href="safety-logo-v2.png">
-    <link rel="apple-touch-icon" href="safety-logo-v2.png">
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="shared.css">
-    <script src="config.js"></script>
-    <script src="shared.js" defer></script>
+    <title>AmerisPro - Modern OSH Safety Management Platform</title>
+    <link rel="icon" type="image/png" href="amerispro_128x128.png">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-main: #F8FAFC;
+            --surface: #FFFFFF;
+            --text-main: #0F172A;
+            --text-muted: #475569;
+            --border: #E2E8F0;
+            --border-dark: #cbd5e1;
+            
+            --primary: #06B6D4; /* Cyan */
+            --secondary: #6366F1; /* Indigo */
+            --success: #10B981; /* Green */
+            --warning: #F59E0B; /* Orange */
+            
+            --shadow-cyan: rgba(6, 182, 212, 0.25);
+            --shadow-indigo: rgba(99, 102, 241, 0.2);
+            --shadow-success: rgba(16, 185, 129, 0.2);
+            --shadow-soft: rgba(15, 23, 42, 0.04);
+            
+            --font-heading: 'Plus Jakarta Sans', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            background: var(--bg);
-            overflow: hidden;
             font-family: var(--font-body);
+            background: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        /* Sidebar Container */
-        .sidebar {
-            width: 260px;
-            background: var(--sidebar-bg);
-            border-right: 3px solid var(--border);
+        /* --- Header Navigation --- */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 2.5px solid var(--border);
+            padding: 15px 40px;
             display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            padding: 16px 16px 20px 16px;
-            /* Hide scrollbar for clean comic book look */
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-        
-        .sidebar::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
         }
 
-        /* Sidebar Brand */
-        .brand {
+        .logo-wrapper {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-            padding-left: 4px;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.4rem;
         }
 
-        .brand img {
-            height: 32px;
-            object-fit: contain;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: 2px solid var(--text-main);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: white;
+            box-shadow: 2px 2px 0px var(--text-main);
         }
 
-        .brand:hover img {
-            transform: scale(1.1) rotate(-3deg);
+        nav {
+            display: flex;
+            gap: 30px;
         }
 
-        .brand span {
+        nav a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.15s ease;
+        }
+
+        nav a:hover {
+            color: var(--secondary);
+        }
+
+        .btn-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
             font-family: var(--font-heading);
             font-weight: 700;
-            font-size: 1.3rem;
-            color: var(--text-main);
-            letter-spacing: -0.5px;
-        }
-
-        /* Mobile-only elements hidden by default */
-        .disconnect-btn,
-        .scroll-hint,
-        .mobile-breadcrumb {
-            display: none;
-        }
-
-        /* Mobile scroll hint on sidebar */
-        .sidebar-scroll-hint {
-            display: none;
-        }
-
-        /* Navigation List */
-        .nav-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            list-style: none;
-            flex-grow: 1;
-        }
-
-        /* Nav Group (Collapsible Sections) */
-        .nav-group {
-            margin-bottom: 10px;
-        }
-
-        .nav-group-header {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-main);
-            margin-bottom: 4px;
-            padding-left: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: 2.5px solid var(--text-main);
             cursor: pointer;
-            user-select: none;
-            opacity: 0.85;
-        }
-
-        .nav-group-items {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            transition: max-height 0.2s ease-out;
-            overflow: visible;
-        }
-
-        /* Individual Links */
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            color: var(--text-main);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 10px;
-            border: 3px solid transparent;
-            transition: all 0.1s ease;
-            cursor: pointer;
-        }
-
-        .nav-link svg {
-            width: 18px;
-            height: 18px;
-            color: var(--text-main);
-            stroke-width: 2.5px;
-            transition: transform 0.15s ease;
-        }
-
-        .nav-link:hover {
-            background: var(--surface);
-            border-color: var(--border);
-            transform: translate(-2px, -2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .nav-link:hover svg {
-            transform: scale(1.1);
-        }
-
-        /* Active Pill State */
-        .nav-link.active {
-            background: var(--warning);
-            color: var(--text-main);
-            font-weight: 700;
-            border: 3px solid #FFFFFF !important;  /* Inner white vinyl border */
-            outline: 3px solid var(--border) !important; /* Outer black die-cut */
-            box-shadow: 4px 4px 0px var(--border) !important;
-            transform: translate(-2px, -2px) rotate(-1.5deg); /* Tilted sticker look! */
-        }
-
-        .nav-link.active svg {
-            color: var(--text-main);
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .nav-link.active:hover {
-            background: var(--warning);
-            transform: translate(-2px, -2px) rotate(-1.5deg);
-        }
-
-        /* Main Workspace Panel */
-        .workspace {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* Top Header Panel */
-        .top-bar {
-            height: 70px;
-            background: var(--surface);
-            border-bottom: 3px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 32px;
-            flex-shrink: 0;
-        }
-
-        .top-bar-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            transition: all 0.2s ease;
             font-size: 0.95rem;
-            color: var(--text-main);
-            font-weight: 600;
         }
 
-        .top-bar-right {
-            display: flex;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #0891b2);
+            color: white;
+            box-shadow: 0 4px 14px var(--shadow-cyan), 3px 3px 0px var(--text-main);
+        }
+
+        .btn-primary:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 0 6px 20px var(--shadow-cyan), 5px 5px 0px var(--text-main);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-main);
+            box-shadow: 3px 3px 0px var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px var(--text-main);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 14px var(--shadow-success), 3px 3px 0px var(--text-main);
+        }
+
+        .btn-success:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 0 6px 20px var(--shadow-success), 5px 5px 0px var(--text-main);
+        }
+
+        /* --- Sections Container --- */
+        section {
+            padding: 80px 40px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* --- Hero Banner Section --- */
+        .hero-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
             align-items: center;
+        }
+
+        .hero-text {
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
 
-        .search-box {
+        .badge-safety {
+            align-self: flex-start;
+            background: #E0F2FE;
+            color: #0369A1;
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 6px 14px;
+            border-radius: 30px;
+            border: 2px solid #0369A1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-text h1 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 3.2rem;
+            line-height: 1.15;
+            color: var(--text-main);
+        }
+
+        .hero-text p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 540px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .hero-image-wrapper {
             display: flex;
             align-items: center;
-            background: #FFFFFF;
-            border: 3px solid var(--border);
-            padding: 8px 14px;
-            border-radius: 12px;
-            width: 220px;
-            box-shadow: 2px 2px 0px var(--border);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            justify-content: center;
+            position: relative;
         }
 
-        .search-box input {
-            border: none;
-            background: transparent;
-            font-size: 0.9rem;
-            outline: none;
-            width: 100%;
-            margin-left: 8px;
-            font-family: inherit;
+        .hero-circle-backdrop {
+            position: absolute;
+            width: 420px;
+            height: 420px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(99, 102, 241, 0.15));
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .hero-mascot {
+            width: 380px;
+            height: auto;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.08));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* --- Modules Split Showcase --- */
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .showcase-card {
+            background: var(--surface);
+            border: 2.5px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 4px 20px var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+        }
+
+        .showcase-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 12px 30px var(--shadow-cyan);
+        }
+
+        .showcase-card.secondary-hover:hover {
+            border-color: var(--secondary);
+            box-shadow: 0 12px 30px var(--shadow-indigo);
+        }
+
+        .showcase-card-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .showcase-mascot-wrapper {
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #F1F5F9;
+            border: 2px dashed var(--border-dark);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .showcase-mascot {
+            width: 130px;
+            height: auto;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+        }
+
+        .showcase-title-block h3 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+        }
+
+        .showcase-features-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .showcase-features-list li {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .showcase-features-list li span {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        /* --- Why Choose Section --- */
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 2.2rem;
             color: var(--text-main);
         }
 
-        .search-box:focus-within {
-            width: 280px;
-            transform: translate(-2px, -2px);
-            box-shadow: 4px 4px 0px var(--border);
-            border-color: var(--primary);
+        .section-header p {
+            color: var(--text-muted);
+            max-width: 580px;
         }
 
-        .badge-connected {
-            display: inline-flex;
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .feature-item {
+            background: var(--surface);
+            border: 2.5px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-dark);
+            box-shadow: 0 8px 24px var(--shadow-soft);
+        }
+
+        .feature-icon-box {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-item h4 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-item p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* --- Customer Reviews Section --- */
+        .testimonial-container {
+            background: var(--surface);
+            border: 2.5px solid var(--border);
+            border-radius: 24px;
+            padding: 50px;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 50px;
             align-items: center;
-            gap: 6px;
-            background: #E8F5E9;
-            color: #2E7D32;
-            border: 3px solid var(--border);
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 12px;
-            box-shadow: 2px 2px 0px var(--border);
+            box-shadow: 0 10px 30px var(--shadow-soft);
         }
 
-        .badge-connected span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4CAF50;
-            display: inline-block;
-            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
-            animation: pulse-dot 1.8s infinite;
+        .testimonial-mascot-col {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
 
-        @keyframes pulse-dot {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(76, 175, 80, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
-        }
-
-        /* Fullscreen Iframe Wrapper */
-        .iframe-container {
-            flex-grow: 1;
-            width: 100%;
-            height: calc(100% - 70px);
-            background: transparent;
-            transition: opacity 0.15s ease-in-out;
-        }
-
-        #portal-frame {
+        .testimonial-stars-graphic {
+            position: absolute;
+            top: 0;
             width: 100%;
             height: 100%;
-            border: none;
-            background: transparent;
+            pointer-events: none;
+            opacity: 0.85;
         }
 
-        /* Upgrade Box in Sidebar */
-        .upgrade-card {
+        .testimonial-card {
+            background: #F8FAFC;
+            border: 2.5px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+        }
+
+        .testimonial-stars {
+            color: var(--warning);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .testimonial-comment {
+            font-size: 1.15rem;
+            font-style: italic;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 20px;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 44px;
+            height: 44px;
+            background: #E2E8F0;
+            border: 2px solid var(--text-main);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* --- Contact Us Section --- */
+        .contact-container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .contact-mascot-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .contact-mascot {
+            width: 320px;
+            height: auto;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.05));
+        }
+
+        .contact-form {
             background: var(--surface);
-            border: 3px solid var(--border);
-            padding: 12px;
+            border: 2.5px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 24px var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 12px 16px;
+            border: 2px solid var(--border);
             border-radius: 12px;
-            margin-top: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.15s ease;
+            background: #F8FAFC;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
+        }
+
+        /* --- Footer --- */
+        footer {
+            border-top: 2.5px solid var(--border);
+            padding: 40px 20px;
             text-align: center;
-            box-shadow: 3px 3px 0px var(--border);
+            background: var(--surface);
         }
-        
-        .upgrade-card h4 {
-            font-family: var(--font-heading);
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 4px;
-        }
-        
-        .upgrade-card p {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            line-height: 1.35;
-            margin-bottom: 8px;
-        }
-        
-        .upgrade-btn {
-            background: var(--primary);
-            color: var(--text-main);
-            border: 3px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
+
+        .footer-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             text-decoration: none;
-            display: inline-block;
-            box-shadow: 2px 2px 0px var(--border);
-            transition: all 0.1s ease;
-        }
-        
-        .upgrade-btn:hover {
-            background: var(--primary-hover);
-            transform: translate(-1px, -1px);
-            box-shadow: 3px 3px 0px var(--border);
+            color: var(--text-main);
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
         }
 
-        .upgrade-btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: 0px 0px 0px var(--border);
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
         }
 
-        /* Mobile Layout */
-        @media (max-width: 768px) {
-            body {
+        .footer-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-copyright {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* --- Responsive Queries --- */
+        @media (max-width: 968px) {
+            header {
+                padding: 15px 20px;
+            }
+            nav {
+                display: none;
+            }
+            .hero-container,
+            .showcase-grid,
+            .testimonial-container,
+            .contact-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+            .hero-actions {
+                justify-content: center;
+            }
+            .hero-mascot,
+            .contact-mascot {
+                width: 280px;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .showcase-card-header {
                 flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                height: auto;
-                min-height: 72px;
-                flex-direction: row;
-                align-items: center;
-                padding: 10px 8px 8px 8px;
-                border-right: none;
-                border-bottom: 3px solid var(--border);
-                overflow-x: auto;
-                overflow-y: hidden;
-                gap: 6px;
-                position: relative;
-            }
-            .sidebar::after {
-                content: '';
-                position: absolute;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                width: 36px;
-                background: linear-gradient(to right, transparent, var(--sidebar-bg) 80%);
-                pointer-events: none;
-                z-index: 2;
-            }
-            .brand {
-                flex-shrink: 0;
-                margin-bottom: 0;
-                padding: 4px 6px;
-                gap: 6px;
-                z-index: 3;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .brand span {
-                font-size: 0.95rem;
-                white-space: nowrap;
-            }
-            .brand img, .brand svg {
-                height: 22px;
-                width: 22px;
-            }
-            .nav-group-header, .upgrade-card, .top-bar {
-                display: none !important;
-            }
-            .nav-list {
-                flex-direction: row;
-                gap: 2px;
-                flex-grow: 1;
-                flex-shrink: 1;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                padding: 8px 16px 8px 8px;
-                mask-image: linear-gradient(to right, black 90%, transparent 100%);
-                -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
-            }
-            .nav-list::-webkit-scrollbar {
-                display: none;
-            }
-            .nav-group {
-                margin-bottom: 0;
-                flex-shrink: 0;
-            }
-            .nav-group-items {
-                flex-direction: row;
-                gap: 2px;
-            }
-            .nav-link {
-                padding: 6px 10px;
-                font-size: 0.78rem;
-                white-space: nowrap;
-                gap: 5px;
-                border-width: 2px;
-                min-height: 38px;
-                border-radius: 10px;
-            }
-            .nav-link svg {
-                width: 15px;
-                height: 15px;
-            }
-            .nav-link.active {
-                transform: translate(-1px, -1px) rotate(-1deg);
-                border-width: 2px !important;
-                outline-width: 2px !important;
-            }
-            .sidebar > div:last-child {
-                display: none !important;
-            }
-
-            /* Icon-only disconnect button fixed on right */
-            .disconnect-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 38px;
-                height: 38px;
-                flex-shrink: 0;
-                background: var(--surface);
-                border: 2px solid var(--border);
-                border-radius: 10px;
-                box-shadow: 2px 2px 0px var(--border);
-                cursor: pointer;
-                z-index: 3;
-                transition: all 0.1s ease;
-            }
-            .disconnect-btn:hover {
-                transform: translate(-1px, -1px);
-                box-shadow: 3px 3px 0px var(--border);
-            }
-            .disconnect-btn svg {
-                width: 18px;
-                height: 18px;
-                color: var(--text-muted);
-            }
-
-            /* Scroll chevron hint */
-            .scroll-hint {
-                display: none;
-                position: absolute;
-                right: 48px;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 24px;
-                height: 24px;
-                align-items: center;
-                justify-content: center;
-                background: var(--sidebar-bg);
-                border: 2px solid var(--border);
-                border-radius: 50%;
-                box-shadow: 2px 2px 0px var(--border);
-                z-index: 3;
-                pointer-events: none;
-                opacity: 0.85;
-            }
-            .scroll-hint.visible {
-                display: flex;
-            }
-            .scroll-hint svg {
-                width: 14px;
-                height: 14px;
-                color: var(--text-main);
-            }
-
-            .iframe-container {
-                height: calc(100% - 52px);
-            }
-            /* Mobile breadcrumb bar */
-            .mobile-breadcrumb {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                height: 44px;
-                background: var(--surface);
-                border-bottom: 3px solid var(--border);
-                padding: 0 16px;
-                flex-shrink: 0;
-                font-size: 0.85rem;
-                font-weight: 700;
-                color: var(--text-main);
-            }
-            .mobile-breadcrumb .connected-dot {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                background: #E8F5E9;
-                color: #2E7D32;
-                border: 2px solid var(--border);
-                font-size: 0.7rem;
-                padding: 2px 8px;
-                border-radius: 10px;
-                box-shadow: 1px 1px 0px var(--border);
-            }
-            .mobile-breadcrumb .connected-dot span {
-                width: 6px;
-                height: 6px;
-                border-radius: 50%;
-                background: #4CAF50;
-            }
-        }
-
-        /* Small phones */
-        @media (max-width: 480px) {
-            .sidebar {
-                padding: 8px 6px 6px 6px;
-                gap: 4px;
-                min-height: 56px;
-            }
-            .sidebar::after {
-                width: 28px;
-            }
-            .brand {
-                padding: 3px 5px;
-                gap: 5px;
-            }
-            .brand span {
-                font-size: 0.85rem;
-            }
-            .brand img, .brand svg {
-                height: 20px;
-                width: 20px;
-            }
-            .nav-link {
-                padding: 5px 8px;
-                font-size: 0.72rem;
-                min-height: 34px;
-                gap: 4px;
-            }
-            .nav-link svg {
-                width: 13px;
-                height: 13px;
-            }
-            .disconnect-btn {
-                width: 34px;
-                height: 34px;
-            }
-            .disconnect-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-            .scroll-hint {
-                right: 42px;
-                width: 20px;
-                height: 20px;
-            }
-            .scroll-hint svg {
-                width: 12px;
-                height: 12px;
-            }
-            .mobile-breadcrumb {
-                height: 40px;
-                padding: 0 12px;
-                font-size: 0.8rem;
-            }
-            .mobile-breadcrumb .connected-dot {
-                font-size: 0.65rem;
+                text-align: center;
             }
         }
     </style>
 </head>
+
 <body>
 
-    <!-- LEFT SIDEBAR -->
-    <div class="sidebar">
-        <div class="brand" id="sidebar-brand">
-            <svg id="sidebar-brand-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#eb5757" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="background: #fef2f2; padding: 4px; border-radius: 6px;">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            <span id="sidebar-brand-name">AmerisPro</span>
-        </div>
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="logo-wrapper">
+            <div class="logo-icon">🛡️</div>
+            <span>AmerisPro</span>
+        </a>
+        <nav>
+            <a href="#features">Features</a>
+            <a href="#modules">Modules</a>
+            <a href="#contact">Contact</a>
+        </nav>
+        <a href="app.html" class="btn-pill btn-primary">Launch Console</a>
+    </header>
 
-        <ul class="nav-list">
-            <!-- GROUP 1: OVERVIEW -->
-            <div class="nav-group">
-                <div class="nav-link active" onclick="loadTab('dashboard.html', this)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="9"></rect>
-                        <rect x="14" y="3" width="7" height="5"></rect>
-                        <rect x="14" y="12" width="7" height="9"></rect>
-                        <rect x="3" y="16" width="7" height="5"></rect>
-                    </svg>
-                    Dashboard
-                </div>
-            </div>
-
-            <!-- GROUP 2: MEDICAL & PPE -->
-            <div class="nav-group">
-                <div class="nav-group-header">First Aid & Gear</div>
-                <div class="nav-group-items">
-                    <div class="nav-link" onclick="loadTab('first_aid.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                        </svg>
-                        Inspect
-                    </div>
-                    <div class="nav-link" onclick="loadTab('stock.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
-                            <polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"></polygon>
-                            <polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"></polygon>
-                            <polygon points="12 12 21 6.92 12 1.92 3 6.92 12 12"></polygon>
-                        </svg>
-                        Stock
-                    </div>
-                    <div class="nav-link" onclick="loadTab('ppe.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                        PPE
-                    </div>
-                </div>
-            </div>
-
-            <!-- GROUP 2.5: PERFORMANCE -->
-            <div class="nav-group">
-                <div class="nav-group-header">Performance</div>
-                <div class="nav-group-items">
-                    <div class="nav-link" onclick="loadTab('incident.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                        Incident
-                    </div>
-                </div>
-            </div>
-
-            <!-- GROUP 3: WORKERS -->
-            <div class="nav-group">
-                <div class="nav-group-header">People & Roster</div>
-                <div class="nav-group-items">
-                    <div class="nav-link" onclick="loadTab('staff.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        Staff
-                    </div>
-                    <div class="nav-link" onclick="loadTab('contractor.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        Contractors
-                    </div>
-                </div>
-            </div>
-
-            <!-- GROUP 4: AUDITS -->
-            <div class="nav-group">
-                <div class="nav-group-header">Audits & Inspections</div>
-                <div class="nav-group-items">
-                    <div class="nav-link" onclick="loadTab('inspection.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                        Inspections
-                    </div>
-                    <div class="nav-link" onclick="loadTab('audit.html', this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="9" y1="9" x2="15" y2="9"></line>
-                            <line x1="9" y1="13" x2="15" y2="13"></line>
-                            <line x1="9" y1="17" x2="15" y2="17"></line>
-                        </svg>
-                        Logs
-                    </div>
-                </div>
-            </div>
-        </ul>
-
-        <!-- Icon-only disconnect button (visible on mobile) -->
-        <button class="disconnect-btn" id="disconnect-btn" onclick="disconnectSheet()" title="Disconnect Sheet" aria-label="Disconnect Sheet">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-        </button>
-
-        <!-- Scroll hint indicator (visible on mobile when overflow) -->
-        <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-        </div>
-
-        <!-- Upgrade Card -->
-        <div class="upgrade-card">
-            <h4>AmerisPro Pro</h4>
-            <p>Unlock incident reports, advanced analytics, and PDF exports.</p>
-            <a href="#" class="upgrade-btn holographic">Upgrade Now</a>
-        </div>
-
-        <!-- Sidebar Legal Links -->
-        <div class="sidebar-footer" style="margin-top: 15px; text-align: center; font-size: 0.72rem; color: var(--text-muted); line-height: 1.5; border-top: 1px dashed var(--border); padding-top: 10px;">
-            <div>© 2026 AmerisPro</div>
-            <div style="margin-top: 4px; display: flex; justify-content: center; gap: 8px;">
-                <a href="privacy.html" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none; border-bottom: 1px dotted var(--primary);">Privacy Policy</a>
-                <span>•</span>
-                <a href="terms.html" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none; border-bottom: 1px dotted var(--primary);">Terms of Service</a>
+    <!-- Hero Banner Section -->
+    <section class="hero-container">
+        <div class="hero-text">
+            <div class="badge-safety">🛡️ Next-Gen compliance</div>
+            <h1>The Modern Way to Manage Site Safety & Compliance</h1>
+            <p>Streamline workplace inspections, personnel records, contractor certifications, and first-aid inventories in one centralized, cloud-connected terminal.</p>
+            <div class="hero-actions">
+                <a href="app.html" class="btn-pill btn-primary">Launch Console</a>
+                <a href="#modules" class="btn-pill btn-secondary">Explore Modules</a>
             </div>
         </div>
-    </div>
-
-    <!-- MAIN WORKSPACE -->
-    <div class="workspace">
-        <!-- MOBILE BREADCRUMB BAR -->
-        <div class="mobile-breadcrumb" id="mobile-breadcrumb">
-            <span id="mobile-page-title">Dashboard Overview</span>
-            <span class="connected-dot"><span></span>Connected</span>
+        <div class="hero-image-wrapper">
+            <div class="hero-circle-backdrop"></div>
+            <img src="mascot_hero.png" alt="AmerisPro Safety Mascot" class="hero-mascot">
         </div>
+    </section>
 
-        <!-- TOP HEADER PANEL -->
-        <div class="top-bar">
-            <div class="top-bar-left" id="breadcrumb-text">
-                Safety records &gt; Dashboard Overview
-            </div>
-            <div class="top-bar-right">
-                <div class="search-box">
-                    🔎 <input type="text" placeholder="Search safety files...">
-                </div>
-                <div class="badge-connected">
-                    <span></span> Connected
-                </div>
-                <!-- Profile Avatar Circle -->
-                <div style="position: relative; display: flex; align-items: center;">
-                    <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--warning); border: 3px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: var(--text-main); box-shadow: 2px 2px 0px var(--border);">
-                        SO
+    <!-- Modules Showcase Section -->
+    <section id="modules">
+        <div class="section-header">
+            <h2>Automated Safety Workflows</h2>
+            <p>Ditch paper checklists and clunky forms. Our portal is backed by a serverless database to automate all site functions.</p>
+        </div>
+        <div class="showcase-grid">
+            <!-- Inspection Module Showcase -->
+            <div class="showcase-card">
+                <div>
+                    <div class="showcase-card-header">
+                        <div class="showcase-mascot-wrapper">
+                            <img src="mascot_inspector.png" alt="Safety Inspector Mascot" class="showcase-mascot">
+                        </div>
+                        <div class="showcase-title-block">
+                            <h3>Workplace Inspections</h3>
+                            <p style="color:var(--text-muted); font-size:0.9rem; font-weight:500;">Custom checklist templates creator</p>
+                        </div>
                     </div>
-                    <span style="position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; background: var(--success); border: 2.5px solid var(--border); border-radius: 50%;"></span>
+                    <ul class="showcase-features-list">
+                        <li><span>✔️</span> Import templates directly from Excel sheets</li>
+                        <li><span>✔️</span> Toggle visual section/category headers</li>
+                        <li><span>✔️</span> Choose field types (Yes/No, Dropdowns, Text, Numbers)</li>
+                        <li><span>✔️</span> Digital signatures and relational logs</li>
+                    </ul>
+                </div>
+                <a href="app.html" class="btn-pill btn-primary" style="align-self: flex-start;">Open Builder</a>
+            </div>
+
+            <!-- Other Portal Modules Showcase -->
+            <div class="showcase-card secondary-hover">
+                <div>
+                    <div class="showcase-card-header">
+                        <div class="showcase-mascot-wrapper" style="background:#EEF2F6;">
+                            <img src="mascot_hero.png" alt="Portal Modules Mascot" class="showcase-mascot" style="transform: scale(0.85);">
+                        </div>
+                        <div class="showcase-title-block">
+                            <h3>Roster, Kit & Worker Portal</h3>
+                            <p style="color:var(--text-muted); font-size:0.9rem; font-weight:500;">Integrated OSH operations suite</p>
+                        </div>
+                    </div>
+                    <ul class="showcase-features-list">
+                        <li><span>✔️</span> <strong>Staff Roster</strong>: Central sync with quick filters</li>
+                        <li><span>✔️</span> <strong>First Aid Kits</strong>: Log audits & inventory levels</li>
+                        <li><span>✔️</span> <strong>Contractor Inductions</strong>: Check certification validity</li>
+                        <li><span>✔️</span> <strong>Google Sheets DB</strong>: Serverless, private database</li>
+                    </ul>
+                </div>
+                <a href="app.html" class="btn-pill btn-secondary" style="align-self: flex-start;">Go to Console</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose AmerisPro -->
+    <section id="features" style="background: white; border-top: 2.5px solid var(--border); border-bottom: 2.5px solid var(--border); max-width: 100%;">
+        <div style="max-width: 1300px; margin: 0 auto; padding: 0 40px;">
+            <div class="section-header">
+                <h2>Designed for High-Compliance Sites</h2>
+                <p>A reliable architecture built to assist safety officers and protect industrial work zones.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon-box">🔒</div>
+                    <h4>Private Cloud DB</h4>
+                    <p>Connects directly to your own Google Drive. No external database servers or recurring server costs.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon-box">⚡</div>
+                    <h4>Lightweight & Fast</h4>
+                    <p>Designed with clean clientside scripts and responsive CSS frameworks. Responsive on mobile and tablet devices.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon-box">📋</div>
+                    <h4>Ready for Audits</h4>
+                    <p>Instant detailed review popup, signature stamp logs, and PDF printing to quickly verify safety checks.</p>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- IFRAME CONTAINER -->
-        <div class="iframe-container">
-            <iframe id="portal-frame" src="about:blank"></iframe>
+    <!-- Customer Reviews (Beehaya Testimonial Style) -->
+    <section>
+        <div class="testimonial-container">
+            <div class="testimonial-mascot-col">
+                <img src="mascot_hero.png" alt="Reviews Mascot" class="hero-mascot" style="width: 250px;">
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+                <p class="testimonial-comment">"AmerisPro has completely transformed our site compliance audits! The Excel template importer is extremely fast and lets us build custom inspections with our own dropdown options instantly. Highly recommend!"</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">AL</div>
+                    <div>
+                        <strong style="display: block; font-size: 0.95rem; color: var(--text-main);">amyleedsmith</strong>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Safety & Compliance Manager</span>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <script>
-        const frame = document.getElementById("portal-frame");
-        const PREMIUM_PAGES = []; // Add premium pages here later (e.g. "some_feature.html")
+    <!-- Contact Us & Form -->
+    <section id="contact">
+        <div class="contact-container">
+            <div class="contact-mascot-col">
+                <img src="mascot_contact.png" alt="Contact Support Mascot" class="contact-mascot">
+                <h3 style="font-family: var(--font-heading); font-weight: 800; font-size: 1.6rem; margin-top: 15px;">Get In Touch With Us</h3>
+                <p style="color:var(--text-muted); font-size:0.95rem; text-align:center; max-width:320px; margin-top:5px;">Have questions, ideas, or feedback? Send us a message and our safety officer mascot will alert our developers!</p>
+            </div>
+            <form class="contact-form" onsubmit="event.preventDefault(); alert('🎉 Message Sent! Thank you for reaching out to AmerisPro support.'); this.reset();">
+                <div class="form-group">
+                    <label for="contact-name">Your Name</label>
+                    <input type="text" id="contact-name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-email">Your Email</label>
+                    <input type="email" id="contact-email" placeholder="john@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-message">Your Message</label>
+                    <textarea id="contact-message" rows="4" placeholder="How can we help you improve site compliance?" required></textarea>
+                </div>
+                <button type="submit" class="btn-pill btn-success" style="align-self: flex-start; padding: 12px 30px;">Send Message</button>
+            </form>
+        </div>
+    </section>
 
-        function loadTab(url, element) {
-            // Check plan type using centralized helpers from shared.js
-            if (PREMIUM_PAGES.includes(url) && !isPremiumPlan()) {
-                const nameMap = {
-                    "incident.html": "Incident Monitoring"
-                };
-                showPremiumUpgradeModal(nameMap[url] || "This Feature");
-                return;
-            }
+    <!-- Footer -->
+    <footer>
+        <a href="index.html" class="footer-logo">
+            <div class="logo-icon" style="width:28px; height:28px; font-size:0.85rem; border-radius:6px; box-shadow:1.5px 1.5px 0px var(--text-main);">🛡️</div>
+            <span style="font-size:1.05rem;">AmerisPro</span>
+        </a>
+        <div class="footer-links">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+        </div>
+        <p class="footer-copyright">&copy; 2026 AmerisPro Safety Tech. All rights reserved.</p>
+    </footer>
 
-            // Update active state class in sidebar
-            document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
-            element.classList.add("active");
-
-            // Load url parameter in iframe
-            const spreadsheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
-            let targetUrl = url;
-            if (spreadsheetId) {
-                targetUrl = `${url}?spreadsheetId=${encodeURIComponent(spreadsheetId)}`;
-            }
-            frame.src = targetUrl;
-
-            // Update Breadcrumb text
-            const title = element.innerText.trim();
-            document.getElementById("breadcrumb-text").innerText = `Safety records > ${title}`;
-            const mobileTitle = document.getElementById("mobile-page-title");
-            if (mobileTitle) mobileTitle.innerText = title;
-
-            // Save URL hash to preserve state on refresh
-            const hash = url.replace(".html", "");
-            window.location.hash = hash;
-        }
-
-        window.loadTabFromChild = function(url) {
-            const baseUrl = url.split("?")[0];
-            const selector = `.nav-link[onclick*="${baseUrl}"]`;
-            const link = document.querySelector(selector);
-            if (link) {
-                loadTab(url, link);
-            }
-        };
-
-        function disconnectSheet() {
-            if (confirm("Are you sure you want to disconnect this portal from the current Google Sheet database?")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        // Initialize dynamic tab based on hash or default to dashboard
-        document.addEventListener("DOMContentLoaded", () => {
-            const systemName = localStorage.getItem("safety_hub_system_name") || "AmerisPro";
-            document.getElementById("sidebar-brand-name").innerText = systemName;
-
-            const hash = window.location.hash.replace("#", "");
-            let defaultPage = "dashboard.html";
-            let activeLinkSelector = '.nav-link[onclick*="dashboard.html"]';
-
-            if (hash) {
-                defaultPage = `${hash}.html`;
-                activeLinkSelector = `.nav-link[onclick*="${defaultPage}"]`;
-            }
-
-            const activeLink = document.querySelector(activeLinkSelector);
-            if (activeLink) {
-                loadTab(defaultPage, activeLink);
-            } else {
-                const homeLink = document.querySelector('.nav-link[onclick*="dashboard.html"]');
-                loadTab("dashboard.html", homeLink);
-            }
-
-            // Mobile scroll hint: show chevron when nav-list overflows
-            const navList = document.querySelector(".nav-list");
-            const scrollHint = document.getElementById("scroll-hint");
-            if (navList && scrollHint) {
-                const updateHint = () => {
-                    const canScrollRight = navList.scrollWidth > navList.clientWidth + 2;
-                    const atEnd = navList.scrollLeft + navList.clientWidth >= navList.scrollWidth - 2;
-                    scrollHint.classList.toggle("visible", canScrollRight && !atEnd);
-                };
-                updateHint();
-                navList.addEventListener("scroll", updateHint, { passive: true });
-                window.addEventListener("resize", updateHint, { passive: true });
-                // Recheck after fonts/layout settle
-                setTimeout(updateHint, 300);
-            }
-        });
-    </script>
 </body>
+
 </html>

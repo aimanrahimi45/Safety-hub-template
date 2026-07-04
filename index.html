@@ -559,6 +559,387 @@
             color: var(--text-muted);
         }
 
+        /* --- Onboarding Stepper Section --- */
+        .onboarding-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 50px;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .stepper-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            background: var(--surface);
+            border: 2.5px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-dark);
+            box-shadow: 0 6px 15px var(--shadow-soft);
+        }
+
+        .step-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px var(--shadow-cyan);
+            background: #f0fdfa; /* Soft teal tint */
+        }
+
+        .step-badge {
+            width: 36px;
+            height: 36px;
+            background: var(--surface);
+            border: 2.5px solid var(--text-main);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            box-shadow: 2px 2px 0px var(--text-main);
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .step-card.active .step-badge {
+            background: var(--primary);
+            color: white;
+            box-shadow: 2px 2px 0px var(--text-main);
+        }
+
+        .step-info h4 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+
+        .step-info p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        /* --- Mockup Viewport Panel --- */
+        .mockup-col {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mockup-card {
+            background: var(--surface);
+            border: 2.5px solid var(--text-main);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 440px;
+            height: 380px;
+            box-shadow: 5px 5px 0px var(--text-main);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .mock-viewport {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .mock-viewport.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0px);
+        }
+
+        .mockup-caption {
+            margin-top: auto;
+            background: var(--bg-main);
+            border-top: 2px solid var(--border);
+            padding: 12px 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* --- Mockup 1: Google Sheets Grid --- */
+        .sheets-header {
+            background: #f1f5f9;
+            border-bottom: 1.5px solid var(--border);
+            padding: 10px 15px 5px 15px;
+        }
+
+        .sheets-green-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .sheets-green-bar::before {
+            content: "📊";
+            font-size: 1rem;
+        }
+
+        .sheets-doc-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .sheets-menu-bar {
+            display: flex;
+            gap: 12px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .sheets-menu-bar span.menu-active {
+            color: #0F9D58;
+            font-weight: 700;
+            border-bottom: 2px solid #0F9D58;
+        }
+
+        .sheets-grid-container {
+            padding: 15px;
+            background: white;
+            flex-grow: 1;
+        }
+
+        .sheets-grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .sheets-grid-table th,
+        .sheets-grid-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .sheets-grid-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .sheets-grid-table td:first-child {
+            background: #f8fafc;
+            font-weight: 600;
+            width: 30px;
+        }
+
+        .sheets-grid-table td.cell-active {
+            background: #e2f0d9;
+            border: 2px solid #0F9D58;
+        }
+
+        /* --- Mockup 2: Google Workspace Marketplace --- */
+        .marketplace-header {
+            background: white;
+            border-bottom: 2px solid var(--border);
+            padding: 14px 20px;
+            font-weight: 800;
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .marketplace-header::before {
+            content: "🛍️";
+        }
+
+        .marketplace-content {
+            padding: 24px;
+            background: white;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .marketplace-app-card {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .marketplace-logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: 2.5px solid var(--text-main);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 3px 3px 0px var(--text-main);
+        }
+
+        .marketplace-app-info h3 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: var(--text-main);
+        }
+
+        .marketplace-app-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .marketplace-install-btn {
+            background: #2563eb;
+            color: white;
+            border: 2px solid var(--text-main);
+            border-radius: 20px;
+            padding: 4px 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--text-main);
+            outline: none;
+        }
+
+        .marketplace-app-details p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        /* --- Mockup 3: Menu Dropdowns --- */
+        .mock-dropdown {
+            position: absolute;
+            top: 5px;
+            left: 120px;
+            background: white;
+            border: 2px solid var(--text-main);
+            border-radius: 8px;
+            box-shadow: 3px 3px 0px var(--text-main);
+            width: 140px;
+            font-size: 0.72rem;
+            z-index: 10;
+            padding: 4px 0;
+        }
+
+        .mock-sub-dropdown {
+            position: absolute;
+            top: 45px;
+            left: 254px;
+            background: white;
+            border: 2px solid var(--text-main);
+            border-radius: 8px;
+            box-shadow: 3px 3px 0px var(--text-main);
+            width: 160px;
+            font-size: 0.72rem;
+            z-index: 11;
+            padding: 4px 0;
+        }
+
+        .dropdown-item {
+            padding: 6px 12px;
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .dropdown-has-sub {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .active-sub {
+            background: #e2e8f0;
+        }
+
+        .highlighted-menu {
+            background: #e0f2fe;
+            color: #0369a1;
+            font-weight: 700;
+        }
+
+        /* --- Mockup 4: Console Login --- */
+        .console-login-mock {
+            padding: 30px;
+            background: #f8fafc;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .console-header-mock {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            margin-bottom: 15px;
+        }
+
+        .console-body-mock {
+            background: white;
+            border: 2.5px solid var(--text-main);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            box-shadow: 4px 4px 0px var(--text-main);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .console-body-mock label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .console-btn-mock {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            color: white;
+            border: 2px solid var(--text-main);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            box-shadow: 2px 2px 0px var(--text-main);
+            cursor: pointer;
+            outline: none;
+        }
+
         /* --- Responsive Queries --- */
         @media (max-width: 968px) {
             header {
@@ -595,6 +976,14 @@
             .showcase-card-header {
                 flex-direction: column;
                 text-align: center;
+            }
+            .onboarding-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .mockup-card {
+                margin: 0 auto;
+                max-width: 100%;
             }
         }
     </style>
@@ -686,6 +1075,171 @@
         </div>
     </section>
 
+    <!-- Interactive Onboarding Guide Section -->
+    <section id="onboarding" style="border-top: 2.5px solid var(--border); padding: 80px 40px; background: var(--bg-main);">
+        <div style="max-width: 1300px; margin: 0 auto;">
+            <div class="section-header" style="text-align: center; max-width: 650px; margin: 0 auto 50px auto;">
+                <h2 style="font-family: var(--font-heading); font-weight: 800; font-size: 2.2rem; color: var(--text-main); margin-bottom: 12px;">Getting Started Is Simple</h2>
+                <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">Install our extension inside your Google Sheets, run the setup, and connect your new dashboard console in minutes.</p>
+            </div>
+            <div class="onboarding-grid">
+                <!-- Stepper Left -->
+                <div class="stepper-col">
+                    <div class="step-card active" onclick="switchStep(1)">
+                        <div class="step-badge">1</div>
+                        <div class="step-info">
+                            <h4>Open Google Sheets</h4>
+                            <p>Open any of your existing spreadsheets, or create a brand-new blank sheet in your Google Account.</p>
+                        </div>
+                    </div>
+                    <div class="step-card" onclick="switchStep(2)">
+                        <div class="step-badge">2</div>
+                        <div class="step-info">
+                            <h4>Install the AmerisPro Add-on</h4>
+                            <p>Go to <strong>Extensions &rarr; Add-ons &rarr; Get Add-ons</strong>, search for <strong>AmerisPro</strong>, and install the extension.</p>
+                        </div>
+                    </div>
+                    <div class="step-card" onclick="switchStep(3)">
+                        <div class="step-badge">3</div>
+                        <div class="step-info">
+                            <h4>Initialize Your Workspace</h4>
+                            <p>Once installed, click on <strong>Extensions &rarr; AmerisPro &rarr; Initialize Workspace</strong> to automatically generate all database tabs.</p>
+                        </div>
+                    </div>
+                    <div class="step-card" onclick="switchStep(4)">
+                        <div class="step-badge">4</div>
+                        <div class="step-info">
+                            <h4>Connect to Your Dashboard</h4>
+                            <p>Copy the Spreadsheet ID from the URL bar and paste it in the AmerisPro console web portal to log in.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mockup Viewport Right -->
+                <div class="mockup-col">
+                    <div class="mockup-card">
+                        <!-- Step 1 Mock: Google Sheets Grid -->
+                        <div class="mock-viewport active" id="mock-step-1">
+                            <div class="sheets-header">
+                                <div class="sheets-green-bar">
+                                    <span class="sheets-doc-title">Untitled spreadsheet</span>
+                                </div>
+                                <div class="sheets-menu-bar">
+                                    <span>File</span><span>Edit</span><span>View</span><span>Insert</span><span>Format</span><span>Data</span><span>Tools</span><span>Extensions</span><span>Help</span>
+                                </div>
+                            </div>
+                            <div class="sheets-grid-container">
+                                <table class="sheets-grid-table">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>A</th>
+                                            <th>B</th>
+                                            <th>C</th>
+                                            <th>D</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td class="cell-active"></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>2</td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>3</td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mockup-caption">Blank Google Spreadsheet ready in your account</div>
+                        </div>
+
+                        <!-- Step 2 Mock: Google Workspace Marketplace -->
+                        <div class="mock-viewport" id="mock-step-2">
+                            <div class="marketplace-header">
+                                <div class="marketplace-title">Google Workspace Marketplace</div>
+                            </div>
+                            <div class="marketplace-content">
+                                <div class="marketplace-app-card">
+                                    <div class="marketplace-logo">🛡️</div>
+                                    <div class="marketplace-app-info">
+                                        <h3 style="margin: 0;">AmerisPro OSH Add-on</h3>
+                                        <p style="margin: 2px 0 6px 0;">By AmerisPro Safety Tech</p>
+                                        <button class="marketplace-install-btn" onclick="switchStep(3)">Install</button>
+                                    </div>
+                                </div>
+                                <div class="marketplace-app-details" style="margin-top: 10px;">
+                                    <p style="margin: 0;">Automate safety inspection checklists, staff rosters, and compliance logs directly inside Google Sheets.</p>
+                                </div>
+                            </div>
+                            <div class="mockup-caption">Install the extension from the Workspace Marketplace</div>
+                        </div>
+
+                        <!-- Step 3 Mock: Extensions Menu Dropdown -->
+                        <div class="mock-viewport" id="mock-step-3">
+                            <div class="sheets-header">
+                                <div class="sheets-green-bar">
+                                    <span class="sheets-doc-title">Safety Database</span>
+                                </div>
+                                <div class="sheets-menu-bar">
+                                    <span>File</span><span>Edit</span><span>View</span><span>Insert</span><span>Format</span><span>Data</span><span>Tools</span><span class="menu-active">Extensions</span><span>Help</span>
+                                </div>
+                            </div>
+                            <div style="position: relative; height: 180px; background: #f8fafc; border-bottom: 1px solid var(--border); flex-grow: 1;">
+                                <!-- Mock Dropdown Menu -->
+                                <div class="mock-dropdown">
+                                    <div class="dropdown-item">Add-ons</div>
+                                    <div class="dropdown-item">Macros</div>
+                                    <div class="dropdown-item dropdown-has-sub active-sub">
+                                        <span>AmerisPro</span>
+                                        <span>▶</span>
+                                    </div>
+                                    <div class="dropdown-item">AppSheet</div>
+                                </div>
+                                <!-- Mock Sub-dropdown Menu -->
+                                <div class="mock-sub-dropdown">
+                                    <div class="dropdown-item highlighted-menu">⚙️ Initialize Workspace ⚡</div>
+                                    <div class="dropdown-item">📋 Sync Staff Roster</div>
+                                    <div class="dropdown-item">🔑 Reset License</div>
+                                </div>
+                            </div>
+                            <div class="mockup-caption">Run the Add-on to automatically generate all database tabs</div>
+                        </div>
+
+                        <!-- Step 4 Mock: Console Portal Login -->
+                        <div class="mock-viewport" id="mock-step-4">
+                            <div class="console-login-mock">
+                                <div class="console-header-mock">🛡️ AmerisPro Console</div>
+                                <div class="console-body-mock">
+                                    <label>Enter Google Spreadsheet ID</label>
+                                    <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                                        <input type="text" value="1x9B_c2A_fK5Lz4D..." readonly style="width: 100%; padding: 10px; padding-right: 35px; border: 2px solid var(--success); border-radius: 8px; font-size: 0.85rem; font-family: monospace; outline: none; background: white; color: var(--text-main);">
+                                        <span style="position: absolute; right: 10px; color: var(--success); font-weight: bold; font-size: 1.1rem;">✓</span>
+                                    </div>
+                                    <button class="console-btn-mock">Save Connection</button>
+                                </div>
+                            </div>
+                            <div class="mockup-caption">Paste your Spreadsheet ID into the portal to connect!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Why Choose AmerisPro -->
     <section id="features" style="background: white; border-top: 2.5px solid var(--border); border-bottom: 2.5px solid var(--border); max-width: 100%;">
         <div style="max-width: 1300px; margin: 0 auto; padding: 0 40px;">
@@ -760,6 +1314,18 @@
                 </div>
             </form>
             <script>
+                function switchStep(stepNum) {
+                    // Update active step cards
+                    document.querySelectorAll('.step-card').forEach((card, idx) => {
+                        card.classList.toggle('active', idx === (stepNum - 1));
+                    });
+
+                    // Update active mockups
+                    document.querySelectorAll('.mock-viewport').forEach((viewport, idx) => {
+                        viewport.classList.toggle('active', idx === (stepNum - 1));
+                    });
+                }
+
                 function submitContactForm(event) {
                     event.preventDefault();
                     document.getElementById("contact-success-msg").style.display = "block";

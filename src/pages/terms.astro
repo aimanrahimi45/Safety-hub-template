@@ -1,66 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service - AmerisPro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #475569;
-            --primary: #2563eb;
-            --border: #e2e8f0;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.6;
-            margin: 0;
-            padding: 40px 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-            border: 1px solid var(--border);
-        }
-        h1 {
-            font-size: 2rem;
-            margin-top: 0;
-            color: var(--text-main);
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 15px;
-        }
-        h2 {
-            font-size: 1.25rem;
-            margin-top: 30px;
-            color: var(--primary);
-        }
-        p, li {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-        ul {
-            padding-left: 20px;
-        }
-        .footer {
-            margin-top: 40px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border);
-            padding-top: 20px;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Terms of Service - AmerisPro">
     <div class="container">
         <h1>Terms of Service</h1>
         <p><strong>Effective Date: June 18, 2026</strong></p>
@@ -96,5 +38,43 @@
             &copy; 2026 AmerisPro. All rights reserved.
         </div>
     </div>
-</body>
-</html>
+</Layout>
+
+<style>
+    .container {
+        max-width: 800px;
+        margin: 40px auto;
+        background: #ffffff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        border: 1px solid #e2e8f0;
+    }
+    h1 {
+        font-size: 2rem;
+        margin-top: 0;
+        color: #0f172a;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 15px;
+    }
+    h2 {
+        font-size: 1.25rem;
+        margin-top: 30px;
+        color: #2563eb;
+    }
+    p, li {
+        color: #475569;
+        font-size: 0.95rem;
+    }
+    ul {
+        padding-left: 20px;
+    }
+    .footer {
+        margin-top: 40px;
+        font-size: 0.8rem;
+        color: #475569;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 20px;
+        text-align: center;
+    }
+</style>

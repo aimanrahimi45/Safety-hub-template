@@ -1,0 +1,76 @@
+---
+// Contact Component
+---
+<!-- Contact Us & Form -->
+    <section id="contact">
+        <div class="contact-container">
+            <div class="contact-mascot-col">
+                <img src="mascot_contact.png" alt="Contact Support Mascot" class="contact-mascot">
+                <h3 style="font-family: var(--font-heading); font-weight: 800; font-size: 1.6rem; margin-top: 15px;">Get In Touch With Us</h3>
+                <p style="color:var(--text-muted); font-size:0.95rem; text-align:center; max-width:320px; margin-top:5px;">Have questions, ideas, or feedback? Send us a message and our safety officer mascot will alert our developers!</p>
+            </div>
+            <form class="contact-form" id="contact-form" onsubmit="submitContactForm(event)">
+                <div class="form-group">
+                    <label for="contact-name">Your Name</label>
+                    <input type="text" id="contact-name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-email">Your Email</label>
+                    <input type="email" id="contact-email" placeholder="john@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-message">Your Message</label>
+                    <textarea id="contact-message" rows="4" placeholder="How can we help you improve site compliance?" required></textarea>
+                </div>
+                <button type="submit" class="btn-pill btn-success" style="align-self: flex-start; padding: 12px 30px;">Send Message</button>
+                <div id="contact-success-msg" style="display: none; background: #ECFDF5; border: 2.5px solid #10B981; color: #065F46; padding: 12px; border-radius: 12px; font-weight: 600; text-align: center; margin-top: 10px;">
+                    🎉 Message Sent! Thank you for reaching out to AmerisPro support.
+                </div>
+            </form>
+            <script>
+                function switchStep(stepNum) {
+                    // Update active step cards
+                    document.querySelectorAll('.step-card').forEach((card, idx) => {
+                        card.classList.toggle('active', idx === (stepNum - 1));
+                    });
+
+                    // Update active mockups
+                    document.querySelectorAll('.mock-viewport').forEach((viewport, idx) => {
+                        viewport.classList.toggle('active', idx === (stepNum - 1));
+                    });
+                }
+
+                function submitContactForm(event) {
+                    event.preventDefault();
+                    document.getElementById("contact-success-msg").style.display = "block";
+                    document.getElementById("contact-form").reset();
+                    setTimeout(() => {
+                        document.getElementById("contact-success-msg").style.display = "none";
+                    }, 4000);
+                }
+            </script>
+        </div>
+    </section>
+
+<script>
+                function switchStep(stepNum) {
+                    // Update active step cards
+                    document.querySelectorAll('.step-card').forEach((card, idx) => {
+                        card.classList.toggle('active', idx === (stepNum - 1));
+                    });
+
+                    // Update active mockups
+                    document.querySelectorAll('.mock-viewport').forEach((viewport, idx) => {
+                        viewport.classList.toggle('active', idx === (stepNum - 1));
+                    });
+                }
+
+                function submitContactForm(event) {
+                    event.preventDefault();
+                    document.getElementById("contact-success-msg").style.display = "block";
+                    document.getElementById("contact-form").reset();
+                    setTimeout(() => {
+                        document.getElementById("contact-success-msg").style.display = "none";
+                    }, 4000);
+                }
+            </script>

@@ -14,3 +14,8 @@ Desktop.ini
 
 # Private Backend Script
 Safety_Hub_Backend.js
+
+# Astro Build Folders
+.astro/
+dist/
+node_modules/

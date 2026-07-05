@@ -19,3 +19,6 @@ Safety_Hub_Backend.js
 .astro/
 dist/
 node_modules/
+
+# Local Legislation PDFs
+legislation/

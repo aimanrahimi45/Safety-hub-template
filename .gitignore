@@ -22,3 +22,6 @@ node_modules/
 
 # Local Legislation PDFs
 legislation/
+
+# Environment Variables
+.env

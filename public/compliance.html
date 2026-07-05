@@ -519,6 +519,107 @@
             color: var(--text-muted);
             margin: 0 0 20px 0;
         }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .progress-label {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            color: var(--text-main);
+            min-width: 180px;
+        }
+        .progress-bar-bg {
+            flex: 1;
+            background: var(--bg);
+            border: 3px solid var(--border);
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            background: var(--success);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Category Filter Pills */
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .filter-pill {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--border);
+            transition: all 0.1s ease;
+        }
+        .filter-pill:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
+        }
+        .filter-pill.active {
+            background: var(--warning);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border);
+        }
+        
+        /* Collapsible Accordions */
+        .frequency-header {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s ease;
+        }
+        .frequency-header:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: var(--shadow-md);
+        }
+        .frequency-header-title {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .frequency-header-arrow {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
+        }
+        .frequency-group.collapsed .frequency-header-arrow {
+            transform: rotate(-90deg);
+        }
+        .frequency-group.collapsed .obligations-list {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -717,6 +818,82 @@
             switchTab('register');
         }
 
+        // Helper to resolve which profiler category an obligation belongs to
+        function resolveCategory(item) {
+            const trigger = (item.trigger_activity || "").toLowerCase();
+            const docName = (item.clauses?.documents?.name || "").toLowerCase();
+            
+            for (const cat in CATEGORY_MAP) {
+                const keywords = CATEGORY_MAP[cat];
+                for (const kw of keywords) {
+                    if (trigger.indexOf(kw) !== -1 || docName.indexOf(kw) !== -1) {
+                        return cat;
+                    }
+                }
+            }
+            return "general";
+        }
+
+        // Live update progress bar count
+        function updateProgressBar() {
+            const items = document.querySelectorAll('.obligation-item');
+            if (items.length === 0) return;
+
+            let compliedCount = 0;
+            items.forEach(item => {
+                const id = item.getAttribute('data-id');
+                if (localStorage.getItem(`obl_check_${id}`) === "true") {
+                    compliedCount++;
+                }
+            });
+
+            const percent = Math.round((compliedCount / items.length) * 100);
+            const fillEl = document.getElementById('progress-fill');
+            const labelEl = document.getElementById('progress-lbl');
+
+            if (fillEl && labelEl) {
+                fillEl.style.width = `${percent}%`;
+                labelEl.innerText = `Progress: ${compliedCount} of ${items.length} Complied (${percent}%)`;
+            }
+        }
+
+        // Accordion slide trigger
+        function toggleAccordion(groupId) {
+            const group = document.getElementById(groupId);
+            if (group) {
+                group.classList.toggle('collapsed');
+            }
+        }
+
+        // Category filtering logic
+        function filterCategory(cat, element) {
+            document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            // Hide/Show items matching category
+            document.querySelectorAll('.obligation-item').forEach(item => {
+                const itemCat = item.getAttribute('data-category');
+                if (cat === 'all' || itemCat === cat) {
+                    item.style.display = 'grid';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Hide frequency groups that have zero visible items
+            document.querySelectorAll('.frequency-group').forEach(group => {
+                const visibleCount = group.querySelectorAll('.obligation-item[style="display: grid;"]').length;
+                if (visibleCount > 0) {
+                    group.style.display = 'block';
+                    // Update the badge count inside the accordion header
+                    const badge = group.querySelector('.rules-count-badge');
+                    if (badge) badge.innerText = `${visibleCount} rules`;
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        }
+
         // Fetch matched obligations from Supabase via Google Apps Script proxy
         async function loadComplianceRegister() {
             const registerContent = document.getElementById('register-content');
@@ -738,7 +915,9 @@
             const filters = `or=(${orConditions})`;
 
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getComplianceObligations&filters=${encodeURIComponent(filters)}`);
+                // PASS both filters and selected categories to ensure proper document exclusion
+                const categoriesArg = encodeURIComponent(selectedCategories.join(","));
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getComplianceObligations&filters=${encodeURIComponent(filters)}&categories=${categoriesArg}`);
                 const result = await response.json();
 
                 if (result.status !== "SUCCESS") {
@@ -779,8 +958,40 @@
                     }
                 });
 
-                // Render html
-                let html = "";
+                // Build Progress Bar HTML
+                let headerHtml = `
+                    <div class="progress-container">
+                        <div class="progress-label" id="progress-lbl">Progress: Loading...</div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                `;
+
+                // Build Category Filter Pills HTML
+                const categoryNames = {
+                    "general": "📋 General OSH",
+                    "heights": "🪜 Heights",
+                    "confined": "🕳️ Confined Space",
+                    "chemicals": "🧪 Chemicals",
+                    "machinery": "⚙️ Machinery",
+                    "gig": "🛵 Gig Workers",
+                    "petroleum": "🛢️ Petroleum"
+                };
+
+                headerHtml += `<div class="filter-pills">`;
+                headerHtml += `<div class="filter-pill active" onclick="filterCategory('all', this)">⭐ Show All</div>`;
+                headerHtml += `<div class="filter-pill" onclick="filterCategory('general', this)">📋 General OSH</div>`;
+                
+                selectedCategories.forEach(cat => {
+                    if (categoryNames[cat]) {
+                        headerHtml += `<div class="filter-pill" onclick="filterCategory('${cat}', this)">${categoryNames[cat]}</div>`;
+                    }
+                });
+                headerHtml += `</div>`;
+
+                // Render Frequency Accordions
+                let listHtml = `<div id="register-accordions">`;
                 const freqTitles = {
                     "continuous": "🔄 Continuous & Operational Duties",
                     "daily": "☀️ Daily Routines",
@@ -795,9 +1006,17 @@
                     const list = groups[key];
                     if (list.length === 0) continue;
 
-                    html += `
-                        <div class="frequency-group">
-                            <div class="frequency-title">${freqTitles[key]}</div>
+                    listHtml += `
+                        <div class="frequency-group" id="group-${key}">
+                            <div class="frequency-header" onclick="toggleAccordion('group-${key}')">
+                                <div class="frequency-header-title">
+                                    <span>${freqTitles[key]}</span>
+                                    <span class="tag rules-count-badge" style="background: var(--bg); font-size: 0.8rem; padding: 2px 8px; border-radius: 6px;">
+                                        ${list.length} rules
+                                    </span>
+                                </div>
+                                <div class="frequency-header-arrow">▼</div>
+                            </div>
                             <div class="obligations-list">
                     `;
 
@@ -806,9 +1025,10 @@
                         const docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
                         const docType = item.clauses?.documents?.type || "Act";
                         const legalWeight = item.legal_weight || "mandatory";
+                        const resolvedCat = resolveCategory(item);
                         
-                        html += `
-                            <div class="obligation-item">
+                        listHtml += `
+                            <div class="obligation-item" data-id="${item.id}" data-category="${resolvedCat}" style="display: grid;">
                                 <div class="obligation-details">
                                     <h4>${item.required_action}</h4>
                                     <p>${item.clauses?.clause_text || ""}</p>
@@ -827,13 +1047,17 @@
                         `;
                     });
 
-                    html += `
+                    listHtml += `
                             </div>
                         </div>
                     `;
                 }
+                listHtml += `</div>`;
 
-                registerContent.innerHTML = html;
+                registerContent.innerHTML = headerHtml + listHtml;
+                
+                // Set initial progress bar calculations
+                updateProgressBar();
 
             } catch (err) {
                 console.error(err);
@@ -841,7 +1065,7 @@
             }
         }
 
-        // Toggle obligation compliance state locally
+        // Toggle obligation compliance state locally and update live progress bar
         function toggleCompliance(element, id) {
             const isComplied = element.classList.toggle('complied');
             const checkbox = element.querySelector('input');
@@ -851,6 +1075,9 @@
             statusLabel.innerText = isComplied ? 'Complied' : 'Pending';
 
             localStorage.setItem(`obl_check_${id}`, isComplied ? "true" : "false");
+            
+            // Recalculate progress immediately
+            updateProgressBar();
         }
 
         // Search keypress trigger

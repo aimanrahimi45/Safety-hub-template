@@ -11,3 +11,6 @@ Desktop.ini
 .gemini/
 *.log
 *.tmp
+
+# Private Backend Script
+Safety_Hub_Backend.js

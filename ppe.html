@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmerisPro PPE Management</title>
+    <link rel="icon" type="image/png" href="amerispro_128x128.png">
+    <link rel="apple-touch-icon" href="amerispro_128x128.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <!-- Chart.js CDN for premium responsive data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px;
+            padding-bottom: 60px;
+        }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 3px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            cursor: pointer;
+            border-bottom: 4px solid transparent;
+            transition: all 0.15s ease;
+            width: auto;
+        }
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: var(--bg);
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 6-Month Warning Alert Card */
+        #warning-card {
+            display: none;
+            background: var(--warning);
+            border: 3px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin: 15px 0;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            line-height: 1.4;
+            box-shadow: var(--shadow-sm);
+        }
+        #warning-card strong {
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        /* Analytics KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .kpi-card {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease;
+        }
+        .kpi-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 6px 6px 0px var(--border);
+        }
+        .kpi-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        .kpi-lbl {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* Chart Grid Layout */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .chart-box {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+        }
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: var(--text-main);
+            margin-bottom: 15px;
+            border-bottom: 3px solid var(--border);
+            padding-bottom: 8px;
+        }
+        .chart-container {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 250px;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+        }
+        .badge-pending { background: var(--warning); color: var(--text-main); }
+        .badge-approved { background: var(--success); color: #2B2D42; }
+        .badge-rejected { background: var(--primary); color: #FFFFFF; }
+
+        /* Action Buttons */
+        .btn-action-group {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-mini {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            font-family: var(--font-heading) !important;
+            font-weight: 700;
+            font-size: 0.75rem;
+            border: 2px solid var(--border) !important;
+            box-shadow: 2px 2px 0px var(--border) !important;
+            border-radius: 10px !important;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            width: auto;
+        }
+        .btn-mini:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--border) !important;
+        }
+        .btn-mini:active {
+            transform: translate(1px, 1px);
+            box-shadow: 0px 0px 0px var(--border) !important;
+        }
+        .btn-mini-approve { background: var(--success) !important; color: #2B2D42 !important; }
+        .btn-mini-reject { background: var(--primary) !important; color: #FFFFFF !important; }
+
+        /* Form Layout Enhancements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        /* Private Lock Screen */
+        #lock-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        /* Horizontal heavy users list */
+        .heavy-users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .heavy-user-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg);
+            border: 3px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            box-shadow: 2px 2px 0px var(--border);
+        }
+        .heavy-user-name { font-weight: 700; color: var(--text-main); }
+        .heavy-user-count { 
+            background: var(--primary); 
+            color: white; 
+            font-weight: bold; 
+            border-radius: 20px; 
+            padding: 2px 8px; 
+            font-size: 0.75rem;
+            border: 2px solid var(--border);
+        }
+
+        /* Fullscreen and Inline Spinner Styles */
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .spinner-mini {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(37, 99, 235, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast-notification {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 3px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+            max-width: 420px;
+            transform: translateX(120%);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+        }
+        .toast-notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .toast-notification.success {
+            border-left: 6px solid #10b981;
+        }
+        .toast-notification.error {
+            border-left: 6px solid #ef4444;
+        }
+        .toast-notification.warning {
+            border-left: 6px solid #f59e0b;
+        }
+        .toast-notification.info {
+            border-left: 6px solid #3b82f6;
+        }
+        .toast-icon {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toast-message {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            flex: 1;
+            line-height: 1.4;
+        }
+        .toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 2px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .toast-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+
+        /* Mobile overrides for PPE */
+        @media (max-width: 768px) {
+            .tabs-nav {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                gap: 4px !important;
+                padding-bottom: 6px !important;
+            }
+            .tab-btn {
+                padding: 8px 12px !important;
+                font-size: 0.8rem !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+            }
+            .kpi-card {
+                padding: 14px !important;
+            }
+            .kpi-val {
+                font-size: 1.4rem !important;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .chart-box {
+                padding: 14px !important;
+                min-height: 200px !important;
+            }
+            .chart-container {
+                height: 180px !important;
+            }
+            .form-grid {
+                grid-template-columns: minmax(0, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .tab-btn {
+                padding: 6px 10px !important;
+                font-size: 0.75rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to AmerisPro
+    </a>
+
+    <!-- LOCKED SCREEN VIEW -->
+    <div id="lock-screen" class="card">
+        <div style="font-size: 3rem; margin-bottom: 20px;">🔐</div>
+        <h2>PPE Management System is Private</h2>
+        <p style="color:var(--text-muted); margin-bottom: 20px; max-width: 400px; font-size: 0.85rem;">This database is confidential. Please unlock using your Dashboard Security PIN.</p>
+        <button type="button" class="submit-btn" style="width:auto; padding: 12px 24px;" onclick="unlockSystem()">Unlock Portal</button>
+    </div>
+
+    <!-- MAIN PORTAL DASHBOARD (HIDDEN ON START) -->
+    <div id="dashboard-content" style="display: none;">
+        <!-- Tabs Navigation -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('tab-record')">📝 Record Request</button>
+            <button class="tab-btn" onclick="switchTab('tab-logs')">📋 Manage Requests</button>
+            <button class="tab-btn" onclick="switchTab('tab-analytics')">📊 Usage Analytics</button>
+        </div>
+
+        <!-- TAB 1: RECORD REQUEST FORM -->
+        <div id="tab-record" class="tab-content active">
+            <div class="card">
+                <h2>Record PPE Request / Issue</h2>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:-10px; margin-bottom:20px;">Log an on-site request or direct issue of replacement PPE.</p>
+                
+
+
+                <form id="ppeRequestForm">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Request Date <span style="color:var(--danger)">*</span></label>
+                            <input type="date" id="req-date" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Requestor / Supervisor <span style="color:var(--danger)">*</span></label>
+                            <input type="text" id="req-supervisor" value="SHO" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Staff ID <span style="color:var(--danger)">*</span></label>
+                            <input type="text" id="req-staff-id" placeholder="e.g. ST-101" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Staff Name <span style="color:var(--danger)">*</span></label>
+                            <input type="text" id="req-staff-name" placeholder="Full Name" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Department <span style="color:var(--danger)">*</span></label>
+                            <select id="req-dept" required>
+                                <option value="" disabled selected>Select Department</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="margin-top: 15px;">
+                        <div class="input-group">
+                            <label>PPE Type <span style="color:var(--danger)">*</span></label>
+                            <select id="req-ppe-type" required>
+                                <option value="" disabled selected>Select PPE Type</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Size / Dimensions <span style="color:var(--danger)">*</span></label>
+                            <input type="text" id="req-size" placeholder="e.g. Size 9, Large" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Color / Specs (Optional)</label>
+                            <input type="text" id="req-color-specs" placeholder="e.g. Black, Double Filter">
+                        </div>
+                        <div class="input-group">
+                            <label>Replacement Reason <span style="color:var(--danger)">*</span></label>
+                            <select id="req-reason" required>
+                                <option value="Damaged">Damaged / Worn Out</option>
+                                <option value="Expired">Expired</option>
+                                <option value="Lost">Lost / Missing</option>
+                                <option value="New Hire">New Issue (New Hire)</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DYNAMIC 6-MONTH WARNING CARD -->
+                    <div id="warning-card">
+                        <strong>⚠️ Smart Check Alert</strong>
+                        This worker received <span id="warn-ppe">PPE</span> less than 6 months ago (issued <span id="warn-date">date</span>, <span id="warn-months">X</span> months ago). Please record condition details in the remarks below.
+                    </div>
+
+                    <div class="input-group" style="margin-top: 15px;">
+                        <label id="lbl-remarks">Condition Remarks</label>
+                        <textarea id="req-remarks" rows="3" placeholder="Explain the condition of the previous PPE..."></textarea>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="direct-dispatch" style="width:20px; height:20px; margin:0; cursor:pointer;" checked>
+                        <label for="direct-dispatch" style="margin:0; font-size:0.85rem; font-weight:500; color:var(--text-main); cursor:pointer;">
+                            <strong>Directly Approve & Issue?</strong> Uncheck this to save as "Pending Approval" (e.g. if awaiting stock).
+                        </label>
+                    </div>
+
+                    <button type="submit" class="submit-btn" style="margin-top: 25px;">Log & Save Record</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB 2: MANAGE REQUESTS & LOGS -->
+        <div id="tab-logs" class="tab-content">
+            <!-- Filter Options -->
+            <div class="card">
+                <h2>Manage PPE Transactions</h2>
+                <p id="ppe-db-status" style="font-size:0.8rem; color:var(--text-muted); margin-top: -10px; margin-bottom: 20px; display: none;">
+                    🗄️ Connected Database: <a id="ppe-db-link" href="#" target="_blank" style="color:var(--primary); text-decoration:underline; font-weight:600;">Open PPE System Google Sheet 🔗</a>
+                </p>
+                <div class="search-bar" style="margin-bottom: 20px;">
+                    <input type="text" id="search-query" placeholder="Search by Staff Name or ID..." oninput="filterData()">
+                    <button type="button" class="secondary-btn" style="width:auto;" onclick="loadDatabaseData()">🔄 Refresh</button>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label style="margin-top:0; font-size:0.75rem;">Status Filter</label>
+                        <select id="filter-status" onchange="filterData()">
+                            <option value="All">All Requests</option>
+                            <option value="Pending Approval">Pending Approval</option>
+                            <option value="Approved / Dispatched">Approved / Dispatched</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label style="margin-top:0; font-size:0.75rem;">Department Filter</label>
+                        <select id="filter-dept" onchange="filterData()">
+                            <option value="All">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label style="margin-top:0; font-size:0.75rem;">PPE Type Filter</label>
+                        <select id="filter-ppe" onchange="filterData()">
+                            <option value="All">All PPE Types</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="justify-content: flex-end; display: flex; align-items: flex-end;">
+                        <button type="button" class="secondary-btn" onclick="exportPpeToCsv()" style="width:100%; height:42px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            📥 Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Table Card -->
+            <div class="card" style="padding: 0; display: flex; flex-direction: column;">
+                <div style="overflow-x: auto; width: 100%;">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                        <thead>
+                            <tr style="background: #1e293b; color: white;">
+                                <th style="padding: 12px 16px; text-align: left;">Request ID</th>
+                                <th style="padding: 12px 16px; text-align: left;">Date</th>
+                                <th style="padding: 12px 16px; text-align: left;">Staff Name (ID)</th>
+                                <th style="padding: 12px 16px; text-align: left;">Department</th>
+                                <th style="padding: 12px 16px; text-align: left;">PPE Issued</th>
+                                <th style="padding: 12px 16px; text-align: left;">Reason</th>
+                                <th style="padding: 12px 16px; text-align: left;">Status</th>
+                                <th style="padding: 12px 16px; text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">⏳ Click Refresh to load logs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Controls -->
+                <div id="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.02); flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Showing <span id="pag-start">0</span>-<span id="pag-end">0</span> of <span id="pag-total">0</span> requests
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="clear-btn btn-mini" id="btn-prev-page" style="padding: 6px 12px; width: auto; font-size: 0.75rem;" onclick="prevPage()">◀ Previous</button>
+                        <span id="page-num-display" style="font-size: 0.85rem; font-weight: 600; padding: 4px 10px; background: rgba(124, 58, 237, 0.08); border-radius: 6px; color: var(--primary);">Page 1 of 1</span>
+                        <button type="button" class="submit-btn btn-mini" id="btn-next-page" style="padding: 6px 12px; width: auto; font-size: 0.75rem; background: var(--primary); color: white; border: none;" onclick="nextPage()">Next ▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: VISUAL ANALYTICS -->
+        <div id="tab-analytics" class="tab-content">
+            <!-- KPI Display Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-val" id="kpi-total-issued">0</div>
+                    <div class="kpi-lbl">Total Issued</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-val" id="kpi-total-pending">0</div>
+                    <div class="kpi-lbl">Pending Requests</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-val" id="kpi-top-dept">-</div>
+                    <div class="kpi-lbl">Heavy Dept</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-val" id="kpi-top-ppe">-</div>
+                    <div class="kpi-lbl">Trending PPE</div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Dept Bar Chart -->
+                <div class="chart-box">
+                    <div class="chart-title">PPE Consumption by Department</div>
+                    <div class="chart-container">
+                        <canvas id="chart-dept"></canvas>
+                    </div>
+                </div>
+                
+                <!-- PPE Type Pie Chart -->
+                <div class="chart-box">
+                    <div class="chart-title">PPE Type Distribution</div>
+                    <div class="chart-container">
+                        <canvas id="chart-ppe"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid" style="margin-top:20px;">
+                <!-- Monthly Trend Line Chart -->
+                <div class="chart-box">
+                    <div class="chart-title">Monthly Replacement Trend</div>
+                    <div class="chart-container">
+                        <canvas id="chart-trends"></canvas>
+                    </div>
+                </div>
+
+                <!-- Heavy Users List -->
+                <div class="chart-box">
+                    <div class="chart-title">Frequent Requesters (Top 5 Staff)</div>
+                    <div class="heavy-users-list" id="heavy-users-container">
+                        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.85rem;">No request data loaded.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fullscreen Loading Overlay -->
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white;">
+    <div class="spinner"></div>
+    <div id="loading-message" style="font-weight: 600; font-size: 1.1rem;">Saving request details...</div>
+</div>
+
+<script>
+    const APPS_SCRIPT_URL = GOOGLE_SCRIPT_URL; // Alias to central config.js URL
+
+
+    let ppeData = [];
+    let activeCharts = {};
+
+    // Pagination state
+    let currentPage = 1;
+    const rowsPerPage = 15;
+    let filteredData = [];
+
+    // --- SECURITY PIN VALIDATION ---
+    function getDashboardPin() {
+        return localStorage.getItem("safety_hub_pin") || "";
+    }
+
+    function updateDatabaseLink(url) {
+        const statusEl = document.getElementById('ppe-db-status');
+        const linkEl = document.getElementById('ppe-db-link');
+        if (statusEl && linkEl && url) {
+            linkEl.href = url;
+            statusEl.style.display = 'block';
+        }
+    }
+
+    function populateDynamicDropdowns() {
+        const depts = getSystemDepartments();
+        const ppeTypes = getSystemPpeTypes();
+
+        const reqDept = document.getElementById("req-dept");
+        if (reqDept) {
+            reqDept.innerHTML = '<option value="" disabled selected>Select Department</option>';
+            depts.forEach(d => {
+                reqDept.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+        }
+
+        const filterDept = document.getElementById("filter-dept");
+        if (filterDept) {
+            filterDept.innerHTML = '<option value="All">All Departments</option>';
+            depts.forEach(d => {
+                filterDept.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+        }
+
+        const reqPpeType = document.getElementById("req-ppe-type");
+        if (reqPpeType) {
+            reqPpeType.innerHTML = '<option value="" disabled selected>Select PPE Type</option>';
+            ppeTypes.forEach(t => {
+                reqPpeType.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+
+        const filterPpe = document.getElementById("filter-ppe");
+        if (filterPpe) {
+            filterPpe.innerHTML = '<option value="All">All PPE Types</option>';
+            ppeTypes.forEach(t => {
+                filterPpe.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+    }
+
+    async function verifyPinState() {
+        const pin = getDashboardPin();
+        if (pin) {
+            const overlay = document.getElementById('loading-overlay');
+            const loadMsg = document.getElementById('loading-message');
+            overlay.style.display = 'flex';
+            loadMsg.innerText = "Verifying security PIN & loading database...";
+
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&spreadsheetId=${localStorage.getItem("safety_hub_spreadsheet_id")}&pin=${pin}`);
+                const resJson = await response.json();
+
+                if (resJson.status === "ERROR") {
+                    localStorage.removeItem("safety_hub_pin");
+                    document.getElementById('lock-screen').style.display = 'block';
+                    document.getElementById('dashboard-content').style.display = 'none';
+                    alert("❌ Session expired or PIN invalid. Please unlock again.");
+                } else {
+                    ppeData = resJson.data || [];
+                    if (resJson.spreadsheetUrl) {
+                        updateDatabaseLink(resJson.spreadsheetUrl);
+                    }
+                    document.getElementById('lock-screen').style.display = 'none';
+                    document.getElementById('dashboard-content').style.display = 'block';
+                    filterData();
+                }
+            } catch (err) {
+                console.error("PIN check failed: ", err);
+                const tbody = document.getElementById('logs-tbody');
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:#dc2626;">Connection error: ${err.message}</td></tr>`;
+            } finally {
+                overlay.style.display = 'none';
+            }
+        } else {
+            document.getElementById('lock-screen').style.display = 'block';
+            document.getElementById('dashboard-content').style.display = 'none';
+        }
+    }
+
+    async function unlockSystem() {
+        const pin = prompt("🔐 Please enter the AmerisPro PIN to unlock the PPE Management system:");
+        if (pin) {
+            const overlay = document.getElementById('loading-overlay');
+            const loadMsg = document.getElementById('loading-message');
+            overlay.style.display = 'flex';
+            loadMsg.innerText = "Verifying security PIN...";
+
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&spreadsheetId=${localStorage.getItem("safety_hub_spreadsheet_id")}&pin=${pin}`);
+                const resJson = await response.json();
+
+                if (resJson.status === "ERROR") {
+                    alert("❌ Invalid PIN entered!");
+                } else {
+                    localStorage.setItem("safety_hub_pin", pin);
+                    ppeData = resJson.data || [];
+                    if (resJson.spreadsheetUrl) {
+                        updateDatabaseLink(resJson.spreadsheetUrl);
+                    }
+                    document.getElementById('lock-screen').style.display = 'none';
+                    document.getElementById('dashboard-content').style.display = 'block';
+                    filterData();
+                }
+            } catch (err) {
+                alert("❌ Authentication Failed: " + err.message);
+            } finally {
+                overlay.style.display = 'none';
+            }
+        }
+    }
+
+
+
+    function formatDateToYmd(date) {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function showToast(message, type = 'success', duration = 3000) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+
+        let icon = 'ℹ️';
+        if (type === 'success') icon = '🎉';
+        else if (type === 'error') icon = '❌';
+        else if (type === 'warning') icon = '⚠️';
+
+        toast.innerHTML = `
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-message">${message}</div>
+            <button type="button" class="toast-close">&times;</button>
+        `;
+
+        container.appendChild(toast);
+
+        // Slide in
+        setTimeout(() => toast.classList.add('show'), 50);
+
+        // Setup auto close
+        let closeTimeout = setTimeout(() => {
+            closeToast(toast);
+        }, duration);
+
+        // Click X to close
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            clearTimeout(closeTimeout);
+            closeToast(toast);
+        });
+    }
+
+    function closeToast(toast) {
+        toast.classList.remove('show');
+        toast.style.transform = 'translateX(120%)';
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 400);
+    }
+
+    // --- TAB SWITCHING ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
+        if (targetBtn) targetBtn.classList.add('active');
+        
+        document.getElementById(tabId).classList.add('active');
+        
+        if (tabId === 'tab-analytics') {
+            setTimeout(renderAnalytics, 100);
+        }
+    }
+
+    // --- SMART 6-MONTH LOOKUP ---
+    const staffIdInput = document.getElementById('req-staff-id');
+    const ppeTypeSelect = document.getElementById('req-ppe-type');
+    const reqDateInput = document.getElementById('req-date');
+
+    [staffIdInput, ppeTypeSelect, reqDateInput].forEach(element => {
+        element.addEventListener('change', checkSixMonthWarning);
+    });
+    staffIdInput.addEventListener('input', checkSixMonthWarning);
+    staffIdInput.addEventListener('blur', checkSixMonthWarning);
+    reqDateInput.addEventListener('input', checkSixMonthWarning);
+
+    // Helper to normalize staff ID (strip trailing .0 decimals, trim, and lowercase)
+    function normalizeStaffId(id) {
+        if (id === null || id === undefined) return "";
+        return String(id).trim().toLowerCase().replace(/\.0+$/, "");
+    }
+
+    // Helper to robustly parse date strings from Google Sheets or form inputs
+    function parseRobustDate(dateStr) {
+        if (!dateStr) return null;
+        if (dateStr instanceof Date) return dateStr;
+        
+        dateStr = String(dateStr).trim();
+        
+        // Try standard Date.parse first
+        let timestamp = Date.parse(dateStr);
+        if (!isNaN(timestamp)) {
+            return new Date(timestamp);
+        }
+        
+        // Handle formats like "D/M/YYYY H:M:S" or "DD/MM/YYYY H:M:S"
+        const parts = dateStr.split(' ');
+        const datePart = parts[0];
+        const timePart = parts[1] || "00:00:00";
+        
+        const dateSplit = datePart.includes('/') ? datePart.split('/') : datePart.split('-');
+        if (dateSplit.length === 3) {
+            let day, month, year;
+            
+            if (dateSplit[0].length === 4) {
+                // YYYY-MM-DD
+                year = parseInt(dateSplit[0], 10);
+                month = parseInt(dateSplit[1], 10) - 1;
+                day = parseInt(dateSplit[2], 10);
+            } else {
+                const p1 = parseInt(dateSplit[0], 10);
+                const p2 = parseInt(dateSplit[1], 10);
+                const p3 = parseInt(dateSplit[2], 10);
+                
+                if (p2 > 12) {
+                    // MM/DD/YYYY
+                    month = p1 - 1;
+                    day = p2;
+                } else if (p1 > 12) {
+                    // DD/MM/YYYY
+                    day = p1;
+                    month = p2 - 1;
+                } else {
+                    // Default to DD/MM/YYYY (Malaysia standard)
+                    day = p1;
+                    month = p2 - 1;
+                }
+                year = p3;
+            }
+            
+            const timeSplit = timePart.split(':');
+            const hour = parseInt(timeSplit[0] || 0, 10);
+            const minute = parseInt(timeSplit[1] || 0, 10);
+            const second = parseInt(timeSplit[2] || 0, 10);
+            
+            const d = new Date(year, month, day, hour, minute, second);
+            if (!isNaN(d.getTime())) {
+                return d;
+            }
+        }
+        
+        return null;
+    }
+
+    async function checkSixMonthWarning() {
+        const staffId = staffIdInput.value.trim();
+        const ppeType = ppeTypeSelect.value;
+        const warnCard = document.getElementById('warning-card');
+        const remarksText = document.getElementById('req-remarks');
+        const lblRemarks = document.getElementById('lbl-remarks');
+
+        if (!staffId || !ppeType) {
+            warnCard.style.display = 'none';
+            return;
+        }
+
+        let found = false;
+        let lastDate = "";
+        let diffMonths = 0;
+
+        // Parse active request date from form for duration comparison (essential for backlog logging)
+        const requestDateVal = reqDateInput.value;
+        const comparisonDate = parseRobustDate(requestDateVal) || new Date();
+
+        // Perform local search if local database cache is available
+        if (typeof ppeData !== 'undefined' && ppeData && ppeData.length > 0) {
+            const targetStaffId = normalizeStaffId(staffId);
+            const targetPpeType = ppeType.trim().toLowerCase();
+
+            // Loop backwards (newest records first) to find the latest matching approved record
+            for (let i = ppeData.length - 1; i >= 0; i--) {
+                const r = ppeData[i];
+                const rowStaffId = normalizeStaffId(r["Staff ID"]);
+                const rowPpeType = String(r["PPE Type"] || "").trim().toLowerCase();
+                const rowStatus = String(r["Status"] || "").trim().toLowerCase();
+
+                if (rowStaffId === targetStaffId && 
+                    rowPpeType === targetPpeType && 
+                    rowStatus.includes("approved")) {
+                    
+                    const rawDate = r["Action Date"] || r["Timestamp"];
+                    if (rawDate) {
+                        const lastIssueDateObj = parseRobustDate(rawDate);
+                        if (lastIssueDateObj) {
+                            const diffTime = comparisonDate - lastIssueDateObj;
+                            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                            
+                            diffMonths = parseFloat((diffDays / 30.44).toFixed(1));
+                            if (diffMonths < 0) diffMonths = 0;
+
+                            const yyyy = lastIssueDateObj.getFullYear();
+                            const mm = String(lastIssueDateObj.getMonth() + 1).padStart(2, '0');
+                            const dd = String(lastIssueDateObj.getDate()).padStart(2, '0');
+                            lastDate = `${yyyy}-${mm}-${dd}`;
+                            
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            // Fallback to server fetch if local database cache is not yet loaded
+            console.warn("Local database cache is empty, falling back to server-side check.");
+            try {
+                const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=checkLastIssue&spreadsheetId=${sheetId}&staffId=${encodeURIComponent(staffId)}&ppeType=${encodeURIComponent(ppeType)}`);
+                const resJson = await response.json();
+                if (resJson.status === "SUCCESS" && resJson.found) {
+                    found = true;
+                    lastDate = resJson.lastDate;
+                    diffMonths = resJson.diffMonths;
+                }
+            } catch (err) {
+                console.error("Server-side fallback check failed: ", err);
+            }
+        }
+
+        if (found && diffMonths < 6) {
+            document.getElementById('warn-ppe').innerText = ppeType;
+            document.getElementById('warn-date').innerText = lastDate;
+            document.getElementById('warn-months').innerText = diffMonths;
+            
+            warnCard.style.display = 'block';
+            remarksText.required = true;
+            lblRemarks.innerHTML = `Condition Remarks <span style="color:var(--danger)">*</span>`;
+            remarksText.placeholder = `Worker was issued ${ppeType} recently (${diffMonths} months ago). You MUST explain the condition of the old PPE here before saving.`;
+        } else {
+            warnCard.style.display = 'none';
+            remarksText.required = false;
+            lblRemarks.innerHTML = `Condition Remarks`;
+            remarksText.placeholder = `Explain the condition of the previous PPE...`;
+        }
+    }
+
+    // --- SUBMIT REQUEST ---
+    document.getElementById('ppeRequestForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const submitBtn = this.querySelector('.submit-btn');
+        const overlay = document.getElementById('loading-overlay');
+        
+        submitBtn.disabled = true;
+        overlay.style.display = 'flex';
+
+        const directIssue = document.getElementById('direct-dispatch').checked;
+        const remarksVal = document.getElementById('req-remarks').value.trim();
+
+        const payload = {
+            action: "ppeForm",
+            spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
+            requestDate: document.getElementById('req-date').value,
+            staffId: document.getElementById('req-staff-id').value.trim(),
+            staffName: document.getElementById('req-staff-name').value.trim(),
+            department: document.getElementById('req-dept').value,
+            supervisorName: document.getElementById('req-supervisor').value.trim(),
+            ppeType: document.getElementById('req-ppe-type').value,
+            size: document.getElementById('req-size').value.trim(),
+            colorSpecs: document.getElementById('req-color-specs').value.trim(),
+            replacementReason: document.getElementById('req-reason').value,
+            conditionRemarks: remarksVal || "-",
+            status: directIssue ? "Approved / Dispatched" : "Pending Approval",
+            authorizedBy: directIssue ? "Safety Officer" : ""
+        };
+
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            const text = await response.text();
+            const result = JSON.parse(text);
+
+            if (result.status === "ERROR") {
+                throw new Error(result.message);
+            }
+
+            overlay.style.display = 'none';
+            showToast(`PPE Request logged successfully! Request ID: ${result.requestId}`, "success", 3000);
+            
+            // Reset form
+            this.reset();
+            document.getElementById('req-date').value = formatDateToYmd(new Date());
+            document.getElementById('req-supervisor').value = "SHO";
+            document.getElementById('direct-dispatch').checked = true;
+            document.getElementById('warning-card').style.display = 'none';
+            document.getElementById('req-remarks').required = false;
+            document.getElementById('lbl-remarks').innerHTML = `Condition Remarks`;
+            
+            submitBtn.disabled = false;
+            loadDatabaseData(); // reload
+
+        } catch (err) {
+            overlay.style.display = 'none';
+            submitBtn.disabled = false;
+            alert("❌ Logging Failed: " + err.message);
+        }
+    });
+
+    // --- FETCH DATA ---
+    async function loadDatabaseData() {
+        const pin = getDashboardPin();
+        if (!pin) return;
+
+        const tbody = document.getElementById('logs-tbody');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">⏳ Fetching latest data from Google Sheet...</td></tr>';
+
+        const overlay = document.getElementById('loading-overlay');
+        const loadMsg = document.getElementById('loading-message');
+        overlay.style.display = 'flex';
+        loadMsg.innerText = "Refreshing database...";
+
+        try {
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=PPE&spreadsheetId=${localStorage.getItem("safety_hub_spreadsheet_id")}&pin=${pin}`);
+            const resJson = await response.json();
+
+            if (resJson.status === "ERROR") {
+                localStorage.removeItem("safety_hub_pin");
+                verifyPinState();
+                return;
+            }
+
+            ppeData = resJson.data || [];
+            if (resJson.spreadsheetUrl) {
+                updateDatabaseLink(resJson.spreadsheetUrl);
+            }
+            filterData();
+
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:#dc2626;">Failed to load data: ${err.message}</td></tr>`;
+        } finally {
+            overlay.style.display = 'none';
+        }
+    }
+
+    // --- FILTER DATA & RENDER TABLE ---
+    function filterData() {
+        const query = document.getElementById('search-query').value.toLowerCase().trim();
+        const status = document.getElementById('filter-status').value;
+        const dept = document.getElementById('filter-dept').value;
+        const ppe = document.getElementById('filter-ppe').value;
+
+        const filtered = ppeData.filter(r => {
+            const matchesQuery = !query || 
+                                 String(r["Staff Name"]).toLowerCase().includes(query) || 
+                                 String(r["Staff ID"]).toLowerCase().includes(query) || 
+                                 String(r["Request ID"]).toLowerCase().includes(query);
+            const matchesStatus = (status === "All") || (r["Status"] === status);
+            const matchesDept = (dept === "All") || (r["Department"] === dept);
+            const matchesPpe = (ppe === "All") || (r["PPE Type"] === ppe);
+
+            return matchesQuery && matchesStatus && matchesDept && matchesPpe;
+        });
+
+        renderTable(filtered);
+    }
+
+    function renderTable(data) {
+        filteredData = data || [];
+        currentPage = 1;
+        renderTablePage();
+    }
+
+    function renderTablePage() {
+        const tbody = document.getElementById('logs-tbody');
+        tbody.innerHTML = '';
+
+        const totalRecords = filteredData.length;
+        if (totalRecords === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">No records match the current filters.</td></tr>';
+            updatePaginationDisplay();
+            return;
+        }
+
+        // Calculate page boundaries
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = Math.min(startIndex + rowsPerPage, totalRecords);
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        pageData.forEach(r => {
+            const row = document.createElement('tr');
+            row.style.borderBottom = '1px solid var(--border)';
+            
+            let statusClass = 'badge-pending';
+            if (r["Status"] === 'Approved / Dispatched') statusClass = 'badge-approved';
+            if (r["Status"] === 'Rejected') statusClass = 'badge-rejected';
+
+            // Clean action buttons for pending approvals
+            let actionHTML = '-';
+            if (r["Status"] === 'Pending Approval') {
+                actionHTML = `
+                    <div class="btn-action-group">
+                        <button type="button" class="submit-btn btn-mini btn-mini-approve" onclick="updateStatus('${r["Request ID"]}', 'Approved / Dispatched')">Issue</button>
+                        <button type="button" class="clear-btn btn-mini btn-mini-reject" onclick="updateStatus('${r["Request ID"]}', 'Rejected')">Reject</button>
+                    </div>
+                `;
+            }
+
+            const shortDate = r["Timestamp"] ? r["Timestamp"].split(' ')[0] : '-';
+
+            row.innerHTML = `
+                <td style="padding: 12px 16px; font-weight:600;">${r["Request ID"]}</td>
+                <td style="padding: 12px 16px; font-size:0.85rem; color:var(--text-muted);">${shortDate}</td>
+                <td style="padding: 12px 16px;">${r["Staff Name"]} <span style="font-size:0.8rem; color:var(--text-muted);">(${r["Staff ID"]})</span></td>
+                <td style="padding: 12px 16px;">${r["Department"]}</td>
+                <td style="padding: 12px 16px; font-weight:500;">${r["PPE Type"]} <span style="font-size:0.8rem; color:var(--text-muted);">(${r["Size"]})</span></td>
+                <td style="padding: 12px 16px; font-size:0.85rem;">${r["Replacement Reason"]}</td>
+                <td style="padding: 12px 16px;"><span class="badge ${statusClass}">${r["Status"].split(' / ')[0]}</span></td>
+                <td style="padding: 12px 16px; text-align: center;">${actionHTML}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        updatePaginationDisplay();
+    }
+
+    function updatePaginationDisplay() {
+        const totalRecords = filteredData.length;
+        const totalPages = Math.ceil(totalRecords / rowsPerPage) || 1;
+
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = totalRecords === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+        const endIndex = Math.min(currentPage * rowsPerPage, totalRecords);
+
+        document.getElementById('pag-start').innerText = startIndex;
+        document.getElementById('pag-end').innerText = endIndex;
+        document.getElementById('pag-total').innerText = totalRecords;
+        document.getElementById('page-num-display').innerText = `Page ${currentPage} of ${totalPages}`;
+
+        const prevBtn = document.getElementById('btn-prev-page');
+        const nextBtn = document.getElementById('btn-next-page');
+
+        prevBtn.disabled = (currentPage === 1);
+        nextBtn.disabled = (currentPage === totalPages);
+
+        prevBtn.style.opacity = (currentPage === 1) ? "0.5" : "1";
+        prevBtn.style.cursor = (currentPage === 1) ? "not-allowed" : "pointer";
+        nextBtn.style.opacity = (currentPage === totalPages) ? "0.5" : "1";
+        nextBtn.style.cursor = (currentPage === totalPages) ? "not-allowed" : "pointer";
+    }
+
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTablePage();
+        }
+    }
+
+    function nextPage() {
+        const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTablePage();
+        }
+    }
+
+    // --- CHANGE STATUS ---
+    async function updateStatus(requestId, newStatus) {
+        const pin = getDashboardPin();
+        if (!pin) return;
+
+        if (!confirm(`Are you sure you want to change the status of ${requestId} to "${newStatus}"?`)) {
+            return;
+        }
+
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = 'flex';
+        document.getElementById('loading-message').innerText = `Updating request status...`;
+
+        try {
+            const payload = {
+                action: "updateRequestStatus",
+                spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
+                pin: pin,
+                requestId: requestId,
+                status: newStatus,
+                authorizedBy: "Safety Officer"
+            };
+
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            const text = await response.text();
+            const result = JSON.parse(text);
+
+            if (result.status === "ERROR") {
+                throw new Error(result.message);
+            }
+
+            overlay.style.display = 'none';
+            showToast(`Request ${requestId} successfully updated to ${newStatus.split(' / ')[0]}!`, "success", 3000);
+            loadDatabaseData(); // Reload
+
+        } catch (err) {
+            overlay.style.display = 'none';
+            alert("❌ Status Update Failed: " + err.message);
+        }
+    }
+
+    // --- EXPORT TO EXCEL CSV ---
+    function exportPpeToCsv() {
+        if (ppeData.length === 0) {
+            alert("No data to export!");
+            return;
+        }
+
+        const headers = ["Request ID", "Timestamp", "Staff ID", "Staff Name", "Department", "Supervisor Name", "PPE Type", "Size", "Color/Specs", "Replacement Reason", "Condition Remarks", "Status", "Authorized By", "Action Date"];
+        let csvContent = "\ufeff"; // UTF-8 BOM
+        csvContent += headers.map(h => `"${h}"`).join(",") + "\n";
+
+        ppeData.forEach(r => {
+            const rowData = headers.map(h => {
+                const val = r[h] !== undefined ? String(r[h]).replace(/"/g, '""') : "";
+                return `"${val}"`;
+            });
+            csvContent += rowData.join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `PPE_Management_Report_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // --- RENDER VISUAL ANALYTICS ---
+    function renderAnalytics() {
+        if (ppeData.length === 0) return;
+
+        // 1. KPI Counts
+        const approvedIssues = ppeData.filter(r => r["Status"] === "Approved / Dispatched");
+        const pendingCount = ppeData.filter(r => r["Status"] === "Pending Approval").length;
+        
+        document.getElementById('kpi-total-issued').innerText = approvedIssues.length;
+        document.getElementById('kpi-total-pending').innerText = pendingCount;
+
+        // Calculations for Dept & PPE distributions
+        const deptCounts = {};
+        const ppeCounts = {};
+        const monthCounts = {};
+        const staffCounts = {};
+
+        approvedIssues.forEach(r => {
+            // Dept Distribution
+            const dept = r["Department"] || "Others";
+            deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+
+            // PPE Type Distribution
+            const ppe = r["PPE Type"] || "Other";
+            ppeCounts[ppe] = (ppeCounts[ppe] || 0) + 1;
+
+            // Staff Frequency
+            const staffKey = `${r["Staff Name"]} (${r["Staff ID"]})`;
+            staffCounts[staffKey] = (staffCounts[staffKey] || 0) + 1;
+
+            // Monthly replacement trend (YYYY-MM)
+            if (r["Timestamp"]) {
+                const ym = r["Timestamp"].substring(0, 7); // Format: YYYY-MM
+                monthCounts[ym] = (monthCounts[ym] || 0) + 1;
+            }
+        });
+
+        // Top Department
+        let topDept = "-";
+        let maxDeptCount = 0;
+        Object.keys(deptCounts).forEach(d => {
+            if (deptCounts[d] > maxDeptCount) {
+                maxDeptCount = deptCounts[d];
+                topDept = d;
+            }
+        });
+        document.getElementById('kpi-top-dept').innerText = topDept;
+
+        // Top PPE Type
+        let topPpe = "-";
+        let maxPpeCount = 0;
+        Object.keys(ppeCounts).forEach(p => {
+            if (ppeCounts[p] > maxPpeCount) {
+                maxPpeCount = ppeCounts[p];
+                topPpe = p;
+            }
+        });
+        document.getElementById('kpi-top-ppe').innerText = topPpe;
+
+        // Destroy old chart instances if they exist
+        Object.keys(activeCharts).forEach(key => {
+            if (activeCharts[key]) activeCharts[key].destroy();
+        });
+
+        // Chart Theme Colors
+        const primaryColor = '#0f766e'; // Teal primary
+        const hoverColor = '#0d5c56';
+        const accentColors = ['#0284c7', '#f59e0b', '#3b82f6', '#10b981', '#6366f1', '#ec4899', '#8b5cf6'];
+
+        // Chart 1: Department Bar Chart
+        const ctxDept = document.getElementById('chart-dept').getContext('2d');
+        activeCharts['dept'] = new Chart(ctxDept, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(deptCounts),
+                datasets: [{
+                    label: 'Items Issued',
+                    data: Object.values(deptCounts),
+                    backgroundColor: primaryColor,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        // Chart 2: PPE Distribution Doughnut
+        const ctxPpe = document.getElementById('chart-ppe').getContext('2d');
+        activeCharts['ppe'] = new Chart(ctxPpe, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(ppeCounts),
+                datasets: [{
+                    data: Object.values(ppeCounts),
+                    backgroundColor: accentColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } }
+            }
+        });
+
+        // Chart 3: Line Chart for Monthly Trends
+        const sortedMonths = Object.keys(monthCounts).sort();
+        const ctxTrends = document.getElementById('chart-trends').getContext('2d');
+        activeCharts['trends'] = new Chart(ctxTrends, {
+            type: 'line',
+            data: {
+                labels: sortedMonths.map(m => {
+                    const parts = m.split('-');
+                    const date = new Date(parts[0], parts[1]-1, 1);
+                    return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'Replacements',
+                    data: sortedMonths.map(m => monthCounts[m]),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        // Top 5 Heavy Users list rendering
+        const heavyUsersContainer = document.getElementById('heavy-users-container');
+        heavyUsersContainer.innerHTML = '';
+
+        const sortedUsers = Object.keys(staffCounts).sort((a,b) => staffCounts[b] - staffCounts[a]).slice(0, 5);
+
+        if (sortedUsers.length === 0) {
+            heavyUsersContainer.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.85rem;">No issued records to track.</div>';
+            return;
+        }
+
+        sortedUsers.forEach(userKey => {
+            const count = staffCounts[userKey];
+            const row = document.createElement('div');
+            row.className = 'heavy-user-row';
+            row.innerHTML = `
+                <span class="heavy-user-name">${userKey}</span>
+                <span class="heavy-user-count">${count} replacement(s)</span>
+            `;
+            heavyUsersContainer.appendChild(row);
+        });
+    }
+
+    // Initialize checking
+    document.getElementById('req-date').value = formatDateToYmd(new Date());
+    populateDynamicDropdowns();
+    verifyPinState();
+</script>
+</body>
+</html>
+
+
+

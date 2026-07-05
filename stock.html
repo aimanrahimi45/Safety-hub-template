@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmerisPro Stock Monitor</title>
+    <link rel="icon" type="image/png" href="amerispro_128x128.png">
+    <link rel="apple-touch-icon" href="amerispro_128x128.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+            padding-bottom: 60px;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .inv-card {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        box-shadow 0.2s ease, 
+                        border-radius 0.3s ease-in-out;
+        }
+
+        .inv-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 6px 6px 0px var(--border);
+            border-color: var(--primary);
+            border-radius: 220px 20px 240px 20px / 20px 240px 20px 220px;
+        }
+
+        .inv-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 70%;
+        }
+
+        .inv-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .inv-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .inv-stock-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 10px;
+            min-width: 70px;
+            border: 3px solid var(--border);
+            box-shadow: 2px 2px 0px var(--border);
+        }
+
+        .badge-ok {
+            background: var(--success) !important;
+            color: #2B2D42 !important;
+        }
+
+        .badge-ok .badge-stock-val, .badge-ok .badge-unit {
+            color: #FFFFFF !important;
+        }
+
+        .badge-alert {
+            background: var(--primary) !important;
+            color: #2B2D42 !important;
+        }
+
+        .badge-alert .badge-stock-val, .badge-alert .badge-unit {
+            color: #FFFFFF !important;
+        }
+
+        .badge-stock-val {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .badge-unit {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            font-family: var(--font-heading) !important;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 3px solid var(--border) !important;
+            box-shadow: var(--shadow-sm) !important;
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, border-radius 0.2s ease !important;
+            text-decoration: none;
+            gap: 8px;
+            box-sizing: border-box;
+            background: var(--primary) !important;
+            color: #FFFFFF !important;
+        }
+
+        .btn-action:hover {
+            background: var(--primary-hover) !important;
+            border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
+            transform: translate(-2px, -2px) !important;
+            box-shadow: 5px 5px 0px var(--border) !important;
+        }
+
+        .btn-action:active {
+            transform: translate(2px, 2px) !important;
+            box-shadow: 0px 0px 0px var(--border) !important;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            font-family: var(--font-heading) !important;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 3px solid var(--border) !important;
+            box-shadow: var(--shadow-sm) !important;
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, border-radius 0.2s ease !important;
+            text-decoration: none;
+            gap: 8px;
+            box-sizing: border-box;
+            background: var(--surface) !important;
+            color: var(--text-main) !important;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg) !important;
+            border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px !important;
+            transform: translate(-2px, -2px) !important;
+            box-shadow: 5px 5px 0px var(--border) !important;
+        }
+
+        .btn-secondary:active {
+            transform: translate(2px, 2px) !important;
+            box-shadow: 0px 0px 0px var(--border) !important;
+        }
+
+        .planner-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .planner-table th {
+            background: var(--bg);
+            color: var(--text-main);
+            font-weight: 700;
+            font-family: var(--font-heading);
+            text-align: left;
+            padding: 10px;
+            border-bottom: 3px solid var(--border);
+        }
+
+        .planner-table td {
+            padding: 10px;
+            border-bottom: 2px dashed #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .shortage-badge {
+            background: #fef2f2;
+            color: #ef4444;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: 2px solid var(--border);
+        }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--surface);
+            border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-md);
+            border: 3px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: var(--bg);
+            border-bottom: 3px solid var(--border);
+            font-weight: 700;
+            font-family: var(--font-heading);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            background: var(--bg);
+            border-top: 3px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .tab-menu {
+            display: flex;
+            gap: 10px;
+            border-bottom: 3px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 16px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 4px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Loading Spinner */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            color: var(--text-muted);
+            gap: 15px;
+        }
+
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile overrides for stock */
+        @media (max-width: 768px) {
+            .inventory-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .inv-card {
+                padding: 12px !important;
+                border-radius: 14px 120px 14px 100px / 100px 14px 120px 14px !important;
+            }
+            .modal-card {
+                border-radius: 14px 120px 14px 100px / 100px 14px 120px 14px !important;
+            }
+            .inv-name {
+                font-size: 0.85rem !important;
+                white-space: normal !important;
+            }
+            .inv-info {
+                max-width: 60% !important;
+            }
+            .inv-stock-badge {
+                min-width: 55px !important;
+                padding: 6px 10px !important;
+            }
+            .badge-stock-val {
+                font-size: 1rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="index.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to AmerisPro
+        </a>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h1 style="margin: 0; font-size: 1.6rem; font-weight: 800;">First Aid Stock Monitor</h1>
+                <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: var(--text-muted);">Manage central cabinet supplies & process active box shortages</p>
+            </div>
+            <button class="btn-action" onclick="openRestockModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Restock Cabinet
+            </button>
+        </div>
+
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="switchTab('tab-inventory', this)">Central Inventory</button>
+            <button class="tab-btn" onclick="switchTab('tab-planner', this)">Replenishment Planner</button>
+        </div>
+
+        <!-- TAB 1: CENTRAL INVENTORY OVERVIEW -->
+        <div id="tab-inventory" class="tab-content active">
+            <div id="inventory-loading" class="loading-container">
+                <div class="spinner"></div>
+                <p>Loading central supply balances...</p>
+            </div>
+            <div class="inventory-grid" id="inventory-container" style="display: none;">
+                <!-- Cards injected dynamically -->
+            </div>
+        </div>
+
+        <!-- TAB 2: REPLENISHMENT DISPATCH PLANNER -->
+        <div id="tab-planner" class="tab-content">
+            <div id="planner-loading" class="loading-container" style="display: none;">
+                <div class="spinner"></div>
+                <p>Calculating box shortages...</p>
+            </div>
+            
+            <div class="card" id="planner-card" style="display: none;">
+                <h2>Consolidated Box Replenishments</h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: -10px; margin-bottom: 20px;">
+                    This list consolidates shortages from all OSH/FAB/01-07 boxes based on their latest inspection.
+                </p>
+                <div style="overflow-x: auto;">
+                    <table class="planner-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th style="text-align: center;">Total Shortage</th>
+                                <th>Details by Box</th>
+                            </tr>
+                        </thead>
+                        <tbody id="planner-table-body">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="planner-action-bar" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <span style="font-size: 0.9rem; color: var(--text-muted);" id="planner-summary-text">Shortages detected.</span>
+                    <button class="btn-action" id="dispatch-btn" onclick="confirmDispatch()">
+                        Confirm Box Dispatch & Deduct Inventory
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" id="planner-empty" style="display: none; text-align: center; padding: 40px;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">🟢</div>
+                <h3>All First Aid Boxes Compliant!</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">No shortages detected in OSH/FAB/01 to 07 based on the latest inspection logs.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restock Modal -->
+    <div class="modal" id="restock-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span>Restock Central Supply Cabinet</span>
+                <button class="close-btn" onclick="closeRestockModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="restock-form">
+                    <label for="restock-item">Select Item to Add</label>
+                    <select id="restock-item" required></select>
+
+                    <label for="restock-qty">Quantity Received</label>
+                    <input type="text" id="restock-qty" placeholder="e.g. 10" required>
+
+                    <label for="restock-notes">Notes / Delivery Order No.</label>
+                    <input type="text" id="restock-notes" placeholder="e.g. PO-88392 or Restock batch">
+
+                    <label for="restock-user">Received By</label>
+                    <input type="text" id="restock-user" value="Safety Officer" required>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-action btn-secondary" onclick="closeRestockModal()">Cancel</button>
+                <button class="btn-action" onclick="submitRestock()">Save Restock</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Central backend URL loaded from config.js
+
+        
+        let inventory = [];
+        let shortages = [];
+        let securePin = "";
+
+        // PIN validation before loading
+        async function initPage() {
+            securePin = localStorage.getItem("safety_hub_pin");
+            if (!securePin) {
+                securePin = prompt("🔐 Enter Dashboard security PIN to access Stock Monitor:");
+                if (!securePin) {
+                    document.body.innerHTML = `<div style="text-align:center; margin-top:100px; font-family:sans-serif; color:#ef4444;"><h3>Access Denied: PIN Required</h3><a href="index.html" style="color:#2563eb;">Return to Hub</a></div>`;
+                    return;
+                }
+                localStorage.setItem("safety_hub_pin", securePin);
+            }
+            await refreshData();
+        }
+
+        async function refreshData() {
+            document.getElementById('inventory-loading').style.display = 'flex';
+            document.getElementById('inventory-container').style.display = 'none';
+            document.getElementById('planner-loading').style.display = 'flex';
+            document.getElementById('planner-card').style.display = 'none';
+            document.getElementById('planner-empty').style.display = 'none';
+
+            try {
+                const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+                const [invRes, shortRes] = await Promise.all([
+                    fetch(`${GOOGLE_SCRIPT_URL}?action=getInventory&spreadsheetId=${sheetId}&pin=${securePin}`),
+                    fetch(`${GOOGLE_SCRIPT_URL}?action=getShortages&spreadsheetId=${sheetId}&pin=${securePin}`)
+                ]);
+
+                const invData = await invRes.json();
+                const shortData = await shortRes.json();
+
+                if (invData.status === "ERROR" || shortData.status === "ERROR") {
+                    localStorage.removeItem("safety_hub_pin");
+                    alert("❌ Invalid PIN authorization. Access denied.");
+                    location.reload();
+                    return;
+                }
+
+                inventory = invData.data;
+                shortages = shortData.shortages;
+
+                renderInventory();
+                renderPlanner();
+            } catch (err) {
+                alert("⚠️ Error fetching inventory: " + err.message);
+            }
+        }
+
+        function renderInventory() {
+            const container = document.getElementById('inventory-container');
+            const selectEl = document.getElementById('restock-item');
+            
+            container.innerHTML = '';
+            selectEl.innerHTML = '<option value="" disabled selected>-- Select Item --</option>';
+
+            inventory.forEach(item => {
+                const isAlert = item["Current Stock"] < item["Min Alert Level"];
+                const badgeClass = isAlert ? 'badge-alert' : 'badge-ok';
+                const warningMsg = isAlert ? `Min alert limit: ${item["Min Alert Level"]}` : `Stock level healthy`;
+
+                container.innerHTML += `
+                    <div class="inv-card">
+                        <div class="inv-info">
+                            <span class="inv-name" title="${item["Item Name"]}">${item["Item Name"]}</span>
+                            <span class="inv-meta">${warningMsg}</span>
+                        </div>
+                        <div class="inv-stock-badge ${badgeClass}">
+                            <span class="badge-stock-val">${item["Current Stock"]}</span>
+                            <span class="badge-unit">${item["Unit"]}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Add to restock select dropdown
+                selectEl.innerHTML += `<option value="${item["Item ID"]}">${item["Item Name"]} (${item["Unit"]})</option>`;
+            });
+
+            document.getElementById('inventory-loading').style.display = 'none';
+            container.style.display = 'grid';
+        }
+
+        function renderPlanner() {
+            const tbody = document.getElementById('planner-table-body');
+            tbody.innerHTML = '';
+
+            if (shortages.length === 0) {
+                document.getElementById('planner-loading').style.display = 'none';
+                document.getElementById('planner-card').style.display = 'none';
+                document.getElementById('planner-empty').style.display = 'block';
+                return;
+            }
+
+            // Consolidate shortages by item name
+            const grouped = {};
+            shortages.forEach(item => {
+                if (!grouped[item.itemId]) {
+                    grouped[item.itemId] = {
+                        name: item.itemName,
+                        totalShortage: 0,
+                        boxes: []
+                    };
+                }
+                grouped[item.itemId].totalShortage += item.shortage;
+                grouped[item.itemId].boxes.push({ boxId: item.boxId, qty: item.shortage });
+            });
+
+            Object.keys(grouped).forEach(itemId => {
+                const item = grouped[itemId];
+                const boxDetails = item.boxes.map(b => `${b.boxId} (short ${b.qty})`).join(', ');
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:600;">${item.name}</td>
+                        <td style="text-align:center;"><span class="shortage-badge">-${item.totalShortage}</span></td>
+                        <td style="color:var(--text-muted); font-size:0.85rem;">${boxDetails}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('planner-summary-text').innerHTML = `<strong>${shortages.length}</strong> active shortages detected across boxes.`;
+            document.getElementById('planner-loading').style.display = 'none';
+            document.getElementById('planner-empty').style.display = 'none';
+            document.getElementById('planner-card').style.display = 'block';
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // Modal triggers
+        function openRestockModal() {
+            document.getElementById('restock-modal').style.display = 'flex';
+        }
+
+        function closeRestockModal() {
+            document.getElementById('restock-modal').style.display = 'none';
+            document.getElementById('restock-form').reset();
+        }
+
+        async function submitRestock() {
+            const itemId = document.getElementById('restock-item').value;
+            const qty = parseInt(document.getElementById('restock-qty').value, 10);
+            const notes = document.getElementById('restock-notes').value || "Manual Restock";
+            const user = document.getElementById('restock-user').value;
+
+            if (!itemId || isNaN(qty) || qty <= 0) {
+                alert("❌ Please select an item and enter a valid quantity greater than 0.");
+                return;
+            }
+
+            closeRestockModal();
+            document.getElementById('inventory-loading').style.display = 'flex';
+            document.getElementById('inventory-container').style.display = 'none';
+
+            try {
+                const payload = {
+                    action: "updateInventory",
+                    spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
+                    pin: securePin,
+                    adjustments: [
+                        { itemId: parseInt(itemId, 10), qty: qty, notes: notes, user: user }
+                    ]
+                };
+
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                alert("🎉 Central Cabinet Stock updated successfully!");
+                await refreshData();
+            } catch (err) {
+                alert("⚠️ Adjustment failed: " + err.message);
+                await refreshData();
+            }
+        }
+
+        async function confirmDispatch() {
+            const confirmAction = confirm("Are you sure you have restocked all the boxes?\n\nThis will automatically deduct the required quantities from central cabinet stock.");
+            if (!confirmAction) return;
+
+            document.getElementById('planner-loading').style.display = 'flex';
+            document.getElementById('planner-card').style.display = 'none';
+
+            // Gather dispatch adjustments (shortages are positive, dispatch means negative adjustments)
+            const adjustments = shortages.map(s => ({
+                itemId: s.itemId,
+                qty: -s.shortage,
+                notes: `Dispatched to ${s.boxId}`,
+                user: "Safety Officer"
+            }));
+
+            try {
+                const payload = {
+                    action: "updateInventory",
+                    spreadsheetId: localStorage.getItem("safety_hub_spreadsheet_id") || "",
+                    pin: securePin,
+                    adjustments: adjustments
+                };
+
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                alert("🎉 Dispatch registered! Central inventory quantities updated.");
+                await refreshData();
+            } catch (err) {
+                alert("⚠️ Dispatch failed: " + err.message);
+                await refreshData();
+            }
+        }
+
+        window.onclick = function (e) {
+            const modal = document.getElementById('restock-modal');
+            if (e.target === modal) closeRestockModal();
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

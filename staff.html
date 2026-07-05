@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmerisPro Staff Database</title>
+    <link rel="icon" type="image/png" href="amerispro_128x128.png">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <!-- SheetJS Excel parser library -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+            padding-bottom: 60px;
+        }
+
+        .header {
+            background: var(--info); /* Sky Blue theme for Staff */
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            border-bottom: 3px solid var(--border);
+            margin: -24px -24px 24px -24px;
+            border-radius: 20px 240px 0px 0px / 220px 20px 0px 0px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: #FFFFFF;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 14px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.1s ease;
+        }
+
+        .tab-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px var(--border);
+        }
+
+        .tab-btn.active {
+            background: var(--warning);
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--info);
+        }
+
+        .btn-submit {
+            background: var(--success);
+            color: var(--text-main);
+            border: 3px solid var(--border);
+            padding: 12px;
+            border-radius: 14px;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.1s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-submit:active {
+            transform: translate(1px, 1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Import Wizard Styling */
+        .upload-area {
+            border: 3px dashed var(--border);
+            background: #fafafa;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+
+        .upload-area:hover {
+            background: #f0fdfa;
+        }
+
+        .upload-area svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        /* Preview Scroll Table */
+        .preview-wrapper {
+            margin-top: 20px;
+            border: 3px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .preview-header-bar {
+            background: var(--sidebar-bg);
+            padding: 10px 15px;
+            border-bottom: 3px solid var(--border);
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        .preview-scroll {
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .preview-table tr {
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .preview-table tr:hover {
+            background: #eff6ff;
+        }
+
+        .preview-table tr.selected-header {
+            background: var(--warning) !important;
+        }
+
+        .preview-table td {
+            padding: 8px 12px;
+            border-right: 1px solid #e2e8f0;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .preview-table td.row-num-col {
+            background: #f1f5f9;
+            text-align: center;
+            font-weight: 700;
+            width: 40px;
+            border-right: 3px solid var(--border);
+        }
+
+        /* Mapping Section */
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            border-top: 3px dashed var(--border);
+            padding-top: 20px;
+        }
+
+        .mapping-card {
+            background: #f8fafc;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mapping-card span {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Search and Table */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+        }
+
+        .roster-table-wrapper {
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .roster-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .roster-table th {
+            background: var(--border);
+            color: #FFFFFF;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .roster-table td {
+            padding: 12px 16px;
+            border-bottom: 3px solid var(--border);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .roster-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: 1px 1px 0px var(--border);
+        }
+
+        .badge-status.active {
+            background: var(--success);
+            color: var(--text-main);
+        }
+
+        .badge-status.inactive {
+            background: #cbd5e1;
+            color: #475569;
+        }
+
+        .btn-edit {
+            background: var(--warning);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.75rem;
+            box-shadow: 1px 1px 0px var(--border);
+        }
+        .btn-edit:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 2px 2px 0px var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>Staff Database</h1>
+            <p>Manage and import your employee roster to dynamically sync with EHS incident logging</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('roster')">📋 Staff Roster</button>
+            <button class="tab-btn" onclick="switchTab('add')">➕ Add Member</button>
+            <button class="tab-btn" onclick="switchTab('import')">📥 Import Excel/CSV</button>
+        </div>
+
+        <!-- TAB: ROSTER LIST -->
+        <div id="roster-panel" class="tab-panel active">
+            <div class="card">
+                <div class="controls-row">
+                    <input type="text" id="searchBox" class="search-input" placeholder="🔍 Search by Staff ID, Name, or Department..." oninput="filterRoster()">
+                    <select id="statusFilter" style="width: 160px;" onchange="filterRoster()">
+                        <option value="ALL">All Statuses</option>
+                        <option value="Active">Active Only</option>
+                        <option value="Inactive">Inactive Only</option>
+                    </select>
+                </div>
+
+                <div class="roster-table-wrapper">
+                    <table class="roster-table">
+                        <thead>
+                            <tr>
+                                <th>Staff ID</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Position</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rosterTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading staff database...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Controls -->
+                <div id="pagination-controls" style="display: none; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.02); flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Showing <span id="pag-start">0</span>-<span id="pag-end">0</span> of <span id="pag-total">0</span> staff members
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="clear-btn btn-mini" id="btn-prev-page" style="padding: 6px 12px; width: auto; font-size: 0.75rem; background:transparent; border:1px solid var(--border); color:var(--text-main); border-radius:6px; cursor:pointer;">◀ Previous</button>
+                        <span id="page-num-display" style="font-size: 0.85rem; font-weight: 600; padding: 4px 10px; background: rgba(14, 165, 233, 0.08); border-radius: 6px; color: var(--info);">Page 1 of 1</span>
+                        <button type="button" class="submit-btn btn-mini" id="btn-next-page" style="padding: 6px 12px; width: auto; font-size: 0.75rem; background: var(--info); color: white; border: none; border-radius:6px; cursor:pointer;">Next ▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: ADD/EDIT FORM -->
+        <div id="add-panel" class="tab-panel">
+            <div class="card">
+                <h2 id="formTitle">Add New Staff Member</h2>
+                <form id="staffForm" onsubmit="handleFormSubmit(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="staffId">Staff ID (Unique) *</label>
+                            <input type="text" id="staffId" required placeholder="e.g. EMP1002">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffName">Full Name *</label>
+                            <input type="text" id="staffName" required placeholder="e.g. John Doe">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="staffDept">Department *</label>
+                            <input type="text" id="staffDept" required placeholder="e.g. Production">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffPos">Position / Job Title</label>
+                            <input type="text" id="staffPos" placeholder="e.g. Operator">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="staffEmail">Email Address</label>
+                            <input type="text" id="staffEmail" placeholder="e.g. john@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="staffStatus">Status</label>
+                            <select id="staffStatus">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">💾 Save Staff Record</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: IMPORT EXCEL/CSV WIZARD -->
+        <div id="import-panel" class="tab-panel">
+            <div class="card" style="text-align: center; padding: 50px 20px;">
+                <div style="font-size: 4.5rem; margin-bottom: 16px;">📥</div>
+                <h2 style="border: none; padding: 0; margin-bottom: 8px;">Import Staff List from Excel/CSV</h2>
+                <p style="max-width: 550px; margin: 0 auto 30px auto; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                    Upload a standard Excel file (.xlsx, .xls) or CSV file exported from your HR database. The wizard will let you select the header row and map columns to target database fields (Staff ID, Name, Department, etc.).
+                </p>
+                <button class="btn-submit" onclick="launchRosterImportWizard()" style="width: auto; padding: 14px 28px; background: var(--info); font-size: 1.1rem; display: inline-flex; align-items: center; gap: 10px; margin: 0 auto;">
+                    ⚡ Launch Import Wizard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allStaff = [];
+        let paginator;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            paginator = new PaginationHelper({
+                data: [],
+                rowsPerPage: 15,
+                renderCallback: function(pagedData) {
+                    renderRosterRows(pagedData);
+                }
+            });
+            loadStaffRoster();
+        });
+
+        function switchTab(tabId, preventReset) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.innerText.toLowerCase().includes(tabId));
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            document.getElementById(tabId + '-panel').classList.add('active');
+            
+            if (tabId === 'roster') {
+                loadStaffRoster();
+            } else if (tabId === 'add' && !preventReset) {
+                resetForm();
+            }
+        }
+
+        // --- BACKEND CALLS ---
+        async function loadStaffRoster() {
+            const tbody = document.getElementById("rosterTableBody");
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            let pin = localStorage.getItem("safety_hub_pin");
+            
+            if (!sheetId || typeof GOOGLE_SCRIPT_URL === "undefined" || GOOGLE_SCRIPT_URL.includes("YOUR_") || GOOGLE_SCRIPT_URL === "") {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">⚠️ Portal not connected. Connect sheet to load roster.</td></tr>`;
+                return;
+            }
+
+            if (!pin) {
+                pin = prompt("🔑 Enter System Authorization PIN to fetch data:");
+                if (!pin) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ PIN verification required.</td></tr>`;
+                    return;
+                }
+                localStorage.setItem("safety_hub_pin", pin);
+            }
+
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLogs&db=Staff&spreadsheetId=${sheetId}&pin=${pin}`);
+                const json = await response.json();
+                
+                if (json.status === "SUCCESS") {
+                    allStaff = json.data || [];
+                    paginator.updateData(allStaff);
+                } else {
+                    localStorage.removeItem("safety_hub_pin");
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Error: ${json.message}</td></tr>`;
+                }
+            } catch(err) {
+                console.error("Error loading staff roster:", err);
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:20px;">⚠️ Connection Failed: ${err}</td></tr>`;
+            }
+        }
+
+        function renderRosterRows(staffArray) {
+            const tbody = document.getElementById("rosterTableBody");
+            if (staffArray.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No staff records found in the database. Add some manually or import an Excel/CSV file!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = staffArray.map(item => `
+                <tr>
+                    <td style="font-family:var(--font-heading); font-weight:700;">${item["Staff ID"] || "-"}</td>
+                    <td>${item["Name"] || "-"}</td>
+                    <td>${item["Department"] || "-"}</td>
+                    <td>${item["Position"] || "-"}</td>
+                    <td style="font-size:0.8rem; color:var(--text-muted);">${item["Email"] || "-"}</td>
+                    <td>
+                        <span class="badge-status ${String(item["Status"]).toLowerCase() === 'active' ? 'active' : 'inactive'}">
+                            ${item["Status"] || "Active"}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-edit" onclick="editStaffMember('${item["Staff ID"]}')">✏️ Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterRoster() {
+            const query = document.getElementById("searchBox").value.toLowerCase();
+            const status = document.getElementById("statusFilter").value;
+
+            const filtered = allStaff.filter(item => {
+                const matchesSearch = 
+                    String(item["Staff ID"]).toLowerCase().includes(query) ||
+                    String(item["Name"]).toLowerCase().includes(query) ||
+                    String(item["Department"]).toLowerCase().includes(query) ||
+                    String(item["Position"]).toLowerCase().includes(query);
+                
+                const matchesStatus = 
+                    status === "ALL" || 
+                    String(item["Status"]).toLowerCase() === status.toLowerCase();
+
+                return matchesSearch && matchesStatus;
+            });
+            paginator.updateData(filtered);
+        }
+
+        function editStaffMember(staffId) {
+            const member = allStaff.find(item => String(item["Staff ID"]).trim() === String(staffId).trim());
+            if (!member) return;
+
+            document.getElementById("staffId").value = member["Staff ID"];
+            document.getElementById("staffId").disabled = true; // Block editing ID
+            document.getElementById("staffName").value = member["Name"];
+            document.getElementById("staffDept").value = member["Department"];
+            document.getElementById("staffPos").value = member["Position"] || "";
+            document.getElementById("staffEmail").value = member["Email"] || "";
+            document.getElementById("staffStatus").value = member["Status"] || "Active";
+
+            document.getElementById("formTitle").innerText = "Edit Staff Member Details";
+            switchTab('add', true);
+        }
+
+        function resetForm() {
+            document.getElementById("staffForm").reset();
+            document.getElementById("staffId").disabled = false;
+            document.getElementById("formTitle").innerText = "Add New Staff Member";
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const saveBtn = event.target.querySelector("button");
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving Record...";
+
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            if (!sheetId) {
+                alert("❌ Error: Master Spreadsheet ID is missing.");
+                saveBtn.disabled = false;
+                saveBtn.innerText = "💾 Save Staff Record";
+                return;
+            }
+
+            const staffData = {
+                "Staff ID": document.getElementById("staffId").value,
+                "Name": document.getElementById("staffName").value,
+                "Department": document.getElementById("staffDept").value,
+                "Position": document.getElementById("staffPos").value,
+                "Email": document.getElementById("staffEmail").value,
+                "Status": document.getElementById("staffStatus").value
+            };
+
+            const payload = {
+                action: "saveStaff",
+                spreadsheetId: sheetId,
+                staffData: staffData
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+                const json = await response.json();
+
+                saveBtn.disabled = false;
+                saveBtn.innerText = "💾 Save Staff Record";
+
+                if (json.status === "SUCCESS") {
+                    alert("✅ Success: " + json.message);
+                    resetForm();
+                    switchTab('roster');
+                } else {
+                    alert("❌ Error: " + json.message);
+                }
+            } catch(err) {
+                console.error("Save Error:", err);
+                saveBtn.disabled = false;
+                saveBtn.innerText = "💾 Save Staff Record";
+                alert("❌ Connection Failed: " + err);
+            }
+        }
+
+        // --- CENTRALIZED EXCEL/CSV IMPORT SYSTEM CALL ---
+        function launchRosterImportWizard() {
+            openExcelImportWizard({
+                title: "Import Staff Roster",
+                fields: [
+                    { id: "Staff ID", label: "Staff ID", required: true, autoMatches: ["id", "staff id", "employee id", "no card", "no. card", "no. kad", "no kad"] },
+                    { id: "Name", label: "Name", required: true, autoMatches: ["name", "full name", "nama", "employee name"] },
+                    { id: "Department", label: "Department", required: false, autoMatches: ["dept", "department", "bahagian", "unit"] },
+                    { id: "Position", label: "Position", required: false, autoMatches: ["role", "position", "designation", "job title", "jawatan"] },
+                    { id: "Email", label: "Email", required: false, autoMatches: ["email", "e-mail", "email address"] }
+                ],
+                onComplete: async (mappedRows) => {
+                    mappedRows.forEach(r => {
+                        r["Status"] = "Active"; // Default status
+                    });
+
+                    const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+                    if (!sheetId) {
+                        alert("❌ Error: Master Spreadsheet ID is missing.");
+                        return;
+                    }
+
+                    // Loading overlay
+                    const loadingOverlay = document.createElement("div");
+                    loadingOverlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(43,45,66,0.6); display:flex; align-items:center; justify-content:center; z-index:99999; color:white; font-family:'Fredoka',sans-serif; font-size:1.5rem; font-weight:700;";
+                    loadingOverlay.innerHTML = `⏳ Saving ${mappedRows.length} imported staff records...`;
+                    document.body.appendChild(loadingOverlay);
+
+                    try {
+                        const response = await fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "text/plain" },
+                            body: JSON.stringify({
+                                action: "importRows",
+                                sheetName: "Staff Roster",
+                                keyColumn: "Staff ID",
+                                dbSpreadsheetKey: "STAFF_SPREADSHEET_ID",
+                                spreadsheetId: sheetId,
+                                mappedRows: mappedRows
+                            })
+                        });
+                        const json = await response.json();
+                        loadingOverlay.remove();
+
+                        if (json.status === "SUCCESS") {
+                            alert("🎉 Import Successful!\n\n" + json.message);
+                            loadStaffRoster();
+                            switchTab('roster');
+                        } else {
+                            alert("❌ Import Failed: " + json.message);
+                        }
+                    } catch(err) {
+                        loadingOverlay.remove();
+                        console.error("Import Error:", err);
+                        alert("❌ Connection Failed: " + err);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+/* ==========================================
+   Safety Hub - Playful Comic Design System
+   Cartoon Neo-Brutalist Aesthetic
+   ========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #FF6B6B;          /* Cartoon Coral Red */
+    --primary-hover: #FF8585;
+    --success: #4ECA64;          /* Playful Green */
+    --warning: #FFD166;          /* Sunny Yellow */
+    --info: #4EA8DE;             /* Sky Blue */
+    --bg: #FFF9EC;               /* Cozy Warm Vanilla Background */
+    --surface: #FFFFFF;          /* Pure White Cards */
+    --sidebar-bg: #FFEED2;       /* Cute Light Orange/Peach Sidebar */
+    --text-main: #2B2D42;        /* Dark Navy Ink Text */
+    --text-muted: #6C757D;       /* Slate Text */
+    --border: #2B2D42;           /* Bold Ink Outlines */
+    --shadow-sm: 3px 3px 0px var(--border);
+    --shadow-md: 6px 6px 0px var(--border);
+    --font-heading: 'Fredoka', sans-serif;
+    --font-body: 'Fredoka', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Styled Cartoon Scrollbars */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg);
+    border-left: 3px solid var(--border);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border: 3px solid var(--border);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+}
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text-main);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* Page Title Section */
+.page-title {
+    margin-bottom: 24px;
+}
+.page-title h1 {
+    font-family: var(--font-heading);
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.page-title p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Common Container Layout */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px;
+    padding-bottom: 60px;
+}
+
+/* Playful Cartoon Cards (Unified Hand-Drawn Wobbly style) */
+.card {
+    background: var(--surface);
+    padding: 24px;
+    border: 3px solid var(--border) !important;
+    box-shadow: var(--shadow-md) !important;
+    /* Wobbly style B as default */
+    border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px !important;
+    margin-bottom: 24px;
+}
+
+/* Headings */
+h2 {
+    font-family: var(--font-heading);
+    color: var(--text-main);
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    border-bottom: 3px solid var(--border);
+    padding-bottom: 12px;
+}
+
+h3 {
+    font-family: var(--font-heading);
+    color: var(--text-main);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* Shared Back Button */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    background: var(--surface);
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 3px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.1s ease;
+}
+
+.back-link:hover {
+    color: var(--primary);
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0px var(--border);
+}
+
+.back-link:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px var(--border);
+}
+
+.back-link svg {
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    stroke-width: 2.5px;
+}
+
+/* Inputs & Form Controls */
+label {
+    display: block;
+    margin-top: 18px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-main);
+}
+
+input[type="text"], 
+input[type="date"], 
+input[type="email"], 
+input[type="number"], 
+select, 
+textarea {
+    width: 100%;
+    padding: 12px 16px;
+    margin-top: 6px;
+    border: 3px solid var(--border);
+    border-radius: 14px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #FFFFFF;
+    color: var(--text-main);
+    box-shadow: 2px 2px 0px var(--border);
+    transition: all 0.1s ease;
+}
+
+input[type="text"]:focus, 
+input[type="date"]:focus, 
+input[type="email"]:focus, 
+input[type="number"]:focus, 
+select:focus, 
+textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px var(--border);
+}
+
+/* Required field red asterisk */
+.required-mark {
+    color: var(--primary);
+    margin-left: 3px;
+    font-weight: bold;
+}
+
+/* Injected Header Bar */
+.header-bar-shared {
+    width: 100%;
+    background: var(--surface);
+    padding: 14px 24px;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin-bottom: 20px;
+    border-bottom: 3px solid var(--border);
+}
+
+.header-bar-shared img {
+    height: 44px;
+    object-fit: contain;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.header-bar-shared img:hover {
+    transform: scale(1.1) rotate(1.5deg);
+}
+
+/* ==========================================
+   IFRAME COMPATIBILITY CLASSES
+   ========================================== */
+body.in-iframe {
+    background: transparent !important;
+    padding: 0px !important;
+}
+
+body.in-iframe .header-bar-shared {
+    display: none !important;
+}
+
+body.in-iframe .back-link {
+    display: none !important;
+}
+
+body.in-iframe .container {
+    padding: 24px 32px !important;
+    max-width: 100% !important;
+}
+
+/* Toggle Switches */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #FFFFFF;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 3px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+}
+
+/* ==========================================
+   STICKER BOOK & HOLOGRAPHIC GLOW EFFECTS
+   ========================================== */
+
+/* The Sticker cutout outline style */
+.sticker {
+    border: 3px solid #FFFFFF !important;  /* Inner white vinyl outline */
+    outline: 3px solid var(--border) !important; /* Outer die-cut outline */
+    box-shadow: 4px 4px 0px var(--border) !important;
+}
+
+/* The holographic rainbow reflection overlay */
+.holographic {
+    position: relative;
+    overflow: hidden;
+}
+
+.holographic::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; right: -50%; bottom: -50%;
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255, 107, 107, 0.25) 30%,
+        rgba(255, 209, 102, 0.25) 40%,
+        rgba(78, 202, 100, 0.25) 50%,
+        rgba(78, 168, 222, 0.25) 60%,
+        transparent 70%
+    );
+    background-size: 200% 200%;
+    transform: rotate(10deg);
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+    mix-blend-mode: color-dodge;
+    z-index: 10;
+}
+
+.holographic:hover::after {
+    opacity: 1;
+    animation: holo-shimmer 2s linear infinite;
+}
+
+@keyframes holo-shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE OVERRIDES
+   ========================================== */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px !important;
+        padding-bottom: 40px !important;
+    }
+    body.in-iframe .container {
+        padding: 12px 16px 60px 16px !important;
+    }
+    .card {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+        border-width: 2px !important;
+        box-shadow: 3px 3px 0px var(--border) !important;
+        border-radius: 16px 200px 16px 180px / 180px 16px 200px 16px !important;
+    }
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    h2 {
+        font-size: 1.2rem !important;
+        margin-bottom: 14px !important;
+        padding-bottom: 8px !important;
+        border-width: 2px !important;
+    }
+    h3 {
+        font-size: 1rem !important;
+    }
+    .page-title h1 {
+        font-size: 1.5rem !important;
+    }
+    .page-title p {
+        font-size: 0.85rem !important;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    textarea {
+        padding: 10px 12px !important;
+        font-size: 0.9rem !important;
+        border-width: 2px !important;
+        box-shadow: 1px 1px 0px var(--border) !important;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="email"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+        transform: translate(0px, 0px) !important;
+        box-shadow: 2px 2px 0px var(--border) !important;
+    }
+    label {
+        margin-top: 14px !important;
+        font-size: 0.8rem !important;
+    }
+    .submit-btn, .secondary-btn, .clear-btn, .btn, .signature-button {
+        padding: 10px 18px !important;
+        font-size: 0.85rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0px var(--border) !important;
+    }
+    .submit-btn:hover, .secondary-btn:hover, .clear-btn:hover {
+        transform: translate(-1px, -1px) !important;
+        box-shadow: 3px 3px 0px var(--border) !important;
+    }
+    .back-link {
+        padding: 6px 10px !important;
+        font-size: 0.85rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0px var(--border) !important;
+    }
+    .back-link svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    .toggle-container {
+        padding: 10px 12px !important;
+        border-width: 2px !important;
+    }
+    .header-bar-shared {
+        padding: 10px 16px !important;
+    }
+    .header-bar-shared img {
+        height: 32px !important;
+    }
+    .wobbly-card {
+        border-width: 2px !important;
+        box-shadow: 3px 3px 0px var(--border) !important;
+    }
+    .wobbly-card:hover {
+        translate: 0px -4px !important;
+        scale: 1.02 !important;
+        box-shadow: 5px 5px 0px var(--border) !important;
+    }
+    .card[style*="padding: 0"], .card[style*="padding:0"] {
+        padding: 0 !important;
+    }
+    .wobbly-style-a {
+        border-radius: 120px 12px 100px 12px / 12px 100px 12px 120px !important;
+    }
+    .wobbly-style-b {
+        border-radius: 14px 110px 14px 100px / 100px 14px 110px 14px !important;
+    }
+    .wobbly-style-c {
+        border-radius: 12px 120px 12px 100px / 100px 12px 120px 12px !important;
+    }
+    .wobbly-style-d {
+        border-radius: 110px 14px 100px 14px / 14px 100px 14px 110px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 12px !important;
+        padding-bottom: 30px !important;
+    }
+    .card {
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+        border-radius: 12px 160px 12px 140px / 140px 12px 160px 12px !important;
+    }
+    h1 {
+        font-size: 1.3rem !important;
+    }
+    h2 {
+        font-size: 1.05rem !important;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    textarea {
+        padding: 8px 10px !important;
+        font-size: 0.85rem !important;
+    }
+    .submit-btn, .secondary-btn, .clear-btn, .btn, .signature-button {
+        padding: 8px 14px !important;
+        font-size: 0.8rem !important;
+    }
+    label {
+        margin-top: 12px !important;
+        font-size: 0.75rem !important;
+    }
+}
+
+/* Alternating wobbly border radius styles to look hand-sketched */
+.wobbly-style-a {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+}
+
+.wobbly-style-b {
+    border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px !important;
+}
+
+.wobbly-style-c {
+    border-radius: 15px 255px 15px 225px / 225px 15px 255px 15px !important;
+}
+
+.wobbly-style-d {
+    border-radius: 240px 20px 220px 20px / 20px 220px 20px 240px !important;
+}
+
+/* Wobbly Card Base */
+.wobbly-card {
+    background: var(--surface);
+    border: 3px solid var(--border) !important;
+    box-shadow: var(--shadow-md) !important;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                translate 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                scale 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                box-shadow 0.2s ease !important;
+    transform: rotate(var(--rotate, 0deg));
+    translate: 0px 0px;
+    scale: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.wobbly-card:hover {
+    translate: 0px -8px;
+    scale: 1.03;
+    box-shadow: 10px 10px 0px var(--border) !important;
+    border-color: var(--primary) !important;
+}
+
+.wobbly-card:active {
+    translate: 0px 2px;
+    box-shadow: 2px 2px 0px var(--border) !important;
+}
+
+/* Wobbly Button style for a sketched look */
+.wobbly-btn {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+    transition: all 0.2s ease !important;
+}
+
+/* ==========================================
+   SHARED DESIGN SYSTEM BUTTONS
+   ========================================== */
+.submit-btn, .secondary-btn, .clear-btn, .btn, .signature-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    font-family: var(--font-heading) !important;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border: 3px solid var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+    text-decoration: none;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+.submit-btn {
+    background: var(--primary) !important;
+    color: #FFFFFF !important;
+}
+.submit-btn:hover {
+    background: var(--primary-hover) !important;
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px var(--border) !important;
+}
+.submit-btn:active {
+    transform: translate(2px, 2px) !important;
+    box-shadow: 0px 0px 0px var(--border) !important;
+}
+.submit-btn:disabled {
+    opacity: 0.65 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.secondary-btn, .signature-button {
+    background: var(--surface) !important;
+    color: var(--text-main) !important;
+}
+.secondary-btn:hover, .signature-button:hover {
+    background: var(--bg) !important;
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px var(--border) !important;
+}
+.secondary-btn:active, .signature-button:active {
+    transform: translate(2px, 2px) !important;
+    box-shadow: 0px 0px 0px var(--border) !important;
+}
+
+.clear-btn {
+    background: #F1F5F9 !important;
+    color: #64748B !important;
+}
+.clear-btn:hover {
+    background: #E2E8F0 !important;
+    color: var(--text-main) !important;
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px var(--border) !important;
+}
+.clear-btn:active {
+    transform: translate(2px, 2px) !important;
+    box-shadow: 0px 0px 0px var(--border) !important;
+}

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmerisPro Contractor Induction</title>
+    <link rel="icon" type="image/png" href="amerispro_128x128.png">
+    <link rel="apple-touch-icon" href="amerispro_128x128.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="config.js"></script>
+    <script src="shared.js" defer></script>
+    <style>
+
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        /* Reusing global h2, labels, inputs, selects from shared.css */
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-bar input { margin-top: 0; }
+        .search-bar button { margin-top: 0; white-space: nowrap; width: auto; padding: 12px 20px; }
+
+        #status_result {
+            margin-top: 12px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        .status-valid { background: #dcfce7; color: #166534; display: block !important; }
+        .status-expired { background: #fee2e2; color: #991b1b; display: block !important; }
+        .status-notfound { background: #fef9c3; color: #854d0e; display: block !important; }
+
+        .checklist-group {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+        .checkbox-container { display: flex; align-items: flex-start; margin-bottom: 12px; cursor: pointer; margin-top: 0; }
+        .checkbox-container:last-child { margin-bottom: 0; }
+        .checkbox-container input { margin-top: 3px; margin-right: 12px; width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+        .checkbox-text { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+
+        #signature-pad {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            width: 100%;
+            height: 180px;
+            background: var(--surface);
+            margin-top: 10px;
+            transition: border-color 0.2s;
+        }
+        #signature-pad:active { border-color: var(--primary); }
+
+        /* Camera UI */
+        #camera-container {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            background: var(--bg);
+            margin-top: 10px;
+            text-align: center;
+        }
+        #video-feed, #captured-photo {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            display: none;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn-group, .camera-btn-group {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+        .camera-btn-group { flex-direction: row; justify-content: center; }
+        .camera-btn-group button { flex: 1; }
+
+        /* Reusing global back-link from shared.css */
+
+        /* Switch Toggle Styling */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .toggle-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Batch Queue Styling */
+        .batch-list {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .batch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .batch-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .batch-item-name {
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: left;
+        }
+        .batch-item-ic {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: left;
+        }
+        .btn-remove {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #fee2e2;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            width: auto;
+        }
+        .btn-remove:hover {
+            background: #fee2e2;
+        }
+
+        /* Fullscreen Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile overrides for contractor */
+        @media (max-width: 768px) {
+            .search-bar {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            .search-bar input {
+                width: 100% !important;
+            }
+            .search-bar button {
+                width: 100% !important;
+            }
+            .camera-btn-group {
+                flex-direction: column !important;
+            }
+            .camera-btn-group button {
+                width: 100% !important;
+            }
+            #video-feed, #captured-photo {
+                max-width: 100% !important;
+            }
+            #signature-pad {
+                height: 140px !important;
+            }
+            .btn-group {
+                flex-direction: column !important;
+            }
+            .btn-group button {
+                width: 100% !important;
+            }
+            .checklist-group {
+                padding: 12px !important;
+            }
+            .checkbox-text {
+                font-size: 0.8rem !important;
+            }
+            .batch-item {
+                flex-direction: column !important;
+                gap: 8px !important;
+                align-items: flex-start !important;
+            }
+            .batch-item-info {
+                width: 100% !important;
+            }
+            .btn-remove {
+                width: 100% !important;
+                text-align: center !important;
+            }
+            #pending-list {
+                max-height: 180px !important;
+            }
+            #qr-modal .card {
+                max-width: 280px !important;
+                padding: 16px !important;
+            }
+            #qr-code-img {
+                width: 160px !important;
+                height: 160px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #signature-pad {
+                height: 120px !important;
+            }
+            .batch-item {
+                padding: 8px 10px !important;
+                font-size: 0.8rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- FULLSCREEN LOADING OVERLAY -->
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-message" style="font-weight: 600; font-size: 1.1rem; text-align: center; padding: 0 20px;">Submitting Safety Induction Record...</div>
+</div>
+
+<div class="container">
+    <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: space-between;">
+        <a href="index.html" class="back-link" style="margin: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to AmerisPro
+        </a>
+        <button type="button" class="secondary-btn" id="btn-show-qr" style="width: auto; padding: 8px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; margin: 0; background: var(--surface);">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h.01M16 20h.01M21 12h.01M12 17h.01M17 12h.01M12 21h.01M4 4h6v6H4V4zm2 2v2h2V6H6zm10-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6z"></path></svg>
+            Scan to Register
+        </button>
+    </div>
+    <div class="card">
+        <h2>Worker Verification</h2>
+        <div class="search-bar">
+            <input type="text" id="search_ic" placeholder="IC or Passport No.">
+            <button type="button" class="secondary-btn" onclick="lookupWorker()">Check Status</button>
+        </div>
+        <div id="status_result"></div>
+    </div>
+
+    <!-- PENDING APPROVALS CARD -->
+    <div class="card" id="pending-card" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">Pending Approvals (<span id="pending-count">0</span>)</h2>
+            <button type="button" class="secondary-btn" onclick="fetchPendingWorkers()" style="width: auto; padding: 6px 12px; font-size: 0.8rem; margin: 0;">🔄 Refresh</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: -10px; margin-bottom: 15px;">Contractors who self-registered today and need your briefing & sign-off.</p>
+        
+        <div id="pending-list" class="batch-list" style="max-height: 250px; overflow-y: auto; margin-bottom: 20px;">
+            <!-- Pending items will render here -->
+        </div>
+
+        <div style="border-top: 1px solid var(--border); padding-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+            <div class="input-group" style="margin: 0;">
+                <label style="font-size: 0.75rem; margin-top: 0;">Sign-off Approver (SHO Name)</label>
+                <input type="text" id="approver-name" placeholder="Enter your name" style="margin-top: 4px;">
+            </div>
+            <button type="button" class="submit-btn" id="btn-approve-pending" style="background: #059669; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2);" onclick="approveSelectedWorkers()" disabled>Approve Selected Contractors</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Contractor Induction</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: -10px; margin-bottom: 20px;">Complete this form in accordance with ISO 45001 standards.</p>
+        
+        <form id="inductionForm">
+            <!-- Group Induction Toggle Switch -->
+            <div class="toggle-container">
+                <span class="toggle-label">Induct a Group of Contractors?</span>
+                <label class="switch">
+                    <input type="checkbox" id="group-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <label>Full Name</label>
+            <input type="text" id="name" placeholder="As per IC/Passport" required>
+            
+            <label>IC / Passport Number</label>
+            <input type="text" id="ic" placeholder="e.g. 900101145555" required>
+            
+            <label>Contractor Company</label>
+            <input type="text" id="company" placeholder="Company Name" required>
+            
+            <label>Induction Date</label>
+            <input type="date" id="induction_date" required>
+
+            <label>Safety Declaration</label>
+            <div class="checklist-group">
+                <label class="checkbox-container">
+                    <input type="checkbox" class="iso-check" required>
+                    <span class="checkbox-text">I understand the site Emergency Evacuation Plan & Assembly Points.</span>
+                </label>
+                <label class="checkbox-container">
+                    <input type="checkbox" class="iso-check" required>
+                    <span class="checkbox-text">I understand the mandatory PPE requirements for my work area.</span>
+                </label>
+                <label class="checkbox-container">
+                    <input type="checkbox" class="iso-check" required>
+                    <span class="checkbox-text">I agree to report all hazards, near-misses, and accidents immediately.</span>
+                </label>
+            </div>
+
+            <label>Inducted By (SHO / Supervisor)</label>
+            <input type="text" id="inducted_by" placeholder="Name of Authorized Personnel" required>
+            
+            <!-- LIVE PHOTO CAPTURE SECTION -->
+            <label>Live Identity Photo</label>
+            <div id="camera-container">
+                <video id="video-feed" autoplay playsinline></video>
+                <img id="captured-photo" alt="Captured Identity Photo">
+                <canvas id="photo-canvas" style="display: none;"></canvas>
+                
+                <div class="camera-btn-group">
+                    <button type="button" class="secondary-btn" id="btn-open-camera">Open Camera</button>
+                    <button type="button" class="secondary-btn" id="btn-switch-camera" style="display: none;">🔄 Switch Camera</button>
+                    <button type="button" class="submit-btn" id="btn-capture" style="display: none;">Take Photo</button>
+                    <button type="button" class="clear-btn" id="btn-retake" style="display: none;">Retake</button>
+                </div>
+            </div>
+
+            <label>Worker Signature</label>
+            <canvas id="signature-pad"></canvas>
+            
+            <div class="btn-group" style="margin-top: 30px;">
+                <button type="submit" class="submit-btn">Submit Record</button>
+                <button type="button" class="clear-btn" id="clear">Clear Signature</button>
+            </div>
+
+            <!-- BATCH QUEUE SECTION -->
+            <div id="batch-section" style="display: none; margin-top: 30px; border-top: 2px dashed var(--border); padding-top: 20px;">
+                <h3 style="margin-bottom: 5px;">Queued Workers (<span id="queue-count">0</span>)</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">These workers will be submitted as a group once you click "Submit Group".</p>
+                <div id="batch-queue" class="batch-list">
+                    <!-- Dynamic batch items will appear here -->
+                </div>
+                
+                <button type="button" class="submit-btn" id="btn-submit-group" style="margin-top: 20px; background: #059669; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2);" disabled>Submit Group Induction</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <!-- QR CODE POPUP MODAL -->
+    <div id="qr-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center;">
+        <div class="card" style="max-width: 320px; text-align: center; padding: 24px; position: relative;">
+            <button type="button" id="btn-close-qr" style="position: absolute; top: 12px; right: 12px; border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); width: auto; padding: 0;">&times;</button>
+            <h3 style="margin-top: 10px; margin-bottom: 5px;">Contractor Self-Register</h3>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 20px;">Scan this QR code on your mobile device to register.</p>
+            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border); display: inline-block; margin-bottom: 15px;">
+                <img id="qr-code-img" src="" alt="QR Code" style="width: 200px; height: 200px; display: block;">
+            </div>
+            <p style="font-size: 0.75rem; font-weight: 500; color: var(--primary); overflow-wrap: break-word;" id="qr-url-text"></p>
+        </div>
+    </div>
+
+<script>
+    const APPS_SCRIPT_URL = GOOGLE_SCRIPT_URL; // Alias to central config.js URL
+
+
+    // --- WORKER LOOKUP ---
+    async function lookupWorker() {
+        const searchIC = document.getElementById('search_ic').value.trim();
+        const resultDiv = document.getElementById('status_result');
+
+        if (!searchIC) return alert("Enter IC first");
+        resultDiv.className = '';
+        resultDiv.innerHTML = "⏳ Checking status...";
+
+        try {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=lookupWorker&spreadsheetId=${sheetId}&ic=${searchIC}`);
+            const resJson = await response.json();
+
+            if (resJson.status === "SUCCESS" && resJson.found) {
+                // Parse date cleanly (could be a string format from Utilities.formatDate)
+                const rawDateStr = resJson.date.split(" ")[0]; // Get YYYY-MM-DD portion
+                const inductionDate = new Date(rawDateStr);
+                const sixMonthsAgo = new Date();
+                sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+                if (inductionDate < sixMonthsAgo) {
+                    resultDiv.innerHTML = `❌ EXPIRED. Re-induction required! (Inducted: ${rawDateStr})`;
+                    resultDiv.classList.add('status-expired');
+                } else {
+                    resultDiv.innerHTML = `✅ VALID. Induction is current. (Inducted: ${rawDateStr})`;
+                    resultDiv.classList.add('status-valid');
+                }
+            } else {
+                resultDiv.innerHTML = "⚠️ NOT FOUND. New induction needed.";
+                resultDiv.classList.add('status-notfound');
+            }
+        } catch (err) {
+            resultDiv.innerHTML = "Error checking status. Try again.";
+            resultDiv.classList.add('status-expired');
+        }
+    }
+
+    // --- SIGNATURE PAD ---
+    const canvasSig = document.getElementById('signature-pad');
+    const signaturePad = new SignaturePad(canvasSig);
+
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const targetWidth = canvasSig.offsetWidth * ratio;
+        const targetHeight = canvasSig.offsetHeight * ratio;
+        if (canvasSig.width !== targetWidth || canvasSig.height !== targetHeight) {
+            canvasSig.width = targetWidth;
+            canvasSig.height = targetHeight;
+            canvasSig.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear();
+        }
+    }
+    window.onresize = resizeCanvas;
+    resizeCanvas();
+    canvasSig.addEventListener('pointerdown', resizeCanvas);
+    document.getElementById('clear').addEventListener('click', () => signaturePad.clear());
+    document.getElementById('induction_date').valueAsDate = new Date();
+
+    // --- CAMERA LOGIC ---
+    const video = document.getElementById('video-feed');
+    const canvasPhoto = document.getElementById('photo-canvas');
+    const capturedPhoto = document.getElementById('captured-photo');
+    const btnOpenCamera = document.getElementById('btn-open-camera');
+    const btnSwitchCamera = document.getElementById('btn-switch-camera');
+    const btnCapture = document.getElementById('btn-capture');
+    const btnRetake = document.getElementById('btn-retake');
+    
+    let cameraStream = null;
+    let finalPhotoData = null;
+    let currentFacingMode = 'user'; // Default to front camera
+
+    async function startCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+            video.srcObject = cameraStream;
+            video.style.display = 'block';
+            capturedPhoto.style.display = 'none';
+            btnOpenCamera.style.display = 'none';
+            btnSwitchCamera.style.display = 'block';
+            btnCapture.style.display = 'block';
+            btnRetake.style.display = 'none';
+        } catch (err) {
+            alert("Camera access denied or unavailable. Details: " + err.message);
+        }
+    }
+
+    btnOpenCamera.addEventListener('click', startCamera);
+
+    btnSwitchCamera.addEventListener('click', () => {
+        currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+        startCamera();
+    });
+
+    btnCapture.addEventListener('click', () => {
+        // High compression logic: max width 800px
+        const MAX_WIDTH = 800;
+        const scale = Math.min(MAX_WIDTH / video.videoWidth, 1);
+        canvasPhoto.width = video.videoWidth * scale;
+        canvasPhoto.height = video.videoHeight * scale;
+        
+        const ctx = canvasPhoto.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvasPhoto.width, canvasPhoto.height);
+        
+        // Compress as JPEG at 60% quality to ensure very small size
+        finalPhotoData = canvasPhoto.toDataURL('image/jpeg', 0.6);
+        
+        capturedPhoto.src = finalPhotoData;
+        capturedPhoto.style.display = 'block';
+        video.style.display = 'none';
+        
+        // Turn off camera light
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+        
+        btnCapture.style.display = 'none';
+        btnSwitchCamera.style.display = 'none';
+        btnRetake.style.display = 'block';
+        btnOpenCamera.style.display = 'none';
+    });
+
+    btnRetake.addEventListener('click', () => {
+        finalPhotoData = null;
+        startCamera();
+    });
+
+    // --- BATCH BINDING LOGIC ---
+    let batchWorkers = [];
+    const groupToggle = document.getElementById('group-toggle');
+    const batchSection = document.getElementById('batch-section');
+    const btnSubmitGroup = document.getElementById('btn-submit-group');
+    const queueCount = document.getElementById('queue-count');
+    const batchQueue = document.getElementById('batch-queue');
+    const submitBtn = document.querySelector('form .btn-group .submit-btn'); // Primary submit button
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingMessage = document.getElementById('loading-message');
+
+    groupToggle.addEventListener('change', function() {
+        if (this.checked) {
+            batchSection.style.display = 'block';
+            submitBtn.innerText = "➕ Add Worker to Group";
+            toggleGroupFields();
+        } else {
+            if (batchWorkers.length > 0) {
+                const discard = confirm("You have workers in the queue. Turning off group mode will discard them. Discard?");
+                if (!discard) {
+                    this.checked = true;
+                    return;
+                }
+                batchWorkers = [];
+                renderQueue();
+            }
+            batchSection.style.display = 'none';
+            submitBtn.innerText = "Submit Record";
+            unlockGroupFields();
+        }
+    });
+
+    function toggleGroupFields() {
+        const shouldLock = batchWorkers.length > 0;
+        document.getElementById('company').disabled = shouldLock;
+        document.getElementById('induction_date').disabled = shouldLock;
+        document.getElementById('inducted_by').disabled = shouldLock;
+        document.querySelectorAll('.iso-check').forEach(cb => cb.disabled = shouldLock);
+    }
+
+    function unlockGroupFields() {
+        document.getElementById('company').disabled = false;
+        document.getElementById('induction_date').disabled = false;
+        document.getElementById('inducted_by').disabled = false;
+        document.querySelectorAll('.iso-check').forEach(cb => cb.disabled = false);
+    }
+
+    function renderQueue() {
+        batchQueue.innerHTML = '';
+        queueCount.innerText = batchWorkers.length;
+        
+        batchWorkers.forEach((w, index) => {
+            const item = document.createElement('div');
+            item.className = 'batch-item';
+            item.innerHTML = `
+                <div class="batch-item-info">
+                    <span class="batch-item-name">${index + 1}. ${w.name}</span>
+                    <span class="batch-item-ic">IC/Passport: ${w.ic}</span>
+                </div>
+                <button type="button" class="btn-remove" onclick="removeWorker(${index})">Remove</button>
+            `;
+            batchQueue.appendChild(item);
+        });
+
+        btnSubmitGroup.disabled = batchWorkers.length === 0;
+        toggleGroupFields();
+    }
+
+    window.removeWorker = function(index) {
+        batchWorkers.splice(index, 1);
+        renderQueue();
+    };
+
+    async function submitInductionRecords(records) {
+        loadingOverlay.style.display = 'flex';
+        let successCount = 0;
+        
+        for (let i = 0; i < records.length; i++) {
+            const currentWorker = records[i];
+            
+            if (records.length > 1) {
+                loadingMessage.innerText = `⏳ Submitting worker ${i + 1} of ${records.length} (${currentWorker.name})...`;
+            } else {
+                loadingMessage.innerText = `⏳ Saving Safety Induction Record for ${currentWorker.name}...`;
+            }
+            
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(currentWorker)
+                });
+                
+                const text = await response.text();
+                let result = {};
+                try {
+                    result = JSON.parse(text);
+                } catch(e) {
+                    if (text.includes("<!DOCTYPE") || text.includes("<html")) {
+                        if (text.includes("Exception") || text.includes("Error") || text.includes("permission") || text.includes("not found")) {
+                            throw new Error("Google Server Exception during execution");
+                        } else {
+                            // Harmless 302 redirect success state
+                            result = { status: "success" };
+                        }
+                    } else {
+                        throw new Error("Invalid server response format");
+                    }
+                }
+                
+                if (result.status && result.status.toLowerCase() === "error") {
+                    throw new Error(result.message);
+                }
+                
+                successCount++;
+                
+            } catch (err) {
+                loadingOverlay.style.display = 'none';
+                alert(`❌ Failed at worker "${currentWorker.name}":\n\n${err.message}\n\nSubmission halted.`);
+                return; // Terminate queue submission
+            }
+        }
+        
+        loadingMessage.innerText = `🎉 Successfully saved ${successCount} record(s)! Reloading...`;
+        setTimeout(() => {
+            location.reload();
+        }, 1500);
+    }
+
+    btnSubmitGroup.addEventListener('click', () => {
+        if (batchWorkers.length === 0) return;
+        const confirmMsg = `Submit safety induction logs for this group of ${batchWorkers.length} worker(s)?`;
+        if (!confirm(confirmMsg)) return;
+        
+        submitInductionRecords(batchWorkers);
+    });
+
+    // --- SUBMISSION ---
+    document.getElementById('inductionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (signaturePad.isEmpty()) {
+            alert("Worker must sign to acknowledge safety briefing.");
+            return;
+        }
+
+        const selectedDate = document.getElementById('induction_date').value;
+        const inductedBy = document.getElementById('inducted_by').value;
+        const companyVal = document.getElementById('company').value;
+        const nameVal = document.getElementById('name').value;
+        const icVal = document.getElementById('ic').value;
+
+        const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+
+        if (groupToggle.checked) {
+            // Group Mode: Queue current worker
+            const newWorker = {
+                action: "contractorRegistrationForm",
+                spreadsheetId: sheetId,
+                name: nameVal,
+                ic: icVal,
+                company: companyVal,
+                date: selectedDate,
+                inducted_by: inductedBy,
+                declaration: "Agreed: Emergency Evac, PPE Rules, Incident Reporting",
+                signature: signaturePad.toDataURL(),
+                photo: finalPhotoData
+            };
+            
+            batchWorkers.push(newWorker);
+            renderQueue();
+            
+            // Clear only worker fields
+            document.getElementById('name').value = '';
+            document.getElementById('ic').value = '';
+            signaturePad.clear();
+            
+            // Clear photo
+            finalPhotoData = null;
+            capturedPhoto.style.display = 'none';
+            video.style.display = 'none';
+            btnOpenCamera.style.display = 'block';
+            btnCapture.style.display = 'none';
+            btnSwitchCamera.style.display = 'none';
+            btnRetake.style.display = 'none';
+            
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            alert(`Worker "${nameVal}" added to the group queue!`);
+            
+        } else {
+            // Normal Mode: Single submission
+            const payload = {
+                action: "contractorRegistrationForm",
+                spreadsheetId: sheetId,
+                name: nameVal,
+                ic: icVal,
+                company: companyVal,
+                date: selectedDate,
+                inducted_by: inductedBy,
+                declaration: "Agreed: Emergency Evac, PPE Rules, Incident Reporting",
+                signature: signaturePad.toDataURL(),
+                photo: finalPhotoData
+            };
+            
+            submitInductionRecords([payload]);
+        }
+    });
+
+    // --- QR CODE POPUP LOGIC ---
+    const qrModal = document.getElementById('qr-modal');
+    const btnShowQr = document.getElementById('btn-show-qr');
+    const btnCloseQr = document.getElementById('btn-close-qr');
+    const qrCodeImg = document.getElementById('qr-code-img');
+    const qrUrlText = document.getElementById('qr-url-text');
+
+    btnShowQr.addEventListener('click', () => {
+        const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+        const baseUrl = window.location.href.replace('contractor.html', 'contractor_self.html');
+        const selfRegUrl = `${baseUrl}?spreadsheetId=${encodeURIComponent(sheetId)}`;
+        qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(selfRegUrl)}`;
+        qrUrlText.innerText = selfRegUrl;
+        qrModal.style.display = 'flex';
+    });
+
+    btnCloseQr.addEventListener('click', () => {
+        qrModal.style.display = 'none';
+    });
+
+    qrModal.addEventListener('click', (e) => {
+        if (e.target === qrModal) {
+            qrModal.style.display = 'none';
+        }
+    });
+
+    // --- PENDING APPROVALS LOGIC ---
+    function getDashboardPin() {
+        let pin = localStorage.getItem("safety_hub_pin");
+        if (!pin) {
+            pin = prompt("🔐 This section contains private contractor records.\n\nPlease enter the Dashboard Security PIN to view pending registrations:");
+            if (pin) {
+                localStorage.setItem("safety_hub_pin", pin);
+            }
+        }
+        return pin;
+    }
+
+    let pendingWorkers = [];
+
+    async function fetchPendingWorkers() {
+        const pin = getDashboardPin();
+        if (!pin) {
+            document.getElementById('pending-card').style.display = 'none';
+            return;
+        }
+
+        const pendingList = document.getElementById('pending-list');
+        pendingList.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-muted); font-size:0.85rem;">⏳ Fetching pending registrations...</div>';
+        document.getElementById('pending-card').style.display = 'block';
+
+        try {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=getLogs&db=Contractor&spreadsheetId=${sheetId}&pin=${pin}`);
+            const resJson = await response.json();
+
+            if (resJson.status === "ERROR") {
+                localStorage.removeItem("safety_hub_pin");
+                pendingList.innerHTML = `<div style="text-align:center; padding: 20px; color:#ef4444; font-size:0.85rem; font-weight:600;">Access Denied: ${resJson.message}</div>`;
+                return;
+            }
+
+            pendingWorkers = resJson.data.filter(r => r["Status"] === "Pending Approval");
+            renderPendingList();
+
+        } catch (err) {
+            pendingList.innerHTML = `<div style="text-align:center; padding: 20px; color:#ef4444; font-size:0.85rem;">Failed to fetch pending list: ${err.message}</div>`;
+        }
+    }
+
+    function renderPendingList() {
+        const pendingList = document.getElementById('pending-list');
+        const btnApprove = document.getElementById('btn-approve-pending');
+        pendingList.innerHTML = '';
+
+        if (pendingWorkers.length === 0) {
+            pendingList.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-muted); font-size:0.85rem;">✅ No pending registrations. All clear!</div>';
+            btnApprove.disabled = true;
+            document.getElementById('pending-count').innerText = "0";
+            return;
+        }
+
+        document.getElementById('pending-count').innerText = pendingWorkers.length;
+
+        pendingWorkers.forEach((w, idx) => {
+            const item = document.createElement('div');
+            item.className = 'batch-item';
+            item.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 10px; width: 100%;">
+                    <input type="checkbox" class="pending-chk" value="${w["IC Number"]}" id="pending-chk-${idx}" style="width:18px; height:18px; margin-top:3px; accent-color:var(--primary); cursor:pointer;" onchange="updateApproveButtonState()">
+                    <label for="pending-chk-${idx}" style="margin: 0; cursor:pointer; flex-grow:1; display:flex; flex-direction:column; text-align:left;">
+                        <span class="batch-item-name">${w["Name"]}</span>
+                        <span class="batch-item-ic">IC/Passport: ${w["IC Number"]} | Company: ${w["Company"]}</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Submitted: ${w["Timestamp"]}</span>
+                    </label>
+                </div>
+            `;
+            pendingList.appendChild(item);
+        });
+
+        updateApproveButtonState();
+    }
+
+    window.updateApproveButtonState = function() {
+        const checked = document.querySelectorAll('.pending-chk:checked').length;
+        document.getElementById('btn-approve-pending').disabled = checked === 0;
+    }
+
+    async function approveSelectedWorkers() {
+        const checkedChks = document.querySelectorAll('.pending-chk:checked');
+        const workerIcs = Array.from(checkedChks).map(chk => chk.value);
+        const approverName = document.getElementById('approver-name').value.trim();
+        const pin = getDashboardPin();
+
+        if (!approverName) {
+            alert("Please enter the Sign-off Approver (SHO Name) before approving!");
+            return;
+        }
+
+        if (!confirm(`Approve and sign-off induction for these ${workerIcs.length} selected contractor(s)?`)) {
+            return;
+        }
+
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = 'flex';
+        const loadMsg = document.getElementById('loading-message');
+        if (loadMsg) loadMsg.innerText = `⏳ Approving ${workerIcs.length} worker(s)...`;
+
+        try {
+            const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
+            const payload = {
+                action: "approveWorkers",
+                spreadsheetId: sheetId,
+                pin: pin,
+                workerIcs: workerIcs,
+                inductedBy: approverName,
+                inductionDate: document.getElementById('induction_date').value
+            };
+
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            const text = await response.text();
+            let result = JSON.parse(text);
+
+            if (result.status && result.status.toLowerCase() === "error") {
+                throw new Error(result.message);
+            }
+
+            overlay.style.display = 'none';
+            alert(`🎉 Successfully approved ${result.count} contractor(s)!`);
+            fetchPendingWorkers();
+
+        } catch (err) {
+            overlay.style.display = 'none';
+            alert("❌ Approval Failed: " + err.message);
+        }
+    }
+
+    // Call on load if PIN exists
+    if (localStorage.getItem("safety_hub_pin")) {
+        fetchPendingWorkers();
+    } else {
+        document.getElementById('pending-card').style.display = 'block';
+        document.getElementById('pending-list').innerHTML = `
+            <div style="text-align:center; padding: 20px;">
+                <button type="button" class="secondary-btn" onclick="fetchPendingWorkers()" style="width:auto; padding:8px 16px; font-size:0.85rem;">
+                    🔐 Unlock Pending Approvals
+                </button>
+            </div>
+        `;
+    }
+</script>
+
+
+
+</body>
+</html>
+
+

@@ -27,7 +27,7 @@
                     🎉 Message Sent! Thank you for reaching out to AmerisPro support.
                 </div>
             </form>
-            <script>
+            <script is:inline>
                 function switchStep(stepNum) {
                     // Update active step cards
                     document.querySelectorAll('.step-card').forEach((card, idx) => {
@@ -48,29 +48,10 @@
                         document.getElementById("contact-success-msg").style.display = "none";
                     }, 4000);
                 }
+
+                // Bind to window for inline HTML event handlers in Astro components
+                window.switchStep = switchStep;
+                window.submitContactForm = submitContactForm;
             </script>
         </div>
     </section>
-
-<script>
-                function switchStep(stepNum) {
-                    // Update active step cards
-                    document.querySelectorAll('.step-card').forEach((card, idx) => {
-                        card.classList.toggle('active', idx === (stepNum - 1));
-                    });
-
-                    // Update active mockups
-                    document.querySelectorAll('.mock-viewport').forEach((viewport, idx) => {
-                        viewport.classList.toggle('active', idx === (stepNum - 1));
-                    });
-                }
-
-                function submitContactForm(event) {
-                    event.preventDefault();
-                    document.getElementById("contact-success-msg").style.display = "block";
-                    document.getElementById("contact-form").reset();
-                    setTimeout(() => {
-                        document.getElementById("contact-success-msg").style.display = "none";
-                    }, 4000);
-                }
-            </script>

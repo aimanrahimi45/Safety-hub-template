@@ -748,7 +748,7 @@
                         <span>🧪 Hazardous Chemical Handling, Storage, or Supply</span>
                     </label>
                     <label class="form-checkbox-label">
-                        <input type="checkbox" id="hazard-machinery_cf">
+                        <input type="checkbox" id="hazard-machinery">
                         <span>⚙️ Machinery Requiring Certificate of Fitness (e.g. Boilers, Lifts, Pressure Vessels)</span>
                     </label>
                     <label class="form-checkbox-label">
@@ -882,7 +882,7 @@
             "heights": ["height", "fall", "scaffold", "ladder", "harness"],
             "confined": ["confined"],
             "chemicals": ["chemical", "asbestos", "lead", "cadmium", "sds", "class", "usechh", "kimia"],
-            "machinery": ["machinery", "boiler", "pressure", "loji", "hoist", "lift", "crane", "safety officer", "competent"],
+            "machinery": ["machinery", "boiler", "pressure", "loji", "competent"],
             "gig": ["gig", "rider", "compounding", "akta-872"],
             "petroleum": ["petroleum", "fuel", "pipeline"],
             "transport": ["pengangkutan", "road-transport", "timber", "traffic"],
@@ -935,7 +935,7 @@
             document.getElementById('profile-industry').value = localStorage.getItem('safety_hub_industry') || 'other';
 
             // Load environmental hazard checkboxes
-            const hazards = ['noise', 'chemicals', 'machinery_cf', 'lifting', 'toxic', 'radiation'];
+            const hazards = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
             hazards.forEach(h => {
                 const val = localStorage.getItem(`safety_hub_hazard_${h}`);
                 document.getElementById(`hazard-${h}`).checked = (val === 'true');
@@ -963,7 +963,7 @@
             localStorage.setItem('safety_hub_industry', industry);
 
             // Save environmental hazard checkboxes
-            const hazards = ['noise', 'chemicals', 'machinery_cf', 'lifting', 'toxic', 'radiation'];
+            const hazards = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
             hazards.forEach(h => {
                 const checked = document.getElementById(`hazard-${h}`).checked;
                 localStorage.setItem(`safety_hub_hazard_${h}`, checked ? 'true' : 'false');
@@ -1079,13 +1079,11 @@
             });
 
             // Add checked hazards
-            const hazards = ['noise', 'chemicals', 'machinery_cf', 'lifting', 'toxic', 'radiation'];
+            const hazards = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
             hazards.forEach(h => {
                 if (localStorage.getItem(`safety_hub_hazard_${h}`) === 'true') {
-                    let mapKey = h;
-                    if (h === 'machinery_cf') mapKey = 'machinery';
-                    if (CATEGORY_MAP[mapKey]) {
-                        keywords.push(...CATEGORY_MAP[mapKey]);
+                    if (CATEGORY_MAP[h]) {
+                        keywords.push(...CATEGORY_MAP[h]);
                     }
                 }
             });
@@ -1230,7 +1228,7 @@
                         "heights": "🪜 Heights",
                         "confined": "🕳️ Confined Space",
                         "chemicals": "🧪 Chemicals",
-                        "machinery_cf": "⚙️ Machinery CF",
+                        "machinery": "⚙️ Machinery CF",
                         "gig": "🛵 Gig Workers",
                         "petroleum": "🛢️ Petroleum",
                         "transport": "🚚 Road Transport",

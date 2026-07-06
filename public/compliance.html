@@ -629,7 +629,8 @@
         <h1>🛡️ OSH Compliance Register</h1>
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('profiler')">📋 Setup Profiler</button>
-            <button class="tab-btn" onclick="switchTab('register')">⚡ Legal Register</button>
+            <button class="tab-btn" onclick="switchTab('register')">⚡ Active Checklist</button>
+            <button class="tab-btn" onclick="switchTab('policy')">⚖️ Policy Standards</button>
             <button class="tab-btn" onclick="switchTab('search')">🔍 AI Legal Search</button>
         </div>
     </div>
@@ -727,8 +728,22 @@
             </div>
         </div>
 
+        <!-- VIEW C: POLICY STANDARDS -->
+        <div id="view-policy" class="view-section">
+            <div class="register-header">
+                <div class="register-meta">
+                    <h2>Corporate Governance & Policies</h2>
+                    <p id="policy-summary">Read-only OSH whistleblower protections, employee rights, and company governance standards.</p>
+                </div>
+                <button class="btn-action" style="padding: 10px 20px; font-size: 0.9rem;" onclick="switchTab('profiler')">✏️ Modify Profile</button>
+            </div>
 
-        <!-- VIEW C: SEARCH -->
+            <div id="policy-content">
+                <!-- Dynamic policy list injected here -->
+            </div>
+        </div>
+
+        <!-- VIEW D: SEARCH -->
         <div id="view-search" class="view-section">
             <div class="search-area">
                 <h2>AI-Powered OSH Search</h2>
@@ -780,8 +795,12 @@
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('view-register').classList.add('active');
                 loadComplianceRegister();
-            } else if (tabId === 'search') {
+            } else if (tabId === 'policy') {
                 document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                document.getElementById('view-policy').classList.add('active');
+                loadComplianceRegister();
+            } else if (tabId === 'search') {
+                document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
                 document.getElementById('view-search').classList.add('active');
             }
         }
@@ -834,9 +853,9 @@
             return "general";
         }
 
-        // Live update progress bar count
+        // Live update progress bar count (Active tasks only)
         function updateProgressBar() {
-            const items = document.querySelectorAll('.obligation-item');
+            const items = document.querySelectorAll('#register-content .obligation-item');
             if (items.length === 0) return;
 
             let compliedCount = 0;
@@ -865,7 +884,7 @@
             }
         }
 
-        // Category filtering logic
+        // Category filtering logic (filters both active and policy lists)
         function filterCategory(cat, element) {
             document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
             if (element) element.classList.add('active');
@@ -885,7 +904,6 @@
                 const visibleCount = group.querySelectorAll('.obligation-item[style="display: grid;"]').length;
                 if (visibleCount > 0) {
                     group.style.display = 'block';
-                    // Update the badge count inside the accordion header
                     const badge = group.querySelector('.rules-count-badge');
                     if (badge) badge.innerText = `${visibleCount} rules`;
                 } else {
@@ -897,7 +915,10 @@
         // Fetch matched obligations from Supabase via Google Apps Script proxy
         async function loadComplianceRegister() {
             const registerContent = document.getElementById('register-content');
+            const policyContent = document.getElementById('policy-content');
+            
             registerContent.innerHTML = '<div class="empty-state">🔄 Fetching matched OSH compliance rules...</div>';
+            policyContent.innerHTML = '<div class="empty-state">🔄 Fetching matched OSH governance rules...</div>';
 
             const savedProfile = localStorage.getItem('safety_hub_osh_profile');
             const selectedCategories = savedProfile ? JSON.parse(savedProfile) : [];
@@ -926,135 +947,206 @@
 
                 const data = result.data || [];
                 if (data.length === 0) {
-                    registerContent.innerHTML = `
+                    const emptyHtml = `
                         <div class="empty-state">
                             <span class="empty-state-icon">📂</span>
                             <h3>No obligations found</h3>
                             <p>Try modifying your profile setup and checking more activities.</p>
                         </div>
                     `;
+                    registerContent.innerHTML = emptyHtml;
+                    policyContent.innerHTML = emptyHtml;
                     return;
                 }
 
-                document.getElementById('register-summary').innerText = `Matched ${data.length} compliance rules matching your profile.`;
+                // SPLIT into Active Checklist vs Passive Policy standards
+                const PASSIVE_KEYWORDS = [
+                    "refrain", "do not", "shall not", "prohibit", "dismiss", "obstruct", 
+                    "alter", "discriminate", "guarantee", "right to", "tiada boleh", 
+                    "tidak boleh", "dilarang", "dihalang", "bukanlah suatu", "hukuman",
+                    "denda", "penjara"
+                ];
 
-                // Group by Frequency
-                const groups = {
-                    "continuous": [],
-                    "daily": [],
-                    "weekly": [],
-                    "monthly": [],
-                    "yearly": [],
-                    "once": [],
-                    "other": []
-                };
+                const activeItems = [];
+                const policyItems = [];
 
                 data.forEach(item => {
-                    const freq = (item.frequency || "other").toLowerCase();
-                    if (groups[freq]) {
-                        groups[freq].push(item);
+                    const actionText = (item.required_action || "").toLowerCase();
+                    const clauseText = (item.clauses?.clause_text || "").toLowerCase();
+                    const triggerText = (item.trigger_activity || "").toLowerCase();
+
+                    const isPassive = PASSIVE_KEYWORDS.some(kw => 
+                        actionText.indexOf(kw) !== -1 || 
+                        clauseText.indexOf(kw) !== -1 ||
+                        triggerText.indexOf(kw) !== -1
+                    );
+
+                    if (isPassive) {
+                        policyItems.push(item);
                     } else {
-                        groups["other"].push(item);
+                        activeItems.push(item);
                     }
                 });
 
-                // Build Progress Bar HTML
-                let headerHtml = `
-                    <div class="progress-container">
-                        <div class="progress-label" id="progress-lbl">Progress: Loading...</div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" id="progress-fill"></div>
-                        </div>
-                    </div>
-                `;
+                document.getElementById('register-summary').innerText = `Matched ${activeItems.length} active compliance tasks.`;
+                document.getElementById('policy-summary').innerText = `Matched ${policyItems.length} read-only policy & protection standards.`;
 
-                // Build Category Filter Pills HTML
-                const categoryNames = {
-                    "general": "📋 General OSH",
-                    "heights": "🪜 Heights",
-                    "confined": "🕳️ Confined Space",
-                    "chemicals": "🧪 Chemicals",
-                    "machinery": "⚙️ Machinery",
-                    "gig": "🛵 Gig Workers",
-                    "petroleum": "🛢️ Petroleum"
-                };
+                // Render Active Tasks
+                if (activeItems.length === 0) {
+                    registerContent.innerHTML = `<div class="empty-state"><h3>No active tasks found</h3></div>`;
+                } else {
+                    // Group by Frequency
+                    const groups = {
+                        "continuous": [],
+                        "daily": [],
+                        "weekly": [],
+                        "monthly": [],
+                        "yearly": [],
+                        "once": [],
+                        "other": []
+                    };
 
-                headerHtml += `<div class="filter-pills">`;
-                headerHtml += `<div class="filter-pill active" onclick="filterCategory('all', this)">⭐ Show All</div>`;
-                headerHtml += `<div class="filter-pill" onclick="filterCategory('general', this)">📋 General OSH</div>`;
-                
-                selectedCategories.forEach(cat => {
-                    if (categoryNames[cat]) {
-                        headerHtml += `<div class="filter-pill" onclick="filterCategory('${cat}', this)">${categoryNames[cat]}</div>`;
-                    }
-                });
-                headerHtml += `</div>`;
+                    activeItems.forEach(item => {
+                        const freq = (item.frequency || "other").toLowerCase();
+                        if (groups[freq]) {
+                            groups[freq].push(item);
+                        } else {
+                            groups["other"].push(item);
+                        }
+                    });
 
-                // Render Frequency Accordions
-                let listHtml = `<div id="register-accordions">`;
-                const freqTitles = {
-                    "continuous": "🔄 Continuous & Operational Duties",
-                    "daily": "☀️ Daily Routines",
-                    "weekly": "📅 Weekly Routines",
-                    "monthly": "📆 Monthly Audits & Inspections",
-                    "yearly": "⭐ Annual Reporting & Training",
-                    "once": "📦 One-Off Initial Requirements",
-                    "other": "📋 General & Occasional Actions"
-                };
-
-                for (const key in groups) {
-                    const list = groups[key];
-                    if (list.length === 0) continue;
-
-                    listHtml += `
-                        <div class="frequency-group" id="group-${key}">
-                            <div class="frequency-header" onclick="toggleAccordion('group-${key}')">
-                                <div class="frequency-header-title">
-                                    <span>${freqTitles[key]}</span>
-                                    <span class="tag rules-count-badge" style="background: var(--bg); font-size: 0.8rem; padding: 2px 8px; border-radius: 6px;">
-                                        ${list.length} rules
-                                    </span>
-                                </div>
-                                <div class="frequency-header-arrow">▼</div>
+                    // Build Progress Bar HTML
+                    let headerHtml = `
+                        <div class="progress-container">
+                            <div class="progress-label" id="progress-lbl">Progress: Loading...</div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progress-fill"></div>
                             </div>
-                            <div class="obligations-list">
+                        </div>
                     `;
 
-                    list.forEach(item => {
-                        const isComplied = localStorage.getItem(`obl_check_${item.id}`) === "true";
+                    // Build Category Filter Pills HTML
+                    const categoryNames = {
+                        "general": "📋 General OSH",
+                        "heights": "🪜 Heights",
+                        "confined": "🕳️ Confined Space",
+                        "chemicals": "🧪 Chemicals",
+                        "machinery": "⚙️ Machinery",
+                        "gig": "🛵 Gig Workers",
+                        "petroleum": "🛢️ Petroleum"
+                    };
+
+                    headerHtml += `<div class="filter-pills">`;
+                    headerHtml += `<div class="filter-pill active" onclick="filterCategory('all', this)">⭐ Show All</div>`;
+                    headerHtml += `<div class="filter-pill" onclick="filterCategory('general', this)">📋 General OSH</div>`;
+                    
+                    selectedCategories.forEach(cat => {
+                        if (categoryNames[cat]) {
+                            headerHtml += `<div class="filter-pill" onclick="filterCategory('${cat}', this)">${categoryNames[cat]}</div>`;
+                        }
+                    });
+                    headerHtml += `</div>`;
+
+                    // Render Frequency Accordions
+                    let listHtml = `<div id="register-accordions">`;
+                    const freqTitles = {
+                        "continuous": "🔄 Continuous & Operational Duties",
+                        "daily": "☀️ Daily Routines",
+                        "weekly": "📅 Weekly Routines",
+                        "monthly": "📆 Monthly Audits & Inspections",
+                        "yearly": "⭐ Annual Reporting & Training",
+                        "once": "📦 One-Off Initial Requirements",
+                        "other": "📋 General & Occasional Actions"
+                    };
+
+                    for (const key in groups) {
+                        const list = groups[key];
+                        if (list.length === 0) continue;
+
+                        listHtml += `
+                            <div class="frequency-group" id="group-${key}">
+                                <div class="frequency-header" onclick="toggleAccordion('group-${key}')">
+                                    <div class="frequency-header-title">
+                                        <span>${freqTitles[key]}</span>
+                                        <span class="tag rules-count-badge" style="background: var(--bg); font-size: 0.8rem; padding: 2px 8px; border-radius: 6px;">
+                                            ${list.length} rules
+                                        </span>
+                                    </div>
+                                    <div class="frequency-header-arrow">▼</div>
+                                </div>
+                                <div class="obligations-list">
+                        `;
+
+                        list.forEach(item => {
+                            const isComplied = localStorage.getItem(`obl_check_${item.id}`) === "true";
+                            const docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
+                            const docType = item.clauses?.documents?.type || "Act";
+                            const legalWeight = item.legal_weight || "mandatory";
+                            const resolvedCat = resolveCategory(item);
+                            
+                            listHtml += `
+                                <div class="obligation-item" data-id="${item.id}" data-category="${resolvedCat}" style="display: grid;">
+                                    <div class="obligation-details">
+                                        <h4>${item.required_action}</h4>
+                                        <p>${item.clauses?.clause_text || ""}</p>
+                                        <div class="obligation-meta-tags">
+                                            <span class="tag act">${docType}: ${docName} (${item.clauses?.section_number || ""})</span>
+                                            <span class="tag weight-${legalWeight}">${legalWeight.toUpperCase()}</span>
+                                        </div>
+                                    </div>
+                                    <div class="obligation-action">
+                                        <div class="compliance-toggle ${isComplied ? 'complied' : ''}" onclick="toggleCompliance(this, '${item.id}')">
+                                            <input type="checkbox" ${isComplied ? 'checked' : ''} style="pointer-events: none;">
+                                            <span>${isComplied ? 'Complied' : 'Pending'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        listHtml += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                    listHtml += `</div>`;
+
+                    registerContent.innerHTML = headerHtml + listHtml;
+                }
+
+                // Render Policy/Governance Standards
+                if (policyItems.length === 0) {
+                    policyContent.innerHTML = `
+                        <div class="empty-state">
+                            <span class="empty-state-icon">⚖️</span>
+                            <h3>No policy standards found</h3>
+                            <p>All matched safety regulations are active tasks.</p>
+                        </div>
+                    `;
+                } else {
+                    let policyHtml = `<div class="obligations-list">`;
+                    policyItems.forEach(item => {
                         const docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
                         const docType = item.clauses?.documents?.type || "Act";
                         const legalWeight = item.legal_weight || "mandatory";
                         const resolvedCat = resolveCategory(item);
-                        
-                        listHtml += `
-                            <div class="obligation-item" data-id="${item.id}" data-category="${resolvedCat}" style="display: grid;">
+
+                        policyHtml += `
+                            <div class="obligation-item" data-category="${resolvedCat}" style="grid-template-columns: 1fr; display: grid;">
                                 <div class="obligation-details">
-                                    <h4>${item.required_action}</h4>
-                                    <p>${item.clauses?.clause_text || ""}</p>
-                                    <div class="obligation-meta-tags">
+                                    <h4 style="color: var(--primary); font-size: 1.25rem; margin-bottom: 10px;">${item.required_action}</h4>
+                                    <p style="border-left: 3px solid var(--border); padding-left: 12px; margin-top: 10px; color: var(--text-muted); font-size: 0.95rem;">${item.clauses?.clause_text || ""}</p>
+                                    <div class="obligation-meta-tags" style="margin-top: 15px;">
                                         <span class="tag act">${docType}: ${docName} (${item.clauses?.section_number || ""})</span>
                                         <span class="tag weight-${legalWeight}">${legalWeight.toUpperCase()}</span>
-                                    </div>
-                                </div>
-                                <div class="obligation-action">
-                                    <div class="compliance-toggle ${isComplied ? 'complied' : ''}" onclick="toggleCompliance(this, '${item.id}')">
-                                        <input type="checkbox" ${isComplied ? 'checked' : ''} style="pointer-events: none;">
-                                        <span>${isComplied ? 'Complied' : 'Pending'}</span>
                                     </div>
                                 </div>
                             </div>
                         `;
                     });
-
-                    listHtml += `
-                            </div>
-                        </div>
-                    `;
+                    policyHtml += `</div>`;
+                    policyContent.innerHTML = policyHtml;
                 }
-                listHtml += `</div>`;
-
-                registerContent.innerHTML = headerHtml + listHtml;
                 
                 // Set initial progress bar calculations
                 updateProgressBar();
@@ -1062,6 +1154,7 @@
             } catch (err) {
                 console.error(err);
                 registerContent.innerHTML = `<div class="empty-state" style="color: #ef4444;">❌ Error querying database: ${err.message}</div>`;
+                policyContent.innerHTML = `<div class="empty-state" style="color: #ef4444;">❌ Error querying database: ${err.message}</div>`;
             }
         }
 
@@ -1129,10 +1222,10 @@
                             <div class="match-score">${similarityPct}% Match</div>
                             <div class="obligation-details">
                                 <h4 style="padding-right: 100px;">${item.required_action}</h4>
-                                <p style="border-left: 3px solid var(--primary-neon); padding-left: 12px; margin-top: 15px; color: #cbd5e1;">${item.clauses?.clause_text || ""}</p>
+                                <p style="border-left: 3px solid var(--border); padding-left: 12px; margin-top: 15px; color: var(--text-muted); font-size: 0.95rem;">${item.clauses?.clause_text || ""}</p>
                                 <div class="obligation-meta-tags" style="margin-top: 15px;">
                                     <span class="tag act">${docType}: ${docName} (${item.clauses?.section_number || ""})</span>
-                                    <span class="tag" style="text-transform: uppercase; color: var(--primary-neon); border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.05);">${item.frequency || "continuous"}</span>
+                                    <span class="tag" style="text-transform: uppercase; color: var(--primary); border-color: var(--border); background: rgba(255, 107, 107, 0.05);">${item.frequency || "continuous"}</span>
                                 </div>
                             </div>
                         </div>

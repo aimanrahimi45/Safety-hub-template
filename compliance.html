@@ -46,9 +46,17 @@
             border-radius: 14px;
             border: 3px solid var(--border);
             box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none; /* Hide for Firefox */
+            -webkit-overflow-scrolling: touch;
+        }
+        .tabs::-webkit-scrollbar {
+            display: none; /* Hide for Chrome/Safari */
         }
 
         .tab-btn {
+            flex-shrink: 0;
             background: transparent;
             border: none;
             color: var(--text-muted);
@@ -96,17 +104,16 @@
 
             .tabs {
                 width: 100%;
-                justify-content: space-between;
+                justify-content: flex-start;
                 box-sizing: border-box;
-                gap: 5px;
-                padding: 4px;
+                gap: 6px;
+                padding: 6px;
             }
 
             .tab-btn {
-                flex: 1;
-                padding: 8px 6px;
-                font-size: 0.8rem;
-                text-align: center;
+                flex: none;
+                padding: 8px 12px;
+                font-size: 0.85rem;
                 white-space: nowrap;
             }
 

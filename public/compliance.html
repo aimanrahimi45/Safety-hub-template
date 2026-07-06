@@ -620,6 +620,77 @@
         .frequency-group.collapsed .obligations-list {
             display: none;
         }
+
+        /* Biodata Form styles */
+        .biodata-form {
+            background: var(--surface);
+            border: 3px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+        }
+        .biodata-form h3 {
+            font-family: var(--font-heading);
+            margin: 0 0 16px 0;
+            color: var(--text-main);
+            font-size: 1.35rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-group label {
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+        .form-group input, .form-group select {
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 1rem;
+            background: var(--bg);
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+        }
+        .form-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .form-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            padding: 8px 12px;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            transition: all 0.15s ease;
+        }
+        .form-checkbox-label:hover {
+            background: var(--bg);
+            border-color: var(--border);
+        }
+        .form-checkbox-label input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -642,10 +713,62 @@
         <div id="view-profiler" class="view-section active">
             <div class="profiler-intro">
                 <h2>Operational Safety Profiler</h2>
-                <p>Check the operational activities carried out at your workplace. The compliance matching engine will automatically compile your facility's mandatory and recommended legal obligations from Malaysian OSH laws.</p>
+                <p>Enter your facility's baseline metrics and operational activities. The OSH engine will automatically compile and filter your custom compliance register.</p>
             </div>
 
-            <div class="grid-options">
+            <!-- SITE BIODATA FORM -->
+            <div class="biodata-form">
+                <h3>🏢 Site Baseline Profile</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="profile-headcount">Employee Headcount</label>
+                        <input type="number" id="profile-headcount" placeholder="e.g. 150" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-industry">Industry Sector</label>
+                        <select id="profile-industry">
+                            <option value="other">General Offices & Services</option>
+                            <option value="manufacturing">Manufacturing</option>
+                            <option value="construction">Construction & Engineering</option>
+                            <option value="shipbuilding">Ship Building & Repair</option>
+                            <option value="utilities">Utilities (Water, Gas, Electricity)</option>
+                            <option value="agriculture">Agriculture / Forestry / Logging</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 24px;">⚠️ Environment & Hazard Exposures</h3>
+                <div class="form-checkboxes">
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="hazard-noise">
+                        <span>🔊 Excessive Noise Area (employees exposed to >82 dBA or equivalent)</span>
+                    </label>
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="hazard-chemicals">
+                        <span>🧪 Hazardous Chemical Handling, Storage, or Supply</span>
+                    </label>
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="hazard-machinery_cf">
+                        <span>⚙️ Machinery Requiring Certificate of Fitness (e.g. Boilers, Lifts, Pressure Vessels)</span>
+                    </label>
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="hazard-lifting">
+                        <span>🛗 Lifting Machinery operation (Passenger Lifts, Escalators, Cranes, Hoists)</span>
+                    </label>
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="hazard-toxic">
+                        <span>😷 Specialized Toxic Exposure (Asbestos, Lead, or Silica Dust handling)</span>
+                    </label>
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="hazard-radiation">
+                        <span>☢️ Ionizing or Non-Ionizing Radiation Source handling</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- SPECIAL OPERATIONS (CARDS) -->
+            <h3 style="margin-top: 30px; border-bottom: 2px solid var(--border); padding-bottom: 8px;">🪜 Special Site Operations</h3>
+            <div class="grid-options" style="margin-top: 16px;">
                 <!-- Heights Card -->
                 <div class="profile-card" onclick="toggleProfileCard(this)" data-id="heights">
                     <div class="card-header">
@@ -653,7 +776,7 @@
                         <div class="checkbox-custom"></div>
                     </div>
                     <h3>Working at Heights</h3>
-                    <p>Includes tasks above 2m elevation, safety scaffolding, ladders, or harness installations.</p>
+                    <p>Includes tasks above 2m elevation, scaffolding, or harness installations.</p>
                 </div>
 
                 <!-- Confined Card -->
@@ -663,27 +786,7 @@
                         <div class="checkbox-custom"></div>
                     </div>
                     <h3>Confined Spaces</h3>
-                    <p>Includes work inside tanks, boilers, silos, sewage pits, requiring gas testers and permits.</p>
-                </div>
-
-                <!-- Chemical Card -->
-                <div class="profile-card" onclick="toggleProfileCard(this)" data-id="chemicals">
-                    <div class="card-header">
-                        <span class="card-icon">🧪</span>
-                        <div class="checkbox-custom"></div>
-                    </div>
-                    <h3>Chemical Management</h3>
-                    <p>Includes storing, handling, or supplying toxic chemicals, hazardous labelling, or SDS maintenance.</p>
-                </div>
-
-                <!-- Machinery Card -->
-                <div class="profile-card" onclick="toggleProfileCard(this)" data-id="machinery">
-                    <div class="card-header">
-                        <span class="card-icon">⚙️</span>
-                        <div class="checkbox-custom"></div>
-                    </div>
-                    <h3>Boilers & Heavy Machinery</h3>
-                    <p>Includes operation of steam boilers, unfired pressure vessels, crane hoists requiring Perakuan Kelayakan.</p>
+                    <p>Work inside tanks, silos, sewers, requiring gas testers and entry permits.</p>
                 </div>
 
                 <!-- Gig Card -->
@@ -693,7 +796,7 @@
                         <div class="checkbox-custom"></div>
                     </div>
                     <h3>Gig Delivery & Riders</h3>
-                    <p>Includes employment of gig delivery riders, dispatch, compounding safety regulations.</p>
+                    <p>Employs or manages gig delivery riders or compounding road transport safety rules.</p>
                 </div>
 
                 <!-- Petroleum Card -->
@@ -703,11 +806,21 @@
                         <div class="checkbox-custom"></div>
                     </div>
                     <h3>Fuel & Petroleum Storage</h3>
-                    <p>Includes bulk fuel tanks, petroleum depots, pipelines, or dangerous petroleum safety compliance.</p>
+                    <p>Bulk storage, carriage, pipelines, or handling of petroleum-related fuels.</p>
+                </div>
+
+                <!-- Transport Card -->
+                <div class="profile-card" onclick="toggleProfileCard(this)" data-id="transport">
+                    <div class="card-header">
+                        <span class="card-icon">🚚</span>
+                        <div class="checkbox-custom"></div>
+                    </div>
+                    <h3>Commercial Vehicle Fleet</h3>
+                    <p>Company logistics, transport trucks, delivery vehicles, driver fatigue policies.</p>
                 </div>
             </div>
 
-            <div class="btn-action-container">
+            <div class="btn-action-container" style="margin-top: 30px;">
                 <button class="btn-action" onclick="generateComplianceRegister()">⚡ Generate Legal Register</button>
             </div>
         </div>
@@ -768,10 +881,15 @@
         const CATEGORY_MAP = {
             "heights": ["working at heights", "aerial work platform operation", "fall protection", "scaffold", "ladder", "harness"],
             "confined": ["confined space", "confined space entry", "confined space operations", "gas testing", "ventilation"],
-            "chemicals": ["chemical", "chemical classification", "chemical exposure", "chemical handling", "chemical labeling", "chemical packaging", "chemical processing", "chemical supply", "hazardous chemical", "asbestos handling", "lead exposure", "cadmium handling", "sds", "class regulations", "usechh"],
+            "chemicals": ["chemical", "chemical classification", "chemical exposure", "chemical handling", "chemical labeling", "chemical packaging", "chemical processing", "chemical supply", "hazardous chemical", "asbestos handling", "lead exposure", "cadmium handling", "sds", "class regulations", "usechh", "kimia"],
             "machinery": ["machinery", "boiler", "steam boiler", "pressure vessel", "unfired pressure vessel", "loji", "loji perakuan kelayakan", "boiler scale cleaning", "hoist", "lift", "crane", "safety officer", "competent person"],
-            "gig": ["gig", "gig worker", "delivery rider", "compounding", "compounding offences"],
-            "petroleum": ["petroleum", "petroleum storage", "petroleum carry", "petroleum transport", "fuel storage", "petroleum pipeline"]
+            "gig": ["gig", "gig worker", "delivery rider", "compounding", "compounding offences", "akta-872"],
+            "petroleum": ["petroleum", "petroleum storage", "petroleum carry", "petroleum transport", "fuel storage", "petroleum pipeline", "akta-petroleum"],
+            "transport": ["pengangkutan-jalan", "road-transport", "timber loading", "traffic management"],
+            "noise": ["noise-exposure-regs", "bising", "hearing", "noise"],
+            "lifting": ["lift", "escalator", "crane", "hoist", "lifting"],
+            "toxic": ["asbestos", "lead", "silica"],
+            "radiation": ["radiation", "atomic"]
         };
 
         // Always matching general OSH requirements for any workplace
@@ -810,8 +928,20 @@
             card.classList.toggle('selected');
         }
 
-        // Load previously selected checkboxes from localStorage on launch
+        // Load previously selected values from localStorage on launch
         window.addEventListener('DOMContentLoaded', () => {
+            // Load headcount and industry
+            document.getElementById('profile-headcount').value = localStorage.getItem('safety_hub_headcount') || '0';
+            document.getElementById('profile-industry').value = localStorage.getItem('safety_hub_industry') || 'other';
+
+            // Load environmental hazard checkboxes
+            const hazards = ['noise', 'chemicals', 'machinery_cf', 'lifting', 'toxic', 'radiation'];
+            hazards.forEach(h => {
+                const val = localStorage.getItem(`safety_hub_hazard_${h}`);
+                document.getElementById(`hazard-${h}`).checked = (val === 'true');
+            });
+
+            // Load operational activities cards
             const savedProfile = localStorage.getItem('safety_hub_osh_profile');
             if (savedProfile) {
                 const selectedIds = JSON.parse(savedProfile);
@@ -826,11 +956,24 @@
 
         // Save selected OSH profile & trigger matching
         function generateComplianceRegister() {
+            // Save headcount and industry
+            const headcount = document.getElementById('profile-headcount').value;
+            const industry = document.getElementById('profile-industry').value;
+            localStorage.setItem('safety_hub_headcount', headcount);
+            localStorage.setItem('safety_hub_industry', industry);
+
+            // Save environmental hazard checkboxes
+            const hazards = ['noise', 'chemicals', 'machinery_cf', 'lifting', 'toxic', 'radiation'];
+            hazards.forEach(h => {
+                const checked = document.getElementById(`hazard-${h}`).checked;
+                localStorage.setItem(`safety_hub_hazard_${h}`, checked ? 'true' : 'false');
+            });
+
+            // Save selected operational cards
             const selected = [];
             document.querySelectorAll('.profile-card.selected').forEach(card => {
                 selected.push(card.getAttribute('data-id'));
             });
-
             localStorage.setItem('safety_hub_osh_profile', JSON.stringify(selected));
             
             // Highlight Legal Register tab and load data
@@ -922,12 +1065,28 @@
 
             const savedProfile = localStorage.getItem('safety_hub_osh_profile');
             const selectedCategories = savedProfile ? JSON.parse(savedProfile) : [];
+            const headcount = parseInt(localStorage.getItem('safety_hub_headcount')) || 0;
+            const industry = localStorage.getItem('safety_hub_industry') || 'other';
 
             // Compile the query filter
             const keywords = [...GENERAL_KEYWORDS];
+            
+            // Add operational activities
             selectedCategories.forEach(cat => {
                 if (CATEGORY_MAP[cat]) {
                     keywords.push(...CATEGORY_MAP[cat]);
+                }
+            });
+
+            // Add checked hazards
+            const hazards = ['noise', 'chemicals', 'machinery_cf', 'lifting', 'toxic', 'radiation'];
+            hazards.forEach(h => {
+                if (localStorage.getItem(`safety_hub_hazard_${h}`) === 'true') {
+                    let mapKey = h;
+                    if (h === 'machinery_cf') mapKey = 'machinery';
+                    if (CATEGORY_MAP[mapKey]) {
+                        keywords.push(...CATEGORY_MAP[mapKey]);
+                    }
                 }
             });
 
@@ -936,8 +1095,15 @@
             const filters = `or=(${orConditions})`;
 
             try {
-                // PASS both filters and selected categories to ensure proper document exclusion
-                const categoriesArg = encodeURIComponent(selectedCategories.join(","));
+                // Compile all selected categories and hazards for backend exclusion filtering
+                const allSelected = [...selectedCategories];
+                hazards.forEach(h => {
+                    if (localStorage.getItem(`safety_hub_hazard_${h}`) === 'true') {
+                        allSelected.push(h);
+                    }
+                });
+
+                const categoriesArg = encodeURIComponent(allSelected.join(","));
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getComplianceObligations&filters=${encodeURIComponent(filters)}&categories=${categoriesArg}`);
                 const result = await response.json();
 
@@ -945,7 +1111,7 @@
                     throw new Error(result.message || "Query failed");
                 }
 
-                const data = result.data || [];
+                let data = result.data || [];
                 if (data.length === 0) {
                     const emptyHtml = `
                         <div class="empty-state">
@@ -958,6 +1124,45 @@
                     policyContent.innerHTML = emptyHtml;
                     return;
                 }
+
+                // Fine-grained OSH legal pruning logic based on headcount, sector and committee/officer requirements
+                const requiresSHO = (
+                    (industry === 'manufacturing' && headcount >= 500) ||
+                    (industry === 'construction' && headcount >= 20) ||
+                    (industry === 'shipbuilding' && headcount >= 100) ||
+                    (industry === 'utilities' && headcount >= 500)
+                );
+                
+                const requiresOSHC = (headcount >= 5 && !requiresSHO);
+                const requiresCommittee = (headcount >= 40);
+
+                data = data.filter(item => {
+                    const sectionNum = item.clauses?.section_number || "";
+                    const docName = (item.clauses?.documents?.name || "").toLowerCase();
+
+                    // Rule 1: SHO Appointing
+                    if (!requiresSHO) {
+                        if (sectionNum.startsWith("Section 29(") || sectionNum === "Section 29" || docName.includes("pegawai-keselamatan")) {
+                            return false;
+                        }
+                    }
+
+                    // Rule 2: OSH Coordinator Appointing
+                    if (!requiresOSHC) {
+                        if (sectionNum.startsWith("Section 29A(")) {
+                            return false;
+                        }
+                    }
+
+                    // Rule 3: Safety Committee Establishment
+                    if (!requiresCommittee) {
+                        if (sectionNum.startsWith("Section 30(") || sectionNum === "Section 30" || docName.includes("jawatankuasa-keselamatan")) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
 
                 // Whitelist of sections to display under the "Policy Standards" tab
                 const POLICY_SECTIONS = [
@@ -1025,16 +1230,21 @@
                         "heights": "🪜 Heights",
                         "confined": "🕳️ Confined Space",
                         "chemicals": "🧪 Chemicals",
-                        "machinery": "⚙️ Machinery",
+                        "machinery_cf": "⚙️ Machinery CF",
                         "gig": "🛵 Gig Workers",
-                        "petroleum": "🛢️ Petroleum"
+                        "petroleum": "🛢️ Petroleum",
+                        "transport": "🚚 Road Transport",
+                        "noise": "🔊 Noise Safety",
+                        "lifting": "🛗 Lifting Gear",
+                        "toxic": "😷 Toxic Hazards",
+                        "radiation": "☢️ Radiation"
                     };
 
                     headerHtml += `<div class="filter-pills">`;
                     headerHtml += `<div class="filter-pill active" onclick="filterCategory('all', this)">⭐ Show All</div>`;
                     headerHtml += `<div class="filter-pill" onclick="filterCategory('general', this)">📋 General OSH</div>`;
                     
-                    selectedCategories.forEach(cat => {
+                    allSelected.forEach(cat => {
                         if (categoryNames[cat]) {
                             headerHtml += `<div class="filter-pill" onclick="filterCategory('${cat}', this)">${categoryNames[cat]}</div>`;
                         }

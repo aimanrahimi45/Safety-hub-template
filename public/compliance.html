@@ -959,26 +959,21 @@
                     return;
                 }
 
-                // SPLIT into Active Checklist vs Passive Policy standards
-                const PASSIVE_KEYWORDS = [
-                    "refrain", "do not", "shall not", "must not", "prohibit", "dismiss", "obstruct", 
-                    "alter", "discriminate", "guarantee", "right to", "tiada boleh", 
-                    "tidak boleh", "dilarang", "dihalang", "bukanlah suatu", "hukuman",
-                    "denda", "penjara", "no person", "no employer", "no trade union",
-                    "offence", "penalty", "penalties", "kesalahan", "melanggar", 
-                    "prescribed regulations", "as prescribed", "consult with", "consultation"
+                // Whitelist of sections to display under the "Policy Standards" tab
+                const POLICY_SECTIONS = [
+                    "Section 27(1)",
+                    "Section 27(2)",
+                    "Section 30(2)",
+                    "Section 30(3)",
+                    "Section 51"
                 ];
 
                 const activeItems = [];
                 const policyItems = [];
 
                 data.forEach(item => {
-                    const actionText = (item.required_action || "").toLowerCase();
-
-                    // Check action ONLY to avoid misclassifying active tasks derived from negatively-phrased clauses
-                    const isPassive = PASSIVE_KEYWORDS.some(kw => 
-                        actionText.indexOf(kw) !== -1
-                    );
+                    const sectionNum = item.clauses?.section_number || "";
+                    const isPassive = POLICY_SECTIONS.includes(sectionNum);
 
                     if (isPassive) {
                         policyItems.push(item);

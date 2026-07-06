@@ -558,15 +558,23 @@
         /* Category Filter Pills */
         .filter-pills {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            gap: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
             margin-bottom: 24px;
+            padding: 4px 8px 10px 4px; /* padding prevents box-shadow clipping during scroll */
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
+            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        }
+        .filter-pills::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
         }
         .filter-pill {
+            flex-shrink: 0; /* Prevent pills from squishing */
             background: var(--surface);
             border: 2px solid var(--border);
-            padding: 6px 14px;
-            border-radius: 10px;
+            padding: 8px 16px;
+            border-radius: 12px;
             font-family: var(--font-heading);
             font-size: 0.9rem;
             cursor: pointer;
@@ -881,7 +889,7 @@
         const CATEGORY_MAP = {
             "heights": ["height", "fall", "scaffold", "ladder", "harness"],
             "confined": ["confined"],
-            "chemicals": ["chemical", "asbestos", "lead", "cadmium", "sds", "class", "usechh", "kimia"],
+            "chemicals": ["chemical", "cadmium", "sds", "class", "usechh", "kimia"],
             "machinery": ["machinery", "boiler", "pressure", "loji", "competent"],
             "gig": ["gig", "rider", "compounding", "akta-872"],
             "petroleum": ["petroleum", "fuel", "pipeline"],

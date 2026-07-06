@@ -879,14 +879,14 @@
     <script>
         // Mapping high-level client cards to specific Supabase trigger activity keywords
         const CATEGORY_MAP = {
-            "heights": ["working at heights", "aerial work platform operation", "fall protection", "scaffold", "ladder", "harness"],
-            "confined": ["confined space", "confined space entry", "confined space operations", "gas testing", "ventilation"],
-            "chemicals": ["chemical", "chemical classification", "chemical exposure", "chemical handling", "chemical labeling", "chemical packaging", "chemical processing", "chemical supply", "hazardous chemical", "asbestos handling", "lead exposure", "cadmium handling", "sds", "class regulations", "usechh", "kimia"],
-            "machinery": ["machinery", "boiler", "steam boiler", "pressure vessel", "unfired pressure vessel", "loji", "loji perakuan kelayakan", "boiler scale cleaning", "hoist", "lift", "crane", "safety officer", "competent person"],
-            "gig": ["gig", "gig worker", "delivery rider", "compounding", "compounding offences", "akta-872"],
-            "petroleum": ["petroleum", "petroleum storage", "petroleum carry", "petroleum transport", "fuel storage", "petroleum pipeline", "akta-petroleum"],
-            "transport": ["pengangkutan-jalan", "road-transport", "timber loading", "traffic management"],
-            "noise": ["noise-exposure-regs", "bising", "hearing", "noise"],
+            "heights": ["height", "fall", "scaffold", "ladder", "harness"],
+            "confined": ["confined"],
+            "chemicals": ["chemical", "asbestos", "lead", "cadmium", "sds", "class", "usechh", "kimia"],
+            "machinery": ["machinery", "boiler", "pressure", "loji", "hoist", "lift", "crane", "safety officer", "competent"],
+            "gig": ["gig", "rider", "compounding", "akta-872"],
+            "petroleum": ["petroleum", "fuel", "pipeline"],
+            "transport": ["pengangkutan", "road-transport", "timber", "traffic"],
+            "noise": ["noise", "bising", "hearing"],
             "lifting": ["lift", "escalator", "crane", "hoist", "lifting"],
             "toxic": ["asbestos", "lead", "silica"],
             "radiation": ["radiation", "atomic"]
@@ -894,7 +894,7 @@
 
         // Always matching general OSH requirements for any workplace
         const GENERAL_KEYWORDS = [
-            "general safety", "safety policy", "first aid", "accident reporting", "nadopod", "committee", "welfare", "employer duty", "employee duty", "general duties"
+            "general", "safety", "first aid", "reporting", "nadopod", "committee", "welfare", "duty"
         ];
 
         // Retrieve sheetId/pin credentials from localStorage (cached from AmerisPro setup screen)

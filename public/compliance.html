@@ -961,10 +961,12 @@
 
                 // SPLIT into Active Checklist vs Passive Policy standards
                 const PASSIVE_KEYWORDS = [
-                    "refrain", "do not", "shall not", "prohibit", "dismiss", "obstruct", 
+                    "refrain", "do not", "shall not", "must not", "prohibit", "dismiss", "obstruct", 
                     "alter", "discriminate", "guarantee", "right to", "tiada boleh", 
                     "tidak boleh", "dilarang", "dihalang", "bukanlah suatu", "hukuman",
-                    "denda", "penjara"
+                    "denda", "penjara", "no person", "no employer", "no trade union",
+                    "offence", "penalty", "penalties", "kesalahan", "melanggar", 
+                    "prescribed regulations", "as prescribed", "consult with", "consultation"
                 ];
 
                 const activeItems = [];
@@ -972,13 +974,10 @@
 
                 data.forEach(item => {
                     const actionText = (item.required_action || "").toLowerCase();
-                    const clauseText = (item.clauses?.clause_text || "").toLowerCase();
-                    const triggerText = (item.trigger_activity || "").toLowerCase();
 
+                    // Check action ONLY to avoid misclassifying active tasks derived from negatively-phrased clauses
                     const isPassive = PASSIVE_KEYWORDS.some(kw => 
-                        actionText.indexOf(kw) !== -1 || 
-                        clauseText.indexOf(kw) !== -1 ||
-                        triggerText.indexOf(kw) !== -1
+                        actionText.indexOf(kw) !== -1
                     );
 
                     if (isPassive) {

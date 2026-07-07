@@ -159,15 +159,13 @@ function renderQuestion() {
   const answered = Object.keys(questionAnswers).length;
   const existing = questionAnswers[q.id];
 
-  // Switch to profiler view
   switchTab('profiler');
 
-  // Build question UI
   const profilerDiv = document.getElementById('view-profiler');
   profilerDiv.innerHTML = `
-    <div class="questionnaire-container">
+    <div class="questionnaire-container" id="q-container" data-reg-index="${currentRegIndex}" data-q-index="${currentQIndex}">
       <div class="q-top-bar">
-        <button class="q-back-btn" onclick="exitQuestionnaire()">← Back to Regulations</button>
+        <button class="q-back-btn" data-action="exit">← Back to Regulations</button>
         <span class="q-reg-title">${reg.icon} ${reg.title}</span>
       </div>
 
@@ -179,18 +177,18 @@ function renderQuestion() {
       </div>
 
       <div class="q-card">
-        <div class="q-reg-badge">${reg.icon} ${reg.regulation || ''}</div>
+        <div class="q-reg-badge">${reg.icon}</div>
         <h2 class="q-question">${q.question}</h2>
         <p class="q-detail">${q.detail}</p>
 
-        <div class="q-actions">
-          <button class="q-btn q-btn-yes ${existing === 'yes' ? 'active' : ''}" onclick="answerQuestion('yes')">
+        <div class="q-actions" data-action-group="answer">
+          <button class="q-btn q-btn-yes ${existing === 'yes' ? 'active' : ''}" data-value="yes">
             <span class="q-btn-icon">✅</span> Yes, in place
           </button>
-          <button class="q-btn q-btn-no ${existing === 'no' ? 'active' : ''}" onclick="answerQuestion('no')">
+          <button class="q-btn q-btn-no ${existing === 'no' ? 'active' : ''}" data-value="no">
             <span class="q-btn-icon">❌</span> Not yet
           </button>
-          <button class="q-btn q-btn-skip ${existing === 'skip' ? 'active' : ''}" onclick="answerQuestion('skip')">
+          <button class="q-btn q-btn-skip ${existing === 'skip' ? 'active' : ''}" data-value="skip">
             <span class="q-btn-icon">⏭️</span> Skip
           </button>
         </div>
@@ -204,30 +202,55 @@ function renderQuestion() {
       </div>
 
       <div class="q-nav">
-        <button class="q-nav-btn" onclick="prevQuestion()" ${currentQIndex === 0 ? 'disabled' : ''}>← Previous</button>
-        <button class="q-nav-btn q-nav-next" onclick="nextOrFinish()">${currentQIndex >= total - 1 ? '📊 View Summary' : 'Next →'}</button>
+        <button class="q-nav-btn" data-action="prev" ${currentQIndex === 0 ? 'disabled' : ''}>← Previous</button>
+        <button class="q-nav-btn q-nav-next" data-action="next">${currentQIndex >= total - 1 ? '📊 View Summary' : 'Next →'}</button>
       </div>
     </div>
   `;
+
+  // Attach event listeners via delegation
+  const container = document.getElementById('q-container');
+  if (!container) return;
+
+  container.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action], [data-value]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const value = btn.dataset.value;
+
+    if (value) {
+      window.answerQuestion(value);
+    } else if (action === 'exit') {
+      window.exitQuestionnaire();
+    } else if (action === 'prev') {
+      window.prevQuestion();
+    } else if (action === 'next') {
+      window.nextOrFinish();
+    }
+  });
 }
 
-function answerQuestion(value) {
+// Make functions globally accessible for backward compat
+window.answerQuestion = function(value) {
   const regs = getApplicableRegulations();
   const reg = regs[currentRegIndex];
+  if (!reg) return;
   const q = reg.questions[currentQIndex];
+  if (!q) return;
 
   questionAnswers[q.id] = value;
   localStorage.setItem('q_answers_' + reg.id, JSON.stringify(questionAnswers));
 
-  // Update UI
   document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.q-btn-' + value).classList.add('active');
+  const activeBtn = document.querySelector(`.q-btn[data-value="${value}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
 
   const steps = document.getElementById('q-action-steps');
   if (steps) {
     steps.style.display = value === 'no' ? 'block' : 'none';
   }
-}
+};
 
 function nextQuestion() {
   const regs = getApplicableRegulations();

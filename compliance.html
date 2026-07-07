@@ -706,6 +706,71 @@
             height: 20px;
             cursor: pointer;
         }
+        /* ===== QUESTIONNAIRE WIZARD ===== */
+        .questionnaire-container { max-width: 720px; margin: 0 auto; padding: 20px 0; }
+        .q-top-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .q-back-btn { background: none; border: 2px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; }
+        .q-back-btn:hover { background: var(--border); }
+        .q-reg-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
+        .q-progress-section { margin-bottom: 24px; }
+        .q-progress-text { font-size: 0.85rem; color: #666; margin-bottom: 6px; font-weight: 500; }
+        .q-progress-bar-bg { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+        .q-progress-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.3s; }
+        .q-card { background: white; border: 3px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 4px 4px 0 var(--shadow); }
+        .q-reg-badge { display: inline-block; background: #f0f0f0; border: 2px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; margin-bottom: 16px; }
+        .q-question { font-size: 1.4rem; margin-bottom: 12px; line-height: 1.4; }
+        .q-detail { color: #555; line-height: 1.6; margin-bottom: 24px; }
+        .q-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+        .q-btn { flex: 1; min-width: 140px; display: flex; align-items: center; gap: 8px; padding: 14px 20px; border: 3px solid var(--border); border-radius: 12px; cursor: pointer; font-size: 1rem; font-weight: 600; background: white; transition: all 0.15s; }
+        .q-btn:hover { transform: translateY(-2px); box-shadow: 2px 2px 0 var(--shadow); }
+        .q-btn.active { transform: translateY(-2px); }
+        .q-btn-yes.active { background: #d4edda; border-color: #28a745; }
+        .q-btn-no.active { background: #f8d7da; border-color: #dc3545; }
+        .q-btn-skip.active { background: #fff3cd; border-color: #ffc107; }
+        .q-btn-icon { font-size: 1.2rem; }
+        .q-action-steps { background: #fff8e1; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-top: 12px; }
+        .q-action-steps h4 { margin-bottom: 12px; font-size: 0.95rem; }
+        .q-action-steps ul { padding-left: 20px; }
+        .q-action-steps li { margin-bottom: 6px; line-height: 1.5; }
+        .q-nav { display: flex; justify-content: space-between; margin-top: 20px; }
+        .q-nav-btn { padding: 12px 24px; border: 3px solid var(--border); border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; background: white; transition: all 0.15s; }
+        .q-nav-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 2px 2px 0 var(--shadow); }
+        .q-nav-btn:disabled { opacity: 0.4; cursor: default; }
+        .q-nav-next { background: var(--primary); color: white; border-color: var(--primary); }
+        .q-nav-next:hover { background: #e05555; }
+        .q-summary-stats { display: flex; gap: 16px; margin: 20px 0; flex-wrap: wrap; }
+        .q-stat { flex: 1; min-width: 100px; background: white; border: 3px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; box-shadow: 2px 2px 0 var(--shadow); }
+        .q-stat-num { font-size: 1.8rem; font-weight: 700; display: block; }
+        .q-stat.good .q-stat-num { color: #28a745; }
+        .q-stat.warn .q-stat-num { color: #dc3545; }
+        .q-stat.muted .q-stat-num { color: #999; }
+        .q-summary-list { background: white; border: 3px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 2px 2px 0 var(--shadow); }
+        .q-summary-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px solid #eee; }
+        .q-summary-item:last-child { border-bottom: none; }
+        .q-summary-icon { font-size: 1.1rem; }
+        .q-summary-item.no { background: #fff5f5; }
+        .q-summary-item.yes { background: #f0fff4; }
+        .q-summary-item.unanswered { background: #fafafa; }
+
+        /* Regulation selector cards */
+        .reg-list-section { margin-top: 30px; }
+        .reg-card { background: white; border: 3px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; cursor: pointer; transition: all 0.15s; box-shadow: 2px 2px 0 var(--shadow); }
+        .reg-card:hover { transform: translateY(-2px); box-shadow: 4px 4px 0 var(--shadow); }
+        .reg-card.done { border-color: #28a745; background: #f0fff4; }
+        .reg-card-header { display: flex; align-items: center; gap: 16px; }
+        .reg-icon { font-size: 2rem; }
+        .reg-info { flex: 1; }
+        .reg-info h4 { margin: 0; font-size: 1.1rem; }
+        .reg-info p { margin: 2px 0 0; font-size: 0.8rem; color: #666; }
+        .reg-status { font-size: 1.3rem; }
+        .reg-progress { margin-top: 10px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
+        .reg-progress-bar { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s; }
+        .reg-card.done .reg-progress-bar { background: #28a745; }
+        .obligation-item.needs-action { border-left: 4px solid #ffc107 !important; }
+        .action-steps-box { background: #fff8e1; border: 2px solid #ffc107; border-radius: 10px; padding: 14px 18px; margin: 10px 0; }
+        .action-steps-box h5 { margin-bottom: 8px; font-size: 0.9rem; }
+        .action-steps-box ul { padding-left: 18px; margin: 0; }
+        .action-steps-box li { margin-bottom: 4px; line-height: 1.5; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -1011,6 +1076,38 @@
             return "general";
         }
 
+        // Read questionnaire answers from localStorage and build section filters
+        function getQuestionnaireSectionFilter() {
+            const covered = new Set();
+            const actionNeeded = new Set();
+            const skipped = new Set();
+            const actionStepsMap = {}; // section_number → action_steps[]
+            let hasAny = false;
+
+            try {
+                const regs = window.__questionsData?.regulations || [];
+                for (const reg of regs) {
+                    const answers = JSON.parse(localStorage.getItem('q_answers_' + reg.id) || '{}');
+                    for (const q of reg.questions) {
+                        const ans = answers[q.id];
+                        if (!ans) continue;
+                        hasAny = true;
+                        const sections = q.maps_to || [];
+                        for (const s of sections) {
+                            if (ans === 'yes') covered.add(s);
+                            else if (ans === 'no') {
+                                actionNeeded.add(s);
+                                actionStepsMap[s] = { steps: q.action_steps || [], question: q.question };
+                            }
+                            else if (ans === 'skip') skipped.add(s);
+                        }
+                    }
+                }
+            } catch (e) { /* no questions data */ }
+
+            return { covered, actionNeeded, skipped, actionStepsMap, hasAny };
+        }
+
         // Live update progress bar count (Active tasks only)
         function updateProgressBar() {
             const items = document.querySelectorAll('#register-content .obligation-item');
@@ -1148,6 +1245,19 @@
                 
                 const requiresOSHC = (headcount >= 5 && !requiresSHO);
                 const requiresCommittee = (headcount >= 40);
+
+                // Apply questionnaire answer filtering
+                const qFilter = getQuestionnaireSectionFilter();
+                if (qFilter.hasAny) {
+                    data = data.filter(item => {
+                        const sectionNum = item.clauses?.section_number || "";
+                        // If this section is mapped by a question answer, apply filter
+                        if (qFilter.covered.has(sectionNum)) return true;     // "yes" → show
+                        if (qFilter.actionNeeded.has(sectionNum)) return true; // "no" → show as action
+                        if (qFilter.skipped.has(sectionNum)) return false;    // "skip" → hide
+                        return true; // unmapped → show by default
+                    });
+                }
 
                 data = data.filter(item => {
                     const sectionNum = item.clauses?.section_number || "";
@@ -1300,14 +1410,24 @@
                             const docType = item.clauses?.documents?.type || "Act";
                             const legalWeight = item.legal_weight || "mandatory";
                             const resolvedCat = resolveCategory(item);
+                            const sectionNo = item.clauses?.section_number || "";
+                            
+                            // Check if this section has action steps from questionnaire
+                            const actionInfo = qFilter.actionStepsMap[sectionNo];
+                            const needsAction = !!actionInfo;
                             
                             listHtml += `
-                                <div class="obligation-item" data-id="${item.id}" data-category="${resolvedCat}" style="display: grid;">
+                                <div class="obligation-item ${needsAction ? 'needs-action' : ''}" data-id="${item.id}" data-category="${resolvedCat}" style="display: grid;">
                                     <div class="obligation-details">
-                                        <h4>${item.required_action}</h4>
-                                        <p>${item.clauses?.clause_text || ""}</p>
+                                        <h4>${item.required_action} ${needsAction ? '⚠️' : ''}</h4>
+                                        ${needsAction ? `
+                                            <div class="action-steps-box">
+                                                <h5>📋 Required actions to comply with ${actionInfo.question}:</h5>
+                                                <ul>${actionInfo.steps.map(s => `<li>${s}</li>`).join('')}</ul>
+                                            </div>
+                                        ` : `<p>${item.clauses?.clause_text || ""}</p>`}
                                         <div class="obligation-meta-tags">
-                                            <span class="tag act">${docType}: ${docName} (${item.clauses?.section_number || ""})</span>
+                                            <span class="tag act">${docType}: ${docName} (${sectionNo})</span>
                                             <span class="tag weight-${legalWeight}">${legalWeight.toUpperCase()}</span>
                                         </div>
                                     </div>
@@ -1458,5 +1578,6 @@
             }
         }
     </script>
+    <script src="questions-ui.js"></script>
 </body>
 </html>

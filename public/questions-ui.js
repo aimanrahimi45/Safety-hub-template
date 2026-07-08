@@ -19,14 +19,42 @@ async function loadQuestions() {
 }
 
 function getApplicableRegulations() {
-  if (!questionsData) return [];
+  if (!questionsData) {
+    console.warn('❌ questionsData is null — questions.json may not have loaded');
+    return [];
+  }
   const hazards = getSelectedHazards();
-  // Also check profile cards for triggers (gig, petroleum, etc.)
   const profile = JSON.parse(localStorage.getItem('safety_hub_osh_profile') || '[]');
   const allTriggers = [...hazards, ...profile];
+  console.log('🔍 getApplicableRegulations:', {
+    questionsLoaded: !!questionsData,
+    regCount: questionsData?.regulations?.length,
+    hazards,
+    profile,
+    allTriggers,
+    matchedRegs: questionsData.regulations.filter(r =>
+      r.trigger === 'all' || allTriggers.includes(r.trigger)
+    ).map(r => r.id)
+  });
   return questionsData.regulations.filter(r =>
     r.trigger === 'all' || allTriggers.includes(r.trigger)
   );
+}
+
+function getSelectedHazards() {
+  const hazards = [];
+  const ids = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
+  ids.forEach(id => {
+    const el = document.getElementById('hazard-' + id);
+    const localVal = localStorage.getItem('safety_hub_hazard_' + id);
+    if (el) {
+      if (el.checked) hazards.push(id);
+    } else if (localVal === 'true') {
+      hazards.push(id);
+    }
+  });
+  console.log('🔍 getSelectedHazards:', { hazards, hazardChemLocal: localStorage.getItem('safety_hub_hazard_chemicals') });
+  return hazards;
 }
 
 function hasQuestionnaire(trigger) {

@@ -19,13 +19,15 @@ async function loadQuestions() {
 }
 
 function getApplicableRegulations() {
-  if (!questionsData) return [];
+  if (!questionsData) { console.warn('⚠️ getApplicableRegulations: questionsData is null'); return []; }
   const hazards = getSelectedHazards();
   const profile = JSON.parse(localStorage.getItem('safety_hub_osh_profile') || '[]');
   const allTriggers = [...hazards, ...profile];
-  return questionsData.regulations.filter(r =>
+  const matched = questionsData.regulations.filter(r =>
     r.trigger === 'all' || allTriggers.includes(r.trigger)
   );
+  console.log('🔍 getApplicableRegulations:', { hazards, profile, matched: matched.map(r => r.id), total: questionsData.regulations.length });
+  return matched;
 }
 
 function getSelectedHazards() {
@@ -40,6 +42,7 @@ function getSelectedHazards() {
       hazards.push(id);
     }
   });
+  console.log('🔍 getSelectedHazards:', { hazards, chemLocal: localStorage.getItem('safety_hub_hazard_chemicals'), chemCheckbox: document.getElementById('hazard-chemicals')?.checked });
   return hazards;
 }
 
@@ -414,21 +417,23 @@ function exitAndGenerate(skipPrompt) {
   switchTab('register');
 }
 
-function renderRegulationCards() {
-  // Dynamic regulation selector insertion
-  const bioSection = document.querySelector('.biodata-form');
-  if (!bioSection) return;
-  const existing = document.querySelector('.reg-list-section');
-  if (existing) existing.remove();
+ function renderRegulationCards() {
+   console.log('🔍 renderRegulationCards fired');
+   const bioSection = document.querySelector('.biodata-form');
+   if (!bioSection) { console.warn('⚠️ .biodata-form not found'); return; }
+   const existing = document.querySelector('.reg-list-section');
+   if (existing) existing.remove();
 
-  const regs = getApplicableRegulations();
-  if (regs.length === 0) return;
+   const regs = getApplicableRegulations();
+   console.log('🔍 renderRegulationCards: regs:', regs.length, regs.map(r => r.id));
+   if (regs.length === 0) { console.warn('⚠️ no applicable regs — cards not rendered'); return; }
 
-  const section = document.createElement('div');
-  section.className = 'reg-list-section';
-  section.innerHTML = renderRegulationSelector();
-  bioSection.after(section);
-}
+   const section = document.createElement('div');
+   section.className = 'reg-list-section';
+   section.innerHTML = renderRegulationSelector();
+   bioSection.after(section);
+   console.log('✅ regulation cards inserted into DOM');
+ }
 
 function checkAllRegStatuses() {
   const regs = getApplicableRegulations();
@@ -449,10 +454,16 @@ function checkAllRegStatuses() {
 let originalProfilerHTML = '';
 
 function initQuestionnaire() {
+  console.log('📌 initQuestionnaire called');
   loadQuestions().then(() => {
-    // Keep a copy of original profiler html
+    console.log('📌 questions loaded, regs:', questionsData?.regulations?.length);
     const profilerDiv = document.getElementById('view-profiler');
+    if (!profilerDiv) { console.warn('⚠️ view-profiler not found in DOM'); return; }
     originalProfilerHTML = profilerDiv.innerHTML;
+    console.log('📌 originalProfilerHTML captured, calling renderRegulationCards...');
+
+    renderRegulationCards();
+    console.log('📌 renderRegulationCards done, checking DOM for .reg-list-section:', !!document.querySelector('.reg-list-section'));
 
     // Override the generate function trigger
     const originalGenerate = window.generateComplianceRegister;

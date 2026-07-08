@@ -393,7 +393,10 @@
         const formattedDate = `${yyyy}-${mm}-${dd}`;
 
         const urlParams = new URLSearchParams(window.location.search);
-        const spreadsheetId = urlParams.get('spreadsheetId') || "";
+        let spreadsheetId = urlParams.get('spreadsheetId') || "";
+        if (spreadsheetId.includes('?')) {
+            spreadsheetId = spreadsheetId.split('?')[0];
+        }
 
         const payload = {
             action: "contractorRegistrationForm",

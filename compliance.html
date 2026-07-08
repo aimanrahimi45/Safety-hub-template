@@ -1558,22 +1558,90 @@
                     return;
                 }
 
+                // Group items by base section to present structured lists cleanly
+                const groups = {};
+                data.forEach(item => {
+                    const sectionNum = item.clauses?.section_number || "";
+                    const baseMatch = sectionNum.match(/^([Ss]ection\s+\d+[A-Z]?|[Jj]adual\s+[A-Z0-9]+)/i);
+                    const baseSection = baseMatch ? baseMatch[0] : sectionNum;
+                    const docId = item.clauses?.doc_id || "unknown";
+                    const key = `${docId}_${baseSection}`;
+
+                    if (!groups[key]) {
+                        groups[key] = {
+                            baseSection,
+                            docId,
+                            docName: item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation",
+                            docType: item.clauses?.documents?.type || "Act",
+                            maxSimilarity: item.similarity || 0,
+                            items: []
+                        };
+                    }
+
+                    if (item.similarity > groups[key].maxSimilarity) {
+                        groups[key].maxSimilarity = item.similarity;
+                    }
+                    groups[key].items.push(item);
+                });
+
                 let html = `<div class="search-results">`;
 
-                data.forEach(item => {
-                    const similarityPct = Math.round((item.similarity || 0) * 100);
-                    const docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
-                    const docType = item.clauses?.documents?.type || "Act";
+                Object.values(groups).forEach(group => {
+                    const similarityPct = Math.round((group.maxSimilarity || 0) * 100);
                     
+                    // Sort items by section number numerically
+                    group.items.sort((a, b) => {
+                        return (a.clauses?.section_number || "").localeCompare(b.clauses?.section_number || "", undefined, {numeric: true, sensitivity: 'base'});
+                    });
+
+                    // Extract common title if present
+                    let commonTitle = "";
+                    const firstItemText = group.items[0].clauses?.clause_text || "";
+                    if (firstItemText.includes(" — ")) {
+                        commonTitle = firstItemText.split(" — ")[0];
+                        // If it contains a Part prefix, clean it up for the header
+                        const parts = commonTitle.split(/(?:BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,]+)/);
+                        if (parts.length > 1) {
+                            commonTitle = parts[parts.length - 1].trim();
+                        }
+                    }
+
                     html += `
-                        <div class="search-result-item">
-                            <div class="match-score">${similarityPct}% Match</div>
-                            <div class="obligation-details">
-                                <h4 style="padding-right: 100px;">${item.required_action}</h4>
-                                <p style="border-left: 3px solid var(--border); padding-left: 12px; margin-top: 15px; color: var(--text-muted); font-size: 0.95rem;">${item.clauses?.clause_text || ""}</p>
-                                <div class="obligation-meta-tags" style="margin-top: 15px;">
-                                    <span class="tag act">${docType}: ${docName} (${item.clauses?.section_number || ""})</span>
-                                    <span class="tag" style="text-transform: uppercase; color: var(--primary); border-color: var(--border); background: rgba(255, 107, 107, 0.05);">${item.frequency || "continuous"}</span>
+                        <div class="search-result-item" style="border-left: 4px solid var(--primary); margin-bottom: 20px; display: block;">
+                            <div class="match-score" style="position: absolute; right: 24px; top: 24px;">${similarityPct}% Match</div>
+                            <div class="obligation-details" style="width: 100%;">
+                                <h3 style="margin: 0 0 8px 0; color: var(--primary); font-size: 1.15rem; font-weight: 600; padding-right: 120px;">
+                                    ${group.baseSection}${commonTitle ? `: ${commonTitle}` : ""}
+                                </h3>
+                                <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">
+                                    <span class="tag act">${group.docType}: ${group.docName}</span>
+                                </div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                    `;
+
+                    group.items.forEach(item => {
+                        let displayText = item.clauses?.clause_text || "";
+                        if (displayText.includes(" — ")) {
+                            displayText = displayText.split(" — ").slice(1).join(" — ");
+                        }
+                        
+                        html += `
+                            <div style="padding: 12px 16px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid var(--border);">
+                                <div style="font-weight: 600; color: var(--text); font-size: 0.9rem; margin-bottom: 4px;">
+                                    ${item.clauses?.section_number || ""}
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.45;">
+                                    ${displayText}
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--primary); margin-top: 8px; font-weight: 500;">
+                                    Action: ${item.required_action}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
                                 </div>
                             </div>
                         </div>

@@ -157,6 +157,28 @@ function switchToOriginalProfiler() {
 }
 
 function startQuestionnaire(regIndex) {
+  // Save headcount and industry
+  const headcount = document.getElementById('profile-headcount')?.value;
+  const industry = document.getElementById('profile-industry')?.value;
+  if (headcount) localStorage.setItem('safety_hub_headcount', headcount);
+  if (industry) localStorage.setItem('safety_hub_industry', industry);
+
+  // Save environmental hazard checkboxes
+  const hazards = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
+  hazards.forEach(h => {
+    const el = document.getElementById(`hazard-${h}`);
+    if (el) {
+      localStorage.setItem(`safety_hub_hazard_${h}`, el.checked ? 'true' : 'false');
+    }
+  });
+
+  // Save selected operational cards
+  const selected = [];
+  document.querySelectorAll('.profile-card.selected').forEach(card => {
+    selected.push(card.getAttribute('data-id'));
+  });
+  localStorage.setItem('safety_hub_osh_profile', JSON.stringify(selected));
+
   currentRegIndex = regIndex;
   currentQIndex = 0;
   const reg = getApplicableRegulations()[regIndex];

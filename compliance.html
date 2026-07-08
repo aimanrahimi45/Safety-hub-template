@@ -1078,11 +1078,9 @@
 
         // Read questionnaire answers from localStorage and build section filters
         function getQuestionnaireSectionFilter() {
-            const covered = new Set();
             const actionNeeded = new Set();
-            const skipped = new Set();
+            const answered = new Set(); // sections where user gave any answer (yes/no/skip)
             const allMapped = new Set(); // all sections that appear in ANY question across any reg
-            const completedMapped = new Set(); // sections from COMPLETED questionnaires only
             const actionStepsMap = {};
             let hasAny = false;
 
@@ -1090,8 +1088,6 @@
                 const regs = window.__questionsData?.regulations || [];
                 for (const reg of regs) {
                     const answers = JSON.parse(localStorage.getItem('q_answers_' + reg.id) || '{}');
-                    const answeredCount = Object.keys(answers).length;
-                    const isComplete = answeredCount >= reg.questions.length;
 
                     for (const q of reg.questions) {
                         const sections = q.maps_to || [];
@@ -1102,20 +1098,17 @@
                         hasAny = true;
 
                         for (const s of sections) {
-                            if (!isComplete) continue; // only filter for completed regs
-                            completedMapped.add(s);
-                            if (ans === 'yes') covered.add(s);
-                            else if (ans === 'no') {
+                            answered.add(s);
+                            if (ans === 'no') {
                                 actionNeeded.add(s);
                                 actionStepsMap[s] = { steps: q.action_steps || [], question: q.question };
                             }
-                            else if (ans === 'skip') skipped.add(s);
                         }
                     }
                 }
             } catch (e) {}
 
-            return { covered, actionNeeded, skipped, allMapped, completedMapped, actionStepsMap, hasAny };
+            return { actionNeeded, answered, allMapped, actionStepsMap, hasAny };
         }
 
         // Live update progress bar count (Active tasks only)
@@ -1267,13 +1260,10 @@
                 if (qFilter.hasAny) {
                     data = data.filter(item => {
                         const sectionNum = item.clauses?.section_number || "";
-                        // Option 2: only show sections mapped to questions from completed regs
+                        // Only show sections the user has answered
                         if (!matchesAny(sectionNum, qFilter.allMapped)) return false;
-                        if (!matchesAny(sectionNum, qFilter.completedMapped)) return false;
-                        // "no" → show with action steps
-                        if (matchesAny(sectionNum, qFilter.actionNeeded)) return true;
-                        // "yes" or "skip" → hide
-                        return false;
+                        if (!matchesAny(sectionNum, qFilter.answered)) return false;
+                        return true;
                     });
                 }
 

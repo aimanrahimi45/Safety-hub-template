@@ -19,11 +19,16 @@ async function loadQuestions() {
 }
 
 function getApplicableRegulations() {
-  if (!questionsData) return [];
+  if (!questionsData) {
+    console.log("[DEBUG Wizard] getApplicableRegulations: questionsData is null");
+    return [];
+  }
   const hazards = getSelectedHazards();
-  return questionsData.regulations.filter(r =>
+  const filtered = questionsData.regulations.filter(r =>
     hazards.includes(r.trigger) || r.trigger === 'all'
   );
+  console.log("[DEBUG Wizard] getApplicableRegulations: hazards:", hazards, "filtered regs:", filtered.map(r => r.id));
+  return filtered;
 }
 
 function hasQuestionnaire(trigger) {
@@ -99,9 +104,11 @@ function getSelectedHazards() {
   ids.forEach(id => {
     // Try DOM first, fall back to localStorage (questionnaire replaces profiler HTML)
     const el = document.getElementById('hazard-' + id);
+    const localVal = localStorage.getItem('safety_hub_hazard_' + id);
+    console.log(`[DEBUG Wizard] getSelectedHazards check for ${id}: DOM exists:`, !!el, "DOM checked:", el?.checked, "localVal:", localVal);
     if (el) {
       if (el.checked) hazards.push(id);
-    } else if (localStorage.getItem('safety_hub_hazard_' + id) === 'true') {
+    } else if (localVal === 'true') {
       hazards.push(id);
     }
   });

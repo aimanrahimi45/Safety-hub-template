@@ -1565,14 +1565,14 @@
                     const sectionNum = item.clauses?.section_number || "";
                     const baseMatch = sectionNum.match(/^([Ss]ection\s+\d+[A-Z]?|[Jj]adual\s+[A-Z0-9]+)/i);
                     const baseSection = baseMatch ? baseMatch[0] : sectionNum;
-                    const docId = item.clauses?.doc_id || "unknown";
-                    const key = `${docId}_${baseSection}`;
+                    const docName = item.clauses?.documents?.name || "unknown";
+                    const key = `${docName}_${baseSection}`;
 
                     if (!groups[key]) {
                         groups[key] = {
                             baseSection,
-                            docId,
-                            docName: item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation",
+                            docName,
+                            docDisplayName: item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation",
                             docType: item.clauses?.documents?.type || "Act",
                             maxSimilarity: item.similarity || 0,
                             items: []
@@ -1595,8 +1595,8 @@
                     if (window.allComplianceObligations) {
                         groupItems = window.allComplianceObligations.filter(localItem => {
                             const localSec = localItem.clauses?.section_number || "";
-                            const localDocId = localItem.clauses?.doc_id || "";
-                            return localDocId === group.docId && (
+                            const localDocName = localItem.clauses?.documents?.name || "";
+                            return localDocName === group.docName && (
                                 localSec === group.baseSection || 
                                 localSec.startsWith(group.baseSection + '(')
                             );
@@ -1630,7 +1630,7 @@
                                     ${group.baseSection}${commonTitle ? `: ${commonTitle}` : ""}
                                 </h3>
                                 <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">
-                                    <span class="tag act">${group.docType}: ${group.docName}</span>
+                                    <span class="tag act">${group.docType}: ${group.docDisplayName}</span>
                                 </div>
                                 
                                 <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">

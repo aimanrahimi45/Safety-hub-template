@@ -110,22 +110,6 @@ function getQuestionnairePercent(regId) {
   return Math.round((Object.keys(answers).length / reg.questions.length) * 100);
 }
 
-function getSelectedHazards() {
-  const hazards = [];
-  const ids = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
-  ids.forEach(id => {
-    // Try DOM first, fall back to localStorage (questionnaire replaces profiler HTML)
-    const el = document.getElementById('hazard-' + id);
-    const localVal = localStorage.getItem('safety_hub_hazard_' + id);
-    if (el) {
-      if (el.checked) hazards.push(id);
-    } else if (localVal === 'true') {
-      hazards.push(id);
-    }
-  });
-  return hazards;
-}
-
 function showRegulationList() {
   const regs = getApplicableRegulations();
   const profilerDiv = document.getElementById('view-profiler');
@@ -165,6 +149,8 @@ function showRegulationList() {
 
 function switchToOriginalProfiler() {
   document.getElementById('view-profiler').innerHTML = originalProfilerHTML;
+  renderRegulationCards();
+  checkAllRegStatuses();
 }
 
 function startQuestionnaire(regIndex) {
@@ -501,9 +487,11 @@ function initQuestionnaire() {
       }
     };
 
-    // Re-render reg cards when hazard checkboxes change
-    document.querySelectorAll('[id^="hazard-"]').forEach(el => {
-      el.addEventListener('change', renderRegulationCards);
+    // Re-render reg cards when hazard checkboxes change (delegated — survives HTML replacement)
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.id && e.target.id.startsWith('hazard-')) {
+        renderRegulationCards();
+      }
     });
   });
 }

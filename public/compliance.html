@@ -1264,14 +1264,18 @@
                     return false;
                 }
                 const qFilter = getQuestionnaireSectionFilter();
-                console.log('📊 Q-Filter:', { 
-                    hasAny: qFilter.hasAny,
-                    allMapped: [...qFilter.allMapped].slice(0,5), 
-                    completedMapped: [...qFilter.completedMapped].slice(0,5),
-                    covered: [...qFilter.covered].slice(0,5),
-                    actionNeeded: [...qFilter.actionNeeded].slice(0,5),
+                const qd = window.__questionsData;
+                console.log('📊 QuestionsData:', JSON.stringify({
+                    regCount: qd?.regulations?.length,
+                    regIds: qd?.regulations?.map(r => r.id),
+                    questionCounts: qd?.regulations?.map(r => r.id + ':' + r.questions.length),
+                    allMappedSize: qFilter.allMapped.size,
+                    allMapped: [...qFilter.allMapped],
+                    completedMappedSize: qFilter.completedMapped.size,
+                    completedMapped: [...qFilter.completedMapped],
+                    actionNeeded: [...qFilter.actionNeeded],
                     totalData: data.length
-                });
+                }));
                 if (qFilter.hasAny) {
                     data = data.filter(item => {
                         const sectionNum = item.clauses?.section_number || "";

@@ -69,6 +69,8 @@ function parseText(raw) {
   const output = [];
   let buf = null;
 
+  let currentSectionTitle = '';
+
   function flush() {
     if (buf) {
       const t = buf.text.join(' ').replace(/\s+/g, ' ').trim();
@@ -80,7 +82,12 @@ function parseText(raw) {
   function addRef(text) {
     const ref = buildRef(stack) || 'Preamble';
     if (!buf || buf.ref !== ref) flush();
-    if (!buf) buf = { ref, text: [] };
+    if (!buf) {
+      buf = { ref, text: [] };
+      if (ref.startsWith('Section ') && !schedule && currentSectionTitle) {
+        buf.text.push(currentSectionTitle + ' —');
+      }
+    }
     buf.text.push(text);
   }
 
@@ -95,6 +102,7 @@ function parseText(raw) {
       flush();
       schedule = schedMatch[1] || 'PERTAMA';
       stack = [{ label: 'Jadual ' + schedule }];
+      currentSectionTitle = ''; // clear when in schedule
       const remaining = line.slice(schedMatch[0].length).trim();
       if (remaining) addRef(remaining);
       continue;
@@ -102,9 +110,51 @@ function parseText(raw) {
 
     const secMatch = line.match(SECTION_RE);
     if (secMatch && !schedule) {
+      // 1. Look back to extract section title from previous lines
+      let titleLines = [];
+      let k = i - 1;
+      while (k >= contentStart) {
+        const rawLine = lines[k];
+        const trimmed = rawLine.trim();
+        if (shouldSkip(rawLine)) {
+          k--;
+          continue;
+        }
+        if (!trimmed) {
+          break; // stop at empty line
+        }
+        // Stop if we hit a sentence ending in a previous line
+        if (k < i - 1 && (trimmed.endsWith('.') || trimmed.endsWith(';') || trimmed.endsWith('”') || trimmed.endsWith(')'))) {
+          break;
+        }
+        titleLines.unshift(trimmed);
+        k--;
+      }
+
+      const sectionTitle = titleLines.join(' ').replace(/\s+/g, ' ').trim();
+
+      // 2. Remove the title lines from the previous buffer if they were appended
+      if (sectionTitle && buf && buf.text) {
+        let matches = true;
+        for (let j = 0; j < titleLines.length; j++) {
+          const bufIdx = buf.text.length - titleLines.length + j;
+          if (bufIdx < 0 || buf.text[bufIdx] !== titleLines[j]) {
+            matches = false;
+            break;
+          }
+        }
+        if (matches) {
+          buf.text.splice(buf.text.length - titleLines.length, titleLines.length);
+        }
+      }
+
       flush();
+
       let secNum = secMatch[1];
       let rest = secMatch[2].trim();
+      
+      currentSectionTitle = sectionTitle;
+
       // Check if rest starts with a subsection like "(1)"
       const subMatch = rest.match(SUBSECTION_RE);
       if (subMatch) {
@@ -119,6 +169,7 @@ function parseText(raw) {
 
     if (/^BAHAGIAN\s+/.test(line)) {
       flush();
+      stack = [];
       continue;
     }
 

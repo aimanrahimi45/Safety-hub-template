@@ -260,6 +260,7 @@ window.answerQuestion = function(value) {
 function nextQuestion() {
   const regs = getApplicableRegulations();
   const reg = regs[currentRegIndex];
+  if (!reg) return;
   if (currentQIndex < reg.questions.length - 1) {
     currentQIndex++;
     renderQuestion();
@@ -276,6 +277,7 @@ function prevQuestion() {
 function nextOrFinish() {
   const regs = getApplicableRegulations();
   const reg = regs[currentRegIndex];
+  if (!reg) return;
   if (currentQIndex < reg.questions.length - 1) {
     nextQuestion();
   } else {
@@ -404,6 +406,28 @@ function initQuestionnaire() {
     // Override the generate function trigger
     const originalGenerate = window.generateComplianceRegister;
     window.generateComplianceRegister = function() {
+      // Save headcount and industry
+      const headcount = document.getElementById('profile-headcount')?.value;
+      const industry = document.getElementById('profile-industry')?.value;
+      if (headcount) localStorage.setItem('safety_hub_headcount', headcount);
+      if (industry) localStorage.setItem('safety_hub_industry', industry);
+
+      // Save environmental hazard checkboxes
+      const hazards = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
+      hazards.forEach(h => {
+        const el = document.getElementById(`hazard-${h}`);
+        if (el) {
+          localStorage.setItem(`safety_hub_hazard_${h}`, el.checked ? 'true' : 'false');
+        }
+      });
+
+      // Save selected operational cards
+      const selected = [];
+      document.querySelectorAll('.profile-card.selected').forEach(card => {
+        selected.push(card.getAttribute('data-id'));
+      });
+      localStorage.setItem('safety_hub_osh_profile', JSON.stringify(selected));
+
       const regs = getApplicableRegulations();
       if (regs.length > 0) {
         showRegulationList();

@@ -286,6 +286,171 @@
           ]
         }
       ]
+    },
+    {
+      "id": "usechh",
+      "title": "USECHH 2000",
+      "full_title": "Occupational Safety and Health (Use and Standard of Exposure of Chemicals Hazardous to Health) Regulations 2000",
+      "icon": "🧪",
+      "trigger": "chemicals",
+      "questions": [
+        {
+          "id": "chemical_register",
+          "question": "Do you have a Chemical Register?",
+          "detail": "A written inventory listing all hazardous chemicals used, stored, or handled at your workplace.",
+          "regulation": "Regulation 5",
+          "maps_to": ["Section 5"],
+          "action_steps": [
+            "Identify all hazardous chemicals in your workplace",
+            "Record each chemical's name, quantity, and location",
+            "Include supplier details and SDS references",
+            "Assign responsibility for keeping the register updated"
+          ]
+        },
+        {
+          "id": "chra",
+          "question": "Have you conducted a Chemical Health Risk Assessment (CHRA)?",
+          "detail": "A written assessment of risks to health from each hazardous chemical used in your workplace.",
+          "regulation": "Regulation 9",
+          "maps_to": ["Section 9"],
+          "action_steps": [
+            "Appoint a registered CHRA assessor (registered with DOSH)",
+            "Assess each work process involving hazardous chemicals",
+            "Document findings: exposure routes, risk levels, control measures",
+            "Review assessment whenever processes change"
+          ]
+        },
+        {
+          "id": "sds",
+          "question": "Do you have Safety Data Sheets (SDS) for all chemicals?",
+          "detail": "Up-to-date SDS from suppliers for every hazardous chemical, accessible to all workers.",
+          "regulation": "Regulation 24, 25",
+          "maps_to": ["Section 24", "Section 25"],
+          "action_steps": [
+            "Request current SDS from suppliers for all chemicals",
+            "Organize SDS in a central register (physical or digital)",
+            "Ensure SDS are in Bahasa Malaysia and English",
+            "Review SDS annually or whenever chemical composition changes"
+          ]
+        },
+        {
+          "id": "labeling",
+          "question": "Are all chemical containers properly labeled?",
+          "detail": "Every container must clearly show the chemical name, hazard pictograms, and risk/safety phrases.",
+          "regulation": "Regulation 20, 21",
+          "maps_to": ["Section 20", "Section 21"],
+          "action_steps": [
+            "Label all original and transferred containers immediately",
+            "Use standard hazard pictograms and warning text",
+            "Include chemical name, supplier info, and date",
+            "Replace damaged or faded labels promptly"
+          ]
+        },
+        {
+          "id": "pel_limits",
+          "question": "Have you identified the Permissible Exposure Limits (PEL) for each chemical?",
+          "detail": "Know the ceiling limit and 8-hour time-weighted average for each chemical from Schedule I / Jadual I.",
+          "regulation": "Regulation 6, 7, 8",
+          "maps_to": ["Section 6", "Section 7", "Section 8"],
+          "action_steps": [
+            "Refer to Schedule I / Jadual I for the PEL of each chemical",
+            "Document ceiling limits and 8-hour TWA values",
+            "Compare against actual workplace exposure levels",
+            "Update whenever new chemicals are introduced"
+          ]
+        },
+        {
+          "id": "exposure_monitoring",
+          "question": "Do you conduct exposure monitoring at your workplace?",
+          "detail": "Airborne concentration monitoring to verify exposure levels remain below PEL limits.",
+          "regulation": "Regulation 26",
+          "maps_to": ["Section 26"],
+          "action_steps": [
+            "Identify monitoring points based on CHRA findings",
+            "Use validated sampling methods (personal air sampling)",
+            "Engage a DOSH-registered monitoring agency if required",
+            "Document results and compare against PEL limits"
+          ]
+        },
+        {
+          "id": "health_surveillance",
+          "question": "Do you provide health surveillance for exposed workers?",
+          "detail": "Medical surveillance for workers exposed to chemicals listed in Schedule II / Jadual II.",
+          "regulation": "Regulation 27",
+          "maps_to": ["Section 27"],
+          "action_steps": [
+            "Identify workers exposed to Schedule II chemicals",
+            "Engage a registered Occupational Health Doctor (OHD)",
+            "Conduct initial and periodic medical examinations",
+            "Maintain confidential health records for each worker"
+          ]
+        },
+        {
+          "id": "engineering_controls",
+          "question": "Are engineering controls in place to minimize exposure?",
+          "detail": "Local Exhaust Ventilation (LEV), enclosures, or other mechanical controls to reduce airborne contaminants.",
+          "regulation": "Regulation 17, 18, 19",
+          "maps_to": ["Section 17", "Section 18", "Section 19"],
+          "action_steps": [
+            "Install LEV systems for processes generating dust/fumes/vapors",
+            "Ensure LEV design meets recognized standards",
+            "Commission and test LEV before use",
+            "Schedule regular maintenance and keep inspection records"
+          ]
+        },
+        {
+          "id": "ppe_usechh",
+          "question": "Is appropriate PPE provided and used?",
+          "detail": "Respirators, gloves, goggles, or protective clothing where engineering controls are insufficient.",
+          "regulation": "Regulation 16",
+          "maps_to": ["Section 16"],
+          "action_steps": [
+            "Select PPE based on CHRA findings and chemical hazards",
+            "Provide approved PPE at no cost to workers",
+            "Train workers on correct use, fitting, and maintenance",
+            "Enforce PPE usage through supervision and disciplinary policy"
+          ]
+        },
+        {
+          "id": "warning_signs_usechh",
+          "question": "Are warning signs posted in chemical handling areas?",
+          "detail": "Visible safety signs at entry points and work areas warning of chemical hazards.",
+          "regulation": "Regulation 29",
+          "maps_to": ["Section 29"],
+          "action_steps": [
+            "Identify all chemical storage and handling areas",
+            "Install warning signs with hazard symbols in Bahasa Malaysia and English",
+            "Include PPE requirements on each sign",
+            "Replace faded or damaged signs immediately"
+          ]
+        },
+        {
+          "id": "training_usechh",
+          "question": "Do workers receive chemical safety training?",
+          "detail": "Workers must be trained on chemical hazards, safe handling, emergency procedures, and proper PPE use.",
+          "regulation": "Regulation 23",
+          "maps_to": ["Section 23"],
+          "action_steps": [
+            "Develop a chemical safety training program",
+            "Train all workers handling chemicals before they start",
+            "Conduct refresher training annually",
+            "Document attendance and training content"
+          ]
+        },
+        {
+          "id": "records_usechh",
+          "question": "Are all required records maintained and accessible?",
+          "detail": "CHRA reports, monitoring results, health records, maintenance logs, and training records must be kept.",
+          "regulation": "Regulation 30",
+          "maps_to": ["Section 30"],
+          "action_steps": [
+            "Establish a record-keeping system for all compliance documents",
+            "Retain health surveillance records for minimum 30 years",
+            "Retain monitoring records for minimum 30 years",
+            "Ensure records are available for DOSH inspection upon request"
+          ]
+        }
+      ]
     }
   ]
 }

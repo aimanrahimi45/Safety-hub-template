@@ -19,23 +19,10 @@ async function loadQuestions() {
 }
 
 function getApplicableRegulations() {
-  if (!questionsData) {
-    console.warn('❌ questionsData is null — questions.json may not have loaded');
-    return [];
-  }
+  if (!questionsData) return [];
   const hazards = getSelectedHazards();
   const profile = JSON.parse(localStorage.getItem('safety_hub_osh_profile') || '[]');
   const allTriggers = [...hazards, ...profile];
-  console.log('🔍 getApplicableRegulations:', {
-    questionsLoaded: !!questionsData,
-    regCount: questionsData?.regulations?.length,
-    hazards,
-    profile,
-    allTriggers,
-    matchedRegs: questionsData.regulations.filter(r =>
-      r.trigger === 'all' || allTriggers.includes(r.trigger)
-    ).map(r => r.id)
-  });
   return questionsData.regulations.filter(r =>
     r.trigger === 'all' || allTriggers.includes(r.trigger)
   );
@@ -53,7 +40,6 @@ function getSelectedHazards() {
       hazards.push(id);
     }
   });
-  console.log('🔍 getSelectedHazards:', { hazards, hazardChemLocal: localStorage.getItem('safety_hub_hazard_chemicals') });
   return hazards;
 }
 

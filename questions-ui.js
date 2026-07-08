@@ -21,8 +21,11 @@ async function loadQuestions() {
 function getApplicableRegulations() {
   if (!questionsData) return [];
   const hazards = getSelectedHazards();
+  // Also check profile cards for triggers (gig, petroleum, etc.)
+  const profile = JSON.parse(localStorage.getItem('safety_hub_osh_profile') || '[]');
+  const allTriggers = [...hazards, ...profile];
   return questionsData.regulations.filter(r =>
-    hazards.includes(r.trigger) || r.trigger === 'all'
+    r.trigger === 'all' || allTriggers.includes(r.trigger)
   );
 }
 

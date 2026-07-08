@@ -66,7 +66,12 @@ function renderRegulationSelector() {
 }
 
 function getQuestionnaireStatus(regId) {
-  const answers = JSON.parse(localStorage.getItem('q_answers_' + regId) || '{}');
+  let answers = {};
+  try {
+    answers = JSON.parse(localStorage.getItem('q_answers_' + regId) || '{}');
+  } catch (e) {
+    answers = {};
+  }
   const reg = questionsData?.regulations.find(r => r.id === regId);
   if (!reg) return 'not_started';
   const total = reg.questions.length;
@@ -79,7 +84,12 @@ function getQuestionnaireStatus(regId) {
 function getQuestionnairePercent(regId) {
   const reg = questionsData?.regulations.find(r => r.id === regId);
   if (!reg || reg.questions.length === 0) return 0;
-  const answers = JSON.parse(localStorage.getItem('q_answers_' + regId) || '{}');
+  let answers = {};
+  try {
+    answers = JSON.parse(localStorage.getItem('q_answers_' + regId) || '{}');
+  } catch (e) {
+    answers = {};
+  }
   return Math.round((Object.keys(answers).length / reg.questions.length) * 100);
 }
 
@@ -143,7 +153,11 @@ function startQuestionnaire(regIndex) {
   currentRegIndex = regIndex;
   currentQIndex = 0;
   const reg = getApplicableRegulations()[regIndex];
-  questionAnswers = JSON.parse(localStorage.getItem('q_answers_' + reg.id) || '{}');
+  try {
+    questionAnswers = JSON.parse(localStorage.getItem('q_answers_' + reg.id) || '{}');
+  } catch (e) {
+    questionAnswers = {};
+  }
 
   // Resume from first unanswered question
   for (let i = 0; i < reg.questions.length; i++) {
@@ -288,7 +302,12 @@ function nextOrFinish() {
 function showQuestionnaireSummary(regIndex) {
   const regs = getApplicableRegulations();
   const reg = regs[regIndex];
-  const answers = JSON.parse(localStorage.getItem('q_answers_' + reg.id) || '{}');
+  let answers = {};
+  try {
+    answers = JSON.parse(localStorage.getItem('q_answers_' + reg.id) || '{}');
+  } catch (e) {
+    answers = {};
+  }
 
   const yes = Object.entries(answers).filter(([, v]) => v === 'yes').length;
   const no = Object.entries(answers).filter(([, v]) => v === 'no').length;

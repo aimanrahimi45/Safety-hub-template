@@ -1264,6 +1264,14 @@
                     return false;
                 }
                 const qFilter = getQuestionnaireSectionFilter();
+                console.log('📊 Q-Filter:', { 
+                    hasAny: qFilter.hasAny,
+                    allMapped: [...qFilter.allMapped].slice(0,5), 
+                    completedMapped: [...qFilter.completedMapped].slice(0,5),
+                    covered: [...qFilter.covered].slice(0,5),
+                    actionNeeded: [...qFilter.actionNeeded].slice(0,5),
+                    totalData: data.length
+                });
                 if (qFilter.hasAny) {
                     data = data.filter(item => {
                         const sectionNum = item.clauses?.section_number || "";

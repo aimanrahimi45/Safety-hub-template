@@ -19,16 +19,11 @@ async function loadQuestions() {
 }
 
 function getApplicableRegulations() {
-  if (!questionsData) {
-    console.log("[DEBUG Wizard] getApplicableRegulations: questionsData is null");
-    return [];
-  }
+  if (!questionsData) return [];
   const hazards = getSelectedHazards();
-  const filtered = questionsData.regulations.filter(r =>
+  return questionsData.regulations.filter(r =>
     hazards.includes(r.trigger) || r.trigger === 'all'
   );
-  console.log("[DEBUG Wizard] getApplicableRegulations: hazards:", hazards, "filtered regs:", filtered.map(r => r.id));
-  return filtered;
 }
 
 function hasQuestionnaire(trigger) {
@@ -105,7 +100,6 @@ function getSelectedHazards() {
     // Try DOM first, fall back to localStorage (questionnaire replaces profiler HTML)
     const el = document.getElementById('hazard-' + id);
     const localVal = localStorage.getItem('safety_hub_hazard_' + id);
-    console.log(`[DEBUG Wizard] getSelectedHazards check for ${id}: DOM exists:`, !!el, "DOM checked:", el?.checked, "localVal:", localVal);
     if (el) {
       if (el.checked) hazards.push(id);
     } else if (localVal === 'true') {
@@ -202,16 +196,11 @@ function startQuestionnaire(regIndex) {
 function renderQuestion() {
   const regs = getApplicableRegulations();
   const reg = regs[currentRegIndex];
-  console.log("[DEBUG Wizard] renderQuestion called for reg index:", currentRegIndex, "regs list length:", regs.length);
-  if (!reg) {
-    console.error("[DEBUG Wizard] No regulation found at index", currentRegIndex, "regs:", regs);
-    return;
-  }
+  if (!reg) return;
   const q = reg.questions[currentQIndex];
   const total = reg.questions.length;
   const answered = Object.keys(questionAnswers).length;
   const existing = questionAnswers[q.id];
-  console.log("[DEBUG Wizard] Question Index:", currentQIndex, "Question text:", q.question);
 
   switchTab('profiler');
 
@@ -264,18 +253,14 @@ function renderQuestion() {
 
   // Attach event listeners via delegation
   const container = document.getElementById('q-container');
-  console.log("[DEBUG Wizard] q-container container found in DOM:", !!container);
   if (!container) return;
 
   container.addEventListener('click', function(e) {
-    console.log("[DEBUG Wizard] Click event captured inside q-container. Event target:", e.target);
     const btn = e.target.closest('[data-action], [data-value]');
-    console.log("[DEBUG Wizard] Closest clickable element:", btn);
     if (!btn) return;
 
     const action = btn.dataset.action;
     const value = btn.dataset.value;
-    console.log("[DEBUG Wizard] Extracted action:", action, "value:", value);
 
     if (value) {
       window.answerQuestion(value);
@@ -291,22 +276,14 @@ function renderQuestion() {
 
 // Make functions globally accessible for backward compat
 window.answerQuestion = function(value) {
-  console.log("[DEBUG Wizard] answerQuestion called with value:", value);
   const regs = getApplicableRegulations();
   const reg = regs[currentRegIndex];
-  if (!reg) {
-    console.error("[DEBUG Wizard] answerQuestion: No regulation found for index:", currentRegIndex);
-    return;
-  }
+  if (!reg) return;
   const q = reg.questions[currentQIndex];
-  if (!q) {
-    console.error("[DEBUG Wizard] answerQuestion: No question found at index:", currentQIndex);
-    return;
-  }
+  if (!q) return;
 
   questionAnswers[q.id] = value;
   localStorage.setItem('q_answers_' + reg.id, JSON.stringify(questionAnswers));
-  console.log("[DEBUG Wizard] Saved answer for", q.id, "to localStorage. Answers:", questionAnswers);
 
   document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
   const activeBtn = document.querySelector(`.q-btn[data-value="${value}"]`);
@@ -319,22 +296,16 @@ window.answerQuestion = function(value) {
 };
 
 function nextQuestion() {
-  console.log("[DEBUG Wizard] nextQuestion called");
   const regs = getApplicableRegulations();
   const reg = regs[currentRegIndex];
-  if (!reg) {
-    console.error("[DEBUG Wizard] nextQuestion: No regulation found");
-    return;
-  }
+  if (!reg) return;
   if (currentQIndex < reg.questions.length - 1) {
     currentQIndex++;
-    console.log("[DEBUG Wizard] Incrementing question index to:", currentQIndex);
     renderQuestion();
   }
 }
 
 function prevQuestion() {
-  console.log("[DEBUG Wizard] prevQuestion called");
   if (currentQIndex > 0) {
     currentQIndex--;
     renderQuestion();
@@ -342,17 +313,12 @@ function prevQuestion() {
 }
 
 function nextOrFinish() {
-  console.log("[DEBUG Wizard] nextOrFinish called");
   const regs = getApplicableRegulations();
   const reg = regs[currentRegIndex];
-  if (!reg) {
-    console.error("[DEBUG Wizard] nextOrFinish: No regulation found");
-    return;
-  }
+  if (!reg) return;
   if (currentQIndex < reg.questions.length - 1) {
     nextQuestion();
   } else {
-    console.log("[DEBUG Wizard] Wizard completed, showing summary");
     showQuestionnaireSummary(currentRegIndex);
   }
 }

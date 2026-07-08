@@ -1081,19 +1081,29 @@
             const covered = new Set();
             const actionNeeded = new Set();
             const skipped = new Set();
-            const actionStepsMap = {}; // section_number → action_steps[]
+            const allMapped = new Set(); // all sections that appear in ANY question across any reg
+            const completedMapped = new Set(); // sections from COMPLETED questionnaires only
+            const actionStepsMap = {};
             let hasAny = false;
 
             try {
                 const regs = window.__questionsData?.regulations || [];
                 for (const reg of regs) {
                     const answers = JSON.parse(localStorage.getItem('q_answers_' + reg.id) || '{}');
+                    const answeredCount = Object.keys(answers).length;
+                    const isComplete = answeredCount >= reg.questions.length;
+
                     for (const q of reg.questions) {
+                        const sections = q.maps_to || [];
+                        for (const s of sections) allMapped.add(s);
+
                         const ans = answers[q.id];
                         if (!ans) continue;
                         hasAny = true;
-                        const sections = q.maps_to || [];
+
                         for (const s of sections) {
+                            if (!isComplete) continue; // only filter for completed regs
+                            completedMapped.add(s);
                             if (ans === 'yes') covered.add(s);
                             else if (ans === 'no') {
                                 actionNeeded.add(s);
@@ -1103,9 +1113,9 @@
                         }
                     }
                 }
-            } catch (e) { /* no questions data */ }
+            } catch (e) {}
 
-            return { covered, actionNeeded, skipped, actionStepsMap, hasAny };
+            return { covered, actionNeeded, skipped, allMapped, completedMapped, actionStepsMap, hasAny };
         }
 
         // Live update progress bar count (Active tasks only)
@@ -1251,11 +1261,14 @@
                 if (qFilter.hasAny) {
                     data = data.filter(item => {
                         const sectionNum = item.clauses?.section_number || "";
-                        // If this section is mapped by a question answer, apply filter
-                        if (qFilter.covered.has(sectionNum)) return true;     // "yes" → show
-                        if (qFilter.actionNeeded.has(sectionNum)) return true; // "no" → show as action
-                        if (qFilter.skipped.has(sectionNum)) return false;    // "skip" → hide
-                        return true; // unmapped → show by default
+                        // If section is NOT mapped by any regulation's questions, show it
+                        if (!qFilter.allMapped.has(sectionNum)) return true;
+                        // If section IS mapped but from uncompleted reg, show it
+                        if (!qFilter.completedMapped.has(sectionNum)) return true;
+                        // From completed reg: respect answers
+                        if (qFilter.covered.has(sectionNum)) return true;
+                        if (qFilter.actionNeeded.has(sectionNum)) return true;
+                        return false; // unmapped within completed reg → hide
                     });
                 }
 

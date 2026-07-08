@@ -385,8 +385,7 @@ function exitQuestionnaire() {
   checkAllRegStatuses();
 }
 
-function exitAndGenerate() {
-  // Check if all applicable regulations are complete
+function exitAndGenerate(skipPrompt) {
   const regs = getApplicableRegulations();
   let allDone = true;
   for (const r of regs) {
@@ -396,14 +395,20 @@ function exitAndGenerate() {
     }
   }
 
-  if (!allDone) {
+  if (!allDone && !skipPrompt) {
     if (!confirm('Some questionnaires are not fully answered. Generate register anyway?')) {
       return;
     }
   }
 
-  exitQuestionnaire();
-  generateComplianceRegister();
+  // Restore profiler HTML first
+  const profilerDiv = document.getElementById('view-profiler');
+  if (profilerDiv && originalProfilerHTML) {
+    profilerDiv.innerHTML = originalProfilerHTML;
+  }
+
+  // Directly switch to register and load, bypassing the overridden generateComplianceRegister
+  switchTab('register');
 }
 
 function renderRegulationCards() {

@@ -786,7 +786,8 @@
 
     btnShowQr.addEventListener('click', () => {
         const sheetId = localStorage.getItem("safety_hub_spreadsheet_id") || "";
-        const baseUrl = window.location.href.replace('contractor.html', 'contractor_self.html');
+        const cleanPath = window.location.pathname.replace('contractor.html', 'contractor_self.html');
+        const baseUrl = window.location.origin + cleanPath;
         const selfRegUrl = `${baseUrl}?spreadsheetId=${encodeURIComponent(sheetId)}`;
         qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(selfRegUrl)}`;
         qrUrlText.innerText = selfRegUrl;

@@ -1,166 +1,288 @@
 {
   "regulations": [
     {
-      "id": "usechh",
-      "title": "USECHH 2000",
-      "full_title": "Occupational Safety and Health (Use and Standard of Exposure of Chemicals Hazardous to Health) Regulations 2000",
-      "icon": "🧪",
-      "trigger": "chemicals",
+      "id": "akta514",
+      "title": "OSHA 1994 (Akta 514)",
+      "full_title": "Occupational Safety and Health Act 1994 — The foundational OSH law for all workplaces",
+      "icon": "⚖️",
+      "trigger": "all",
       "questions": [
         {
-          "id": "chemical_register",
-          "question": "Do you have a Chemical Register?",
-          "detail": "A written inventory listing all hazardous chemicals used, stored, or handled at your workplace.",
-          "regulation": "Regulation 5",
-          "maps_to": ["Section 5"],
-          "action_steps": [
-            "Identify all hazardous chemicals in your workplace",
-            "Record each chemical's name, quantity, and location",
-            "Include supplier details and SDS references",
-            "Assign responsibility for keeping the register updated"
-          ]
-        },
-        {
-          "id": "chra",
-          "question": "Have you conducted a Chemical Health Risk Assessment (CHRA)?",
-          "detail": "A written assessment of risks to health from each hazardous chemical used in your workplace.",
-          "regulation": "Regulation 9",
-          "maps_to": ["Section 9"],
-          "action_steps": [
-            "Appoint a registered CHRA assessor (registered with DOSH)",
-            "Assess each work process involving hazardous chemicals",
-            "Document findings: exposure routes, risk levels, control measures",
-            "Review assessment whenever processes change"
-          ]
-        },
-        {
-          "id": "sds",
-          "question": "Do you have Safety Data Sheets (SDS) for all chemicals?",
-          "detail": "Up-to-date SDS from suppliers for every hazardous chemical, accessible to all workers.",
-          "regulation": "Regulation 24, 25",
-          "maps_to": ["Section 24", "Section 25"],
-          "action_steps": [
-            "Request current SDS from suppliers for all chemicals",
-            "Organize SDS in a central register (physical or digital)",
-            "Ensure SDS are in Bahasa Malaysia and English",
-            "Review SDS annually or whenever chemical composition changes"
-          ]
-        },
-        {
-          "id": "labeling",
-          "question": "Are all chemical containers properly labeled?",
-          "detail": "Every container must clearly show the chemical name, hazard pictograms, and risk/safety phrases.",
-          "regulation": "Regulation 20, 21",
-          "maps_to": ["Section 20", "Section 21"],
-          "action_steps": [
-            "Label all original and transferred containers immediately",
-            "Use standard hazard pictograms and warning text",
-            "Include chemical name, supplier info, and date",
-            "Replace damaged or faded labels promptly"
-          ]
-        },
-        {
-          "id": "pel_limits",
-          "question": "Have you identified the Permissible Exposure Limits (PEL) for each chemical?",
-          "detail": "Know the ceiling limit and 8-hour time-weighted average for each chemical from Schedule I / Jadual I.",
-          "regulation": "Regulation 6, 7, 8",
-          "maps_to": ["Section 6", "Section 7", "Section 8"],
-          "action_steps": [
-            "Refer to Schedule I / Jadual I for the PEL of each chemical",
-            "Document ceiling limits and 8-hour TWA values",
-            "Compare against actual workplace exposure levels",
-            "Update whenever new chemicals are introduced"
-          ]
-        },
-        {
-          "id": "exposure_monitoring",
-          "question": "Do you conduct exposure monitoring at your workplace?",
-          "detail": "Airborne concentration monitoring to verify exposure levels remain below PEL limits.",
-          "regulation": "Regulation 26",
-          "maps_to": ["Section 26"],
-          "action_steps": [
-            "Identify monitoring points based on CHRA findings",
-            "Use validated sampling methods (personal air sampling)",
-            "Engage a DOSH-registered monitoring agency if required",
-            "Document results and compare against PEL limits"
-          ]
-        },
-        {
-          "id": "health_surveillance",
-          "question": "Do you provide health surveillance for exposed workers?",
-          "detail": "Medical surveillance for workers exposed to chemicals listed in Schedule II / Jadual II (e.g. lead, asbestos, cadmium).",
-          "regulation": "Regulation 27",
-          "maps_to": ["Section 27"],
-          "action_steps": [
-            "Identify workers exposed to Schedule II chemicals",
-            "Engage a registered Occupational Health Doctor (OHD)",
-            "Conduct initial and periodic medical examinations",
-            "Maintain confidential health records for each worker"
-          ]
-        },
-        {
-          "id": "engineering_controls",
-          "question": "Are engineering controls in place to minimize exposure?",
-          "detail": "Local Exhaust Ventilation (LEV), enclosures, or other mechanical controls to reduce airborne contaminants.",
-          "regulation": "Regulation 17, 18, 19",
-          "maps_to": ["Section 17", "Section 18", "Section 19"],
-          "action_steps": [
-            "Install LEV systems for processes generating dust/fumes/vapors",
-            "Ensure LEV design meets recognized standards",
-            "Commission and test LEV before use",
-            "Schedule regular maintenance and keep inspection records"
-          ]
-        },
-        {
-          "id": "ppe",
-          "question": "Is appropriate PPE provided and used?",
-          "detail": "Respirators, gloves, goggles, or protective clothing where engineering controls are insufficient.",
-          "regulation": "Regulation 16",
+          "id": "safety_policy",
+          "question": "Do you have a written Safety and Health Policy?",
+          "detail": "Employers with 5+ workers must have a written OSH policy communicated to all employees.",
+          "regulation": "Section 16",
           "maps_to": ["Section 16"],
           "action_steps": [
-            "Select PPE based on CHRA findings and chemical hazards",
-            "Provide approved PPE at no cost to workers",
-            "Train workers on correct use, fitting, and maintenance",
-            "Enforce PPE usage through supervision and disciplinary policy"
+            "Draft a written OSH policy statement signed by top management",
+            "Display the policy prominently in the workplace",
+            "Communicate it to all employees during induction",
+            "Review and update the policy annually"
           ]
         },
         {
-          "id": "warning_signs",
-          "question": "Are warning signs posted in chemical handling areas?",
-          "detail": "Visible safety signs at entry points and work areas warning of chemical hazards.",
-          "regulation": "Regulation 29",
+          "id": "hirarc",
+          "question": "Do you conduct systematic risk assessments (HIRARC)?",
+          "detail": "Employers must identify hazards, assess risks, and implement controls for all work activities.",
+          "regulation": "Section 15(2)(a)",
+          "maps_to": ["Section 15(2)(a)"],
+          "action_steps": [
+            "Establish a HIRARC procedure for all tasks and areas",
+            "Train responsible person to conduct risk assessments",
+            "Document all assessments and control measures",
+            "Review assessments when processes change or after incidents"
+          ]
+        },
+        {
+          "id": "emergency",
+          "question": "Do you have emergency response procedures?",
+          "detail": "Employers must establish procedures for fire, chemical spill, first aid, and evacuation.",
+          "regulation": "Section 15(2)(f)",
+          "maps_to": ["Section 15(2)(f)"],
+          "action_steps": [
+            "Develop emergency response plans for fire, spill, and evacuation",
+            "Install fire extinguishers and alarm systems",
+            "Conduct emergency drills at least once a year",
+            "Appoint and train emergency response team members"
+          ]
+        },
+        {
+          "id": "accident_reporting",
+          "question": "Do you report accidents and dangerous occurrences?",
+          "detail": "All workplace accidents, dangerous occurrences, and occupational poisonings must be reported to DOSH.",
+          "regulation": "Section 28",
+          "maps_to": ["Section 28"],
+          "action_steps": [
+            "Establish an accident reporting procedure",
+            "Notify DOSH within 24 hours for serious accidents",
+            "Submit written report within 7 days (JKKP 6/7/8)",
+            "Maintain an accident register for all incidents"
+          ]
+        },
+        {
+          "id": "safety_officer",
+          "question": "Have you appointed a Safety and Health Officer (SHO)?",
+          "detail": "Required for manufacturing (500+ workers), construction (20+), shipbuilding (100+), utilities (500+).",
+          "regulation": "Section 29",
           "maps_to": ["Section 29"],
           "action_steps": [
-            "Identify all chemical storage and handling areas",
-            "Install warning signs with hazard symbols in Bahasa Malaysia and English",
-            "Include PPE requirements on each sign",
-            "Replace faded or damaged signs immediately"
+            "Determine if your industry and headcount require a SHO",
+            "Engage a DOSH-registered SHO",
+            "Register the SHO appointment with DOSH",
+            "Ensure SHO conducts regular inspections and maintains records"
           ]
         },
         {
-          "id": "training",
-          "question": "Do workers receive chemical safety training?",
-          "detail": "Workers must be trained on chemical hazards, safe handling, emergency procedures, and proper PPE use.",
-          "regulation": "Regulation 23",
-          "maps_to": ["Section 23"],
-          "action_steps": [
-            "Develop a chemical safety training program",
-            "Train all workers handling chemicals before they start",
-            "Conduct refresher training annually",
-            "Document attendance and training content"
-          ]
-        },
-        {
-          "id": "records",
-          "question": "Are all required records maintained and accessible?",
-          "detail": "CHRA reports, monitoring results, health records, maintenance logs, and training records must be kept.",
-          "regulation": "Regulation 30",
+          "id": "committee",
+          "question": "Do you have a Safety and Health Committee?",
+          "detail": "Mandatory for workplaces with 40 or more employees.",
+          "regulation": "Section 30",
           "maps_to": ["Section 30"],
           "action_steps": [
-            "Establish a record-keeping system for all compliance documents",
-            "Retain health surveillance records for minimum 30 years",
-            "Retain monitoring records for minimum 30 years",
-            "Ensure records are available for DOSH inspection upon request"
+            "Establish a joint Safety and Health Committee",
+            "Include employer and employee representatives",
+            "Hold meetings at least once every 3 months",
+            "Maintain minutes and track action items"
+          ]
+        },
+        {
+          "id": "ppe_provision",
+          "question": "Do you provide PPE to workers free of charge?",
+          "detail": "Employers must provide suitable PPE where hazards cannot be fully controlled by engineering means.",
+          "regulation": "Section 15(2)(a), 24",
+          "maps_to": ["Section 24(1)(a)", "Section 24(1)(b)"],
+          "action_steps": [
+            "Conduct PPE needs assessment for each task",
+            "Procure DOSH-approved PPE",
+            "Provide PPE free of charge to all workers",
+            "Train workers on correct use, fitting, and maintenance"
+          ]
+        },
+        {
+          "id": "workplace_inspection",
+          "question": "Do you conduct regular workplace inspections?",
+          "detail": "Regular inspections help identify unsafe conditions and ensure control measures remain effective.",
+          "regulation": "Section 15(2)(d)",
+          "maps_to": ["Section 15(2)(d)"],
+          "action_steps": [
+            "Schedule regular workplace inspections (monthly recommended)",
+            "Use a standardized inspection checklist",
+            "Document findings and assign corrective actions",
+            "Track closure of all identified issues"
+          ]
+        },
+        {
+          "id": "information_training",
+          "question": "Do workers receive safety information and training?",
+          "detail": "Employers must provide information, instruction, training, and supervision to ensure worker safety.",
+          "regulation": "Section 15(2)(c)",
+          "maps_to": ["Section 15(2)(c)"],
+          "action_steps": [
+            "Develop a safety training program for all workers",
+            "Conduct induction training for new employees",
+            "Provide job-specific safety training",
+            "Document all training attendance"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "akta872",
+      "title": "Pekerja Gig 2025 (Akta 872)",
+      "full_title": "Gig Worker Act 2025 — Regulates platform work, gig economy, and delivery services",
+      "icon": "🛵",
+      "trigger": "gig",
+      "questions": [
+        {
+          "id": "service_agreement",
+          "question": "Do you have written service agreements with gig workers?",
+          "detail": "Every platform must have a written service agreement with each gig worker specifying terms and conditions.",
+          "regulation": "Section 8",
+          "maps_to": ["Section 8"],
+          "action_steps": [
+            "Draft a standard service agreement compliant with Akta 872",
+            "Specify scope of services, payment terms, and working conditions",
+            "Provide agreement in Bahasa Malaysia and English",
+            "Keep signed copies on record"
+          ]
+        },
+        {
+          "id": "income_transparency",
+          "question": "Are gig workers informed of income rates and payment methods?",
+          "detail": "Platforms must disclose pay rates, tip policies, and payment schedules clearly to all gig workers.",
+          "regulation": "Section 8(1)(c), 8(1)(d)",
+          "maps_to": ["Section 8(1)(c)", "Section 8(1)(d)"],
+          "action_steps": [
+            "Display pay rates and calculation methods clearly on the platform",
+            "Provide itemized income statements to each worker",
+            "Process payments within agreed timelines",
+            "Clearly communicate any changes to pay rates in advance"
+          ]
+        },
+        {
+          "id": "nondiscrimination",
+          "question": "Do you have a non-discrimination policy for gig workers?",
+          "detail": "Platforms must not discriminate against gig workers in assigning tasks, pay, or termination decisions.",
+          "regulation": "Section 9",
+          "maps_to": ["Section 9"],
+          "action_steps": [
+            "Adopt a written non-discrimination policy for gig workers",
+            "Ensure algorithm-based decisions are reviewed for bias",
+            "Provide a channel for workers to report discrimination",
+            "Take corrective action against any discriminatory practices"
+          ]
+        },
+        {
+          "id": "dispute_resolution",
+          "question": "Do you have an internal dispute resolution mechanism?",
+          "detail": "Platforms must provide a mechanism for gig workers to appeal deactivation, pay disputes, or grievances.",
+          "regulation": "Section 8(1)(h), 17, 18",
+          "maps_to": ["Section 8(1)(h)", "Section 17", "Section 18"],
+          "action_steps": [
+            "Establish an internal dispute resolution process",
+            "Assign a dedicated team to handle gig worker complaints",
+            "Respond to complaints within specified timelines",
+            "Maintain records of all disputes and resolutions"
+          ]
+        },
+        {
+          "id": "safety_protection",
+          "question": "Do you ensure gig worker safety and provide accident coverage?",
+          "detail": "Platforms must implement safety measures and ensure gig workers are covered for work-related accidents.",
+          "regulation": "Section 103, 104",
+          "maps_to": ["Section 103", "Section 104"],
+          "action_steps": [
+            "Develop safety guidelines for gig workers",
+            "Provide safety equipment where necessary (helmets, vests)",
+            "Ensure SOCSO or equivalent accident coverage is in place",
+            "Report any workplace accidents involving gig workers"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "akta302",
+      "title": "Petroleum 1984 (Akta 302)",
+      "full_title": "Petroleum (Safety Measures) Act 1984 — Regulates storage, transport, and handling of petroleum",
+      "icon": "🛢️",
+      "trigger": "petroleum",
+      "questions": [
+        {
+          "id": "storage_license",
+          "question": "Do you have a valid storage license for petroleum?",
+          "detail": "Any premises storing petroleum in quantities exceeding exempted limits must have a storage license.",
+          "regulation": "Section 19",
+          "maps_to": ["Section 19"],
+          "action_steps": [
+            "Apply for a petroleum storage license from DOSH",
+            "Ensure storage facility meets construction and safety requirements",
+            "Display the license prominently at the storage premises",
+            "Renew the license before expiry"
+          ]
+        },
+        {
+          "id": "storage_construction",
+          "question": "Are petroleum storage areas properly constructed and maintained?",
+          "detail": "Storage tanks, bund walls, ventilation, and fire protection must comply with prescribed standards.",
+          "regulation": "Section 19, 45",
+          "maps_to": ["Section 45(f)", "Section 45(g)"],
+          "action_steps": [
+            "Ensure storage tanks are of approved construction and materials",
+            "Install bund walls to contain spills",
+            "Provide adequate ventilation in storage areas",
+            "Conduct regular inspections of storage infrastructure"
+          ]
+        },
+        {
+          "id": "fire_safety",
+          "question": "Do you have fire prevention and firefighting equipment?",
+          "detail": "Fire extinguishers, fire suppression systems, and emergency plans are mandatory at petroleum premises.",
+          "regulation": "Section 45(h)",
+          "maps_to": ["Section 45(h)"],
+          "action_steps": [
+            "Install fire extinguishers suitable for Class B fires",
+            "Install fixed fire suppression systems where required",
+            "Develop a fire emergency response plan",
+            "Conduct regular fire drills and equipment inspections"
+          ]
+        },
+        {
+          "id": "transport_license",
+          "question": "Do you have proper licenses for petroleum transport?",
+          "detail": "Vehicles transporting petroleum must be licensed and comply with safety requirements.",
+          "regulation": "Section 3, 45(e)",
+          "maps_to": ["Section 3", "Section 45(e)"],
+          "action_steps": [
+            "Ensure all transport vehicles have required permits",
+            "Equip vehicles with fire extinguishers and spill kits",
+            "Train drivers on safe transport procedures",
+            "Maintain transport logs and inspection records"
+          ]
+        },
+        {
+          "id": "warning_signs_petrol",
+          "question": "Are warning signs displayed at petroleum facilities?",
+          "detail": "No-smoking signs, danger signs, and emergency contact information must be visibly posted.",
+          "regulation": "Section 20",
+          "maps_to": ["Section 20"],
+          "action_steps": [
+            "Install 'NO SMOKING' signs at all petroleum areas",
+            "Display danger warning signs at entry points",
+            "Post emergency contact numbers and procedures",
+            "Replace faded or damaged signs promptly"
+          ]
+        },
+        {
+          "id": "accident_notification",
+          "question": "Do you report petroleum-related accidents and incidents?",
+          "detail": "Any accident involving petroleum must be reported to an Inspector and investigated.",
+          "regulation": "Section 22, 23",
+          "maps_to": ["Section 22", "Section 23"],
+          "action_steps": [
+            "Establish an incident reporting procedure",
+            "Notify the Petroleum Inspector immediately of any accident",
+            "Preserve the accident site for investigation",
+            "Cooperate fully with Inspector during investigation"
           ]
         }
       ]

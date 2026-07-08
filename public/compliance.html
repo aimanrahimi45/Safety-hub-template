@@ -1225,6 +1225,7 @@
                 }
 
                 let data = result.data || [];
+                window.allComplianceObligations = data;
                 if (data.length === 0) {
                     const emptyHtml = `
                         <div class="empty-state">
@@ -1589,21 +1590,36 @@
                 Object.values(groups).forEach(group => {
                     const similarityPct = Math.round((group.maxSimilarity || 0) * 100);
                     
+                    // Fetch all items from the locally cached legal register to get the full list of subsections
+                    let groupItems = [];
+                    if (window.allComplianceObligations) {
+                        groupItems = window.allComplianceObligations.filter(localItem => {
+                            const localSec = localItem.clauses?.section_number || "";
+                            const localDocId = localItem.clauses?.doc_id || "";
+                            return localDocId === group.docId && (
+                                localSec === group.baseSection || 
+                                localSec.startsWith(group.baseSection + '(')
+                            );
+                        });
+                    }
+                    
+                    // Fallback to the vector search result items if cache lookup returned nothing
+                    if (groupItems.length === 0) {
+                        groupItems = group.items;
+                    }
+
                     // Sort items by section number numerically
-                    group.items.sort((a, b) => {
+                    groupItems.sort((a, b) => {
                         return (a.clauses?.section_number || "").localeCompare(b.clauses?.section_number || "", undefined, {numeric: true, sensitivity: 'base'});
                     });
 
                     // Extract common title if present
                     let commonTitle = "";
-                    const firstItemText = group.items[0].clauses?.clause_text || "";
+                    const firstItemText = groupItems[0].clauses?.clause_text || "";
                     if (firstItemText.includes(" — ")) {
                         commonTitle = firstItemText.split(" — ")[0];
-                        // If it contains a Part prefix, clean it up for the header
-                        const parts = commonTitle.split(/(?:BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,]+)/);
-                        if (parts.length > 1) {
-                            commonTitle = parts[parts.length - 1].trim();
-                        }
+                        // Clean up Part heading prefix to keep the title clean
+                        commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
                     }
 
                     html += `
@@ -1620,7 +1636,7 @@
                                 <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
                     `;
 
-                    group.items.forEach(item => {
+                    groupItems.forEach(item => {
                         let displayText = item.clauses?.clause_text || "";
                         if (displayText.includes(" — ")) {
                             displayText = displayText.split(" — ").slice(1).join(" — ");

@@ -1256,18 +1256,24 @@
                 const requiresOSHC = (headcount >= 5 && !requiresSHO);
                 const requiresCommittee = (headcount >= 40);
 
-                // Apply questionnaire answer filtering
+                // Apply questionnaire answer filtering (prefix match)
+                function matchesAny(section, prefixes) {
+                    for (const p of prefixes) {
+                        if (section.startsWith(p)) return true;
+                    }
+                    return false;
+                }
                 const qFilter = getQuestionnaireSectionFilter();
                 if (qFilter.hasAny) {
                     data = data.filter(item => {
                         const sectionNum = item.clauses?.section_number || "";
                         // If section is NOT mapped by any regulation's questions, show it
-                        if (!qFilter.allMapped.has(sectionNum)) return true;
+                        if (!matchesAny(sectionNum, qFilter.allMapped)) return true;
                         // If section IS mapped but from uncompleted reg, show it
-                        if (!qFilter.completedMapped.has(sectionNum)) return true;
+                        if (!matchesAny(sectionNum, qFilter.completedMapped)) return true;
                         // From completed reg: respect answers
-                        if (qFilter.covered.has(sectionNum)) return true;
-                        if (qFilter.actionNeeded.has(sectionNum)) return true;
+                        if (matchesAny(sectionNum, qFilter.covered)) return true;
+                        if (matchesAny(sectionNum, qFilter.actionNeeded)) return true;
                         return false; // unmapped within completed reg → hide
                     });
                 }
@@ -1425,8 +1431,11 @@
                             const resolvedCat = resolveCategory(item);
                             const sectionNo = item.clauses?.section_number || "";
                             
-                            // Check if this section has action steps from questionnaire
-                            const actionInfo = qFilter.actionStepsMap[sectionNo];
+                            // Check if this section has action steps from questionnaire (prefix match)
+                            let actionInfo = null;
+                            for (const [prefix, info] of Object.entries(qFilter.actionStepsMap)) {
+                                if (sectionNo.startsWith(prefix)) { actionInfo = info; break; }
+                            }
                             const needsAction = !!actionInfo;
                             
                             listHtml += `

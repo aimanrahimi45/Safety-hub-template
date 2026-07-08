@@ -87,8 +87,13 @@ function getSelectedHazards() {
   const hazards = [];
   const ids = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'];
   ids.forEach(id => {
+    // Try DOM first, fall back to localStorage (questionnaire replaces profiler HTML)
     const el = document.getElementById('hazard-' + id);
-    if (el && el.checked) hazards.push(id);
+    if (el) {
+      if (el.checked) hazards.push(id);
+    } else if (localStorage.getItem('safety_hub_hazard_' + id) === 'true') {
+      hazards.push(id);
+    }
   });
   return hazards;
 }

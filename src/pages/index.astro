@@ -53,7 +53,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
     </div>
   </section>
 
-  <!-- ===== Modules Grid (Explore Equipment) ===== -->
+  <!-- ===== Explore Our Modules (CASE CE Equipment style) ===== -->
   <section id="modules" class="section reveal">
     <div class="container">
       <div class="section-header row">
@@ -61,44 +61,92 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
           <h2>Explore Our Modules</h2>
           <p>Integrated OSH tools designed to simplify site compliance and safety management.</p>
         </div>
-        <a href="app/" class="header-link">VIEW ALL →</a>
+        <a href="app/" class="header-link">VIEW ALL &rsaquo;</a>
       </div>
-      <div class="modules-grid stagger-children">
-        <div class="module-item">
-          <div class="module-icon">🔍</div>
-          <h3>Inspections</h3>
-          <p>Custom templates with Excel import, digital signatures, and audit trails</p>
-          <a href="app/#inspection" class="module-link">Open Builder →</a>
+
+      <!-- Category Icon Row -->
+      <div class="category-row">
+        <a href="#inspection" class="category-item active">
+          <span class="category-icon">🔍</span>
+          <span class="category-label">Inspections</span>
+        </a>
+        <a href="#legal" class="category-item">
+          <span class="category-icon">📋</span>
+          <span class="category-label">Legal Register</span>
+        </a>
+        <a href="#incident" class="category-item">
+          <span class="category-icon">🛡️</span>
+          <span class="category-label">Incident Report</span>
+        </a>
+        <a href="#ppe" class="category-item">
+          <span class="category-icon"></span>
+          <span class="category-label">First Aid & PPE</span>
+        </a>
+        <a href="#contractor" class="category-item">
+          <span class="category-icon">👷</span>
+          <span class="category-label">Contractors</span>
+        </a>
+        <a href="#staff" class="category-item">
+          <span class="category-icon">👥</span>
+          <span class="category-label">Staff Roster</span>
+        </a>
+      </div>
+
+      <!-- Module Cards (2-column) -->
+      <div class="module-cards">
+        <div class="module-card">
+          <div class="module-card-img">
+            <span class="module-badge">AmerisPro</span>
+            <div class="img-placeholder">🔍</div>
+          </div>
+          <div class="module-card-body">
+            <h3>Inspection Builder</h3>
+            <p>Custom templates with Excel import, digital signatures, and audit trails. Build inspections that match your site requirements.</p>
+            <a href="app/#inspection" class="btn-card">VIEW ALL FEATURES</a>
+          </div>
+          <div class="card-accent"></div>
         </div>
-        <div class="module-item">
-          <div class="module-icon">📋</div>
-          <h3>Legal Register</h3>
-          <p>OSH compliance checklist with smart questionnaire filtering</p>
-          <a href="compliance.html" class="module-link">Open Register →</a>
+        <div class="module-card">
+          <div class="module-card-img">
+            <span class="module-badge">AmerisPro</span>
+            <div class="img-placeholder">📋</div>
+          </div>
+          <div class="module-card-body">
+            <h3>Legal Register</h3>
+            <p>OSH compliance checklist with smart questionnaire filtering. Answer yes/no/skip to auto-filter your compliance requirements.</p>
+            <a href="compliance.html" class="btn-card">VIEW ALL FEATURES</a>
+          </div>
+          <div class="card-accent"></div>
         </div>
-        <div class="module-item">
-          <div class="module-icon">🛡️</div>
-          <h3>Incident Report</h3>
-          <p>Digital incident logging with root cause tracking and staff lookup</p>
-          <a href="app/#incident" class="module-link">Open Form →</a>
+      </div>
+
+      <div class="prior-link">
+        <a href="app/">PRIOR MODELS &rsaquo;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Service Solutions (CASE CE style) ===== -->
+  <section class="section section-grey reveal">
+    <div class="container">
+      <div class="section-header row">
+        <div>
+          <h2>Explore Our Service Solutions</h2>
         </div>
-        <div class="module-item">
-          <div class="module-icon">🧰</div>
-          <h3>First Aid & PPE</h3>
-          <p>Inventory audits, shortage alerts, and stock transaction logs</p>
-          <a href="app/" class="module-link">Open Console →</a>
+        <a href="app/" class="header-link">VIEW ALL &rsaquo;</a>
+      </div>
+      <div class="service-solutions">
+        <div class="service-item">
+          <span class="service-icon">⚡</span>
+          <h3>AmerisPro Cloud</h3>
+          <p>Reduce your Total Cost of Ownership by increased connectivity resulting in more efficient safety management.</p>
+          <a href="app/" class="service-link">DISCOVER AMERISPRO CLOUD &rsaquo;</a>
         </div>
-        <div class="module-item">
-          <div class="module-icon">👷</div>
-          <h3>Contractors</h3>
-          <p>Induction management, certification tracking, worker approval</p>
-          <a href="app/#contractor" class="module-link">Open Console →</a>
-        </div>
-        <div class="module-item">
-          <div class="module-icon">👥</div>
-          <h3>Staff Roster</h3>
-          <p>Central personnel database with department filters and status tracking</p>
-          <a href="app/#staff" class="module-link">Open Console →</a>
+        <div class="service-item">
+          <span class="service-icon">🤖</span>
+          <h3>AI Legal Search</h3>
+          <p>Semantic search over indexed OSH legislation. Ask natural language questions and get clause-level answers instantly.</p>
+          <a href="app/" class="service-link">DISCOVER AI SEARCH &rsaquo;</a>
         </div>
       </div>
     </div>

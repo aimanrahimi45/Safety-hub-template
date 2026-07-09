@@ -1,74 +1,223 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
-import Hero from '../components/Hero.astro';
-import Modules from '../components/Modules.astro';
-import Onboarding from '../components/Onboarding.astro';
-import Features from '../components/Features.astro';
-import Testimonials from '../components/Testimonials.astro';
-import Contact from '../components/Contact.astro';
-import Footer from '../components/Footer.astro';
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRcQY0C-lOXpkxlkz9bVcwEQ9hGAUdKnyt7Mw5K9UDVk45juA/exec";
 ---
 
 <Layout title="AmerisPro - Modern OSH Safety Management Platform">
-    <Header />
-    <main>
-        <Hero />
-        <Modules />
-        <Onboarding />
-        <Features />
-        <section id="updates" class="reveal" style="padding:4rem 40px;max-width:1100px;margin:0 auto">
-          <div class="section-header">
-            <h2>Latest Updates</h2>
-            <p>What's new with AmerisPro — product updates and improvements.</p>
+
+  <!-- ===== Navigation ===== -->
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="header-logo">
+        <img src="/amerispro.png" alt="AmerisPro">
+        <span>AMERISPRO</span>
+      </a>
+      <ul class="nav-main">
+        <li>
+          <a href="#">Modules</a>
+          <ul class="dropdown">
+            <li><a href="app/#inspection">Inspections</a></li>
+            <li><a href="compliance.html">Legal Register</a></li>
+            <li><a href="app/#incident">Incident Report</a></li>
+            <li><a href="app/">First Aid & PPE</a></li>
+            <li><a href="app/#contractor">Contractors</a></li>
+            <li><a href="app/#staff">Staff Roster</a></li>
+          </ul>
+        </li>
+        <li><a href="app/">Console</a></li>
+        <li><a href="index.html#waiting-list">Early Access</a></li>
+      </ul>
+      <div class="header-actions">
+        <button class="header-search" aria-label="Search">🔍</button>
+        <span class="header-lang">Southeast Asia</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="container">
+      <div class="hero-content reveal">
+        <span class="hero-badge">Next-Gen OSH Compliance</span>
+        <h1>The Modern Way to Manage Site Safety</h1>
+        <p>Streamline inspections, incident reporting, legal compliance, contractor management, and first aid inventory in one centralized platform — powered by your own Google Drive.</p>
+        <div class="hero-actions">
+          <a href="app/" class="btn btn-primary">Launch Console</a>
+          <a href="index.html#modules" class="btn btn-outline">Explore Modules</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Modules Grid (Explore Equipment) ===== -->
+  <section id="modules" class="section reveal">
+    <div class="container">
+      <div class="section-header centered">
+        <h2>Explore Our Modules</h2>
+        <p>Integrated OSH tools designed to simplify site compliance and safety management.</p>
+      </div>
+      <div class="modules-grid stagger-children">
+        <div class="module-item">
+          <div class="module-icon">🔍</div>
+          <h3>Inspections</h3>
+          <p>Custom templates with Excel import, digital signatures, and audit trails</p>
+          <a href="app/#inspection" class="module-link">Open Builder →</a>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">📋</div>
+          <h3>Legal Register</h3>
+          <p>OSH compliance checklist with smart questionnaire filtering</p>
+          <a href="compliance.html" class="module-link">Open Register →</a>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">🛡️</div>
+          <h3>Incident Report</h3>
+          <p>Digital incident logging with root cause tracking and staff lookup</p>
+          <a href="app/#incident" class="module-link">Open Form →</a>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">🧰</div>
+          <h3>First Aid & PPE</h3>
+          <p>Inventory audits, shortage alerts, and stock transaction logs</p>
+          <a href="app/" class="module-link">Open Console →</a>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">👷</div>
+          <h3>Contractors</h3>
+          <p>Induction management, certification tracking, worker approval</p>
+          <a href="app/#contractor" class="module-link">Open Console →</a>
+        </div>
+        <div class="module-item">
+          <div class="module-icon">👥</div>
+          <h3>Staff Roster</h3>
+          <p>Central personnel database with department filters and status tracking</p>
+          <a href="app/#staff" class="module-link">Open Console →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Latest Updates ===== -->
+  <section id="updates" class="section section-grey reveal">
+    <div class="container">
+      <div class="section-header centered">
+        <h2>Latest Updates</h2>
+        <p>What's new with AmerisPro — product updates and improvements.</p>
+      </div>
+      <div class="updates-grid stagger-children">
+        <div class="update-card">
+          <div class="update-card-img">📜</div>
+          <div class="update-card-body">
+            <div class="update-date">Jul 2026</div>
+            <h3>Legal Register Questionnaire</h3>
+            <p>Smart filtering with regulation-specific questionnaires. Answer yes/no/skip to auto-filter your compliance checklist.</p>
           </div>
-          <div class="updates-grid stagger-children">
-            <div class="update-card">
-              <div class="update-date">Jul 2026</div>
-              <h3>Legal Register Questionnaire</h3>
-              <p>Smart filtering with regulation-specific questionnaires. Answer yes/no/skip to auto-filter your compliance checklist.</p>
-              <span class="tag weight-mandatory" style="display:inline-block;margin-top:10px;font-size:0.75rem;">NEW</span>
-            </div>
-            <div class="update-card">
-              <div class="update-date">Jun 2026</div>
-              <h3>AI Legal Search</h3>
-              <p>Semantic search over indexed OSH legislation. Ask natural language questions and get clause-level answers.</p>
-              <span class="tag weight-mandatory" style="display:inline-block;margin-top:10px;font-size:0.75rem;">PREMIUM</span>
-            </div>
-            <div class="update-card">
-              <div class="update-date">Jun 2026</div>
-              <h3>OSH Legislation Database</h3>
-              <p>4 acts fully indexed: OSHA 1994, Gig Workers 2025, Petroleum 1984, USECHH 2000. 1,300+ clauses parsed.</p>
-            </div>
+        </div>
+        <div class="update-card">
+          <div class="update-card-img">🤖</div>
+          <div class="update-card-body">
+            <div class="update-date">Jun 2026</div>
+            <h3>AI Legal Search</h3>
+            <p>Semantic search over indexed OSH legislation. Ask natural language questions and get clause-level answers.</p>
           </div>
-        </section>
-        <section id="waiting-list" class="reveal" style="padding:4rem 1rem;max-width:600px;margin:0 auto;text-align:center">
-          <h2 style="font-size:2rem;font-weight:800;margin-bottom:0.5rem">🚀 Early Access</h2>
-          <p style="color:var(--text-muted);margin-bottom:2rem">Join the waiting list — we'll notify you when it's ready.</p>
-          <form id="waiting-form" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-            <input name="name" placeholder="Your Name" style="flex:1;min-width:160px;padding:12px 18px;border-radius:50px;border:2.5px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;font-family:var(--font-heading)">
-            <input name="email" type="email" required placeholder="Email Address" style="flex:1;min-width:220px;padding:12px 18px;border-radius:50px;border:2.5px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;font-family:var(--font-heading)">
-            <button type="submit" class="btn-pill btn-primary">Join</button>
-          </form>
-          <div id="waiting-msg" style="margin-top:12px;font-weight:600;min-height:2em"></div>
-        </section>
-        <script is:inline>
-          const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRcQY0C-lOXpkxlkz9bVcwEQ9hGAUdKnyt7Mw5K9UDVk45juA/exec";
-          document.getElementById('waiting-form').onsubmit = async function(e) {
-            e.preventDefault();
-            const msg = document.getElementById('waiting-msg');
-            msg.innerHTML = '⏳ Sending...';
-            try {
-              const q = 'action=waitingList&email=' + encodeURIComponent(this.email.value) + '&name=' + encodeURIComponent(this.name.value);
-              const res = await fetch(GAS_URL + '?' + q);
-              const data = await res.json();
-              msg.innerHTML = data.message || '✅ Thank you!';
-              if (data.status === 'SUCCESS') { this.email.value = ''; this.name.value = ''; }
-            } catch(e) {
-              msg.innerHTML = '❌ Error. Please refresh and try again.';
-            }
-          };
-        </script>
-    </main>
-    <Footer />
+        </div>
+        <div class="update-card">
+          <div class="update-card-img">📚</div>
+          <div class="update-card-body">
+            <div class="update-date">Jun 2026</div>
+            <h3>OSH Legislation Database</h3>
+            <p>4 acts fully indexed: OSHA 1994, Gig Workers 2025, Petroleum 1984, USECHH 2000. 1,300+ clauses parsed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Support / Keep in Touch ===== -->
+  <section class="section support-grid reveal" style="padding:80px 32px;max-width:1680px;margin:0 auto">
+    <div class="support-content">
+      <h2>Do you need support?</h2>
+      <p>For the fastest response, launch the console and check the settings sidebar inside your Google Sheet. For all other inquiries, join the waiting list and we'll get back to you.</p>
+      <a href="index.html#waiting-list" class="btn btn-primary">Contact Us</a>
+    </div>
+    <div class="support-content" style="text-align:right">
+      <h2>Get started today</h2>
+      <p>Connect your Google Sheet and start managing site safety in minutes. No servers, no subscriptions — your data stays yours.</p>
+      <a href="app/" class="btn btn-outline" style="border-color:var(--color-text);color:var(--color-text)">Launch Console</a>
+    </div>
+  </section>
+
+  <!-- ===== Waiting List ===== -->
+  <section id="waiting-list" class="section section-grey reveal">
+    <div class="container" style="text-align:center;max-width:600px;margin:0 auto">
+      <div class="section-header centered">
+        <h2>Early Access</h2>
+        <p>Join the waiting list — we'll notify you when it's ready.</p>
+      </div>
+      <form id="waiting-form" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:32px">
+        <input name="name" placeholder="Your Name" style="flex:1;min-width:160px;padding:12px 18px;border:1px solid var(--color-border);font-family:var(--font-family);font-size:0.95rem;font-weight:500">
+        <input name="email" type="email" required placeholder="Email Address" style="flex:1;min-width:220px;padding:12px 18px;border:1px solid var(--color-border);font-family:var(--font-family);font-size:0.95rem;font-weight:500">
+        <button type="submit" class="btn btn-primary" style="padding:12px 32px">Join</button>
+      </form>
+      <div id="waiting-msg" style="margin-top:12px;font-weight:600;min-height:2em"></div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>Modules</h4>
+          <a href="app/#inspection">Inspections</a>
+          <a href="compliance.html">Legal Register</a>
+          <a href="app/#incident">Incident Report</a>
+          <a href="app/">First Aid & PPE</a>
+          <a href="app/#contractor">Contractors</a>
+          <a href="app/#staff">Staff Roster</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Service</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="index.html">Home</a>
+          <a href="index.html#modules">Features</a>
+          <a href="index.html#waiting-list">Early Access</a>
+        </div>
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <a href="mailto:support@amerispro.com">support@amerispro.com</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 AmerisPro Safety Tech. All rights reserved.</span>
+        <div>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script is:inline>
+    document.getElementById('waiting-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const msg = document.getElementById('waiting-msg');
+      msg.innerHTML = '⏳ Sending...';
+      try {
+        const q = 'action=waitingList&email=' + encodeURIComponent(this.email.value) + '&name=' + encodeURIComponent(this.name.value);
+        const res = await fetch(GAS_URL + '?' + q);
+        const data = await res.json();
+        msg.innerHTML = data.message || '✅ Thank you!';
+        if (data.status === 'SUCCESS') { this.email.value = ''; this.name.value = ''; }
+      } catch(e) {
+        msg.innerHTML = '❌ Error. Please refresh and try again.';
+      }
+    };
+  </script>
+
 </Layout>

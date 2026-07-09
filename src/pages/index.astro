@@ -35,8 +35,8 @@ import Footer from '../components/Footer.astro';
             const msg = document.getElementById('waiting-msg');
             msg.innerHTML = '⏳ Menghantar...';
             try {
-              const url = GAS_URL + '?action=waitingList&email=' + encodeURIComponent(this.email.value) + '&name=' + encodeURIComponent(this.name.value);
-              const res = await fetch(url);
+              const q = 'action=waitingList&email=' + encodeURIComponent(this.email.value) + '&name=' + encodeURIComponent(this.name.value);
+              const res = await fetch(GAS_URL + '?' + q);
               const data = await res.json();
               msg.innerHTML = data.message || '✅ Terima kasih!';
               if (data.status === 'SUCCESS') { this.email.value = ''; this.name.value = ''; }

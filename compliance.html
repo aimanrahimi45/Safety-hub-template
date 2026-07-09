@@ -1734,11 +1734,20 @@
                         }
 
                         html += `
-                            <div style="padding: 16px; border-left: 4px solid var(--primary); background: rgba(255, 255, 255, 0.6); border-radius: 8px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); box-shadow: 1px 1px 0 var(--shadow);">
-                                <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1rem; font-weight: 600;">
-                                    ${section.baseSection}${commonTitle ? `: ${commonTitle}` : ""}
-                                </h4>
-                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div class="nested-accordion-item" style="border: 2px solid var(--border); border-radius: 8px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.6); overflow: hidden; display: block;">
+                                <div class="nested-accordion-header" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: 600; color: var(--primary); transition: background 0.2s;" onclick="toggleNestedAccordion(this)">
+                                    <span style="font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                                        📖 ${section.baseSection}${commonTitle ? `: ${commonTitle}` : ""}
+                                    </span>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; background: rgba(0,0,0,0.04); padding: 2px 8px; border-radius: 12px;">
+                                            ${sectionItems.length} clauses
+                                        </span>
+                                        <span class="nested-accordion-icon" style="font-size: 0.8rem; color: var(--text-muted); transition: transform 0.3s; display: inline-block;">▼</span>
+                                    </div>
+                                </div>
+                                <div class="nested-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: rgba(0, 0, 0, 0.015);">
+                                    <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px;">
                         `;
 
                         sectionItems.forEach(item => {
@@ -1764,6 +1773,7 @@
                         });
 
                         html += `
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -1824,7 +1834,7 @@
             }
         }
 
-        // Global toggle function for accordion cards
+        // Global toggle function for outer accordion cards
         window.toggleAccordion = function(header) {
             const item = header.parentElement;
             const content = item.querySelector('.accordion-content');
@@ -1845,6 +1855,35 @@
                 icon.style.transform = 'rotate(180deg)';
                 header.style.background = 'rgba(15, 118, 110, 0.02)';
                 item.style.boxShadow = '5px 5px 0 var(--shadow)';
+            }
+        }
+
+        // Global toggle function for nested inner accordions
+        window.toggleNestedAccordion = function(header) {
+            const item = header.parentElement;
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.nested-accordion-icon');
+            const isOpen = item.classList.contains('active');
+            const parentOuterContent = item.closest('.accordion-content');
+
+            if (isOpen) {
+                item.classList.remove('active');
+                content.style.maxHeight = '0';
+                icon.style.transform = 'rotate(0deg)';
+                header.style.background = 'transparent';
+            } else {
+                item.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + 'px';
+                icon.style.transform = 'rotate(180deg)';
+                header.style.background = 'rgba(15, 118, 110, 0.02)';
+            }
+
+            // Update parent height dynamically to fit the newly sized inner container
+            if (parentOuterContent) {
+                parentOuterContent.style.maxHeight = 'none';
+                setTimeout(() => {
+                    parentOuterContent.style.maxHeight = parentOuterContent.scrollHeight + 'px';
+                }, 10);
             }
         }
     </script>

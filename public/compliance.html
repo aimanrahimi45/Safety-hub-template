@@ -1658,7 +1658,11 @@
                     const firstItemText = groupItems[0].clauses?.clause_text || "";
                     if (firstItemText.includes(" — ")) {
                         commonTitle = firstItemText.split(" — ")[0];
-                        // Clean up                    html += `
+                        // Clean up Part heading prefix to keep the title clean
+                        commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
+                    }
+
+                    html += `
                         <div class="search-result-item accordion-item" style="margin-bottom: 16px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255, 255, 255, 0.01); overflow: hidden; display: block; position: relative;">
                             <div class="accordion-header" style="padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background 0.2s;" onclick="toggleAccordion(this)">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">

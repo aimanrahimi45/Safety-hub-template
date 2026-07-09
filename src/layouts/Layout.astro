@@ -501,102 +501,110 @@ img { max-width: 100%; height: auto; }
     opacity: 0.7;
 }
 
-/* --- Social Links in Updates --- */
+/* --- Updates / News Grid (CASE CE style) --- */
+.updates-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 3px solid var(--color-primary);
+}
+.updates-header-left h2 {
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 8px;
+}
+.updates-header-left p {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    max-width: 560px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
 .updates-social {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--color-border);
-}
-.social-label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--color-text-muted);
-    letter-spacing: 1px;
-    margin-right: 8px;
+    gap: 12px;
+    padding-top: 8px;
 }
 .social-icon {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
     font-size: 1rem;
-    color: var(--color-text-muted);
-    transition: all 0.15s;
+    font-weight: 700;
+    color: var(--color-primary);
     text-decoration: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
 }
 .social-icon:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
 }
-
-/* --- Quick Links Floating Bar (Mobile) --- */
-.quick-links {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--color-bg);
-    border-top: 1px solid var(--color-border);
-    z-index: 1000;
-    padding: 8px 0;
-    justify-content: space-around;
-}
-.ql-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    text-decoration: none;
-    color: var(--color-text-muted);
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-.ql-icon { font-size: 1.2rem; }
-
-/* --- Updates / News Grid --- */
 .updates-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
 }
-.update-card { background: var(--color-bg); }
-.update-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.update-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+.update-card:hover {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
 .update-card-img {
-    width: 100%; height: 200px;
+    width: 100%;
+    height: 240px;
     background: var(--color-bg-grey);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
+    overflow: hidden;
 }
-.update-card-body { padding: 24px; }
+.update-card-img .img-placeholder {
+    font-size: 3rem;
+    opacity: 0.3;
+}
+.update-card-body {
+    padding: 28px;
+}
 .update-date {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 700;
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 .update-card h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 8px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    margin-bottom: 12px;
     line-height: 1.4;
 }
 .update-card p {
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     color: var(--color-text-muted);
     line-height: 1.6;
+    margin-bottom: 20px;
+}
+.read-more {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.read-more:hover {
+    color: var(--color-primary);
 }
 
 /* --- Support Section --- */
@@ -664,6 +672,33 @@ img { max-width: 100%; height: auto; }
     transition: color 0.15s;
 }
 .footer-bottom a:hover { color: white; }
+
+/* --- Quick Links Floating Bar (Mobile) --- */
+.quick-links {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    z-index: 1000;
+    padding: 8px 0;
+    justify-content: space-around;
+}
+.ql-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.ql-icon { font-size: 1.2rem; }
 
 /* --- Responsive --- */
 @media (max-width: 1200px) {

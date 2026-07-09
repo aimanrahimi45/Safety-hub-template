@@ -1584,7 +1584,34 @@
                     groups[key].items.push(item);
                 });
 
-                let html = `<div class="search-results">`;
+                let html = `
+                    <div id="ai-summary-container" class="ai-summary-box" style="margin-bottom: 25px; padding: 24px; background: rgba(15, 118, 110, 0.04); border: 1px solid rgba(15, 118, 110, 0.15); border-radius: 12px; display: block; position: relative;">
+                        <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                            ✨ AI Legal Assistant (Nemotron Ultra)
+                        </h4>
+                        <div id="ai-summary-text" class="ai-summary-text" style="color: var(--text); font-size: 0.95rem; line-height: 1.6;">
+                            <span class="spinner" style="display: inline-block; width: 14px; height: 14px; border: 2px solid var(--primary); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span>
+                            AI is drafting a summary of the relevant sections...
+                        </div>
+                    </div>
+                    
+                    <style>
+                        @keyframes spin {
+                            to { transform: rotate(360deg); }
+                        }
+                        .ai-summary-text ul {
+                            margin: 10px 0;
+                            padding-left: 20px;
+                        }
+                        .ai-summary-text li {
+                            margin-bottom: 8px;
+                        }
+                        .ai-summary-text strong {
+                            color: var(--primary);
+                        }
+                    </style>
+                    <div class="search-results">
+                `;
 
                 Object.values(groups).forEach(group => {
                     const similarityPct = Math.round((group.maxSimilarity || 0) * 100);
@@ -1650,6 +1677,35 @@
 
                 html += `</div>`;
                 resultsContent.innerHTML = html;
+
+                // Collect clauses text for RAG (top 8 items to keep payload reasonable)
+                const uniqueClausesText = data.slice(0, 8).map(item => {
+                    const secNum = item.clauses?.section_number || "";
+                    const docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
+                    const text = item.clauses?.clause_text || "";
+                    return `[${docName} ${secNum}]: ${text}`;
+                }).join("\n");
+
+                // Asynchronously fetch the AI summary in the background
+                fetch(`${GOOGLE_SCRIPT_URL}?action=getAiSummary&query=${encodeURIComponent(queryText)}&clauses=${encodeURIComponent(uniqueClausesText)}`)
+                    .then(res => res.json())
+                    .then(res => {
+                        const textEl = document.getElementById('ai-summary-text');
+                        if (res.status === "SUCCESS") {
+                            // Simple markdown parser helper for bold and bullets
+                            let summaryHtml = res.summary;
+                            summaryHtml = summaryHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            summaryHtml = summaryHtml.replace(/^\s*[-*+]\s+(.*?)$/gm, '<li>$1</li>');
+                            summaryHtml = summaryHtml.replace(/(<li>.*?<\/li>)/s, '<ul>$1</ul>');
+                            summaryHtml = summaryHtml.replace(/\n/g, '<br>');
+                            textEl.innerHTML = summaryHtml;
+                        } else {
+                            textEl.innerHTML = `<span style="color: #ef4444;">⚠️ Gagal menjana rumusan: ${res.message}</span>`;
+                        }
+                    })
+                    .catch(err => {
+                        document.getElementById('ai-summary-text').innerHTML = `<span style="color: #ef4444;">⚠️ Ralat sambungan AI.</span>`;
+                    });
 
             } catch (err) {
                 console.error(err);

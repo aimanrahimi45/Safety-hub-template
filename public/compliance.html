@@ -1614,30 +1614,43 @@
                     return;
                 }
 
-                // Group items by base section to present structured lists cleanly
-                const groups = {};
+                // Group items by document then by section dynamically
+                const docGroups = {};
                 data.forEach(item => {
+                    const docName = item.clauses?.documents?.name || "unknown";
+                    const docDisplayName = formatDocName(docName);
+                    const docType = item.clauses?.documents?.type || "Act";
+                    
+                    if (!docGroups[docName]) {
+                        docGroups[docName] = {
+                            docName,
+                            docDisplayName,
+                            docType,
+                            maxSimilarity: item.similarity || 0,
+                            sections: {}
+                        };
+                    }
+
+                    if (item.similarity > docGroups[docName].maxSimilarity) {
+                        docGroups[docName].maxSimilarity = item.similarity;
+                    }
+
                     const sectionNum = item.clauses?.section_number || "";
                     const baseMatch = sectionNum.match(/^([A-Za-z\s-]+\s+\d+[A-Za-z]*|[A-Za-z\s-]+\s+[A-Z0-9]+|\d+[A-Za-z]*)/i);
                     const baseSection = baseMatch ? baseMatch[0] : sectionNum;
-                    const docName = item.clauses?.documents?.name || "unknown";
-                    const key = `${docName}_${baseSection}`;
 
-                    if (!groups[key]) {
-                        groups[key] = {
+                    if (!docGroups[docName].sections[baseSection]) {
+                        docGroups[docName].sections[baseSection] = {
                             baseSection,
-                            docName,
-                            docDisplayName: formatDocName(item.clauses?.documents?.name),
-                            docType: item.clauses?.documents?.type || "Act",
                             maxSimilarity: item.similarity || 0,
                             items: []
                         };
                     }
 
-                    if (item.similarity > groups[key].maxSimilarity) {
-                        groups[key].maxSimilarity = item.similarity;
+                    if (item.similarity > docGroups[docName].sections[baseSection].maxSimilarity) {
+                        docGroups[docName].sections[baseSection].maxSimilarity = item.similarity;
                     }
-                    groups[key].items.push(item);
+                    docGroups[docName].sections[baseSection].items.push(item);
                 });
 
                 let html = `
@@ -1672,70 +1685,85 @@
                     <div class="search-results">
                 `;
 
-                Object.values(groups).forEach(group => {
-                    const similarityPct = Math.round((group.maxSimilarity || 0) * 100);
-                    
-                    // Use the matching items returned by the database search
-                    let groupItems = group.items;
+                Object.values(docGroups).forEach(docGroup => {
+                    const docSimilarityPct = Math.round((docGroup.maxSimilarity || 0) * 100);
+                    const sectionsArray = Object.values(docGroup.sections);
 
-                    // Sort items by section number numerically
-                    groupItems.sort((a, b) => {
-                        return (a.clauses?.section_number || "").localeCompare(b.clauses?.section_number || "", undefined, {numeric: true, sensitivity: 'base'});
-                    });
-
-                    // Extract common title if present
-                    let commonTitle = "";
-                    const firstItemText = groupItems[0].clauses?.clause_text || "";
-                    if (firstItemText.includes(" — ")) {
-                        commonTitle = firstItemText.split(" — ")[0];
-                        // Clean up Part heading prefix to keep the title clean
-                        commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
-                    }
+                    // Sort sections by their max similarity
+                    sectionsArray.sort((a, b) => b.maxSimilarity - a.maxSimilarity);
 
                     html += `
                         <div class="search-result-item accordion-item" style="margin-bottom: 16px; border: 3px solid var(--border); border-radius: 14px; background: white; box-shadow: 3px 3px 0 var(--shadow); overflow: hidden; display: block; position: relative; transition: all 0.2s;">
                             <div class="accordion-header" style="padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background 0.2s;" onclick="toggleAccordion(this)">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <h3 style="margin: 0; color: var(--primary); font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                        ${group.baseSection}${commonTitle ? `: ${commonTitle}` : ""}
+                                    <h3 style="margin: 0; color: var(--primary); font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                        📂 ${docGroup.docDisplayName}
                                     </h3>
                                     <div style="color: var(--text-muted); font-size: 0.8rem; display: flex; gap: 8px; align-items: center; margin-top: 4px;">
                                         <span class="tag act" style="padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(78, 168, 222, 0.12); color: var(--info); font-weight: 600; border: 2px solid var(--border);">
-                                            ${group.docDisplayName}
+                                            ${docGroup.docType}
                                         </span>
                                         <span>•</span>
-                                        <span>${groupItems.length} matching clauses</span>
+                                        <span>${sectionsArray.length} matching sections</span>
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 16px;">
                                     <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary); background: rgba(15, 118, 110, 0.08); padding: 4px 10px; border-radius: 20px;">
-                                        ${similarityPct}% Match
+                                        ${docSimilarityPct}% Match
                                     </span>
                                     <span class="accordion-icon" style="font-size: 1rem; color: var(--text-muted); transition: transform 0.3s; display: inline-block;">▼</span>
                                 </div>
                             </div>
                             
-                            <div class="accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; background: rgba(0, 0, 0, 0.02); border-top: 0 solid var(--border); padding: 0 24px;">
-                                <div style="display: flex; flex-direction: column; gap: 12px; padding: 20px 0;">
+                            <div class="accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; background: rgba(0, 0, 0, 0.015); border-top: 0 solid var(--border); padding: 0 24px;">
+                                <div style="display: flex; flex-direction: column; gap: 16px; padding: 20px 0;">
                     `;
 
-                    groupItems.forEach(item => {
-                        let displayText = item.clauses?.clause_text || "";
-                        if (displayText.includes(" — ")) {
-                            displayText = displayText.split(" — ").slice(1).join(" — ");
+                    sectionsArray.forEach(section => {
+                        let sectionItems = section.items;
+                        sectionItems.sort((a, b) => {
+                            return (a.clauses?.section_number || "").localeCompare(b.clauses?.section_number || "", undefined, {numeric: true, sensitivity: 'base'});
+                        });
+
+                        // Extract common title if present
+                        let commonTitle = "";
+                        const firstItemText = sectionItems[0].clauses?.clause_text || "";
+                        if (firstItemText.includes(" — ")) {
+                            commonTitle = firstItemText.split(" — ")[0];
+                            commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
                         }
-                        
+
                         html += `
-                            <div style="padding: 16px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid var(--border);">
-                                <div style="font-weight: 600; color: var(--text); font-size: 0.9rem; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                                    📌 Sub-clause ${item.clauses?.section_number || ""}
+                            <div style="padding: 16px; border-left: 4px solid var(--primary); background: rgba(255, 255, 255, 0.6); border-radius: 8px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); box-shadow: 1px 1px 0 var(--shadow);">
+                                <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1rem; font-weight: 600;">
+                                    ${section.baseSection}${commonTitle ? `: ${commonTitle}` : ""}
+                                </h4>
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                        `;
+
+                        sectionItems.forEach(item => {
+                            let displayText = item.clauses?.clause_text || "";
+                            if (displayText.includes(" — ")) {
+                                displayText = displayText.split(" — ").slice(1).join(" — ");
+                            }
+                            
+                            html += `
+                                <div style="padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 6px; border: 1px solid rgba(0,0,0,0.05);">
+                                    <div style="font-weight: 600; color: var(--text); font-size: 0.85rem; margin-bottom: 4px;">
+                                        Sub-clause ${item.clauses?.section_number || ""}
+                                    </div>
+                                    <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45;">
+                                        ${displayText}
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--primary); margin-top: 8px; font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
+                                        <span>⚡</span>
+                                        <span><strong>Action:</strong> ${item.required_action}</span>
+                                    </div>
                                 </div>
-                                <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
-                                    ${displayText}
-                                </div>
-                                <div style="font-size: 0.85rem; color: var(--primary); margin-top: 10px; font-weight: 500; display: flex; align-items: flex-start; gap: 6px; background: rgba(15, 118, 110, 0.05); padding: 8px 12px; border-radius: 6px;">
-                                    <span>⚡</span>
-                                    <span><strong>Action Required:</strong> ${item.required_action}</span>
+                            `;
+                        });
+
+                        html += `
                                 </div>
                             </div>
                         `;

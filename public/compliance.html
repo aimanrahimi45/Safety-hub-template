@@ -1618,7 +1618,7 @@
                 const groups = {};
                 data.forEach(item => {
                     const sectionNum = item.clauses?.section_number || "";
-                    const baseMatch = sectionNum.match(/^([Ss]ection\s+\d+[A-Z]?|[Jj]adual\s+[A-Z0-9]+)/i);
+                    const baseMatch = sectionNum.match(/^([A-Za-z\s-]+\s+\d+[A-Za-z]*|[A-Za-z\s-]+\s+[A-Z0-9]+|\d+[A-Za-z]*)/i);
                     const baseSection = baseMatch ? baseMatch[0] : sectionNum;
                     const docName = item.clauses?.documents?.name || "unknown";
                     const key = `${docName}_${baseSection}`;

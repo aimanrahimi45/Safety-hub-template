@@ -1552,6 +1552,49 @@
             }
         }
 
+        // Parse basic Markdown (Bold, Lists)
+        function parseMarkdown(md) {
+            if (!md) return "";
+            const lines = md.split('\n');
+            let inList = false;
+            let html = "";
+            
+            lines.forEach(line => {
+                let cleanLine = line.trim();
+                if (!cleanLine) return;
+                
+                // Handle bold
+                cleanLine = cleanLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                // Handle lists
+                const bulletMatch = cleanLine.match(/^[-*+•]\s+(.*)$/);
+                if (bulletMatch) {
+                    if (!inList) {
+                        html += '<ul>';
+                        inList = true;
+                    }
+                    html += `<li>${bulletMatch[1]}</li>`;
+                } else {
+                    if (inList) {
+                        html += '</ul>';
+                        inList = false;
+                    }
+                    if (cleanLine.startsWith('###')) {
+                        html += `<h4>${cleanLine.replace('###', '').trim()}</h4>`;
+                    } else if (cleanLine.startsWith('##')) {
+                        html += `<h3>${cleanLine.replace('##', '').trim()}</h3>`;
+                    } else {
+                        html += `<p>${cleanLine}</p>`;
+                    }
+                }
+            });
+            
+            if (inList) {
+                html += '</ul>';
+            }
+            return html;
+        }
+
         // Query AI Semantic vector search
         async function performSearch() {
             const queryInput = document.getElementById('search-query');
@@ -1563,7 +1606,7 @@
             resultsContent.innerHTML = `
                 <div id="ai-summary-container" class="ai-summary-box" style="margin-bottom: 25px; padding: 24px; background: rgba(15, 118, 110, 0.04); border: 1px solid rgba(15, 118, 110, 0.15); border-radius: 12px; display: block; position: relative;">
                     <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600;">
-                        ✨ AI Legal Assistant (Ling 2.6 Flash)
+                        ✨ AI Legal Assistant (Mistral Nemo)
                     </h4>
                     <div id="ai-summary-text" class="ai-summary-text" style="color: var(--text); font-size: 0.95rem; line-height: 1.6;">
                         <span class="spinner" style="display: inline-block; width: 14px; height: 14px; border: 2px solid var(--primary); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span>
@@ -1583,7 +1626,7 @@
                         margin-bottom: 8px;
                     }
                     .ai-summary-text strong {
-                        color: var(--primary);
+                        font-weight: 600;
                     }
                     .accordion-header:hover {
                         background: rgba(15, 118, 110, 0.02) !important;
@@ -1656,7 +1699,7 @@
                 let html = `
                     <div id="ai-summary-container" class="ai-summary-box" style="margin-bottom: 25px; padding: 24px; background: rgba(15, 118, 110, 0.04); border: 1px solid rgba(15, 118, 110, 0.15); border-radius: 12px; display: block; position: relative;">
                         <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600;">
-                            ✨ AI Legal Assistant (Ling 2.6 Flash)
+                            ✨ AI Legal Assistant (Mistral Nemo)
                         </h4>
                         <div id="ai-summary-text" class="ai-summary-text" style="color: var(--text); font-size: 0.95rem; line-height: 1.6;">
                             <span class="spinner" style="display: inline-block; width: 14px; height: 14px; border: 2px solid var(--primary); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span>
@@ -1676,7 +1719,7 @@
                             margin-bottom: 8px;
                         }
                         .ai-summary-text strong {
-                            color: var(--primary);
+                            font-weight: 600;
                         }
                         .accordion-header:hover {
                             background: rgba(15, 118, 110, 0.02) !important;
@@ -1826,13 +1869,7 @@
                     .then(res => {
                         const textEl = document.getElementById('ai-summary-text');
                         if (res.status === "SUCCESS") {
-                            // Simple markdown parser helper for bold and bullets
-                            let summaryHtml = res.summary;
-                            summaryHtml = summaryHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                            summaryHtml = summaryHtml.replace(/^\s*[-*+]\s+(.*?)$/gm, '<li>$1</li>');
-                            summaryHtml = summaryHtml.replace(/(<li>.*?<\/li>)/s, '<ul>$1</ul>');
-                            summaryHtml = summaryHtml.replace(/\n/g, '<br>');
-                            textEl.innerHTML = summaryHtml;
+                            textEl.innerHTML = parseMarkdown(res.summary);
                         } else {
                             textEl.innerHTML = `<span style="color: #ef4444;">⚠️ Gagal menjana rumusan: ${res.message}</span>`;
                         }

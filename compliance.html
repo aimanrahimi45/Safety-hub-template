@@ -1062,7 +1062,13 @@
 
         // Sync premium status from backend on page load
         (async function syncPremiumStatus() {
-            const sid = localStorage.getItem('safety_hub_spreadsheet_id');
+            // Read spreadsheet ID from URL param if not in localStorage
+            let sid = localStorage.getItem('safety_hub_spreadsheet_id');
+            if (!sid) {
+                const urlParams = new URLSearchParams(window.location.search);
+                sid = urlParams.get('spreadsheetId') || urlParams.get('sheetId') || '';
+                if (sid) localStorage.setItem('safety_hub_spreadsheet_id', sid);
+            }
             if (sid) {
                 try {
                     const r = await fetch(GOOGLE_SCRIPT_URL + '?action=getBranding&spreadsheetId=' + encodeURIComponent(sid));

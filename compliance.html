@@ -1020,6 +1020,7 @@
                 document.getElementById('view-policy').classList.add('active');
                 loadComplianceRegister();
             } else if (tabId === 'search') {
+                // Already resolved — sync promise is synchronous if fetch completed
                 if (!isPremiumPlan()) {
                     showPremiumUpgradeModal('AI Legal Search');
                     return;
@@ -1060,9 +1061,8 @@
             }
         });
 
-        // Sync premium status from backend on page load
-        (async function syncPremiumStatus() {
-            // Read spreadsheet ID from URL param if not in localStorage
+        // Sync premium status from backend on page load (returns promise for callers)
+        window.premiumSyncPromise = (async function syncPremiumStatus() {
             let sid = localStorage.getItem('safety_hub_spreadsheet_id');
             if (!sid) {
                 const urlParams = new URLSearchParams(window.location.search);

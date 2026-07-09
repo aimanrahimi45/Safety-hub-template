@@ -782,7 +782,7 @@
             <button class="tab-btn active" onclick="switchTab('profiler')">📋 Setup Profiler</button>
             <button class="tab-btn" onclick="switchTab('register')">⚡ Active Checklist</button>
             <button class="tab-btn" onclick="switchTab('policy')">⚖️ Policy Standards</button>
-            <button class="tab-btn" onclick="switchTab('search')">🔍 AI Legal Search</button>
+            <button class="tab-btn" onclick="switchTab('search')">🔍 AI Legal Search <span style="font-size:0.7rem; background:#fbbf24; color:#000; border-radius:4px; padding:1px 5px; margin-left:4px; font-weight:700;">PRO</span></button>
         </div>
     </div>
 
@@ -998,6 +998,10 @@
                 document.getElementById('view-policy').classList.add('active');
                 loadComplianceRegister();
             } else if (tabId === 'search') {
+                if (!isPremiumPlan()) {
+                    showPremiumUpgradeModal('AI Legal Search');
+                    return;
+                }
                 document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
                 document.getElementById('view-search').classList.add('active');
             }
@@ -1606,7 +1610,7 @@
             resultsContent.innerHTML = `
                 <div id="ai-summary-container" class="ai-summary-box" style="margin-bottom: 25px; padding: 24px; background: rgba(15, 118, 110, 0.04); border: 1px solid rgba(15, 118, 110, 0.15); border-radius: 12px; display: block; position: relative;">
                     <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600;">
-                        ✨ AI Legal Assistant (Mistral Nemo)
+                        ✨ AI Legal Assistant
                     </h4>
                     <div id="ai-summary-text" class="ai-summary-text" style="color: var(--text); font-size: 0.95rem; line-height: 1.6;">
                         <span class="spinner" style="display: inline-block; width: 14px; height: 14px; border: 2px solid var(--primary); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span>

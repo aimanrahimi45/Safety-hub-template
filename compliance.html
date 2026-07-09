@@ -1528,7 +1528,7 @@
             }
         }
 
-        // Query AI directly without Vector Search (pure model testing)
+        // Query AI Semantic vector search
         async function performSearch() {
             const queryInput = document.getElementById('search-query');
             const queryText = queryInput.value.trim();
@@ -1539,11 +1539,11 @@
             resultsContent.innerHTML = `
                 <div id="ai-summary-container" class="ai-summary-box" style="margin-bottom: 25px; padding: 24px; background: rgba(15, 118, 110, 0.04); border: 1px solid rgba(15, 118, 110, 0.15); border-radius: 12px; display: block; position: relative;">
                     <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600;">
-                        ✨ AI Legal Assistant (Ling 2.6 Flash - No Vectors)
+                        ✨ AI Legal Assistant (Ling 2.6 Flash)
                     </h4>
                     <div id="ai-summary-text" class="ai-summary-text" style="color: var(--text); font-size: 0.95rem; line-height: 1.6;">
                         <span class="spinner" style="display: inline-block; width: 14px; height: 14px; border: 2px solid var(--primary); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span>
-                        AI (Ling-2.6-Flash) is generating response directly from pre-trained knowledge...
+                        AI is drafting a summary of the relevant sections...
                     </div>
                 </div>
                 
@@ -1562,10 +1562,161 @@
                         color: var(--primary);
                     }
                 </style>
+                <div class="search-results">
+                    <div class="empty-state">🧠 Scanning database semantic vectors...</div>
+                </div>
             `;
 
             try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getVectorSearch&query=${encodeURIComponent(queryText)}`);
+                const result = await response.json();
+
+                if (result.status !== "SUCCESS") {
+                    throw new Error(result.message || "Search failed");
+                }
+
+                const data = result.data || [];
+                if (data.length === 0) {
+                    resultsContent.innerHTML = `
+                        <div class="empty-state">
+                            <span class="empty-state-icon">🔍</span>
+                            <h3>No matches found</h3>
+                            <p>Try rephrasing your search query (e.g. "confined space permit" instead of "space").</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Group items by base section to present structured lists cleanly
+                const groups = {};
+                data.forEach(item => {
+                    const sectionNum = item.clauses?.section_number || "";
+                    const baseMatch = sectionNum.match(/^([Ss]ection\s+\d+[A-Z]?|[Jj]adual\s+[A-Z0-9]+)/i);
+                    const baseSection = baseMatch ? baseMatch[0] : sectionNum;
+                    const docName = item.clauses?.documents?.name || "unknown";
+                    const key = `${docName}_${baseSection}`;
+
+                    if (!groups[key]) {
+                        groups[key] = {
+                            baseSection,
+                            docName,
+                            docDisplayName: item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation",
+                            docType: item.clauses?.documents?.type || "Act",
+                            maxSimilarity: item.similarity || 0,
+                            items: []
+                        };
+                    }
+
+                    if (item.similarity > groups[key].maxSimilarity) {
+                        groups[key].maxSimilarity = item.similarity;
+                    }
+                    groups[key].items.push(item);
+                });
+
+                let html = `
+                    <div id="ai-summary-container" class="ai-summary-box" style="margin-bottom: 25px; padding: 24px; background: rgba(15, 118, 110, 0.04); border: 1px solid rgba(15, 118, 110, 0.15); border-radius: 12px; display: block; position: relative;">
+                        <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                            ✨ AI Legal Assistant (Ling 2.6 Flash)
+                        </h4>
+                        <div id="ai-summary-text" class="ai-summary-text" style="color: var(--text); font-size: 0.95rem; line-height: 1.6;">
+                            <span class="spinner" style="display: inline-block; width: 14px; height: 14px; border: 2px solid var(--primary); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span>
+                            AI is drafting a summary of the relevant sections...
+                        </div>
+                    </div>
+                    
+                    <style>
+                        @keyframes spin {
+                            to { transform: rotate(360deg); }
+                        }
+                        .ai-summary-text ul {
+                            margin: 10px 0;
+                            padding-left: 20px;
+                        }
+                        .ai-summary-text li {
+                            margin-bottom: 8px;
+                        }
+                        .ai-summary-text strong {
+                            color: var(--primary);
+                        }
+                    </style>
+                    <div class="search-results">
+                `;
+
+                Object.values(groups).forEach(group => {
+                    const similarityPct = Math.round((group.maxSimilarity || 0) * 100);
+                    
+                    // Use the matching items returned by the database search
+                    let groupItems = group.items;
+
+                    // Sort items by section number numerically
+                    groupItems.sort((a, b) => {
+                        return (a.clauses?.section_number || "").localeCompare(b.clauses?.section_number || "", undefined, {numeric: true, sensitivity: 'base'});
+                    });
+
+                    // Extract common title if present
+                    let commonTitle = "";
+                    const firstItemText = groupItems[0].clauses?.clause_text || "";
+                    if (firstItemText.includes(" — ")) {
+                        commonTitle = firstItemText.split(" — ")[0];
+                        // Clean up Part heading prefix to keep the title clean
+                        commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
+                    }
+
+                    html += `
+                        <div class="search-result-item" style="border-left: 4px solid var(--primary); margin-bottom: 20px; display: block;">
+                            <div class="match-score" style="position: absolute; right: 24px; top: 24px;">${similarityPct}% Match</div>
+                            <div class="obligation-details" style="width: 100%;">
+                                <h3 style="margin: 0 0 8px 0; color: var(--primary); font-size: 1.15rem; font-weight: 600; padding-right: 120px;">
+                                    ${group.baseSection}${commonTitle ? `: ${commonTitle}` : ""}
+                                </h3>
+                                <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">
+                                    <span class="tag act">${group.docType}: ${group.docDisplayName}</span>
+                                </div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                    `;
+
+                    groupItems.forEach(item => {
+                        let displayText = item.clauses?.clause_text || "";
+                        if (displayText.includes(" — ")) {
+                            displayText = displayText.split(" — ").slice(1).join(" — ");
+                        }
+                        
+                        html += `
+                            <div style="padding: 12px 16px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid var(--border);">
+                                <div style="font-weight: 600; color: var(--text); font-size: 0.9rem; margin-bottom: 4px;">
+                                    ${item.clauses?.section_number || ""}
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.45;">
+                                    ${displayText}
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--primary); margin-top: 8px; font-weight: 500;">
+                                    Action: ${item.required_action}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                resultsContent.innerHTML = html;
+
+                // Collect clauses text for RAG (top 8 items to keep payload reasonable)
+                const uniqueClausesText = data.slice(0, 8).map(item => {
+                    const secNum = item.clauses?.section_number || "";
+                    const docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
+                    const text = item.clauses?.clause_text || "";
+                    return `[${docName} ${secNum}]: ${text}`;
+                }).join("\n");
+
+                // Asynchronously fetch the AI summary in the background via POST to avoid URL length limits
+                fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "text/plain;charset=utf-8"
@@ -1573,23 +1724,27 @@
                     body: JSON.stringify({
                         action: "getAiSummary",
                         query: queryText,
-                        clauses: "" // No vector context passed
+                        clauses: uniqueClausesText
                     })
-                });
-                
-                const res = await response.json();
-                const textEl = document.getElementById('ai-summary-text');
-                
-                if (res.status === "SUCCESS") {
-                    let summaryHtml = res.summary;
-                    summaryHtml = summaryHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    summaryHtml = summaryHtml.replace(/^\s*[-*+]\s+(.*?)$/gm, '<li>$1</li>');
-                    summaryHtml = summaryHtml.replace(/(<li>.*?<\/li>)/s, '<ul>$1</ul>');
-                    summaryHtml = summaryHtml.replace(/\n/g, '<br>');
-                    textEl.innerHTML = summaryHtml;
-                } else {
-                    textEl.innerHTML = `<span style="color: #ef4444;">⚠️ Gagal menjana rumusan: ${res.message}</span>`;
-                }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        const textEl = document.getElementById('ai-summary-text');
+                        if (res.status === "SUCCESS") {
+                            // Simple markdown parser helper for bold and bullets
+                            let summaryHtml = res.summary;
+                            summaryHtml = summaryHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            summaryHtml = summaryHtml.replace(/^\s*[-*+]\s+(.*?)$/gm, '<li>$1</li>');
+                            summaryHtml = summaryHtml.replace(/(<li>.*?<\/li>)/s, '<ul>$1</ul>');
+                            summaryHtml = summaryHtml.replace(/\n/g, '<br>');
+                            textEl.innerHTML = summaryHtml;
+                        } else {
+                            textEl.innerHTML = `<span style="color: #ef4444;">⚠️ Gagal menjana rumusan: ${res.message}</span>`;
+                        }
+                    })
+                    .catch(err => {
+                        document.getElementById('ai-summary-text').innerHTML = `<span style="color: #ef4444;">⚠️ Ralat sambungan AI.</span>`;
+                    });
             } catch (err) {
                 console.error(err);
                 resultsContent.innerHTML = `<div class="empty-state" style="color: #ef4444;">❌ Search error: ${err.message}</div>`;

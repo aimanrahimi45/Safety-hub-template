@@ -21,10 +21,10 @@ import Footer from '../components/Footer.astro';
         <section id="waiting-list" style="padding:4rem 1rem;max-width:600px;margin:0 auto;text-align:center">
           <h2 style="font-size:2rem;font-weight:800;margin-bottom:0.5rem">🚀 Early Access</h2>
           <p style="color:var(--text-muted);margin-bottom:2rem">Join the waiting list — we'll notify you when it's ready.</p>
-          <form id="waiting-form" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-            <input name="name" placeholder="Your Name" style="flex:1;min-width:140px;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem">
-            <input name="email" type="email" required placeholder="Email Address" style="flex:1;min-width:200px;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem">
-            <button type="submit" style="padding:12px 28px;border-radius:10px;background:var(--accent,#2563eb);color:#fff;border:none;font-size:1rem;font-weight:600;cursor:pointer">Join</button>
+          <form id="waiting-form" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+            <input name="name" placeholder="Your Name" style="flex:1;min-width:160px;padding:12px 18px;border-radius:50px;border:2.5px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;font-family:var(--font-heading)">
+            <input name="email" type="email" required placeholder="Email Address" style="flex:1;min-width:220px;padding:12px 18px;border-radius:50px;border:2.5px solid var(--border);background:var(--bg);color:var(--text);font-size:1rem;font-family:var(--font-heading)">
+            <button type="submit" class="btn-pill btn-primary">Join</button>
           </form>
           <div id="waiting-msg" style="margin-top:12px;font-weight:600;min-height:2em"></div>
         </section>
@@ -33,19 +33,18 @@ import Footer from '../components/Footer.astro';
           document.getElementById('waiting-form').onsubmit = async function(e) {
             e.preventDefault();
             const msg = document.getElementById('waiting-msg');
-            msg.innerHTML = '⏳ Menghantar...';
+            msg.innerHTML = '⏳ Sending...';
             try {
               const q = 'action=waitingList&email=' + encodeURIComponent(this.email.value) + '&name=' + encodeURIComponent(this.name.value);
               const res = await fetch(GAS_URL + '?' + q);
               const data = await res.json();
-              msg.innerHTML = data.message || '✅ Terima kasih!';
+              msg.innerHTML = data.message || '✅ Thank you!';
               if (data.status === 'SUCCESS') { this.email.value = ''; this.name.value = ''; }
             } catch(e) {
-              msg.innerHTML = '❌ Ralat. Cuba refresh dan hantar semula.';
+              msg.innerHTML = '❌ Error. Please refresh and try again.';
             }
           };
         </script>
-        <Contact />
     </main>
     <Footer />
 </Layout>

@@ -15,6 +15,19 @@ const { title } = Astro.props;
 </head>
 <body>
     <slot />
+    <script is:inline>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children').forEach(el => observer.observe(el));
+        });
+    </script>
 </body>
 </html>
 
@@ -1030,4 +1043,18 @@ const { title } = Astro.props;
                 width: 140px !important;
             }
         }
+        /* --- Scroll Animations --- */
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .reveal-left { opacity: 0; transform: translateX(-40px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .reveal-right { opacity: 0; transform: translateX(40px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .reveal-scale { opacity: 0; transform: scale(0.92); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .reveal.visible, .reveal-left.visible, .reveal-right.visible, .reveal-scale.visible { opacity: 1; transform: none; }
+        .stagger-children > * { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .stagger-children.visible > *:nth-child(1) { transition-delay: 0s; }
+        .stagger-children.visible > *:nth-child(2) { transition-delay: 0.1s; }
+        .stagger-children.visible > *:nth-child(3) { transition-delay: 0.2s; }
+        .stagger-children.visible > *:nth-child(4) { transition-delay: 0.3s; }
+        .stagger-children.visible > *:nth-child(5) { transition-delay: 0.4s; }
+        .stagger-children.visible > *:nth-child(6) { transition-delay: 0.5s; }
+        .stagger-children.visible > * { opacity: 1; transform: translateY(0); }
 </style>

@@ -73,6 +73,7 @@ img { max-width: 100%; height: auto; }
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 1000;
+    background: var(--color-bg);
 }
 .top-bar {
     background: #F4F4F4;
@@ -102,7 +103,7 @@ img { max-width: 100%; height: auto; }
 .main-nav {
     background: var(--color-bg);
     border-bottom: 1px solid var(--color-border);
-    height: 60px;
+    height: 80px;
     display: flex;
     align-items: center;
 }
@@ -120,11 +121,12 @@ img { max-width: 100%; height: auto; }
     font-size: 1.15rem;
     color: var(--color-text);
 }
-.header-logo img { height: 28px; }
+.header-logo img { height: 32px; }
 .nav-main {
     display: flex;
     align-items: center;
     gap: 4px;
+    list-style: none;
 }
 .nav-main > li { position: relative; }
 .nav-main > li > a {
@@ -157,6 +159,7 @@ img { max-width: 100%; height: auto; }
     transform: translateY(8px);
     transition: all 0.15s ease;
     z-index: 100;
+    list-style: none;
 }
 .nav-main > li:hover .dropdown {
     opacity: 1;
@@ -181,9 +184,40 @@ img { max-width: 100%; height: auto; }
 .header-search {
     background: none;
     border: none;
-    font-size: 1rem;
+    font-size: 1.2rem;
     cursor: pointer;
     color: var(--color-text);
+    padding: 8px;
+    transition: color 0.15s;
+}
+.header-search:hover { color: var(--color-primary); }
+
+/* Icon Navigation Style (CASE CE inspired) */
+.icon-nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    list-style: none;
+}
+.icon-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: color 0.15s;
+}
+.icon-nav-item:hover { color: var(--color-primary); }
+.icon-nav-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+.icon-nav-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 /* --- Hero --- */

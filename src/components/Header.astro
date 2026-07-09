@@ -1,16 +1,40 @@
 ---
-// Header Component
+// Header Component - Icon-driven navbar inspired by CASE CE
 ---
 <!-- Header Navigation -->
-    <header>
-        <a href="index.html" class="logo-wrapper">
-            <img src="amerispro.png" alt="AmerisPro Logo" style="height: 32px; object-fit: contain;">
-            <span>AmerisPro</span>
-        </a>
-        <nav>
-            <a href="#features">Features</a>
-            <a href="#modules">Modules</a>
-            <a href="#contact">Contact</a>
-        </nav>
-        <a href="app/" class="btn-pill btn-primary">Launch Console</a>
-    </header>
+<header class="site-header">
+    <nav class="main-nav">
+        <div class="container">
+            <a href="/" class="header-logo">
+                <img src="/amerispro.png" alt="AmerisPro Logo">
+                <span>AmerisPro</span>
+            </a>
+            <ul class="icon-nav">
+                <li>
+                    <a href="#features" class="icon-nav-item">
+                        <span class="icon-nav-icon">⚙️</span>
+                        <span class="icon-nav-label">Features</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#modules" class="icon-nav-item">
+                        <span class="icon-nav-icon">📦</span>
+                        <span class="icon-nav-label">Modules</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#contact" class="icon-nav-item">
+                        <span class="icon-nav-icon">✉️</span>
+                        <span class="icon-nav-label">Contact</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="app/" class="icon-nav-item">
+                        <span class="icon-nav-icon"></span>
+                        <span class="icon-nav-label">Launch Console</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>

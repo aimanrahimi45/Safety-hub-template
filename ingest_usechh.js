@@ -110,61 +110,76 @@ function parseText(raw) {
 
     const secMatch = line.match(SECTION_RE);
     if (secMatch && !schedule) {
-      // 1. Look back to extract section title from previous lines
-      let titleLines = [];
-      let k = i - 1;
-      while (k >= contentStart) {
-        const rawLine = lines[k];
-        const trimmed = rawLine.trim();
-        if (shouldSkip(rawLine)) {
-          k--;
-          continue;
-        }
-        if (!trimmed) {
-          break; // stop at empty line
-        }
-        // Stop if we hit a sentence ending in a previous line
-        // Exclude the first preceding line (k === i - 1) from the punctuation check
-        if (k < i - 1 && (trimmed.endsWith('.') || trimmed.endsWith(';') || trimmed.endsWith('”') || trimmed.endsWith(')'))) {
-          break;
-        }
-        titleLines.unshift(trimmed);
-        k--;
-      }
-
-      const sectionTitle = titleLines.join(' ').replace(/\s+/g, ' ').trim();
-
-      // 2. Remove the title lines from the previous buffer if they were appended
-      if (sectionTitle && buf && buf.text) {
-        let matches = true;
-        for (let j = 0; j < titleLines.length; j++) {
-          const bufIdx = buf.text.length - titleLines.length + j;
-          if (bufIdx < 0 || buf.text[bufIdx] !== titleLines[j]) {
-            matches = false;
-            break;
-          }
-        }
-        if (matches) {
-          buf.text.splice(buf.text.length - titleLines.length, titleLines.length);
-        }
-      }
-
-      flush();
-
       let secNum = secMatch[1];
       let rest = secMatch[2].trim();
-      
-      currentSectionTitle = sectionTitle;
 
-      // Check if rest starts with a subsection like "(1)"
-      const subMatch = rest.match(SUBSECTION_RE);
-      if (subMatch) {
-        stack = [{ label: 'Section ' + secNum }, { label: '(' + subMatch[1] + ')' }];
-        rest = rest.slice(subMatch[0].length).trim();
-      } else {
-        stack = [{ label: 'Section ' + secNum }];
+      // Check if the next line starts with a subsection (meaning this line is only a title)
+      let isTitleOnly = false;
+      let nextIdx = i + 1;
+      while (nextIdx < lines.length) {
+        if (!shouldSkip(lines[nextIdx])) {
+          const nextLineTrimmed = lines[nextIdx].trim();
+          if (SUBSECTION_RE.test(nextLineTrimmed)) {
+            isTitleOnly = true;
+          }
+          break;
+        }
+        nextIdx++;
       }
-      if (rest) addRef(rest);
+
+      if (isTitleOnly) {
+        flush();
+        currentSectionTitle = rest.replace(/\.$/, '').trim(); // Remove trailing period
+        stack = [{ label: 'Section ' + secNum }];
+      } else {
+        // Standard section parsing with lookback title
+        let titleLines = [];
+        let k = i - 1;
+        while (k >= contentStart) {
+          const rawLine = lines[k];
+          const trimmed = rawLine.trim();
+          if (shouldSkip(rawLine)) {
+            k--;
+            continue;
+          }
+          if (!trimmed) {
+            break;
+          }
+          if (k < i - 1 && (trimmed.endsWith('.') || trimmed.endsWith(';') || trimmed.endsWith('”') || trimmed.endsWith(')'))) {
+            break;
+          }
+          titleLines.unshift(trimmed);
+          k--;
+        }
+
+        const sectionTitle = titleLines.join(' ').replace(/\s+/g, ' ').trim();
+
+        if (sectionTitle && buf && buf.text) {
+          let matches = true;
+          for (let j = 0; j < titleLines.length; j++) {
+            const bufIdx = buf.text.length - titleLines.length + j;
+            if (bufIdx < 0 || buf.text[bufIdx] !== titleLines[j]) {
+              matches = false;
+              break;
+            }
+          }
+          if (matches) {
+            buf.text.splice(buf.text.length - titleLines.length, titleLines.length);
+          }
+        }
+
+        flush();
+        currentSectionTitle = sectionTitle;
+
+        const subMatch = rest.match(SUBSECTION_RE);
+        if (subMatch) {
+          stack = [{ label: 'Section ' + secNum }, { label: '(' + subMatch[1] + ')' }];
+          rest = rest.slice(subMatch[0].length).trim();
+        } else {
+          stack = [{ label: 'Section ' + secNum }];
+        }
+        if (rest) addRef(rest);
+      }
       continue;
     }
 

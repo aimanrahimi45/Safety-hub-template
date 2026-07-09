@@ -1686,8 +1686,18 @@
                     return `[${docName} ${secNum}]: ${text}`;
                 }).join("\n");
 
-                // Asynchronously fetch the AI summary in the background
-                fetch(`${GOOGLE_SCRIPT_URL}?action=getAiSummary&query=${encodeURIComponent(queryText)}&clauses=${encodeURIComponent(uniqueClausesText)}`)
+                // Asynchronously fetch the AI summary in the background via POST to avoid URL length limits
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify({
+                        action: "getAiSummary",
+                        query: queryText,
+                        clauses: uniqueClausesText
+                    })
+                })
                     .then(res => res.json())
                     .then(res => {
                         const textEl = document.getElementById('ai-summary-text');

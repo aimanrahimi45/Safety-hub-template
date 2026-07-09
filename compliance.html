@@ -1225,7 +1225,6 @@
                 }
 
                 let data = result.data || [];
-                window.allComplianceObligations = data;
                 if (data.length === 0) {
                     const emptyHtml = `
                         <div class="empty-state">
@@ -1590,23 +1589,8 @@
                 Object.values(groups).forEach(group => {
                     const similarityPct = Math.round((group.maxSimilarity || 0) * 100);
                     
-                    // Fetch all items from the locally cached legal register to get the full list of subsections
-                    let groupItems = [];
-                    if (window.allComplianceObligations) {
-                        groupItems = window.allComplianceObligations.filter(localItem => {
-                            const localSec = localItem.clauses?.section_number || "";
-                            const localDocName = localItem.clauses?.documents?.name || "";
-                            return localDocName === group.docName && (
-                                localSec === group.baseSection || 
-                                localSec.startsWith(group.baseSection + '(')
-                            );
-                        });
-                    }
-                    
-                    // Fallback to the vector search result items if cache lookup returned nothing
-                    if (groupItems.length === 0) {
-                        groupItems = group.items;
-                    }
+                    // Use the matching items returned by the database search
+                    let groupItems = group.items;
 
                     // Sort items by section number numerically
                     groupItems.sort((a, b) => {

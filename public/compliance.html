@@ -1020,10 +1020,6 @@
                 document.getElementById('view-policy').classList.add('active');
                 loadComplianceRegister();
             } else if (tabId === 'search') {
-                if (!isPremiumPlan()) {
-                    showPremiumUpgradeModal('AI Legal Search');
-                    return;
-                }
                 document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
                 document.getElementById('view-search').classList.add('active');
             }

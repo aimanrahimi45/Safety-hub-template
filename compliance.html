@@ -1843,6 +1843,9 @@
 
             if (isOpen) {
                 item.classList.remove('active');
+                content.style.maxHeight = content.scrollHeight + 'px';
+                // Force a browser reflow
+                content.offsetHeight;
                 content.style.maxHeight = '0';
                 content.style.borderTop = '0px solid transparent';
                 icon.style.transform = 'rotate(0deg)';
@@ -1855,6 +1858,13 @@
                 icon.style.transform = 'rotate(180deg)';
                 header.style.background = 'rgba(15, 118, 110, 0.02)';
                 item.style.boxShadow = '5px 5px 0 var(--shadow)';
+
+                // After the transition ends (300ms), remove max-height limit so inner content can expand dynamically
+                setTimeout(() => {
+                    if (item.classList.contains('active')) {
+                        content.style.maxHeight = 'none';
+                    }
+                }, 300);
             }
         }
 
@@ -1864,7 +1874,6 @@
             const content = header.nextElementSibling;
             const icon = header.querySelector('.nested-accordion-icon');
             const isOpen = item.classList.contains('active');
-            const parentOuterContent = item.closest('.accordion-content');
 
             if (isOpen) {
                 item.classList.remove('active');
@@ -1876,14 +1885,6 @@
                 content.style.maxHeight = content.scrollHeight + 'px';
                 icon.style.transform = 'rotate(180deg)';
                 header.style.background = 'rgba(15, 118, 110, 0.02)';
-            }
-
-            // Update parent height dynamically to fit the newly sized inner container
-            if (parentOuterContent) {
-                parentOuterContent.style.maxHeight = 'none';
-                setTimeout(() => {
-                    parentOuterContent.style.maxHeight = parentOuterContent.scrollHeight + 'px';
-                }, 10);
             }
         }
     </script>

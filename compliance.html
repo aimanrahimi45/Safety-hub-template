@@ -1020,6 +1020,10 @@
                 document.getElementById('view-policy').classList.add('active');
                 loadComplianceRegister();
             } else if (tabId === 'search') {
+                if (!isPremiumPlan()) {
+                    showPremiumUpgradeModal('AI Legal Search');
+                    return;
+                }
                 document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
                 document.getElementById('view-search').classList.add('active');
             }
@@ -1055,6 +1059,20 @@
                 });
             }
         });
+
+        // Sync premium status from backend on page load
+        (async function syncPremiumStatus() {
+            const sid = localStorage.getItem('safety_hub_spreadsheet_id');
+            if (sid) {
+                try {
+                    const r = await fetch(GOOGLE_SCRIPT_URL + '?action=getBranding&spreadsheetId=' + encodeURIComponent(sid));
+                    const d = await r.json();
+                    if (d.status === 'SUCCESS' && d.planType) {
+                        localStorage.setItem('safety_hub_plan_type', d.planType);
+                    }
+                } catch(e) {}
+            }
+        })();
 
         // Save selected OSH profile & trigger matching
         function generateComplianceRegister() {

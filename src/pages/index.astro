@@ -53,9 +53,12 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
   <!-- ===== Modules Grid (Explore Equipment) ===== -->
   <section id="modules" class="section reveal">
     <div class="container">
-      <div class="section-header centered">
-        <h2>Explore Our Modules</h2>
-        <p>Integrated OSH tools designed to simplify site compliance and safety management.</p>
+      <div class="section-header row">
+        <div>
+          <h2>Explore Our Modules</h2>
+          <p>Integrated OSH tools designed to simplify site compliance and safety management.</p>
+        </div>
+        <a href="app/" class="header-link">VIEW ALL →</a>
       </div>
       <div class="modules-grid stagger-children">
         <div class="module-item">
@@ -101,9 +104,18 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
   <!-- ===== Latest Updates ===== -->
   <section id="updates" class="section section-grey reveal">
     <div class="container">
-      <div class="section-header centered">
-        <h2>Latest Updates</h2>
-        <p>What's new with AmerisPro — product updates and improvements.</p>
+      <div class="section-header row">
+        <div>
+          <h2>Latest Updates</h2>
+          <p>Get all the latest updates from AmerisPro, as they happen.</p>
+        </div>
+        <a href="index.html#waiting-list" class="header-link">VIEW ALL →</a>
+      </div>
+      <div class="updates-social">
+        <span class="social-label">CONNECT WITH US</span>
+        <a href="#" class="social-icon" aria-label="Facebook">⬡</a>
+        <a href="#" class="social-icon" aria-label="LinkedIn">⬡</a>
+        <a href="#" class="social-icon" aria-label="YouTube">⬡</a>
       </div>
       <div class="updates-grid stagger-children">
         <div class="update-card">
@@ -163,6 +175,30 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
       <div id="waiting-msg" style="margin-top:12px;font-weight:600;min-height:2em"></div>
     </div>
   </section>
+
+  <!-- ===== Floating Quick Links (Mobile) ===== -->
+  <div class="quick-links">
+    <a href="app/" class="ql-item">
+      <span class="ql-icon">👤</span>
+      <span class="ql-label">Console</span>
+    </a>
+    <a href="compliance.html" class="ql-item">
+      <span class="ql-icon">📋</span>
+      <span class="ql-label">Register</span>
+    </a>
+    <a href="app/#incident" class="ql-item">
+      <span class="ql-icon">🛡️</span>
+      <span class="ql-label">Incident</span>
+    </a>
+    <a href="app/#contractor" class="ql-item">
+      <span class="ql-icon">👷</span>
+      <span class="ql-label">Contractor</span>
+    </a>
+    <a href="index.html#waiting-list" class="ql-item">
+      <span class="ql-icon">✉️</span>
+      <span class="ql-label">Contact</span>
+    </a>
+  </div>
 
   <!-- ===== Footer ===== -->
   <footer class="site-footer">

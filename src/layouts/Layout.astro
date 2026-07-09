@@ -140,6 +140,49 @@ const { title } = Astro.props;
             font-size: 0.95rem;
         }
 
+        .updates-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .update-card {
+            background: var(--surface);
+            border: 2.5px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.25s ease;
+        }
+
+        .update-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px var(--shadow-cyan);
+        }
+
+        .update-date {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .update-card h3 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+
+        .update-card p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), #0891b2);
             color: white;
@@ -259,88 +302,65 @@ const { title } = Astro.props;
         }
 
         /* --- Modules Split Showcase --- */
-        .showcase-grid {
+        .module-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
             margin-top: 40px;
         }
 
-        .showcase-card {
+        .module-card {
             background: var(--surface);
             border: 2.5px solid var(--border);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 4px 20px var(--shadow-soft);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            border-radius: 20px;
+            padding: 28px;
             transition: all 0.25s ease;
         }
 
-        .showcase-card:hover {
-            transform: translateY(-5px);
+        .module-card:hover {
+            transform: translateY(-4px);
             border-color: var(--primary);
-            box-shadow: 0 12px 30px var(--shadow-cyan);
+            box-shadow: 0 8px 24px var(--shadow-cyan);
         }
 
-        .showcase-card.secondary-hover:hover {
-            border-color: var(--secondary);
-            box-shadow: 0 12px 30px var(--shadow-indigo);
-        }
-
-        .showcase-card-header {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            margin-bottom: 25px;
-        }
-
-        .showcase-mascot-wrapper {
-            width: 140px;
+        .module-card-img {
+            width: 100%;
             height: 140px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #F1F5F9;
-            border: 2px dashed var(--border-dark);
-            border-radius: 20px;
-            overflow: hidden;
+            border-radius: 14px;
+            margin-bottom: 16px;
+            font-size: 2rem;
         }
 
-        .showcase-mascot {
-            width: 130px;
-            height: auto;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
-        }
-
-        .showcase-title-block h3 {
+        .module-card h3 {
             font-family: var(--font-heading);
             font-weight: 800;
-            font-size: 1.6rem;
+            font-size: 1.2rem;
             margin-bottom: 6px;
         }
 
-        .showcase-features-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-
-        .showcase-features-list li {
-            font-size: 0.95rem;
-            font-weight: 500;
+        .module-card p {
             color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
         }
 
-        .showcase-features-list li span {
-            color: var(--success);
+        .module-link {
             font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary);
+            text-decoration: none;
+            transition: gap 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .module-link:hover {
+            gap: 8px;
         }
 
         /* --- Why Choose Section --- */
@@ -543,9 +563,50 @@ const { title } = Astro.props;
         /* --- Footer --- */
         footer {
             border-top: 2.5px solid var(--border);
-            padding: 40px 20px;
-            text-align: center;
+            padding: 50px 40px 30px;
             background: var(--surface);
+        }
+
+        .footer-grid {
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .footer-col h4 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-col a {
+            display: block;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+            padding: 4px 0;
+            transition: color 0.15s;
+        }
+
+        .footer-col a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            border-top: 2px solid var(--border);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1100px;
+            margin: 0 auto;
         }
 
         .footer-logo {
@@ -556,29 +617,10 @@ const { title } = Astro.props;
             color: var(--text-main);
             font-family: var(--font-heading);
             font-weight: 800;
-            font-size: 1.2rem;
-            margin-bottom: 15px;
+            font-size: 1rem;
         }
 
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 20px;
-        }
-
-        .footer-links a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .footer-links a:hover {
-            color: var(--primary);
-        }
-
-        .footer-copyright {
+        .footer-bottom p {
             font-size: 0.8rem;
             color: var(--text-muted);
         }
@@ -1042,8 +1084,23 @@ const { title } = Astro.props;
                 left: 125px !important;
                 width: 140px !important;
             }
+            .module-grid, .updates-grid, .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .module-grid, .updates-grid, .footer-grid {
+                grid-template-columns: 1fr;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
         }
         /* --- Scroll Animations --- */
+        .tag { display:inline-block; padding:3px 10px; border-radius:20px; font-weight:700; border:2px solid; }
+        .tag.weight-mandatory { background:#FEF3C7; color:#92400E; border-color:#F59E0B; }
         .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .reveal-left { opacity: 0; transform: translateX(-40px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .reveal-right { opacity: 0; transform: translateX(40px); transition: opacity 0.6s ease, transform 0.6s ease; }

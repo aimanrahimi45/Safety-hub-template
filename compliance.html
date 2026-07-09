@@ -1791,10 +1791,23 @@
 
                 // Collect clauses text for RAG (top 8 items to keep payload reasonable)
                 const uniqueClausesText = data.slice(0, 8).map(item => {
-                    const secNum = item.clauses?.section_number || "";
-                    const docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
+                    let secNum = item.clauses?.section_number || "";
+                    let docName = item.clauses?.documents?.name ? item.clauses.documents.name.replace(".pdf", "") : "Legislation";
                     const text = item.clauses?.clause_text || "";
-                    return `[${docName} ${secNum}]: ${text}`;
+                    
+                    // Clean document name
+                    if (docName.includes("OSHA_1994_Act_514")) {
+                        docName = "Akta 514";
+                    } else if (docName.includes("FMA_1967_Act_139")) {
+                        docName = "Akta 139";
+                    } else {
+                        docName = docName.replace(/_/g, " ");
+                    }
+                    
+                    // Clean section terms
+                    secNum = secNum.replace(/Section/i, "Seksyen").replace(/Regulation/i, "Peraturan");
+                    
+                    return `Rujukan: ${docName} (${secNum}) - Kandungan: ${text}`;
                 }).join("\n");
 
                 // Asynchronously fetch the AI summary in the background via POST to avoid URL length limits

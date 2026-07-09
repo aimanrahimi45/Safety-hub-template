@@ -984,6 +984,7 @@
         // --- Premium Plan Helpers (inlined from shared.js) ---
         function isPremiumPlan() {
             const planType = localStorage.getItem("safety_hub_plan_type") || "Free";
+            console.log('🔍 isPremiumPlan:', planType);
             return planType.toLowerCase() === "premium";
         }
 
@@ -1064,19 +1065,31 @@
         // Sync premium status from backend on page load (returns promise for callers)
         window.premiumSyncPromise = (async function syncPremiumStatus() {
             let sid = localStorage.getItem('safety_hub_spreadsheet_id');
+            console.log('🔍 PremiumSync: localStorage sid =', sid);
             if (!sid) {
                 const urlParams = new URLSearchParams(window.location.search);
                 sid = urlParams.get('spreadsheetId') || urlParams.get('sheetId') || '';
+                console.log('🔍 PremiumSync: URL sid =', sid);
                 if (sid) localStorage.setItem('safety_hub_spreadsheet_id', sid);
             }
             if (sid) {
                 try {
-                    const r = await fetch(GOOGLE_SCRIPT_URL + '?action=getBranding&spreadsheetId=' + encodeURIComponent(sid));
+                    const url = GOOGLE_SCRIPT_URL + '?action=getBranding&spreadsheetId=' + encodeURIComponent(sid);
+                    console.log('🔍 PremiumSync: fetching', url);
+                    const r = await fetch(url);
                     const d = await r.json();
+                    console.log('🔍 PremiumSync: response', d);
                     if (d.status === 'SUCCESS' && d.planType) {
                         localStorage.setItem('safety_hub_plan_type', d.planType);
+                        console.log('🔍 PremiumSync: set planType to', d.planType);
+                    } else {
+                        console.warn('🔍 PremiumSync: invalid response, planType not saved');
                     }
-                } catch(e) {}
+                } catch(e) {
+                    console.error('🔍 PremiumSync: fetch error', e);
+                }
+            } else {
+                console.warn('🔍 PremiumSync: no spreadsheet ID found');
             }
         })();
 

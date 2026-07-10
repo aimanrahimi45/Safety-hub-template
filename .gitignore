@@ -25,3 +25,6 @@ legislation/
 
 # Environment Variables
 .env
+
+# Reference assets (originals, not for production)
+reference/

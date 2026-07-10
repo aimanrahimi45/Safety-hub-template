@@ -1,0 +1,44 @@
+A clean, high-resolution web application screenshot showing the "Staff Database" module, focused on the main Staff Roster view. The image is a single rounded-corner card with a thick dark navy wavy border and a soft pale cream background. Generous cream margins on all four sides.
+
+At the very top of the card is a sky blue header bar (NOT yellow, NOT red, NOT green) with the title "Staff Database" in large bold white display text. Below the title in smaller white text is the subtitle "Employee Roster".
+
+Below the sky blue header is a data table with six columns. The column headers, in this exact order from left to right, are:
+1. "Staff ID"
+2. "Name"
+3. "Department"
+4. "Position"
+5. "Email"
+6. "Status"
+
+The table has four visible rows of sample data, each row separated by a thin light grey line:
+Row 1: "EMP1001", "Sarah Tan", "Operations", "Site Supervisor", "sarah.tan@example.com", "Active" (small green rounded pill badge with white text)
+Row 2: "EMP1002", "Ahmad Razali", "Safety", "EHS Officer", "ahmad.razali@example.com", "Active" (small green rounded pill badge with white text)
+Row 3: "EMP1003", "Priya Nair", "Production", "Line Operator", "priya.nair@example.com", "Active" (small green rounded pill badge with white text)
+Row 4: "EMP1004", "Daniel Lee", "Maintenance", "Technician", "daniel.lee@example.com", "Inactive" (small grey rounded pill badge with white text)
+
+Each row has a pale white background with very subtle alternating zebra striping. Above the table, just below the sky blue header, is a small search input box with rounded corners and a magnifying glass icon on its left side, showing placeholder text "Search staff..." in light grey.
+
+The card sits centered on a soft pale cream page background with generous cream margins on all four sides so the content is not cropped. The image is a very wide landscape rectangle, much wider than it is tall.
+
+Style: playful, illustrated, slightly wobbly hand-drawn outlines, friendly, modern web app screenshot aesthetic. Colors: dark navy text and wavy border, pale cream background, sky blue header, white table rows with very subtle alternating zebra striping, green status badges for Active, grey status badges for Inactive.
+
+Do NOT include any of the following: real photographs of people, browser chrome, device frames, window controls, color codes, hex values, technical text, watermarks, signatures, logos, measurements, numbers other than the staff IDs (which are "EMP" followed by four digits), aspect ratios, version labels, blurry or distorted text, spelling errors, scrambled words, nonsensical text, dark or moody color schemes, cluttered or busy backgrounds, multiple cards or panels (just ONE card with the table), tabs, sidebars, or navigation bars.
+
+---
+NEGATIVE PROMPT (things the model must avoid):
+- Any text string not explicitly listed above
+- Hex codes (e.g. #FFF9EB, #1A2747)
+- Aspect ratios, dimensions, pixel counts, measurements
+- Version labels, file names, technical metadata
+- Real photographic faces or people
+- Browser chrome, device frames, window controls
+- Watermarks, signatures, stock photo logos
+- Spelling errors, typos, scrambled letters, made-up words
+- Garbled or repeating characters
+- Dark backgrounds, moody lighting, horror aesthetic
+- Cluttered, noisy, or busy compositions
+- Multiple separate cards, tabs, sidebars, nav bars
+- Blurry, low-resolution, or distorted text
+- Text that overflows its container or is cut off
+- Random symbols, emoji, or decorations not in the description
+- Off-topic content (animals, vehicles, landscapes, food, etc.)

@@ -384,6 +384,51 @@ img { max-width: 100%; height: auto; }
 /* --- Section Common --- */
 .section { padding: 80px 0; }
 .section-grey { background: var(--color-bg-grey); }
+
+/* Cinematic dark section — matches hero overlay treatment for visual
+   continuity when scrolling from the hero into this section. */
+.section-cinematic {
+    position: relative;
+    z-index: 1;
+    color: #FFFFFF;
+    background-image: url('/images/explore-our-module-background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.section-cinematic::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(135deg, rgba(30,30,29,0.85) 0%, rgba(58,58,57,0.7) 50%, rgba(30,30,29,0.9) 100%);
+    pointer-events: none;
+}
+.section-cinematic > .container {
+    position: relative;
+    z-index: 2;
+}
+.section-cinematic .section-header h2 {
+    color: #FFFFFF;
+}
+.section-cinematic .section-header p {
+    color: rgba(255, 255, 255, 0.7);
+}
+.section-cinematic .module-list-item {
+    color: rgba(255, 255, 255, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+.section-cinematic .module-list-item:first-child {
+    border-top-color: rgba(255, 255, 255, 0.15);
+}
+.section-cinematic .module-list-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #FFFFFF;
+}
+.section-cinematic .module-list-item.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+}
 .section-header {
     margin-bottom: 40px;
 }

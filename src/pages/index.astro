@@ -65,7 +65,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
     </div>
   </section>
 
-  <!-- ===== Explore Our Modules (CASE CE Equipment style) ===== -->
+  <!-- ===== Explore Our Modules (CASE CE left-list + right-cards layout) ===== -->
   <section id="modules" class="section reveal">
     <div class="container">
       <div class="section-header row">
@@ -76,59 +76,216 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
         <a href="app/" class="header-link">VIEW ALL &rsaquo;</a>
       </div>
 
-      <!-- Category Icon Row -->
-      <div class="category-row">
-        <a href="#inspection" class="category-item active">
-          <span class="category-icon">🔍</span>
-          <span class="category-label">Inspections</span>
-        </a>
-        <a href="#legal" class="category-item">
-          <span class="category-icon">📋</span>
-          <span class="category-label">Legal Register</span>
-        </a>
-        <a href="#incident" class="category-item">
-          <span class="category-icon">🛡️</span>
-          <span class="category-label">Incident Report</span>
-        </a>
-        <a href="#ppe" class="category-item">
-          <span class="category-icon"></span>
-          <span class="category-label">First Aid & PPE</span>
-        </a>
-        <a href="#contractor" class="category-item">
-          <span class="category-icon">👷</span>
-          <span class="category-label">Contractors</span>
-        </a>
-        <a href="#staff" class="category-item">
-          <span class="category-icon">👥</span>
-          <span class="category-label">Staff Roster</span>
-        </a>
-      </div>
-
-      <!-- Module Cards (2-column) -->
-      <div class="module-cards">
-        <div class="module-card">
-          <div class="module-card-img">
-            <span class="module-badge">AmerisPro</span>
-            <div class="img-placeholder">🔍</div>
-          </div>
-          <div class="module-card-body">
-            <h3>Inspection Builder</h3>
-            <p>Custom templates with Excel import, digital signatures, and audit trails. Build inspections that match your site requirements.</p>
-            <a href="app/#inspection" class="btn-card">VIEW ALL FEATURES</a>
-          </div>
-          <div class="card-accent"></div>
+      <div class="module-layout">
+        <!-- Left: Category List -->
+        <div class="module-list">
+          <button class="module-list-item active" data-tab="inspection">
+            <span class="module-list-icon">🔍</span>
+            <span class="module-list-label">Inspections</span>
+          </button>
+          <button class="module-list-item" data-tab="legal">
+            <span class="module-list-icon">📋</span>
+            <span class="module-list-label">Legal Register</span>
+          </button>
+          <button class="module-list-item" data-tab="incident">
+            <span class="module-list-icon">🛡️</span>
+            <span class="module-list-label">Incident Report</span>
+          </button>
+          <button class="module-list-item" data-tab="ppe">
+            <span class="module-list-icon"></span>
+            <span class="module-list-label">First Aid &amp; PPE</span>
+          </button>
+          <button class="module-list-item" data-tab="contractor">
+            <span class="module-list-icon">👷</span>
+            <span class="module-list-label">Contractors</span>
+          </button>
+          <button class="module-list-item" data-tab="staff">
+            <span class="module-list-icon">👥</span>
+            <span class="module-list-label">Staff Roster</span>
+          </button>
         </div>
-        <div class="module-card">
-          <div class="module-card-img">
-            <span class="module-badge">AmerisPro</span>
-            <div class="img-placeholder">📋</div>
+
+        <!-- Right: Product Cards -->
+        <div class="module-cards-wrapper">
+          <!-- Inspection -->
+          <div class="module-tab active" data-tab="inspection">
+            <div class="module-cards">
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">🔍</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Inspection Builder</h3>
+                  <p>Custom templates with Excel import, digital signatures, and audit trails. Build inspections that match your site requirements.</p>
+                  <a href="app/#inspection" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">📊</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Inspection Reports</h3>
+                  <p>Auto-generated reports with findings, photos, and corrective actions. Export to PDF or share directly with stakeholders.</p>
+                  <a href="app/#inspection" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+            </div>
           </div>
-          <div class="module-card-body">
-            <h3>Legal Register</h3>
-            <p>OSH compliance checklist with smart questionnaire filtering. Answer yes/no/skip to auto-filter your compliance requirements.</p>
-            <a href="compliance.html" class="btn-card">VIEW ALL FEATURES</a>
+
+          <!-- Legal Register -->
+          <div class="module-tab" data-tab="legal">
+            <div class="module-cards">
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">📋</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Legal Register Profiler</h3>
+                  <p>Automatically generate your Legal Register based on a smart questionnaire. Answer industry-specific questions to auto-build your compliance checklist.</p>
+                  <a href="compliance.html" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">🤖</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>AI Legal Search</h3>
+                  <p>Vector-powered semantic search over indexed OSH legislation with AI-generated clause summaries. Ask natural language questions and get instant answers.</p>
+                  <a href="compliance.html" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+            </div>
           </div>
-          <div class="card-accent"></div>
+
+          <!-- Incident Report -->
+          <div class="module-tab" data-tab="incident">
+            <div class="module-cards">
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">🛡️</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Incident Logger</h3>
+                  <p>Digital incident logging with root cause tracking, photo evidence, and staff lookup. Capture incidents in real-time from any device.</p>
+                  <a href="app/#incident" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">📈</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Incident Analytics</h3>
+                  <p>Trend analysis and reporting on incident types, locations, and root causes. Identify patterns before they become serious.</p>
+                  <a href="app/#incident" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- First Aid & PPE -->
+          <div class="module-tab" data-tab="ppe">
+            <div class="module-cards">
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder"></div>
+                </div>
+                <div class="module-card-body">
+                  <h3>First Aid Inventory</h3>
+                  <p>Track first aid kit contents, expiry dates, and replenishment schedules. Never run short on critical supplies.</p>
+                  <a href="app/" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder"></div>
+                </div>
+                <div class="module-card-body">
+                  <h3>PPE Management</h3>
+                  <p>Issue, track, and audit personal protective equipment. Monitor stock levels and auto-alert when items need replacement.</p>
+                  <a href="app/" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contractors -->
+          <div class="module-tab" data-tab="contractor">
+            <div class="module-cards">
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">👷</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Contractor Induction</h3>
+                  <p>Digital induction management with certification tracking and worker approval workflows. Ensure every contractor is site-ready.</p>
+                  <a href="app/#contractor" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">📄</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Permit to Work</h3>
+                  <p>Manage high-risk work permits digitally. Track approvals, conditions, and expiry — all linked to your contractor database.</p>
+                  <a href="app/#contractor" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Staff Roster -->
+          <div class="module-tab" data-tab="staff">
+            <div class="module-cards">
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">👥</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Staff Directory</h3>
+                  <p>Central personnel database with department filters, role tracking, and contact details. Find any team member instantly.</p>
+                  <a href="app/#staff" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+              <div class="module-card">
+                <div class="module-card-img">
+                  <span class="module-badge">AmerisPro</span>
+                  <div class="img-placeholder">📅</div>
+                </div>
+                <div class="module-card-body">
+                  <h3>Shift Roster</h3>
+                  <p>Plan and track staff shifts, overtime, and site assignments. Ensure adequate coverage for every shift and zone.</p>
+                  <a href="app/#staff" class="btn-card">VIEW ALL FEATURES</a>
+                </div>
+                <div class="card-accent"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

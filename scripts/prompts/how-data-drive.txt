@@ -1,0 +1,30 @@
+A clean square illustration of a Google Drive icon being protected by a shield. The image is a square illustration, much taller than wide is wrong, it should be roughly equal width and height. Style: playful, illustrated, slightly wobbly hand-drawn outlines, friendly modern flat aesthetic.
+
+The central subject is a stylized triangular Google Drive icon (a folded paper triangle shape in Google Drive's signature colors of green, yellow, and blue) sitting in the centre of the image. Wrapped around the Drive icon is a large protective shield shape in dark navy with a thin lighter navy outline. The shield has a small white checkmark in its centre. A small padlock icon sits at the top of the shield.
+
+Below the shield and Drive icon, in dark navy handwritten display text, reads the single word "Secured". The text is the only text in the image, nothing else.
+
+The background is plain white or very pale cream. The illustration has generous breathing room around it — it should not fill the entire frame, there should be clear empty space on all four sides.
+
+Colors: dark navy for the shield outline and text, Google Drive green, yellow, and blue for the Drive icon, white for the checkmark and padlock body.
+
+Do NOT include any of the following: real photographs of people, browser chrome, device frames, window controls, color codes, hex values, technical text, watermarks, signatures, logos other than the Google Drive icon itself, measurements, numbers, aspect ratios, version labels, blurry or distorted text, spelling errors, scrambled words, nonsensical text, dark or moody color schemes, multiple separate illustrations (just ONE Drive icon and ONE shield), wavy or spring-shaped borders, frames, or background patterns.
+
+---
+NEGATIVE PROMPT (things the model must avoid):
+- Any text string other than the single word "Secured"
+- Hex codes (e.g. #1A2747, #4285F4)
+- Aspect ratios, dimensions, pixel counts, measurements
+- Version labels, file names, technical metadata
+- Real photographic faces or people
+- Browser chrome, device frames, window controls
+- Watermarks, signatures, stock photo logos
+- Spelling errors, typos, scrambled letters, made-up words
+- Dark backgrounds, moody lighting, horror aesthetic
+- Multiple separate illustrations in one image
+- Wavy, spring-shaped, squiggly, or zig-zag borders or frames
+- Background patterns, gradients, textures, or scenery
+- Off-topic content (animals, vehicles, landscapes, food, construction equipment, etc.)
+- Under construction signs, barriers, cones, hard hats, warning tape
+- Modern flat material-design aesthetic with sharp shadows
+- Glassmorphism, neumorphism, or trendy 2020s UI effects

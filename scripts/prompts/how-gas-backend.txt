@@ -1,0 +1,32 @@
+A clean square illustration of a stylized Google Apps Script logo with code symbols. The image is a square illustration, roughly equal width and height. Style: playful, illustrated, slightly wobbly hand-drawn outlines, friendly modern flat aesthetic.
+
+The central subject is a stylized representation of code: a large dark navy rounded rectangle representing a code editor or terminal window, with several horizontal lines of "code" inside it (the lines are just simple dark navy horizontal strokes of varying lengths, not real code). Around the code window float three small decorative elements: a yellow angle bracket "<", a yellow forward slash "/", and a yellow closing angle bracket ">", arranged in a triangle around the window. A small cloud icon in light blue or white sits behind the code window in the upper background.
+
+Below the code window, in dark navy handwritten display text, reads the single phrase "No Servers". The text is the only text in the image, nothing else.
+
+The background is plain white or very pale cream. The illustration has generous breathing room around it — it should not fill the entire frame, there should be clear empty space on all four sides.
+
+Colors: dark navy for the code window and text, yellow for the angle brackets and slash, light blue or white for the cloud.
+
+Do NOT include any of the following: real photographs of people, browser chrome, device frames, window controls, color codes, hex values, technical text, watermarks, signatures, logos other than the Google Apps Script visual language, measurements, numbers, aspect ratios, version labels, blurry or distorted text, spelling errors, scrambled words, nonsensical text, dark or moody color schemes, multiple separate illustrations (just ONE code window with floating brackets and a cloud), wavy or spring-shaped borders, frames, or background patterns.
+
+---
+NEGATIVE PROMPT (things the model must avoid):
+- Any text string other than the phrase "No Servers"
+- Hex codes (e.g. #1A2747, #4285F4, #FBBC04)
+- Aspect ratios, dimensions, pixel counts, measurements
+- Version labels, file names, technical metadata
+- Real photographic faces or people
+- Browser chrome, device frames, window controls
+- Watermarks, signatures, stock photo logos
+- Spelling errors, typos, scrambled letters, made-up words
+- Dark backgrounds, moody lighting, horror aesthetic
+- Multiple separate illustrations in one image
+- Wavy, spring-shaped, squiggly, or zig-zag borders or frames
+- Background patterns, gradients, textures, or scenery
+- Off-topic content (animals, vehicles, landscapes, food, construction equipment, etc.)
+- Under construction signs, barriers, cones, hard hats, warning tape
+- Modern flat material-design aesthetic with sharp shadows
+- Glassmorphism, neumorphism, or trendy 2020s UI effects
+- Real programming language syntax or actual code text
+- Server rack illustrations, physical server hardware, or data center imagery

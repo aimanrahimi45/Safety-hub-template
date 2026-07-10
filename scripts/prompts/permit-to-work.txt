@@ -1,5 +1,13 @@
-A clean, high-resolution web application screenshot showing an "Under Construction" placeholder for a "Permit to Work" module. The image is a single rounded-corner card with a thick dark navy wavy border and a soft cream/light-yellow background (#FFF9EB), matching the style of the other module preview cards on the site.
+A wide landscape web app screenshot (very wide rectangular format) showing an "Under Construction" placeholder card. The card has a thick dark navy wavy border and a soft pale cream background. Generous cream margins on all four sides.
 
-Centered inside the card is a large yellow and black striped construction barrier board (like a road barricade) standing upright, with a bright orange traffic cone to its left and a white hard hat resting on top of the barrier. Above the barrier, in large bold dark navy display text, reads: "Permit to Work". Below the barrier, in slightly smaller dark navy text, reads: "Module Under Construction". A small dark navy tag in the upper-right corner of the card reads "COMING SOON" in yellow text.
+Text in the image (ONLY these three strings, nothing else):
+1. "Permit to Work" — large bold dark navy display title, centered at the top of the card, on a SINGLE LINE.
+2. "COMING SOON" — small dark navy badge with yellow text in the upper-right corner of the card. The badge must be fully visible, not clipped, and not rotated.
+3. "Module Under Construction" — medium dark navy text, centered below the construction barrier.
 
-The card sits centered on a cream/light-yellow page background with generous cream margins on all four sides so the content is not cropped. Aspect ratio 1800x790 (landscape, ~2.28:1). Style: playful, illustrated, slightly wobbly hand-drawn outlines, friendly, modern web app screenshot aesthetic. No browser chrome, no device frame, no other UI.
+Visual elements centered in the card:
+- A large yellow and black diagonally striped construction barrier board (road barricade) standing upright on two grey legs.
+- A bright orange traffic cone with a white reflective stripe, positioned to the LEFT of the barrier.
+- A white hard hat with grey vents, resting on the TOP-RIGHT corner of the barrier.
+
+No browser chrome, no device frame, no icons other than those described, no color codes, no hex values, no technical text, no watermarks, no signatures, no measurements, no numbers, no aspect ratios, no version labels. Style: playful illustrated with slightly wobbly hand-drawn outlines, friendly modern web app aesthetic. Colors: dark navy text and border, pale cream background, yellow-and-black barrier, orange cone, white hard hat.

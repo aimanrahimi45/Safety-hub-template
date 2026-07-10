@@ -454,9 +454,9 @@ img { max-width: 100%; height: auto; }
     font-weight: 700;
 }
 .module-list-icon {
-    font-size: 1.4rem;
     width: 28px;
-    text-align: center;
+    height: 28px;
+    object-fit: contain;
 }
 .module-list-label {
     font-size: 0.92rem;
@@ -513,6 +513,12 @@ img { max-width: 100%; height: auto; }
 .img-placeholder {
     font-size: 4rem;
     opacity: 0.3;
+}
+.card-icon {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    opacity: 0.9;
 }
 .module-card-body {
     padding: 28px;
@@ -899,7 +905,7 @@ img { max-width: 100%; height: auto; }
     body { padding-bottom: 70px; }
 }
 @media (max-width: 600px) {
-    .module-list-icon { font-size: 1.2rem; }
+    .module-list-icon { width: 22px; height: 22px; }
     .module-list-label { font-size: 0.72rem; }
     .module-card-img { height: 200px; }
     .support-split-left,

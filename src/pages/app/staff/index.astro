@@ -211,10 +211,21 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   // -------------------------------------------------------------------
   const PAGE_SIZE = 15;
   let currentPage = 1;
-  let currentMaxPage = 1;
   let supabase: ReturnType<typeof getSupabase> | null = null;
   /** UUID of the row being edited (null = create mode). */
   let editingId: string | null = null;
+
+  const paginator = new (window as any).PaginationHelper({
+    prevBtnId: 'staff-prev',
+    nextBtnId: 'staff-next',
+    pageInfoId: 'staff-page-info',
+    pageSize: PAGE_SIZE,
+    onChange: (newPage: number) => {
+      currentPage = newPage;
+      writeFiltersToUrl(newPage);
+      void loadRoster();
+    }
+  });
 
   // -------------------------------------------------------------------
   // Helpers
@@ -360,13 +371,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       });
 
       const total = count ?? null;
-      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (rows.length === PAGE_SIZE ? page + 1 : page);
-      currentMaxPage = maxPage;
-      prevBtn.disabled = page <= 1;
-      nextBtn.disabled = page >= maxPage;
-      pageInfo.textContent = total != null
-        ? `Page ${page} of ${maxPage} (${total} total)`
-        : `Page ${page}`;
+      paginator.update(currentPage, total || 0);
     } catch (e) {
       skelEl.hidden = true;
       showError(e instanceof Error ? e.message : 'Failed to load staff.');
@@ -384,20 +389,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     currentPage = 1;
     writeFiltersToUrl(1);
     void loadRoster();
-  });
-  prevBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-      currentPage -= 1;
-      writeFiltersToUrl(currentPage);
-      void loadRoster();
-    }
-  });
-  nextBtn.addEventListener('click', () => {
-    if (currentPage < currentMaxPage) {
-      currentPage += 1;
-      writeFiltersToUrl(currentPage);
-      void loadRoster();
-    }
   });
 
   const exportBtn = document.getElementById('staff-export-csv') as HTMLButtonElement;

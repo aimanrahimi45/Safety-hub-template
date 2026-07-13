@@ -579,3 +579,80 @@ const isLinkActive = (path: string) => {
     }
   }
 </style>
+
+<script is:inline>
+  // Safety Hub - Reusable Unified Pagination Helper
+  window.PaginationHelper = class {
+    constructor(options) {
+      this.currentPage = options.currentPage || 1;
+      this.pageSize = options.pageSize || 15;
+      this.totalRecords = options.totalRecords || 0;
+      this.onChange = options.onChange;
+
+      // DOM Elements
+      this.elements = {
+        prevBtn: document.getElementById(options.prevBtnId || "btn-prev-page"),
+        nextBtn: document.getElementById(options.nextBtnId || "btn-next-page"),
+        pageInfo: document.getElementById(options.pageInfoId || "page-num-display") || document.getElementById("page-info"),
+        start: document.getElementById(options.startId || "pag-start"),
+        end: document.getElementById(options.endId || "pag-end"),
+        total: document.getElementById(options.totalId || "pag-total"),
+        controlsContainer: document.getElementById(options.controlsContainerId || "pagination-controls")
+      };
+
+      // Bind events
+      if (this.elements.prevBtn) {
+        this.elements.prevBtn.onclick = (e) => {
+          if (e) e.preventDefault();
+          if (this.currentPage > 1) {
+            this.currentPage--;
+            if (this.onChange) this.onChange(this.currentPage);
+          }
+        };
+      }
+      if (this.elements.nextBtn) {
+        this.elements.nextBtn.onclick = (e) => {
+          if (e) e.preventDefault();
+          const totalPages = Math.ceil(this.totalRecords / this.pageSize) || 1;
+          if (this.currentPage < totalPages) {
+            this.currentPage++;
+            if (this.onChange) this.onChange(this.currentPage);
+          }
+        };
+      }
+    }
+
+    update(currentPage, totalRecords, pageSize) {
+      this.currentPage = currentPage;
+      this.totalRecords = totalRecords;
+      if (pageSize) this.pageSize = pageSize;
+
+      const totalPages = Math.ceil(this.totalRecords / this.pageSize) || 1;
+      const startIndex = this.totalRecords === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+      const endIndex = Math.min(this.currentPage * this.pageSize, this.totalRecords);
+
+      if (this.elements.start) this.elements.start.innerText = startIndex;
+      if (this.elements.end) this.elements.end.innerText = endIndex;
+      if (this.elements.total) this.elements.total.innerText = this.totalRecords;
+      
+      if (this.elements.pageInfo) {
+        this.elements.pageInfo.innerText = `Page ${this.currentPage} of ${totalPages}`;
+      }
+
+      if (this.elements.prevBtn) {
+        this.elements.prevBtn.disabled = (this.currentPage === 1);
+        this.elements.prevBtn.style.opacity = (this.currentPage === 1) ? "0.5" : "1";
+        this.elements.prevBtn.style.cursor = (this.currentPage === 1) ? "not-allowed" : "pointer";
+      }
+      if (this.elements.nextBtn) {
+        this.elements.nextBtn.disabled = (this.currentPage === totalPages);
+        this.elements.nextBtn.style.opacity = (this.currentPage === totalPages) ? "0.5" : "1";
+        this.elements.nextBtn.style.cursor = (this.currentPage === totalPages) ? "not-allowed" : "pointer";
+      }
+
+      if (this.elements.controlsContainer) {
+        this.elements.controlsContainer.style.display = this.totalRecords > 0 ? "flex" : "none";
+      }
+    }
+  };
+</script>

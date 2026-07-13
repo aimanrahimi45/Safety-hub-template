@@ -306,9 +306,29 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   let allTemplateItems: InspectionTemplateItem[] = [];
   let allTemplates: InspectionTemplate[] = [];
   let tmplPage = 1;
-  let tmplMaxPage = 1;
   let logPage = 1;
-  let logMaxPage = 1;
+
+  const tmplPaginator = new (window as any).PaginationHelper({
+    prevBtnId: 'ins-tmpl-prev',
+    nextBtnId: 'ins-tmpl-next',
+    pageInfoId: 'ins-tmpl-page-info',
+    pageSize: TEMPLATE_PAGE_SIZE,
+    onChange: (newPage: number) => {
+      tmplPage = newPage;
+      renderTemplatesTable();
+    }
+  });
+
+  const logPaginator = new (window as any).PaginationHelper({
+    prevBtnId: 'ins-log-prev',
+    nextBtnId: 'ins-log-next',
+    pageInfoId: 'ins-log-page-info',
+    pageSize: PAGE_SIZE,
+    onChange: (newPage: number) => {
+      logPage = newPage;
+      void loadHistoryPage(newPage);
+    }
+  });
   // Map<questionId, { questionId, questionText, responseType, options, section, responseValue, remarks }>
   let answers: Record<string, AnswerEntry> = {};
   let signaturePad: { isEmpty(): boolean; clear(): void; toDataURL(t: string): string; fromDataURL(s: string): void; off?(): void; on?(): void; } | null = null;
@@ -846,10 +866,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         tmplTbody.appendChild(tr);
       }
     }
-    tmplMaxPage = maxPage;
-    tmplPageInfo.textContent = `Page ${tmplPage} of ${maxPage} (${total} total)`;
-    tmplPrev.disabled = tmplPage <= 1;
-    tmplNext.disabled = tmplPage >= maxPage;
+    tmplPaginator.update(tmplPage, total);
   }
 
   tmplApply.addEventListener('click', () => { tmplPage = 1; renderTemplatesTable(); });
@@ -859,8 +876,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     tmplPage = 1;
     renderTemplatesTable();
   });
-  tmplPrev.addEventListener('click', () => { if (tmplPage > 1) { tmplPage -= 1; renderTemplatesTable(); } });
-  tmplNext.addEventListener('click', () => { if (tmplPage < tmplMaxPage) { tmplPage += 1; renderTemplatesTable(); } });
 
   // -----------------------------------------------------------------
   // Manage tab: import wizard
@@ -1035,10 +1050,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       logTbody.innerHTML = '';
       if (rows.length === 0) {
         logEmpty.hidden = false;
-        logPrev.disabled = true;
-        logNext.disabled = true;
-        logMaxPage = 1;
-        logPageInfo.textContent = `Page ${logPage}`;
+        logPaginator.update(logPage, 0);
         return;
       }
       logEmpty.hidden = true;
@@ -1057,11 +1069,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         logTbody.appendChild(tr);
       }
       const total = count ?? null;
-      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (rows.length === PAGE_SIZE ? page + 1 : page);
-      logMaxPage = maxPage;
-      logPrev.disabled = page <= 1;
-      logNext.disabled = page >= maxPage;
-      logPageInfo.textContent = total != null ? `Page ${page} of ${maxPage} (${total} total)` : `Page ${page}`;
+      logPaginator.update(logPage, total || 0);
     } catch (e) {
       logTbody.innerHTML = `<tr><td colspan="6" class="ins-empty-cell">❌ ${escapeHtml(e instanceof Error ? e.message : 'Failed to load history.')}</td></tr>`;
     }
@@ -1072,8 +1080,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     logDate.value = '';
     void loadHistoryPage(1);
   });
-  logPrev.addEventListener('click', () => { if (logPage > 1) void loadHistoryPage(logPage - 1); });
-  logNext.addEventListener('click', () => { if (logPage < logMaxPage) void loadHistoryPage(logPage + 1); });
 
   const logExportBtn = document.getElementById('ins-log-export-csv') as HTMLButtonElement;
   logExportBtn.addEventListener('click', () => {

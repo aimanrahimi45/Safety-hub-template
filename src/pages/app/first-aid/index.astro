@@ -101,6 +101,18 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   let allThisYear = 0;
   let thisMonth = 0;
 
+  const paginator = new (window as any).PaginationHelper({
+    prevBtnId: 'fa-prev',
+    nextBtnId: 'fa-next',
+    pageInfoId: 'fa-page-info',
+    pageSize: PAGE_SIZE,
+    onChange: (newPage: number) => {
+      currentPage = newPage;
+      writePageToUrl(newPage);
+      void refresh();
+    }
+  });
+
   function showError(msg: string): void {
     errorEl.hidden = false;
     errorEl.textContent = msg;
@@ -204,28 +216,14 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         `;
         tbody.appendChild(tr);
       }
-
-      const totalApprox = count ?? (rows.length < PAGE_SIZE ? offset + rows.length : (offset + PAGE_SIZE + 1));
-      const hasMore = rows.length === PAGE_SIZE && offset + PAGE_SIZE < (totalApprox || Infinity);
-      // Use the returned count if available, else fall back to "hasMore" heuristic.
       const total = count ?? null;
-      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (hasMore ? page + 1 : page);
-
-      prevBtn.disabled = page <= 1;
-      nextBtn.disabled = page >= maxPage;
-      pageInfo.textContent = total != null
-        ? `Page ${page} of ${maxPage} (${total} total)`
-        : `Page ${page}`;
-
-      // Stash maxPage for next-click handling
-      currentMaxPage = maxPage;
+      paginator.update(currentPage, total || 0);
     } catch (e) {
       skelEl.hidden = true;
       showError(e instanceof Error ? e.message : 'Failed to load records.');
     }
   }
 
-  let currentMaxPage = 1;
   let supabase: ReturnType<typeof getSupabase> | null = null;
 
   if (!isSupabaseConfigured()) {
@@ -254,20 +252,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       currentPage = 1;
       writePageToUrl(1);
       void refresh();
-    });
-    prevBtn.addEventListener('click', () => {
-      if (currentPage > 1) {
-        currentPage -= 1;
-        writePageToUrl(currentPage);
-        void refresh();
-      }
-    });
-    nextBtn.addEventListener('click', () => {
-      if (currentPage < currentMaxPage) {
-        currentPage += 1;
-        writePageToUrl(currentPage);
-        void refresh();
-      }
     });
 
     const exportBtn = document.getElementById('fa-export-csv') as HTMLButtonElement;

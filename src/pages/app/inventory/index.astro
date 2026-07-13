@@ -68,6 +68,18 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           </thead>
           <tbody id="inv-tbody"></tbody>
         </table>
+
+        <!-- Pagination Controls -->
+        <nav class="ins-pager" id="inv-pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; gap: 10px;">
+          <div style="font-size: 0.85rem; color: var(--color-text-muted);">
+            Showing <span id="inv-pag-start">0</span>-<span id="inv-pag-end">0</span> of <span id="inv-pag-total">0</span> items
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="btn" id="inv-prev" style="padding: 6px 12px; font-size: 0.75rem;">← Prev</button>
+            <span id="inv-page-info" style="font-size: 0.85rem; font-weight: 700; color: var(--color-text);">Page 1 of 1</span>
+            <button type="button" class="btn" id="inv-next" style="padding: 6px 12px; font-size: 0.75rem;">Next →</button>
+          </div>
+        </nav>
       </section>
 
       <section id="inv-empty" class="inv-empty" hidden>
@@ -251,6 +263,22 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   let allRows: InventoryRow[] = [];
   let activeRow: InventoryRow | null = null;
   let authUserId: string | null = null;
+  let currentPage = 1;
+
+  const paginator = new (window as any).PaginationHelper({
+    prevBtnId: 'inv-prev',
+    nextBtnId: 'inv-next',
+    pageInfoId: 'inv-page-info',
+    startId: 'inv-pag-start',
+    endId: 'inv-pag-end',
+    totalId: 'inv-pag-total',
+    controlsContainerId: 'inv-pagination-controls',
+    pageSize: 10,
+    onChange: (newPage: number) => {
+      currentPage = newPage;
+      renderTable();
+    }
+  });
 
   function showError(msg: string): void {
     errorBanner.hidden = false;
@@ -295,12 +323,17 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     if (filtered.length === 0) {
       tableWrap.hidden = true;
       emptyEl.hidden = false;
+      paginator.update(currentPage, 0);
       return;
     }
     emptyEl.hidden = true;
     tableWrap.hidden = false;
 
-    for (const row of filtered) {
+    const startIdx = (currentPage - 1) * 10;
+    const endIdx = startIdx + 10;
+    const pageRows = filtered.slice(startIdx, endIdx);
+
+    for (const row of pageRows) {
       const tr = document.createElement('tr');
       const lowStock = row.current_stock < row.min_alert_level;
       tr.innerHTML = `
@@ -321,6 +354,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       `;
       tbody.appendChild(tr);
     }
+    paginator.update(currentPage, filtered.length);
   }
 
   function updateSub(): void {
@@ -440,7 +474,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       showError('Failed to initialise inventory page.');
     });
 
-    searchEl.addEventListener('input', renderTable);
+    searchEl.addEventListener('input', () => {
+      currentPage = 1;
+      renderTable();
+    });
 
     addBtn.addEventListener('click', () => openForm(null));
     formClose.addEventListener('click', closeForm);

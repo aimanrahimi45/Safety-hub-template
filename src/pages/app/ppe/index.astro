@@ -265,10 +265,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       if (rows.length === 0) {
         tableWrap.hidden = true;
         emptyEl.hidden = false;
-        prevBtn.disabled = page <= 1;
-        nextBtn.disabled = true;
-        currentMaxPage = page;
-        pageInfo.textContent = `Page ${page}`;
+        paginator.update(page, 0);
         return;
       }
       emptyEl.hidden = true;

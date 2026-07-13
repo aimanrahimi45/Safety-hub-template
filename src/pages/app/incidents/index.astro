@@ -322,10 +322,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       emptyEl.querySelector('p')!.textContent =
         'No severities selected. Pick at least one severity to filter.';
       subEl.textContent = '0 incidents';
-      prevBtn.disabled = true;
-      nextBtn.disabled = true;
-      pageInfo.textContent = `Page ${page}`;
-      currentMaxPage = 1;
+      paginator.update(page, 0);
       return;
     }
     if (jkkp === 'yes') q = q.eq('reported_to_jkkp', true);
@@ -360,10 +357,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         emptyEl.hidden = false;
         emptyEl.querySelector('p')!.textContent =
           'No incidents recorded yet. Click "Report incident" to file your first.';
-        prevBtn.disabled = page <= 1;
-        nextBtn.disabled = true;
-        currentMaxPage = page;
-        pageInfo.textContent = `Page ${page}`;
+        paginator.update(page, 0);
         return;
       }
       emptyEl.hidden = true;

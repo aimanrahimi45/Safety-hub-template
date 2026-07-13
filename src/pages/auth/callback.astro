@@ -6,8 +6,7 @@ import Layout from '../../layouts/Layout.astro';
     <div class="container">
       <div class="callback-card">
         <h1>Signing you in…</h1>
-        <p id="callback-status">Completing Google sign-in.</p>
-        <pre id="callback-debug" style="text-align:left; font-size:11px; background:#0f172a; color:#a7f3d0; padding:12px; margin-top:16px; max-height:260px; overflow:auto; border-radius:6px; white-space:pre-wrap; word-break:break-all;"></pre>
+        <p>Completing Google sign-in.</p>
       </div>
     </div>
   </main>
@@ -15,15 +14,6 @@ import Layout from '../../layouts/Layout.astro';
 
 <script>
   import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
-
-  const statusEl = document.getElementById('callback-status') as HTMLElement;
-  const debugEl = document.getElementById('callback-debug') as HTMLElement;
-
-  function log(...args: unknown[]): void {
-    const line = args.map(a => typeof a === 'string' ? a : JSON.stringify(a, null, 2)).join(' ');
-    console.log('[CALLBACK]', line);
-    if (debugEl) debugEl.textContent += line + '\n';
-  }
 
   function go(path: string, err?: string): void {
     const target = err ? `/login?error=${encodeURIComponent(err)}` : path;
@@ -35,91 +25,31 @@ import Layout from '../../layouts/Layout.astro';
   } else {
     const params = new URLSearchParams(window.location.search);
     const errorParam = params.get('error_description') || params.get('error');
-    const code = params.get('code');
-
-    log('=== CALLBACK DEBUG ===');
-    log('URL:', window.location.href);
-    log('Origin:', window.location.origin);
-    log('Search params:', Object.fromEntries(params.entries()));
-    log('Has code?', !!code, ' code length:', code?.length ?? 0);
-    log('Has error?', !!errorParam, ' err:', errorParam);
-
-    // Check localStorage for Supabase auth keys
-    const lsKeys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k) lsKeys.push(k);
-    }
-    log('localStorage keys:', lsKeys);
-
-    const projectRef = 'mpcewzoejxczwqqjlwsm';
-    const codeVerifierKey = `sb-${projectRef}-auth-code-verifier`;
-    const hasVerifier = !!localStorage.getItem(codeVerifierKey);
-    log('Code verifier key:', codeVerifierKey, ' exists?', hasVerifier);
-    if (hasVerifier) {
-      const v = localStorage.getItem(codeVerifierKey)!;
-      log('  verifier length:', v.length, ' first 20 chars:', v.slice(0, 20) + '...');
-    }
 
     if (errorParam) {
-      log('ERROR param present → redirecting to login');
       go('/login', errorParam);
     } else {
       const supabase = getSupabase();
 
-      // Check existing session
-      supabase.auth.getSession().then(({ data, error }) => {
-        log('getSession:', { hasSession: !!data.session, error: error?.message ?? 'none' });
-        if (data.session) {
-          log('  user id:', data.session.user.id);
-          log('  email:', data.session.user.email);
-          go('/app/dashboard');
-        }
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) go('/app/dashboard');
       });
 
-      // Manual code exchange
-      if (code) {
-        log('Calling exchangeCodeForSession manually...');
-        supabase.auth.exchangeCodeForSession(code)
-          .then(({ data, error }) => {
-            if (error) {
-              log('exchangeCodeForSession ERROR:', error.message, 'status:', error.status);
-              log('  name:', error.name);
-              log('  full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-            } else {
-              log('exchangeCodeForSession SUCCESS');
-              log('  user:', data.user?.email);
-              log('  expires_at:', data.session?.expires_at);
-              go('/app/dashboard');
-            }
-          })
-          .catch((e) => {
-            log('exchangeCodeForSession EXCEPTION:', e?.message ?? e);
-          });
-      } else {
-        log('No code in URL — cannot exchange');
-      }
-
-      // Listen for auth events
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, session) => {
-          log('AUTH EVENT:', event, session ? 'session present' : 'no session');
           if (event === 'SIGNED_IN' && session) {
             subscription.unsubscribe();
             go('/app/dashboard');
-          } else if (event === 'TOKEN_REFRESHED') {
-            log('  (token refreshed)');
-          } else if (event === 'SIGNED_OUT') {
-            log('  (user signed out)');
+          } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+            subscription.unsubscribe();
+            go('/login', 'Sign-in was cancelled or failed.');
           }
         }
       );
 
       setTimeout(() => {
-        log('=== 10s timeout reached ===');
         if (window.location.pathname === '/auth/callback') {
-          log('Still on callback — auth did not complete. Redirecting to login with error.');
-          go('/login', 'Sign-in did not complete. Check browser console for details.');
+          go('/login', 'Sign-in timed out. Please try again.');
         }
       }, 10_000);
     }

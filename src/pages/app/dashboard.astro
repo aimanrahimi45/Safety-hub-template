@@ -1,12 +1,10 @@
 ---
 import AppLayout from '../../layouts/AppLayout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
 
 const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 ---
 <AppLayout title="Dashboard - AmerisPro">
-  <Header />
+
 
   <main class="dashboard-page">
     <div class="container">
@@ -119,8 +117,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       </section>
     </div>
   </main>
-
-  <Footer />
 </AppLayout>
 
 <script>

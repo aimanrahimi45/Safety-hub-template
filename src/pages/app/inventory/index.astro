@@ -421,20 +421,46 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       }
       authUserId = userData.user.id;
 
-      // Query active tenant and role
-      const { data: memberData, error: memberErr } = await supabase!
-        .from('tenant_members')
-        .select('tenant_id, role')
-        .eq('user_id', authUserId)
-        .eq('is_active', true)
-        .limit(1);
+      // Query active tenant and role (tries tenant_members, falls back to tenants for solo mode)
+      let tenantId = null;
+      let role = null;
 
-      if (memberErr || !memberData || memberData.length === 0) {
+      try {
+        const { data: memberData, error: memberErr } = await supabase!
+          .from('tenant_members')
+          .select('tenant_id, role')
+          .eq('user_id', authUserId)
+          .eq('is_active', true)
+          .limit(1);
+
+        if (!memberErr && memberData && memberData.length > 0) {
+          tenantId = memberData[0].tenant_id;
+          role = memberData[0].role;
+        }
+      } catch {
+        // tenant_members query might throw if table does not exist
+      }
+
+      if (!tenantId) {
+        // Fallback to tenants table (Solo-SHO mode)
+        const { data: tenantData, error: tenantErr } = await supabase!
+          .from('tenants')
+          .select('id')
+          .eq('owner_user_id', authUserId)
+          .limit(1);
+
+        if (!tenantErr && tenantData && tenantData.length > 0) {
+          tenantId = tenantData[0].id;
+          role = 'admin'; // Owner is admin
+        }
+      }
+
+      if (!tenantId) {
         showError('You do not belong to an active tenant workspace.');
         return;
       }
-      activeTenantId = memberData[0].tenant_id;
-      activeUserRole = memberData[0].role;
+      activeTenantId = tenantId;
+      activeUserRole = role;
 
       await load();
     })().catch(() => {

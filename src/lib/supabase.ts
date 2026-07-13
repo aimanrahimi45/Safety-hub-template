@@ -1,5 +1,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+// Polyfill WebSocket for Node.js < 22 SSR environments where Supabase checks for it
+if (typeof globalThis.WebSocket === 'undefined') {
+  (globalThis as any).WebSocket = class {};
+}
+
 // =====================================================================
 // Browser Supabase client (singleton).
 //

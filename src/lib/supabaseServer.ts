@@ -1,6 +1,11 @@
 import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr';
 import type { APIContext, AstroGlobal } from 'astro';
 
+// Polyfill WebSocket for Node.js < 22 SSR environments where Supabase checks for it
+if (typeof globalThis.WebSocket === 'undefined') {
+  (globalThis as any).WebSocket = class {};
+}
+
 // =====================================================================
 // Server-side Supabase client for Astro middleware.
 //

@@ -532,7 +532,9 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   }
   .dash-warning {
     background: #FFF7E6;
-    border: 1px solid #E58E1A;
+    border: 3px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
     color: #6A4A0F;
   }
   .dash-warning code {
@@ -542,7 +544,9 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   }
   .dash-error {
     background: #FDECEC;
-    border: 1px solid #C0392B;
+    border: 3px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
     color: #8B1A1A;
   }
   .dash-hero {
@@ -571,14 +575,16 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
   }
   .plan-free {
-    background: var(--color-bg-grey, #F4F4F4);
-    color: var(--color-text-muted, #6A6A69);
+    background: var(--warning);
+    color: var(--text-main);
   }
   .plan-premium {
-    background: #1F7A4D;
-    color: #ffffff;
+    background: var(--success);
+    color: var(--text-main);
   }
   .dash-expiry {
     font-size: 0.85rem;
@@ -596,17 +602,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   }
   .module-tile {
     display: block;
-    background: var(--color-bg, #FFFFFF);
-    border: 1px solid var(--color-border, #E0E0E0);
-    padding: 24px;
     color: inherit;
     text-decoration: none;
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-  }
-  .module-tile:hover {
-    border-color: var(--color-primary, #E58E1A);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-    transform: translateY(-1px);
   }
   .module-tile-icon {
     font-size: 1.8rem;
@@ -633,18 +630,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   }
   .metric-tile {
     display: block;
-    background: var(--color-bg, #FFFFFF);
-    border: 1px solid var(--color-border, #E0E0E0);
-    border-radius: 8px;
-    padding: 16px;
     text-decoration: none;
     color: inherit;
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-  }
-  .metric-tile:hover {
-    border-color: var(--color-primary, #E58E1A);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-    transform: translateY(-1px);
   }
   .metric-tile-icon {
     font-size: 1.4rem;
@@ -654,7 +641,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     font-size: 1.8rem;
     font-weight: 900;
     line-height: 1.1;
-    color: var(--color-text, #1E1E1D);
   }
   .metric-tile-sub {
     font-size: 0.78rem;
@@ -672,9 +658,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
   /* Recent activity feed */
   .activity-feed {
-    background: var(--color-bg, #FFFFFF);
-    border: 1px solid var(--color-border, #E0E0E0);
-    border-radius: 8px;
     padding: 16px 20px;
     margin: 0 0 32px 0;
   }
@@ -688,13 +671,9 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     align-items: center;
     gap: 12px;
     padding: 10px 8px;
-    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
     text-decoration: none;
     color: inherit;
-    transition: background 0.1s;
   }
-  .activity-item:last-child { border-bottom: none; }
-  .activity-item:hover { background: var(--color-bg-grey, #F8FAFC); }
   .activity-item-icon {
     font-size: 1.2rem;
     width: 32px;

@@ -25,7 +25,7 @@ const isLinkActive = (path: string) => {
     <!-- LEFT SIDEBAR -->
     <aside class="app-sidebar">
       <div class="app-brand">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="background: #eff6ff; padding: 6px; border-radius: 8px; border: 2px solid #2B2D42;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2B2D42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="background: #eff6ff; padding: 6px; border-radius: 8px; border: 3px solid #2B2D42; box-shadow: 2px 2px 0px #2B2D42;">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
         </svg>
         <span>AmerisPro</span>
@@ -160,7 +160,42 @@ const isLinkActive = (path: string) => {
 </Layout>
 
 <style is:global>
-  /* Playful Neo-brutalist sidebar layout styling */
+  /* Playful Neo-brutalist variables scoped to overwrite all child app pages */
+  :root {
+    --color-primary: #FF6B6B !important;
+    --color-primary-hover: #FF8585 !important;
+    --color-text: #2B2D42 !important;
+    --color-text-muted: #6C757D !important;
+    --color-bg: #FFF9EC !important;
+    --color-bg-grey: #FFEED2 !important;
+    --color-border: #2B2D42 !important;
+    --color-border-light: #2B2D42 !important;
+    --font-family: 'Fredoka', 'Roboto', sans-serif !important;
+
+    /* Legacy names */
+    --primary: #FF6B6B;
+    --primary-hover: #FF8585;
+    --success: #4ECA64;
+    --warning: #FFD166;
+    --info: #4EA8DE;
+    --bg: #FFF9EC;
+    --surface: #FFFFFF;
+    --sidebar-bg: #FFEED2;
+    --text-main: #2B2D42;
+    --border: #2B2D42;
+    --shadow-sm: 3px 3px 0px var(--border);
+    --shadow-md: 6px 6px 0px var(--border);
+    --font-heading: 'Fredoka', sans-serif;
+    --font-body: 'Fredoka', sans-serif;
+  }
+
+  body {
+    background-color: #FFF9EC !important;
+    font-family: 'Fredoka', sans-serif !important;
+    color: #2B2D42 !important;
+    overflow-x: hidden;
+  }
+
   .app-layout-container {
     display: flex;
     min-height: 100vh;
@@ -177,7 +212,7 @@ const isLinkActive = (path: string) => {
     flex-direction: column;
     flex-shrink: 0;
     padding: 16px 16px 20px 16px;
-    font-family: 'Fredoka', 'Roboto', sans-serif;
+    font-family: 'Fredoka', sans-serif;
   }
 
   .app-sidebar::-webkit-scrollbar {
@@ -290,6 +325,139 @@ const isLinkActive = (path: string) => {
     min-height: 100vh;
     overflow-x: hidden;
     background: #FFF9EC;
+  }
+
+  /* --- Global Neo-Brutalist Layout Components --- */
+  .metric-tile, .module-tile, .app-card, .stat-card, .card, .dashboard-page section, .activity-feed, .dash-hero {
+    background: #FFFFFF !important;
+    border: 3px solid #2B2D42 !important;
+    box-shadow: 6px 6px 0px #2B2D42 !important;
+    border-radius: 20px !important;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .metric-tile:hover, .module-tile:hover, .stat-card:hover, .card:hover {
+    transform: translate(-4px, -4px) scale(1.01) !important;
+    box-shadow: 10px 10px 0px #2B2D42 !important;
+    border-color: #FF6B6B !important;
+  }
+
+  /* Sketched wobbly border-radii alternators */
+  .metric-tile:nth-child(4n+1), .module-tile:nth-child(4n+1) {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+  }
+  .metric-tile:nth-child(4n+2), .module-tile:nth-child(4n+2) {
+    border-radius: 20px 240px 20px 220px / 220px 20px 240px 20px !important;
+  }
+  .metric-tile:nth-child(4n+3), .module-tile:nth-child(4n+3) {
+    border-radius: 15px 255px 15px 225px / 225px 15px 255px 15px !important;
+  }
+  .metric-tile:nth-child(4n+4), .module-tile:nth-child(4n+4) {
+    border-radius: 240px 20px 220px 20px / 20px 220px 20px 240px !important;
+  }
+
+  /* Sketched outline buttons */
+  button, .btn, .btn-primary, .btn-secondary, .launch-btn, .signature-button, .action-btn {
+    font-family: 'Fredoka', sans-serif !important;
+    font-weight: 700 !important;
+    background: #FFFFFF !important;
+    color: #2B2D42 !important;
+    border: 3px solid #2B2D42 !important;
+    border-radius: 12px !important;
+    box-shadow: 3px 3px 0px #2B2D42 !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 16px !important;
+  }
+
+  button:hover, .btn:hover, .action-btn:hover {
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px #2B2D42 !important;
+    background: #FFD166 !important;
+  }
+
+  button:active, .btn:active, .action-btn:active {
+    transform: translate(1px, 1px) !important;
+    box-shadow: 1px 1px 0px #2B2D42 !important;
+  }
+
+  /* Form controls wobbly style */
+  input[type="text"], input[type="number"], input[type="email"], input[type="date"], select, textarea {
+    border: 3px solid #2B2D42 !important;
+    border-radius: 12px !important;
+    background: #FFFFFF !important;
+    padding: 10px 14px !important;
+    font-family: 'Fredoka', sans-serif !important;
+    font-weight: 600 !important;
+    color: #2B2D42 !important;
+    box-shadow: 3px 3px 0px #2B2D42 !important;
+    outline: none !important;
+    transition: all 0.15s ease !important;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: #FF6B6B !important;
+    box-shadow: 5px 5px 0px #2B2D42 !important;
+  }
+
+  /* Neo brutalist tables */
+  table {
+    border: 3px solid #2B2D42 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    box-shadow: 6px 6px 0px #2B2D42 !important;
+    background: #FFFFFF !important;
+    width: 100% !important;
+    margin-bottom: 24px !important;
+  }
+
+  th {
+    background: #FFEED2 !important;
+    border-bottom: 3px solid #2B2D42 !important;
+    font-weight: 700 !important;
+    color: #2B2D42 !important;
+    padding: 12px !important;
+  }
+
+  td {
+    border-bottom: 2px solid #2B2D42 !important;
+    border-right: 2px solid #2B2D42 !important;
+    padding: 12px !important;
+    color: #2B2D42 !important;
+    background: #FFFFFF !important;
+  }
+
+  td:last-child {
+    border-right: none !important;
+  }
+
+  tr:last-child td {
+    border-bottom: none !important;
+  }
+
+  /* Activity row wobbly stickers */
+  .activity-item {
+    border: 3px solid #2B2D42 !important;
+    border-radius: 12px !important;
+    background: #FFFFFF !important;
+    margin-bottom: 12px !important;
+    box-shadow: 3px 3px 0px #2B2D42 !important;
+    transition: all 0.15s ease !important;
+    display: flex !important;
+    padding: 12px !important;
+  }
+
+  .activity-item:hover {
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 5px 5px 0px #2B2D42 !important;
+    border-color: #FF6B6B !important;
   }
 
   /* Responsive styling */

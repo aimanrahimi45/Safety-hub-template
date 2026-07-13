@@ -566,7 +566,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           injury_type: boxId, // mapped to box ID
           treatment_given: checklistJson, // Mapped to serialized checklist JSON!
           referred_to_hospital: instantRestock, // mapped to instant restock flag
-          hospital_name: `Company: ${company} | Dept: ${dept} | Section: ${section} | Position: ${officerPos}`,
+          hospital_name: instantRestock ? 'Refill Dispatch' : null,
           signature_url: signatureUrl,
           signature_uploaded_at: signatureUploadedAt,
         };

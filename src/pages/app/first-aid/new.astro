@@ -212,6 +212,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const deductSkip = document.getElementById('fa-deduct-skip') as HTMLButtonElement;
   const deductGo = document.getElementById('fa-deduct-go') as HTMLButtonElement;
 
+  let activeTenantId: string | null = null;
   let savedLogId: string | null = null;
   let authUserId: string | null = null;
   let supabase: ReturnType<typeof getSupabase> | null = null;
@@ -334,6 +335,20 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         return;
       }
       authUserId = userData.user.id;
+
+      // Query active tenant
+      const { data: memberData, error: memberErr } = await supabase
+        .from('tenant_members')
+        .select('tenant_id')
+        .eq('user_id', authUserId)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (memberErr || !memberData || memberData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        return;
+      }
+      activeTenantId = memberData[0].tenant_id;
 
       // Load items from central inventory to populate the checklist
       try {
@@ -513,7 +528,13 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         });
 
         // 3. Insert Inspection Log Payload
-        const insertPayload: Omit<FirstAidLog, 'id' | 'tenant_id' | 'reported_by' | 'created_at' | 'updated_at' | 'deducted_from_inventory' | 'status'> = {
+        if (!activeTenantId || !authUserId) {
+          throw new Error('Active session could not be resolved. Please reload the page.');
+        }
+
+        const insertPayload = {
+          tenant_id: activeTenantId,
+          reported_by: authUserId,
           incident_date: inspectDate,
           incident_time: '12:00:00', // Default placeholder time
           location,

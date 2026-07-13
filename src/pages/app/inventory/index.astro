@@ -246,6 +246,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const adjustCancel = document.getElementById('inv-adjust-cancel') as HTMLButtonElement;
   const adjustSave = document.getElementById('inv-adjust-save') as HTMLButtonElement;
 
+  let activeTenantId: string | null = null;
+  let activeUserRole: string | null = null;
   let allRows: InventoryRow[] = [];
   let activeRow: InventoryRow | null = null;
   let authUserId: string | null = null;
@@ -412,12 +414,28 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     supabase = getSupabase();
 
     (async () => {
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      const { data: userData, error: userErr } = await supabase!.auth.getUser();
       if (userErr || !userData.user) {
         window.location.replace('/login');
         return;
       }
       authUserId = userData.user.id;
+
+      // Query active tenant and role
+      const { data: memberData, error: memberErr } = await supabase!
+        .from('tenant_members')
+        .select('tenant_id, role')
+        .eq('user_id', authUserId)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (memberErr || !memberData || memberData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        return;
+      }
+      activeTenantId = memberData[0].tenant_id;
+      activeUserRole = memberData[0].role;
+
       await load();
     })().catch(() => {
       showError('Failed to initialise inventory page.');
@@ -469,12 +487,20 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     });
 
     seedBtn.addEventListener('click', () => {
+      if (!activeTenantId) {
+        showError('Active tenant session not found. Please reload the page.');
+        return;
+      }
+      if (activeUserRole !== 'supervisor' && activeUserRole !== 'admin') {
+        showError('Forbidden: You must be an Admin or Supervisor to seed default items.');
+        return;
+      }
       seedBtn.disabled = true;
       seedBtn.textContent = 'Seeding…';
       (async () => {
         try {
-          // RLS auto-fills tenant_id on INSERT; we just pass the row data.
           const rows = DEFAULT_FIRST_AID_ITEMS.map((it) => ({
+            tenant_id: activeTenantId,
             item_code: it.item_code,
             item_name: it.item_name,
             unit: it.unit,
@@ -549,9 +575,16 @@ import AppLayout from '../../../layouts/AppLayout.astro';
               .eq('id', id);
             if (error) throw error;
           } else {
+            if (!activeTenantId) {
+              throw new Error('Active tenant session not found. Please reload the page.');
+            }
+            if (activeUserRole !== 'supervisor' && activeUserRole !== 'admin') {
+              throw new Error('Forbidden: You must be an Admin or Supervisor to add items.');
+            }
             const { error } = await supabase!
               .from('first_aid_inventory')
               .insert({
+                tenant_id: activeTenantId,
                 item_code: itemCode,
                 item_name: itemName,
                 unit,

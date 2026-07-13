@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Sign in - AmerisPro</title><link rel="icon" type="image/png" href="/amerispro_128x128.png"><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/callback.BBEiwP6j.css">
+<style>.auth-page[data-astro-cid-sgpqyurt]{min-height:calc(100vh - 80px);display:flex;align-items:center;justify-content:center;padding:120px 32px 64px;background:var(--color-bg-grey, #F4F4F4)}.auth-card[data-astro-cid-sgpqyurt]{background:var(--color-bg, #FFFFFF);border:1px solid var(--color-border, #E0E0E0);padding:48px 40px;max-width:440px;width:100%;text-align:center}.auth-card[data-astro-cid-sgpqyurt] h1[data-astro-cid-sgpqyurt]{font-size:1.6rem;font-weight:900;margin-bottom:8px}.auth-subtitle[data-astro-cid-sgpqyurt]{color:var(--color-text-muted, #6A6A69);margin-bottom:32px;font-size:.95rem}.auth-warning[data-astro-cid-sgpqyurt],.auth-error[data-astro-cid-sgpqyurt]{text-align:left;padding:12px 14px;margin-bottom:20px;font-size:.85rem;line-height:1.5}.auth-warning[data-astro-cid-sgpqyurt]{background:#fff7e6;border:1px solid #E58E1A;color:#6a4a0f}.auth-warning[data-astro-cid-sgpqyurt] code[data-astro-cid-sgpqyurt]{background:#0000000f;padding:1px 4px;font-size:.8rem}.auth-error[data-astro-cid-sgpqyurt]{background:#fdecec;border:1px solid #C0392B;color:#8b1a1a}.google-btn[data-astro-cid-sgpqyurt]{display:inline-flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 24px;background:var(--color-bg, #FFFFFF);color:var(--color-text, #1E1E1D);border:1px solid var(--color-border, #E0E0E0);font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;transition:border-color .15s,box-shadow .15s}.google-btn[data-astro-cid-sgpqyurt]:hover:not(:disabled){border-color:var(--color-primary, #E58E1A);box-shadow:0 2px 6px #0000000f}.google-btn[data-astro-cid-sgpqyurt]:focus-visible{outline:2px solid var(--color-primary, #E58E1A);outline-offset:2px}.google-btn[data-astro-cid-sgpqyurt]:disabled{opacity:.6;cursor:not-allowed}.google-btn-icon[data-astro-cid-sgpqyurt]{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--color-primary, #E58E1A);color:#fff;font-weight:900;font-size:.85rem}.auth-foot[data-astro-cid-sgpqyurt]{margin-top:24px;font-size:.78rem;color:var(--color-text-muted, #6A6A69)}.auth-foot[data-astro-cid-sgpqyurt] a[data-astro-cid-sgpqyurt]{color:var(--color-primary, #E58E1A);text-decoration:underline}
+</style><script type="module">const o=document.getElementById("auth-setup-warning"),e=document.getElementById("auth-error"),t=document.getElementById("google-signin-btn"),a=new URLSearchParams(window.location.search);a.get("next");const n=a.get("error");n&&(e.hidden=!1,e.textContent=decodeURIComponent(n));o.hidden=!1,t.disabled=!0,t.textContent="Sign in unavailable — setup required";
+</script></head> <body>  <!-- Header Navigation --><header class="site-header"> <nav class="main-nav"> <div class="container"> <a href="/" class="header-logo"> <img src="/amerispro.png" alt="AmerisPro Logo"> <span>AmerisPro</span> </a> <ul class="icon-nav"> <li> <a href="#features" class="icon-nav-item"> <span class="icon-nav-icon">⚙️</span> <span class="icon-nav-label">Features</span> </a> </li> <li> <a href="#modules" class="icon-nav-item"> <span class="icon-nav-icon">📦</span> <span class="icon-nav-label">Modules</span> </a> </li> <li> <a href="#contact" class="icon-nav-item"> <span class="icon-nav-icon">✉️</span> <span class="icon-nav-label">Contact</span> </a> </li> <li> <a href="app/" class="icon-nav-item"> <span class="icon-nav-icon"></span> <span class="icon-nav-label">Launch Console</span> </a> </li> </ul> </div> </nav> </header> <main class="auth-page" data-astro-cid-sgpqyurt> <div class="container" data-astro-cid-sgpqyurt> <div class="auth-card" data-astro-cid-sgpqyurt> <h1 data-astro-cid-sgpqyurt>Sign in to AmerisPro</h1> <p class="auth-subtitle" data-astro-cid-sgpqyurt>
+Use your Google account to access your safety compliance workspace.
+</p> <div id="auth-setup-warning" class="auth-warning" hidden data-astro-cid-sgpqyurt> <strong data-astro-cid-sgpqyurt>Setup required.</strong> <span data-astro-cid-sgpqyurt>
+Supabase environment variables are not configured. Copy
+<code data-astro-cid-sgpqyurt>.env.example</code> to <code data-astro-cid-sgpqyurt>.env</code> and fill in
+            your <code data-astro-cid-sgpqyurt>PUBLIC_SUPABASE_URL</code> and
+<code data-astro-cid-sgpqyurt>PUBLIC_SUPABASE_ANON_KEY</code>, then restart the dev server.
+</span> </div> <div id="auth-error" class="auth-error" hidden data-astro-cid-sgpqyurt></div> <button type="button" id="google-signin-btn" class="google-btn" data-astro-cid-sgpqyurt> <span class="google-btn-icon" aria-hidden="true" data-astro-cid-sgpqyurt>G</span> <span data-astro-cid-sgpqyurt>Sign in with Google</span> </button> <p class="auth-foot" data-astro-cid-sgpqyurt>
+By signing in, you agree to our
+<a href="/terms" data-astro-cid-sgpqyurt>Terms of Service</a> and
+<a href="/privacy" data-astro-cid-sgpqyurt>Privacy Policy</a>.
+</p> </div> </div> </main> <!-- Footer --><footer> <div class="footer-grid"> <div class="footer-col"> <h4>Modules</h4> <a href="app/#inspection">Inspections</a> <a href="compliance.html">Legal Register</a> <a href="app/#incident">Incident Report</a> <a href="app/">First Aid & PPE</a> <a href="app/#contractor">Contractors</a> <a href="app/#staff">Staff Roster</a> </div> <div class="footer-col"> <h4>Resources</h4> <a href="privacy.html">Privacy Policy</a> <a href="terms.html">Terms of Service</a> </div> <div class="footer-col"> <h4>Company</h4> <a href="index.html">Home</a> <a href="index.html#modules">Features</a> <a href="index.html#waiting-list">Early Access</a> </div> </div> <div class="footer-bottom"> <a href="index.html" class="footer-logo"> <img src="amerispro.png" alt="AmerisPro Logo" style="height: 24px; object-fit: contain;"> <span>AmerisPro</span> </a> <p>&copy; 2026 AmerisPro Safety Tech. All rights reserved.</p> </div> </footer>  <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+            // Hero indicator sync (12s cycle, 6s per slide)
+            const indicators = document.querySelectorAll('.indicator');
+            if (indicators.length === 2) {
+                let current = 0;
+                setInterval(() => {
+                    indicators[current].classList.remove('active');
+                    current = (current + 1) % 2;
+                    indicators[current].classList.add('active');
+                }, 6000);
+            }
+
+            // Module tab switching
+            const listItems = document.querySelectorAll('.module-list-item');
+            const tabs = document.querySelectorAll('.module-tab');
+            listItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const tab = item.dataset.tab;
+                    listItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    tabs.forEach(t => t.classList.remove('active'));
+                    const target = document.querySelector('.module-tab[data-tab="' + tab + '"]');
+                    if (target) target.classList.add('active');
+                });
+            });
+        });
+    </script> </body> </html>   

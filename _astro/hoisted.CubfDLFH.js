@@ -1,0 +1,1 @@
+import"./index.BuHnIpvD.js";const e=document.getElementById("ct-setup-warning");document.getElementById("ct-error");const n=document.getElementById("ct-form"),d=document.getElementById("ct-submit");e.hidden=!1,d.disabled=!0;n.addEventListener("submit",t=>{t.preventDefault()});

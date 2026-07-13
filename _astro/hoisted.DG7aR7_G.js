@@ -1,0 +1,1 @@
+import"./index.BuHnIpvD.js";document.getElementById("onboarding-form");const e=document.getElementById("onboarding-submit");document.getElementById("ob-error");const t=document.getElementById("ob-setup-warning");t.hidden=!1,e.disabled=!0,e.textContent="Setup required";

@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Signing you in - AmerisPro</title><link rel="icon" type="image/png" href="/amerispro_128x128.png"><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/callback.BBEiwP6j.css">
+<style>.callback-page[data-astro-cid-qbporkgn]{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--color-bg-grey, #F4F4F4);padding:80px 32px}.callback-card[data-astro-cid-qbporkgn]{background:var(--color-bg, #FFFFFF);border:1px solid var(--color-border, #E0E0E0);padding:48px 40px;max-width:440px;width:100%;text-align:center}.callback-card[data-astro-cid-qbporkgn] h1[data-astro-cid-qbporkgn]{font-size:1.4rem;font-weight:900;margin-bottom:8px}.callback-card[data-astro-cid-qbporkgn] p[data-astro-cid-qbporkgn]{color:var(--color-text-muted, #6A6A69)}
+</style><script type="module">document.getElementById("callback-status");document.getElementById("callback-debug");function o(t,e){const n=`/login?error=${encodeURIComponent(e)}`;window.location.replace(n)}o("/login","Supabase is not configured.");
+</script></head> <body>  <main class="callback-page" data-astro-cid-qbporkgn> <div class="container" data-astro-cid-qbporkgn> <div class="callback-card" data-astro-cid-qbporkgn> <h1 data-astro-cid-qbporkgn>Signing you in…</h1> <p id="callback-status" data-astro-cid-qbporkgn>Completing Google sign-in.</p> <pre id="callback-debug" style="text-align:left; font-size:11px; background:#0f172a; color:#a7f3d0; padding:12px; margin-top:16px; max-height:260px; overflow:auto; border-radius:6px; white-space:pre-wrap; word-break:break-all;" data-astro-cid-qbporkgn></pre> </div> </div> </main>  <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+            // Hero indicator sync (12s cycle, 6s per slide)
+            const indicators = document.querySelectorAll('.indicator');
+            if (indicators.length === 2) {
+                let current = 0;
+                setInterval(() => {
+                    indicators[current].classList.remove('active');
+                    current = (current + 1) % 2;
+                    indicators[current].classList.add('active');
+                }, 6000);
+            }
+
+            // Module tab switching
+            const listItems = document.querySelectorAll('.module-list-item');
+            const tabs = document.querySelectorAll('.module-tab');
+            listItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const tab = item.dataset.tab;
+                    listItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    tabs.forEach(t => t.classList.remove('active'));
+                    const target = document.querySelector('.module-tab[data-tab="' + tab + '"]');
+                    if (target) target.classList.add('active');
+                });
+            });
+        });
+    </script> </body> </html>   

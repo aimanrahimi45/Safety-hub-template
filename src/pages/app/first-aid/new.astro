@@ -1,7 +1,7 @@
 ---
 import AppLayout from '../../../layouts/AppLayout.astro';
 ---
-<AppLayout title="New First Aid Record - AmerisPro">
+<AppLayout title="First Aid Box Inspection - AmerisPro">
   <main class="fa-new-page">
     <div class="container">
       <div id="fa-setup-warning" class="fa-warning" hidden>
@@ -17,128 +17,138 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
       <header class="fa-header">
         <div>
-          <h1>New First Aid Record</h1>
-          <p class="fa-sub">Log an incident and any first aid items used.</p>
+          <h1>First Aid Box Inspection</h1>
+          <p class="fa-sub">Monthly box compliance checklist and inventory restock log.</p>
         </div>
         <a href="/app/first-aid" class="fa-link-btn">← Back to list</a>
       </header>
 
       <form id="fa-form" novalidate>
-        <!-- Section A: Incident details -->
+        <!-- Section A: Metadata -->
         <fieldset class="fa-fieldset">
-          <legend>A. Incident details</legend>
+          <legend>A. Inspection Metadata</legend>
 
           <div class="fa-row-2">
             <label class="field">
-              <span class="field-label">Date of incident <em>*</em></span>
-              <input type="date" name="incident_date" id="fa-incident-date" required />
+              <span class="field-label">Date of Inspection <em>*</em></span>
+              <input type="date" name="inspect_date" id="fa-inspect-date" required />
             </label>
             <label class="field">
-              <span class="field-label">Time of incident <em>*</em></span>
-              <input type="time" name="incident_time" id="fa-incident-time" required />
+              <span class="field-label">Company <em>*</em></span>
+              <input type="text" name="company" id="fa-company" required placeholder="e.g. AmerisPro Safety" />
+            </label>
+          </div>
+
+          <div class="fa-row-3">
+            <label class="field">
+              <span class="field-label">Department <em>*</em></span>
+              <input type="text" name="department" id="fa-dept" required placeholder="e.g. Production" />
+            </label>
+            <label class="field">
+              <span class="field-label">Section <em>*</em></span>
+              <input type="text" name="section" id="fa-section" required placeholder="e.g. Main Plant" />
+            </label>
+            <label class="field">
+              <span class="field-label">First Aid Box ID <em>*</em></span>
+              <input type="text" name="box_id" id="fa-box-id" required placeholder="e.g. Box A" />
             </label>
           </div>
 
           <label class="field">
             <span class="field-label">Location <em>*</em></span>
-            <input
-              type="text"
-              name="location"
-              id="fa-location"
-              required
-              placeholder="e.g. Workshop A, Building 2, Level 3"
-            />
+            <input type="text" name="location" id="fa-location" required placeholder="e.g. Office / Warehouse" />
+          </label>
+        </fieldset>
+
+        <!-- Section B: Cleanliness -->
+        <fieldset class="fa-fieldset">
+          <legend>B. Box Condition &amp; Cleanliness</legend>
+
+          <div class="fa-row-2">
+            <label class="field">
+              <span class="field-label">Box Cleanliness &amp; Condition <em>*</em></span>
+              <select name="cleanliness" id="fa-cleanliness" required>
+                <option value="Good" selected>Good</option>
+                <option value="Fair">Fair</option>
+                <option value="Poor">Poor</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Cleanliness Remarks</span>
+              <input type="text" name="cleanliness_remarks" id="fa-cleanliness-remarks" placeholder="Optional notes on cleanliness..." />
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Section C: Checklist Items -->
+        <fieldset class="fa-fieldset">
+          <legend>C. Checklist Items</legend>
+          <div class="fa-autofill-bar">
+            <span>ISO 45001 standard quantities check.</span>
+            <button type="button" id="fa-quickfill-btn" class="fa-secondary-btn">⚡ Autofill Standard Quantities</button>
+          </div>
+
+          <table class="fa-items-table" aria-label="First aid box items checked">
+            <thead>
+              <tr>
+                <th scope="col">Item Description</th>
+                <th scope="col" style="width: 100px;">Required</th>
+                <th scope="col" class="fa-qty-col" style="width: 120px;">Available Qty</th>
+                <th scope="col" style="width: 130px;">Expiry Date</th>
+                <th scope="col">Remarks / Notes</th>
+              </tr>
+            </thead>
+            <tbody id="fa-checklist-tbody">
+              <tr>
+                <td colspan="5" style="text-align:center; padding: 20px; color: var(--color-text-muted);">
+                  Loading checklist items...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </fieldset>
+
+        <!-- Section D: Sign-off -->
+        <fieldset class="fa-fieldset">
+          <legend>D. Inspection Findings &amp; Digital Sign-off</legend>
+
+          <label class="field">
+            <span class="field-label">Inspection Findings / Corrective Action (If any)</span>
+            <textarea name="findings" id="fa-findings" rows="3" placeholder="Describe any corrective actions needed or taken..."></textarea>
           </label>
 
           <div class="fa-row-2">
             <label class="field">
-              <span class="field-label">Injured person name <em>*</em></span>
-              <input type="text" name="injured_person_name" id="fa-injured-name" required />
+              <span class="field-label">Inspected By (Name) <em>*</em></span>
+              <input type="text" name="officer_name" id="fa-officer-name" required placeholder="e.g. Safety Inspector" />
             </label>
             <label class="field">
-              <span class="field-label">Injured person employee ID</span>
-              <input type="text" name="injured_person_id" id="fa-injured-id" />
+              <span class="field-label">Position <em>*</em></span>
+              <input type="text" name="officer_position" id="fa-officer-position" required value="Safety Officer" />
             </label>
           </div>
 
-          <label class="field">
-            <span class="field-label">Injury type <em>*</em></span>
-            <input
-              type="text"
-              name="injury_type"
-              id="fa-injury-type"
-              required
-              placeholder="e.g. Cut on left hand, Chemical burn"
-            />
-          </label>
-
-          <label class="field">
-            <span class="field-label">Treatment given <em>*</em></span>
-            <textarea
-              name="treatment_given"
-              id="fa-treatment"
-              rows="4"
-              required
-              placeholder="Describe treatment provided"
-            ></textarea>
-          </label>
-
-          <label class="field-check">
-            <input type="checkbox" name="referred_to_hospital" id="fa-referred" />
-            <span>Referred to hospital</span>
-          </label>
-
-          <label class="field" id="fa-hospital-wrap" hidden>
-            <span class="field-label">Hospital name <em>*</em></span>
-            <input type="text" name="hospital_name" id="fa-hospital-name" placeholder="e.g. Hospital Kuala Lumpur" />
-          </label>
-        </fieldset>
-
-        <!-- Section B: Items used -->
-        <fieldset class="fa-fieldset">
-          <legend>B. Items used</legend>
-          <p class="fa-hint" id="fa-items-hint">Add any first aid items used during treatment.</p>
-          <table class="fa-items-table" aria-label="Items used">
-            <thead>
-              <tr>
-                <th scope="col">Item name</th>
-                <th scope="col" class="fa-qty-col">Qty</th>
-                <th scope="col">Notes</th>
-                <th scope="col" class="fa-rm-col"><span class="sr-only">Remove</span></th>
-              </tr>
-            </thead>
-            <tbody id="fa-items-tbody"></tbody>
-          </table>
-          <button type="button" id="fa-add-item" class="fa-secondary-btn">+ Add item</button>
-        </fieldset>
-
-        <!-- Section C: Signature (Premium) -->
-        <fieldset class="fa-fieldset" id="fa-sig-fieldset" hidden>
-          <legend>C. Signature</legend>
-          <div id="fa-sig-free">
-            <p>Signature capture is a Premium feature. <a href="/app/settings">Learn more</a></p>
-          </div>
-          <div id="fa-sig-premium" hidden>
-            <p class="fa-hint">Capture the reporter's signature (Premium). The image is resized client-side and uploaded to Supabase Storage.</p>
+          <div class="fa-field" id="fa-sig-pad-fieldset">
+            <span class="field-label">Digital Verification Sign-off <em>*</em></span>
+            <p class="fa-hint">ISO 45001 Compliance requires a safety inspection signature before submission.</p>
             <div class="fa-sig-controls">
-              <button type="button" id="fa-sig-capture" class="fa-secondary-btn">Capture signature</button>
-              <button type="button" id="fa-sig-clear" class="fa-secondary-btn" hidden>Clear</button>
+              <button type="button" id="fa-sig-clear" class="fa-secondary-btn">Clear Signature</button>
             </div>
-            <div id="fa-sig-pad-wrap" hidden>
-              <canvas id="fa-sig-pad" class="fa-sig-pad" width="600" height="160" aria-label="Signature pad"></canvas>
-              <button type="button" id="fa-sig-save" class="fa-secondary-btn">Save signature</button>
+            <div class="fa-sig-pad-wrap">
+              <canvas id="fa-sig-pad" class="fa-sig-pad" width="600" height="180" aria-label="Signature pad"></canvas>
             </div>
             <input type="hidden" name="signature_url" id="fa-sig-data" />
-            <div id="fa-sig-preview-wrap" hidden>
-              <p class="fa-hint">Saved signature:</p>
-              <img id="fa-sig-preview" class="fa-sig-preview" alt="Signature preview" />
-            </div>
           </div>
+
+          <label class="field-check fa-restock-check">
+            <input type="checkbox" name="instant_restock" id="fa-instant-restock" />
+            <span><strong>Instant Restock:</strong> Deduct shortages from central inventory automatically on submit</span>
+          </label>
         </fieldset>
 
         <div class="fa-form-actions">
           <a href="/app/first-aid" class="fa-secondary-btn">Cancel</a>
-          <button type="submit" id="fa-submit" class="fa-primary-btn">Save record</button>
+          <button type="submit" id="fa-submit" class="fa-primary-btn">Submit Inspection Log</button>
         </div>
       </form>
     </div>
@@ -148,13 +158,13 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   <div id="fa-deduct-modal" class="fa-modal" hidden role="dialog" aria-modal="true" aria-labelledby="fa-deduct-title">
     <div class="fa-modal-card">
       <header class="fa-modal-head">
-        <h2 id="fa-deduct-title">Deduct from inventory?</h2>
+        <h2 id="fa-deduct-title">Deduct shortages from inventory?</h2>
         <button type="button" class="fa-modal-close" id="fa-deduct-close" aria-label="Close">×</button>
       </header>
       <div class="fa-modal-body">
-        <p>You used:</p>
+        <p>Shortages dispatched for refill:</p>
         <ul id="fa-deduct-list" class="fa-deduct-list"></ul>
-        <p>Deduct these quantities from your inventory now?</p>
+        <p>Deduct these quantities from your central cabinet inventory now?</p>
       </div>
       <div id="fa-deduct-error" class="fa-error" hidden></div>
       <div class="fa-modal-actions">
@@ -175,27 +185,25 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const errorEl = document.getElementById('fa-error') as HTMLElement;
   const formEl = document.getElementById('fa-form') as HTMLFormElement;
   const submitBtn = document.getElementById('fa-submit') as HTMLButtonElement;
-  const dateEl = document.getElementById('fa-incident-date') as HTMLInputElement;
-  const timeEl = document.getElementById('fa-incident-time') as HTMLInputElement;
-  const referredEl = document.getElementById('fa-referred') as HTMLInputElement;
-  const hospitalWrap = document.getElementById('fa-hospital-wrap') as HTMLElement;
-  const hospitalNameEl = document.getElementById('fa-hospital-name') as HTMLInputElement;
-  const itemsTbody = document.getElementById('fa-items-tbody') as HTMLElement;
-  const itemsHint = document.getElementById('fa-items-hint') as HTMLElement;
-  const addItemBtn = document.getElementById('fa-add-item') as HTMLButtonElement;
 
-  const sigFieldset = document.getElementById('fa-sig-fieldset') as HTMLElement;
-  const sigFree = document.getElementById('fa-sig-free') as HTMLElement;
-  const sigPremium = document.getElementById('fa-sig-premium') as HTMLElement;
-  const sigCapture = document.getElementById('fa-sig-capture') as HTMLButtonElement;
+  const dateEl = document.getElementById('fa-inspect-date') as HTMLInputElement;
+  const companyEl = document.getElementById('fa-company') as HTMLInputElement;
+  const deptEl = document.getElementById('fa-dept') as HTMLInputElement;
+  const sectionEl = document.getElementById('fa-section') as HTMLInputElement;
+  const boxIdEl = document.getElementById('fa-box-id') as HTMLInputElement;
+  const locationEl = document.getElementById('fa-location') as HTMLInputElement;
+  const cleanlinessEl = document.getElementById('fa-cleanliness') as HTMLSelectElement;
+  const cleanlinessRemarksEl = document.getElementById('fa-cleanliness-remarks') as HTMLInputElement;
+  const findingsEl = document.getElementById('fa-findings') as HTMLTextAreaElement;
+  const officerNameEl = document.getElementById('fa-officer-name') as HTMLInputElement;
+  const officerPosEl = document.getElementById('fa-officer-position') as HTMLInputElement;
+  const restockCheckEl = document.getElementById('fa-instant-restock') as HTMLInputElement;
+  const quickfillBtn = document.getElementById('fa-quickfill-btn') as HTMLButtonElement;
+
+  const checklistTbody = document.getElementById('fa-checklist-tbody') as HTMLElement;
   const sigClear = document.getElementById('fa-sig-clear') as HTMLButtonElement;
-  const sigPadWrap = document.getElementById('fa-sig-pad-wrap') as HTMLElement;
   const sigPad = document.getElementById('fa-sig-pad') as HTMLCanvasElement;
-  const sigSave = document.getElementById('fa-sig-save') as HTMLButtonElement;
   const sigData = document.getElementById('fa-sig-data') as HTMLInputElement;
-  const sigPreviewWrap = document.getElementById('fa-sig-preview-wrap') as HTMLElement;
-  const sigPreview = document.getElementById('fa-sig-preview') as HTMLImageElement;
-  let sigLocalDataUrl: string | null = null;
 
   const deductModal = document.getElementById('fa-deduct-modal') as HTMLElement;
   const deductList = document.getElementById('fa-deduct-list') as HTMLElement;
@@ -203,6 +211,37 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const deductClose = document.getElementById('fa-deduct-close') as HTMLButtonElement;
   const deductSkip = document.getElementById('fa-deduct-skip') as HTMLButtonElement;
   const deductGo = document.getElementById('fa-deduct-go') as HTMLButtonElement;
+
+  let savedLogId: string | null = null;
+  let authUserId: string | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  let checklistItems: Array<{ id: string | number; name: string; req: string | number; unit: string; exp?: string }> = [];
+
+  const DEFAULT_CHECKLIST_ITEMS = [
+    { id: 1, name: "Triangular Bandage 100cm", req: 5, unit: "pcs" },
+    { id: 2, name: "Eye Dressing No 16", req: 3, unit: "pkt" },
+    { id: 3, name: "Sterile Gamgee Pad 25cm", req: 3, unit: "pkt" },
+    { id: 4, name: "Sterile Gauze Pad 7.5cm", req: 6, unit: "pkt" },
+    { id: 5, name: "Sterile Gauze Pad 10cm", req: 6, unit: "pkt" },
+    { id: 6, name: "Elastic Bandage", req: 3, unit: "pkt" },
+    { id: 7, name: "W.O.W Bandage 2.5cm", req: 8, unit: "pcs" },
+    { id: 8, name: "W.O.W Bandage 5.0cm", req: 8, unit: "pcs" },
+    { id: 9, name: "W.O.W Bandage 7.5cm", req: 8, unit: "pcs" },
+    { id: 10, name: "Instant Ice Pack", req: 6, unit: "pkt" },
+    { id: 11, name: "Sterile Non-Adherent Pad", req: 6, unit: "pkt" },
+    { id: 12, name: "Pair of Glove", req: 6, unit: "pkt" },
+    { id: 13, name: "Scissors", req: 1, unit: "pcs" },
+    { id: 14, name: "Adhesive Tape", req: 1, unit: "pcs" },
+    { id: 15, name: "Bactigras", req: 2, unit: "pcs" },
+    { id: 16, name: "Yellow Antiseptic Liquid", req: 1, unit: "pcs" },
+    { id: 17, name: "Cotton Bud 100pcs", req: 1, unit: "pkt" },
+    { id: 18, name: "CPR Face Shield", req: 3, unit: "pcs" },
+    { id: 19, name: "Adhesive Plaster", req: 60, unit: "pcs" },
+    { id: 20, name: "Safety Pin", req: 36, unit: "pcs" },
+    { id: 21, name: "Thermometer", req: 1, unit: "pcs" },
+    { id: 22, name: "Waste Bag", req: 3, unit: "pcs" },
+    { id: 23, name: "First Aid Manual", req: 1, unit: "pcs" }
+  ];
 
   function showError(msg: string): void {
     errorEl.hidden = false;
@@ -220,143 +259,38 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
-  function nowTime(): string {
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  }
 
-  // Reserved for future sanitisation needs.
-
-  function renderItems(): void {
-    const rows = itemsTbody.querySelectorAll<HTMLTableRowElement>('tr');
-    rows.forEach((row) => {
-      const rm = row.querySelector<HTMLButtonElement>('button.fa-rm-item');
-      if (rm) rm.disabled = rows.length === 1;
+  // --- Render Dynamic Checklist ---
+  function renderChecklist(): void {
+    checklistTbody.innerHTML = '';
+    checklistItems.forEach((item) => {
+      const tr = document.createElement('tr');
+      tr.className = 'item-row';
+      tr.innerHTML = `
+        <td><strong class="item-name">${item.name}</strong></td>
+        <td><span class="fa-badge-no" style="padding: 2px 6px; font-weight: 700;">${item.req} ${item.unit}</span></td>
+        <td class="fa-qty-col">
+          <input type="number" class="fa-item-avail" data-id="${item.id}" data-req="${item.req}" min="0" value="${item.req}" required style="width: 80px; padding: 6px;" />
+        </td>
+        <td>
+          <input type="text" class="fa-item-exp" data-id="${item.id}" placeholder="MM/YY" value="${item.exp || ''}" style="width: 100px; padding: 6px;" />
+        </td>
+        <td>
+          <input type="text" class="fa-item-remarks" data-id="${item.id}" placeholder="Optional notes" style="width: 100%; padding: 6px;" />
+        </td>
+      `;
+      checklistTbody.appendChild(tr);
     });
   }
 
-  function addItemRow(): void {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" name="item_description" class="fa-item-name" list="fa-inv-datalist" required /></td>
-      <td class="fa-qty-col"><input type="number" name="quantity" class="fa-item-qty" min="1" value="1" required /></td>
-      <td><input type="text" name="notes" class="fa-item-notes" placeholder="Optional" /></td>
-      <td class="fa-rm-col"><button type="button" class="fa-rm-item" aria-label="Remove item">×</button></td>
-    `;
-    itemsTbody.appendChild(tr);
-    renderItems();
-  }
-
-  function readItems(): Array<{ item_description: string; quantity: number; notes: string | null }> {
-    const out: Array<{ item_description: string; quantity: number; notes: string | null }> = [];
-    itemsTbody.querySelectorAll<HTMLTableRowElement>('tr').forEach((row) => {
-      const name = (row.querySelector<HTMLInputElement>('input.fa-item-name')?.value ?? '').trim();
-      const qty = Number(row.querySelector<HTMLInputElement>('input.fa-item-qty')?.value ?? '0');
-      const notes = (row.querySelector<HTMLInputElement>('input.fa-item-notes')?.value ?? '').trim();
-      if (!name) return;
-      const safeQty = Number.isFinite(qty) && qty > 0 ? Math.floor(qty) : 1;
-      out.push({ item_description: name, quantity: safeQty, notes: notes || null });
-    });
-    return out;
-  }
-
-  let savedLogId: string | null = null;
-  let authUserId: string | null = null;
-  let supabase: ReturnType<typeof getSupabase> | null = null;
-
-  if (!isSupabaseConfigured()) {
-    setupWarning.hidden = false;
-    submitBtn.disabled = true;
-  } else {
-    supabase = getSupabase();
-
-    dateEl.value = today();
-    timeEl.value = nowTime();
-    addItemRow();
-
-    // Setup initial state
-    (async () => {
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userData.user) {
-        window.location.replace('/login');
-        return;
-      }
-      authUserId = userData.user.id;
-
-      // Build inventory datalist for item-name autocomplete.
-      const datalist = document.createElement('datalist');
-      datalist.id = 'fa-inv-datalist';
-      try {
-        const { data: inv, error: invErr } = await supabase
-          .from('first_aid_inventory')
-          .select('item_name')
-          .eq('is_active', true)
-          .order('item_name');
-        if (!invErr && inv) {
-          for (const r of inv as Array<{ item_name: string }>) {
-            const opt = document.createElement('option');
-            opt.value = r.item_name;
-            datalist.appendChild(opt);
-          }
-        } else {
-          itemsHint.textContent = 'Your inventory is empty. Add items in Inventory Management to use auto-lookup, or type free-text item names here.';
-        }
-      } catch {
-        itemsHint.textContent = 'Your inventory is empty. Add items in Inventory Management to use auto-lookup, or type free-text item names here.';
-      }
-      document.body.appendChild(datalist);
-
-      // Premium check
-      try {
-        const { data: premium } = await supabase.rpc('is_my_tenant_premium');
-        if (premium === true) {
-          sigFieldset.hidden = false;
-          sigFree.hidden = true;
-          sigPremium.hidden = false;
-        } else {
-          sigFieldset.hidden = false;
-          sigFree.hidden = false;
-          sigPremium.hidden = true;
-        }
-      } catch {
-        sigFieldset.hidden = true;
-      }
-    })().catch(() => {
-      showError('Failed to initialise form.');
-    });
-  }
-
-  // Referred checkbox toggle
-  referredEl.addEventListener('change', () => {
-    if (referredEl.checked) {
-      hospitalWrap.hidden = false;
-      hospitalNameEl.required = true;
-    } else {
-      hospitalWrap.hidden = true;
-      hospitalNameEl.required = false;
-      hospitalNameEl.value = '';
-    }
-  });
-
-  // Items add/remove
-  addItemBtn.addEventListener('click', () => addItemRow());
-  itemsTbody.addEventListener('click', (ev) => {
-    const t = ev.target as HTMLElement;
-    if (t.classList.contains('fa-rm-item')) {
-      const row = t.closest('tr');
-      if (row && itemsTbody.querySelectorAll('tr').length > 1) {
-        row.remove();
-        renderItems();
-      }
-    }
-  });
-
-  // Signature pad (basic)
+  // --- Signature Pad Binding ---
   let drawing = false;
+  let sigDrawn = false;
   function getCtx(): CanvasRenderingContext2D | null { return sigPad.getContext('2d'); }
   function clearCanvas(): void {
     const ctx = getCtx();
     if (ctx) ctx.clearRect(0, 0, sigPad.width, sigPad.height);
+    sigDrawn = false;
   }
   function pos(ev: MouseEvent | TouchEvent): { x: number; y: number } {
     const rect = sigPad.getBoundingClientRect();
@@ -371,36 +305,72 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   function bindPad(): void {
     const ctx = getCtx();
     if (!ctx) return;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1E1E1D';
+    ctx.strokeStyle = '#2B2D42';
 
     sigPad.addEventListener('mousedown', (e) => { drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-    sigPad.addEventListener('mousemove', (e) => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    sigPad.addEventListener('mousemove', (e) => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); sigDrawn = true; });
     sigPad.addEventListener('mouseup', () => { drawing = false; });
     sigPad.addEventListener('mouseleave', () => { drawing = false; });
     sigPad.addEventListener('touchstart', (e) => { e.preventDefault(); drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
-    sigPad.addEventListener('touchmove', (e) => { e.preventDefault(); if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+    sigPad.addEventListener('touchmove', (e) => { e.preventDefault(); if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); sigDrawn = true; }, { passive: false });
     sigPad.addEventListener('touchend', () => { drawing = false; });
   }
-  sigCapture.addEventListener('click', () => {
-    sigPadWrap.hidden = false;
-    sigClear.hidden = false;
-    sigCapture.hidden = true;
-    clearCanvas();
-    setTimeout(bindPad, 50);
+
+  // --- Boot ---
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    submitBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+    dateEl.value = today();
+    bindPad();
+
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      authUserId = userData.user.id;
+
+      // Load items from central inventory to populate the checklist
+      try {
+        const { data: invItems, error: invErr } = await supabase
+          .from('first_aid_inventory')
+          .select('*')
+          .eq('is_active', true)
+          .order('item_name');
+        if (!invErr && invItems && invItems.length > 0) {
+          checklistItems = invItems.map((it) => ({
+            id: it.id,
+            name: it.item_name,
+            req: parseInt(it.required_std, 10) || 1,
+            unit: it.unit || 'pcs'
+          }));
+        } else {
+          checklistItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+        }
+      } catch {
+        checklistItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));
+      }
+      renderChecklist();
+    })().catch(() => {
+      showError('Failed to initialise checklist.');
+    });
+  }
+
+  // Quick fill handler
+  quickfillBtn.addEventListener('click', () => {
+    const inputs = checklistTbody.querySelectorAll<HTMLInputElement>('input.fa-item-avail');
+    inputs.forEach((input) => {
+      const req = input.dataset.req || '0';
+      input.value = req;
+    });
   });
-  sigClear.addEventListener('click', () => {
-    clearCanvas();
-    sigData.value = '';
-    sigPreviewWrap.hidden = true;
-  });
-  sigSave.addEventListener('click', () => {
-    sigLocalDataUrl = sigPad.toDataURL('image/png');
-    sigPreview.src = sigLocalDataUrl;
-    sigPreviewWrap.hidden = false;
-    sigData.value = 'pending-upload';
-  });
+
+  sigClear.addEventListener('click', () => clearCanvas());
 
   function openDeductPrompt(logId: string, items: Array<{ item_description: string; quantity: number }>): void {
     savedLogId = logId;
@@ -428,15 +398,14 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           p_actor_id: authUserId,
         });
         if (error) {
-          // Map common error messages to friendlier text.
           const m = error.message;
           if (/No matching inventory item for:/i.test(m)) {
             const detail = m.replace(/^No matching inventory item for:\s*/i, '').trim();
             const itemName = detail.split(',')[0]?.trim() ?? detail;
-            throw new Error(`Item "${itemName}" not found in your inventory. Add it in Inventory Management, or skip deduction and update inventory manually.`);
+            throw new Error(`Item "${itemName}" not found in central inventory. Add it in Inventory first, or skip and restock manually.`);
           }
           if (/Insufficient stock:/i.test(m)) {
-            throw new Error('Some items have insufficient stock. Please restock before deducting, or adjust quantities.');
+            throw new Error('Insufficient central stock. Please restock your central inventory before executing auto-restock.');
           }
           throw error;
         }
@@ -454,69 +423,111 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     if (!supabase) return;
     clearError();
 
-    const incidentDate = dateEl.value;
-    const incidentTime = timeEl.value;
-    const location = (document.getElementById('fa-location') as HTMLInputElement).value.trim();
-    const injuredName = (document.getElementById('fa-injured-name') as HTMLInputElement).value.trim();
-    const injuredId = ((document.getElementById('fa-injured-id') as HTMLInputElement).value || '').trim() || null;
-    const injuryType = (document.getElementById('fa-injury-type') as HTMLInputElement).value.trim();
-    const treatment = (document.getElementById('fa-treatment') as HTMLTextAreaElement).value.trim();
-    const referred = referredEl.checked;
-    const hospitalName = referred ? hospitalNameEl.value.trim() : null;
+    const inspectDate = dateEl.value;
+    const company = companyEl.value.trim();
+    const dept = deptEl.value.trim();
+    const section = sectionEl.value.trim();
+    const boxId = boxIdEl.value.trim();
+    const location = locationEl.value.trim();
+    const cleanliness = cleanlinessEl.value;
+    const cleanlinessRemarks = cleanlinessRemarksEl.value.trim();
+    const findings = findingsEl.value.trim();
+    const officerName = officerNameEl.value.trim();
+    const officerPos = officerPosEl.value.trim();
+    const instantRestock = restockCheckEl.checked;
 
-    if (!incidentDate || !incidentTime) {
-      showError('Date and time of incident are required.');
+    if (!inspectDate || !company || !dept || !section || !boxId || !location || !officerName || !officerPos) {
+      showError('Please fill in all required fields.');
       return;
     }
-    if (!location || !injuredName || !injuryType || !treatment) {
-      showError('Location, injured person, injury type, and treatment are all required.');
+
+    if (!sigDrawn) {
+      showError('ISO 45001 Compliance requires a safety inspector signature before submission.');
       return;
     }
-    if (referred && !hospitalName) {
-      showError('Hospital name is required when referred.');
-      return;
-    }
-    const items = readItems();
 
     submitBtn.disabled = true;
     const original = submitBtn.textContent;
-    submitBtn.textContent = 'Saving…';
+    submitBtn.textContent = 'Submitting…';
 
     (async () => {
       try {
+        // 1. Upload Signature
         let signatureUrl: string | null = null;
         let signatureUploadedAt: string | null = null;
-        if (sigLocalDataUrl) {
-          const sigBlob = await (await fetch(sigLocalDataUrl)).blob();
-          const resized = await resizeImage(sigBlob, {
-            maxWidth: 200,
-            maxHeight: 100,
-            quality: 0.7,
-            outputType: 'image/png',
-          });
-          const uploaded = await uploadToStorage('signatures', resized.blob, 'sig', 'png');
-          if (uploaded.error) {
-            throw new Error(`Signature upload failed: ${uploaded.error}`);
-          }
-          signatureUrl = uploaded.url;
-          signatureUploadedAt = new Date().toISOString();
+        
+        const sigLocalDataUrl = sigPad.toDataURL('image/png');
+        const sigBlob = await (await fetch(sigLocalDataUrl)).blob();
+        const resized = await resizeImage(sigBlob, {
+          maxWidth: 600,
+          maxHeight: 200,
+          quality: 0.7,
+          outputType: 'image/png',
+        });
+        const uploaded = await uploadToStorage('signatures', resized.blob, 'sig_fa', 'png');
+        if (uploaded.error) {
+          throw new Error(`Signature upload failed: ${uploaded.error}`);
         }
+        signatureUrl = uploaded.url;
+        signatureUploadedAt = new Date().toISOString();
 
-        // NOTE: tenant_id is auto-set by RLS WITH CHECK. Do NOT pass it.
+        // 2. Gather Checklist details and serialize as JSON for treatment_given
+        const itemsList: Array<{ name: string; req: number; avail: number; exp: string; remarks: string }> = [];
+        const shortages: Array<{ item_description: string; quantity: number }> = [];
+
+        const rows = checklistTbody.querySelectorAll<HTMLTableRowElement>('tr.item-row');
+        rows.forEach((row) => {
+          const name = row.querySelector('.item-name')?.textContent || '';
+          const availInput = row.querySelector<HTMLInputElement>('input.fa-item-avail');
+          const expInput = row.querySelector<HTMLInputElement>('input.fa-item-exp');
+          const remarksInput = row.querySelector<HTMLInputElement>('input.fa-item-remarks');
+
+          if (!availInput) return;
+          const req = parseInt(availInput.dataset.req || '0', 10);
+          const avail = parseInt(availInput.value, 10) || 0;
+          const exp = expInput?.value.trim() || '—';
+          const remarks = remarksInput?.value.trim() || '—';
+
+          itemsList.push({ name, req, avail, exp, remarks });
+
+          // Calculate shortages to save for inventory transaction logs if restock is checked
+          if (avail < req) {
+            shortages.push({
+              item_description: name,
+              quantity: req - avail
+            });
+          }
+        });
+
+        const checklistJson = JSON.stringify({
+          company,
+          department: dept,
+          section,
+          box_id: boxId,
+          cleanliness,
+          cleanliness_remarks: cleanlinessRemarks || '-',
+          findings: findings || '-',
+          officer_name: officerName,
+          officer_position: officerPos,
+          checklist: itemsList
+        });
+
+        // 3. Insert Inspection Log Payload
         const insertPayload: Omit<FirstAidLog, 'id' | 'tenant_id' | 'reported_by' | 'created_at' | 'updated_at' | 'deducted_from_inventory' | 'status'> = {
-          incident_date: incidentDate,
-          incident_time: incidentTime,
+          incident_date: inspectDate,
+          incident_time: '12:00:00', // Default placeholder time
           location,
-          injured_person_name: injuredName,
-          injured_person_id: injuredId,
-          injury_type: injuryType,
-          treatment_given: treatment,
-          referred_to_hospital: referred,
-          hospital_name: hospitalName,
+          injured_person_name: officerName, // mapped to officer name
+          injured_person_id: cleanliness, // mapped to cleanliness
+          injury_type: boxId, // mapped to box ID
+          treatment_given: checklistJson, // Mapped to serialized checklist JSON!
+          referred_to_hospital: instantRestock, // mapped to instant restock flag
+          hospital_name: `Company: ${company} | Dept: ${dept} | Section: ${section} | Position: ${officerPos}`,
           signature_url: signatureUrl,
           signature_uploaded_at: signatureUploadedAt,
         };
-        const { data: created, error: createErr } = await supabase
+
+        const { data: created, error: createErr } = await supabase!
           .from('first_aid_logs')
           .insert(insertPayload)
           .select('id')
@@ -524,25 +535,23 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         if (createErr) throw createErr;
         const logId = created.id;
 
-        if (items.length > 0) {
-          const detailRows: Array<Omit<FirstAidDetail, 'id' | 'created_at'>> = items.map((it) => ({
+        // 4. Save shortages to first_aid_details if they checked instantRestock
+        if (instantRestock && shortages.length > 0) {
+          const detailRows: Array<Omit<FirstAidDetail, 'id' | 'created_at'>> = shortages.map((s) => ({
             first_aid_log_id: logId,
-            item_description: it.item_description,
-            quantity: it.quantity,
-            notes: it.notes,
+            item_description: s.item_description,
+            quantity: s.quantity,
+            notes: 'Restock refill dispatch'
           }));
-          const { error: detailErr } = await supabase.from('first_aid_details').insert(detailRows);
+          const { error: detailErr } = await supabase!.from('first_aid_details').insert(detailRows);
           if (detailErr) throw detailErr;
-        }
-
-        if (items.length === 0) {
-          // No items: skip the deduction prompt entirely.
+          
+          openDeductPrompt(logId, shortages);
+        } else {
           window.location.href = `/app/first-aid/${logId}`;
-          return;
         }
-        openDeductPrompt(logId, items.map((i) => ({ item_description: i.item_description, quantity: i.quantity })));
       } catch (e) {
-        showError(e instanceof Error ? e.message : 'Failed to save record.');
+        showError(e instanceof Error ? e.message : 'Failed to save inspection.');
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = original;
@@ -599,202 +608,182 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     font-size: 0.78rem;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    color: var(--color-text-muted, #6A6A69);
     padding: 0 8px;
   }
-  .fa-hint {
-    font-size: 0.85rem;
-    color: var(--color-text-muted, #6A6A69);
-    margin-bottom: 12px;
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .field-label { font-size: 0.8rem; font-weight: 700; color: var(--color-text, #1E1E1D); }
+  .field-label em { color: #C0392B; font-style: normal; }
+  .field input[type="text"],
+  .field input[type="date"],
+  .field select,
+  .field textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: #fff;
+    color: var(--color-text, #1E1E1D);
+    outline: none;
+  }
+  .field input[type="text"]:focus,
+  .field input[type="date"]:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--color-primary, #E58E1A);
   }
   .fa-row-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
-  @media (max-width: 600px) { .fa-row-2 { grid-template-columns: 1fr; } }
-
-  .field { display: block; margin-bottom: 16px; }
-  .field-label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
+  .fa-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
   }
-  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
-  .field input, .field textarea, .field select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border, #E0E0E0);
-    font-family: inherit;
-    font-size: 0.9rem;
-    background: var(--color-bg, #fff);
+  @media (max-width: 768px) {
+    .fa-row-2, .fa-row-3 { grid-template-columns: 1fr; gap: 0; }
   }
-  .field input:focus, .field textarea:focus, .field select:focus {
-    outline: 2px solid var(--color-primary, #E58E1A);
-    outline-offset: 1px;
-    border-color: var(--color-primary, #E58E1A);
-  }
-  .field-check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .fa-autofill-bar {
+    background: #FFF7E6;
+    border: 1px solid #E58E1A;
+    padding: 12px 16px;
     margin-bottom: 16px;
-    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 700;
   }
-
   .fa-items-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     font-size: 0.88rem;
   }
-  .fa-items-table th, .fa-items-table td {
-    padding: 8px;
+  .fa-items-table th,
+  .fa-items-table td {
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
     text-align: left;
-    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
-    vertical-align: top;
   }
   .fa-items-table th {
     background: var(--color-bg-grey, #F4F4F4);
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+  .fa-badge-no {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    background: #F4F4F4;
     color: var(--color-text-muted, #6A6A69);
   }
-  .fa-qty-col { width: 80px; }
-  .fa-rm-col { width: 40px; text-align: center; }
-  .fa-items-table input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--color-border, #E0E0E0);
-    font-family: inherit;
-    font-size: 0.88rem;
-  }
-  .fa-rm-item {
-    background: transparent;
-    border: 1px solid var(--color-border, #E0E0E0);
-    color: var(--color-text-muted, #6A6A69);
-    width: 28px;
-    height: 28px;
-    line-height: 1;
-    font-size: 1rem;
+  .fa-restock-check {
+    margin-top: 20px;
+    background: #E8F5E9;
+    border: 1px solid #C8E6C9;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     cursor: pointer;
   }
-  .fa-rm-item:hover:not(:disabled) { color: #C0392B; border-color: #C0392B; }
-  .fa-rm-item:disabled { opacity: 0.3; cursor: not-allowed; }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
+  .fa-sig-pad-wrap {
+    border: 1px solid var(--color-border, #E0E0E0);
+    background: #FAFAFA;
+    margin-top: 10px;
+    max-width: 600px;
     overflow: hidden;
-    clip: rect(0,0,0,0);
-    border: 0;
   }
-
-  .fa-secondary-btn {
-    background: transparent;
-    border: 1px solid var(--color-border, #E0E0E0);
-    color: var(--color-text, #1E1E1D);
-    padding: 8px 14px;
-    font-family: inherit;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    cursor: pointer;
+  .fa-sig-pad {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
   }
-  .fa-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
-  .fa-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fa-sig-controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+  }
+  .fa-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+  }
   .fa-primary-btn {
     background: var(--color-primary, #E58E1A);
     color: #fff;
     border: none;
     padding: 12px 24px;
-    font-family: inherit;
-    font-size: 0.85rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .fa-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+  .fa-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 12px 20px;
+    font-weight: 700;
+    text-transform: uppercase;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
   }
-  .fa-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
-  .fa-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .fa-secondary-btn:hover { border-color: var(--color-primary, #E58E1A); color: var(--color-primary, #E58E1A); }
 
-  .fa-form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  .fa-sig-controls { display: flex; gap: 8px; margin-bottom: 12px; }
-  .fa-sig-pad {
-    border: 1px solid var(--color-border, #E0E0E0);
-    background: #fff;
-    display: block;
-    width: 100%;
-    max-width: 600px;
-    height: 160px;
-    touch-action: none;
-    margin-bottom: 8px;
-    cursor: crosshair;
-  }
-  .fa-sig-preview {
-    border: 1px solid var(--color-border, #E0E0E0);
-    background: #fff;
-    max-width: 320px;
-    height: auto;
-  }
-
+  /* Modal styles */
   .fa-modal {
     position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    z-index: 50;
+    z-index: 2000;
   }
   .fa-modal-card {
-    background: var(--color-bg, #fff);
-    width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
-    overflow: auto;
+    background: #fff;
     border: 1px solid var(--color-border, #E0E0E0);
+    width: 440px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   }
   .fa-modal-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    margin-bottom: 16px;
   }
-  .fa-modal-head h2 { font-size: 1.1rem; font-weight: 900; margin: 0; }
+  .fa-modal-head h2 { font-size: 1.15rem; font-weight: 900; }
   .fa-modal-close {
     background: transparent;
     border: none;
     font-size: 1.5rem;
-    line-height: 1;
     cursor: pointer;
-    color: var(--color-text-muted, #6A6A69);
-    padding: 4px 8px;
   }
-  .fa-modal-body { padding: 20px; }
-  .fa-deduct-list { padding-left: 20px; margin: 8px 0 16px; }
+  .fa-modal-body { font-size: 0.92rem; margin-bottom: 20px; line-height: 1.5; }
+  .fa-deduct-list {
+    margin: 12px 0;
+    padding-left: 20px;
+    font-weight: 700;
+    color: #C0392B;
+  }
   .fa-modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    padding: 0 20px 20px;
+    gap: 12px;
   }
 </style>

@@ -39,7 +39,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         <button type="button" id="fa-filter-clear" class="fa-secondary-btn">Clear</button>
         <button type="button" id="fa-export-csv" class="fa-secondary-btn">📥 Export CSV</button>
       </section>
-
       <section id="fa-skeleton" class="fa-skeleton" hidden>
         <div class="skel-row"></div>
         <div class="skel-row"></div>
@@ -48,16 +47,15 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       </section>
 
       <section id="fa-table-wrap" hidden>
-        <table class="fa-table" aria-label="First aid records">
+        <table class="fa-table" aria-label="First aid box inspections">
           <thead>
             <tr>
               <th scope="col">Date</th>
-              <th scope="col">Time</th>
+              <th scope="col">Box ID</th>
               <th scope="col">Location</th>
-              <th scope="col">Injured person</th>
-              <th scope="col">Injury type</th>
-              <th scope="col">Hospital</th>
-              <th scope="col">Inventory</th>
+              <th scope="col">Inspected By</th>
+              <th scope="col">Cleanliness</th>
+              <th scope="col">Restocked</th>
               <th scope="col" class="fa-actions-col">Action</th>
             </tr>
           </thead>
@@ -71,7 +69,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       </section>
 
       <section id="fa-empty" class="fa-empty" hidden>
-        <p>No First Aid records yet. Click "New inspection" to log your first one.</p>
+        <p>No First Aid box inspections yet. Click "New inspection" to log your first one.</p>
       </section>
     </div>
   </main>
@@ -118,11 +116,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const day = String(d.getDate()).padStart(2, '0');
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  }
-
-  function formatTime(t: string | null): string {
-    if (!t) return '—';
-    return t.slice(0, 5);
   }
 
   function readPageFromUrl(): { page: number; from: string | null; to: string | null } {
@@ -183,7 +176,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       ]);
       allThisYear = yrRes.count ?? 0;
       thisMonth = moRes.count ?? 0;
-      subEl.textContent = `${allThisYear} record${allThisYear === 1 ? '' : 's'} this year • ${thisMonth} this month`;
+      subEl.textContent = `${allThisYear} inspection${allThisYear === 1 ? '' : 's'} this year • ${thisMonth} this month`;
 
       if (rows.length === 0) {
         tableWrap.hidden = true;
@@ -196,20 +189,17 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       tbody.innerHTML = '';
       for (const r of rows) {
         const tr = document.createElement('tr');
-        const hospitalBadge = r.referred_to_hospital
+        const restockedBadge = r.referred_to_hospital
           ? '<span class="fa-badge fa-badge-yes">Yes</span>'
           : '<span class="fa-badge fa-badge-no">No</span>';
-        const invBadge = r.deducted_from_inventory
-          ? '<span class="fa-badge fa-badge-yes">Yes</span>'
-          : '<span class="fa-badge fa-badge-no">No</span>';
+        const cleanliness = r.injured_person_id || 'Good';
         tr.innerHTML = `
           <td>${formatDate(r.incident_date)}</td>
-          <td>${formatTime(r.incident_time)}</td>
+          <td>${escapeHtml(r.injury_type || '—')}</td>
           <td>${escapeHtml(r.location)}</td>
           <td>${escapeHtml(r.injured_person_name)}</td>
-          <td>${escapeHtml(r.injury_type)}</td>
-          <td>${hospitalBadge}</td>
-          <td>${invBadge}</td>
+          <td><span class="fa-badge ${cleanliness.toLowerCase() === 'good' ? 'fa-badge-yes' : 'fa-badge-no'}">${escapeHtml(cleanliness)}</span></td>
+          <td>${restockedBadge}</td>
           <td class="fa-actions-col"><a href="/app/first-aid/${r.id}" class="fa-view-link">View</a></td>
         `;
         tbody.appendChild(tr);

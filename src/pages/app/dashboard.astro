@@ -39,7 +39,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
             <div class="metric-tile-icon" aria-hidden="true">⛑️</div>
             <div class="metric-tile-value" data-role="value">—</div>
             <div class="metric-tile-sub" data-role="sub">…</div>
-            <div class="metric-tile-label">First Aid</div>
+            <div class="metric-tile-label">First Aid Boxes</div>
           </a>
           <a href="/app/ppe" class="metric-tile" id="metric-ppe">
             <div class="metric-tile-icon" aria-hidden="true">🦺</div>
@@ -78,7 +78,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         <h2>Recent Activity</h2>
         <div id="dash-activity-list"></div>
         <div id="dash-activity-empty" class="activity-empty" hidden>
-          No recent activity yet. Start by logging a First Aid record, reporting an incident, or scheduling an inspection.
+          No recent activity yet. Start by logging a First Aid inspection, reporting an incident, or scheduling an inspection.
         </div>
       </section>
 
@@ -88,7 +88,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           <a href="/app/first-aid" class="module-tile">
             <div class="module-tile-icon" aria-hidden="true">⛑️</div>
             <h3>First Aid</h3>
-            <p>Log first aid incidents and track inventory consumption.</p>
+            <p>Conduct box inspections, manage central stock, and deduct refills.</p>
           </a>
           <a href="/app/ppe" class="module-tile">
             <div class="module-tile-icon" aria-hidden="true">🦺</div>
@@ -444,8 +444,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           id: r.id,
           kind: 'first_aid',
           icon: '⛑️',
-          title: r.injured_person_name || 'First aid record',
-          sub: r.injury_type ? `Injury: ${r.injury_type}` : 'First aid log',
+          title: r.injury_type ? `Box Inspection: ${r.injury_type}` : 'First aid box inspection',
+          sub: r.injured_person_name ? `By ${r.injured_person_name}` : 'First aid box inspection',
           createdAt: r.created_at,
           href: `/app/first-aid/${encodeURIComponent(r.id)}`,
         });

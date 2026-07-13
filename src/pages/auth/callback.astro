@@ -1,84 +1,25 @@
 ---
-import Layout from '../../layouts/Layout.astro';
----
-<Layout title="Signing you in - AmerisPro">
-  <main class="callback-page">
-    <div class="container">
-      <div class="callback-card">
-        <h1>Signing you in…</h1>
-        <p>Completing Google sign-in.</p>
-      </div>
-    </div>
-  </main>
-</Layout>
+import { createSupabaseServerClient } from '../../lib/supabaseServer';
 
-<script>
-  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+const code = Astro.url.searchParams.get('code');
+const errorParam = Astro.url.searchParams.get('error_description') || Astro.url.searchParams.get('error');
 
-  function go(path: string, err?: string): void {
-    const target = err ? `/login?error=${encodeURIComponent(err)}` : path;
-    window.location.replace(target);
-  }
+if (errorParam) {
+  return Astro.redirect(`/login?error=${encodeURIComponent(errorParam)}`);
+}
 
-  if (!isSupabaseConfigured()) {
-    go('/login', 'Supabase is not configured.');
-  } else {
-    const params = new URLSearchParams(window.location.search);
-    const errorParam = params.get('error_description') || params.get('error');
-
-    if (errorParam) {
-      go('/login', errorParam);
+if (code) {
+  const supabase = createSupabaseServerClient(Astro);
+  if (supabase) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      // Successfully authenticated and cookies set. Redirect to dashboard.
+      return Astro.redirect('/app/dashboard');
     } else {
-      const supabase = getSupabase();
-
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) go('/app/dashboard');
-      });
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          if (event === 'SIGNED_IN' && session) {
-            subscription.unsubscribe();
-            go('/app/dashboard');
-          } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-            subscription.unsubscribe();
-            go('/login', 'Sign-in was cancelled or failed.');
-          }
-        }
-      );
-
-      setTimeout(() => {
-        if (window.location.pathname === '/auth/callback') {
-          go('/login', 'Sign-in timed out. Please try again.');
-        }
-      }, 10_000);
+      return Astro.redirect(`/login?error=${encodeURIComponent(error.message)}`);
     }
   }
-</script>
+}
 
-<style>
-  .callback-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-bg-grey, #F4F4F4);
-    padding: 80px 32px;
-  }
-  .callback-card {
-    background: var(--color-bg, #FFFFFF);
-    border: 1px solid var(--color-border, #E0E0E0);
-    padding: 48px 40px;
-    max-width: 440px;
-    width: 100%;
-    text-align: center;
-  }
-  .callback-card h1 {
-    font-size: 1.4rem;
-    font-weight: 900;
-    margin-bottom: 8px;
-  }
-  .callback-card p {
-    color: var(--color-text-muted, #6A6A69);
-  }
-</style>
+return Astro.redirect('/login?error=Authentication+failed.+No+code+provided.');
+---

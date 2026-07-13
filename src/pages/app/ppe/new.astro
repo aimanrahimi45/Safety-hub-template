@@ -1,0 +1,489 @@
+---
+// PPE Issue Log — record new issue form.
+//
+// Single-issue form (not multi-item). After submit, redirects to the
+// detail page. The 6-month warning banner updates as the user types
+// Staff ID + selects PPE Type by calling the check_last_ppe_issue RPC
+// (debounced 500ms). request_code is auto-generated server-side via
+// next_ppe_request_code() RPC.
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="Record PPE Issue - AmerisPro">
+  <main class="ppe-new-page">
+    <div class="container">
+      <div id="ppe-setup-warning" class="ppe-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ppe-error" class="ppe-error" hidden></div>
+
+      <header class="ppe-header">
+        <div>
+          <h1>Record PPE Issue</h1>
+          <p class="ppe-sub">Log a single PPE item issued to a staff member.</p>
+        </div>
+        <a href="/app/ppe" class="ppe-link-btn">← Back to list</a>
+      </header>
+
+      <form id="ppe-form" novalidate>
+        <!-- Section A: Staff information -->
+        <fieldset class="ppe-fieldset">
+          <legend>A. Staff information</legend>
+
+          <div class="ppe-row-2">
+            <label class="field">
+              <span class="field-label">Staff ID <em>*</em></span>
+              <input type="text" name="staff_id" id="ppe-staff-id" required placeholder="e.g. EMP-001" />
+            </label>
+            <label class="field">
+              <span class="field-label">Staff name <em>*</em></span>
+              <input type="text" name="staff_name" id="ppe-staff-name" required placeholder="e.g. Ahmad bin Ali" />
+            </label>
+          </div>
+
+          <div class="ppe-row-2">
+            <label class="field">
+              <span class="field-label">Department <em>*</em></span>
+              <select name="department" id="ppe-department" required>
+                <option value="">— Select department —</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Supervisor name</span>
+              <input type="text" name="supervisor" id="ppe-supervisor" placeholder="Defaults to SHO" value="SHO" />
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Section B: PPE details -->
+        <fieldset class="ppe-fieldset">
+          <legend>B. PPE details</legend>
+
+          <div class="ppe-row-2">
+            <label class="field">
+              <span class="field-label">PPE Type <em>*</em></span>
+              <select name="ppe_type" id="ppe-type" required>
+                <option value="">— Select PPE type —</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Size</span>
+              <input type="text" name="size" id="ppe-size" placeholder="e.g. M, L, XL, 10, Free Size" />
+            </label>
+          </div>
+
+          <div id="ppe-warning" class="ppe-warning-banner" hidden></div>
+
+          <label class="field">
+            <span class="field-label">Color / Specs</span>
+            <input type="text" name="color_specs" id="ppe-color" placeholder="e.g. Black, steel toe" />
+          </label>
+        </fieldset>
+
+        <!-- Section C: Reason and condition -->
+        <fieldset class="ppe-fieldset">
+          <legend>C. Reason and condition</legend>
+
+          <div class="ppe-row-2">
+            <label class="field">
+              <span class="field-label">Replacement reason <em>*</em></span>
+              <select name="replacement_reason" id="ppe-reason" required>
+                <option value="Damaged" selected>Damaged</option>
+                <option value="Worn Out">Worn Out</option>
+                <option value="New Hire">New Hire</option>
+                <option value="Lost">Lost</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Action date <em>*</em></span>
+              <input type="date" name="action_date" id="ppe-action-date" required />
+              <span class="field-hint">The date the PPE was actually given out.</span>
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Condition remarks</span>
+            <textarea
+              name="condition_remarks"
+              id="ppe-condition"
+              rows="3"
+              placeholder="e.g. Helmet cracked after fall from height."
+            ></textarea>
+          </label>
+        </fieldset>
+
+        <div class="ppe-form-actions">
+          <a href="/app/ppe" class="ppe-secondary-btn">Cancel</a>
+          <button type="submit" id="ppe-submit" class="ppe-primary-btn">Save issue</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { PpeRequest } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('ppe-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ppe-error') as HTMLElement;
+  const formEl = document.getElementById('ppe-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('ppe-submit') as HTMLButtonElement;
+  const staffIdEl = document.getElementById('ppe-staff-id') as HTMLInputElement;
+  const staffNameEl = document.getElementById('ppe-staff-name') as HTMLInputElement;
+  const deptEl = document.getElementById('ppe-department') as HTMLSelectElement;
+  const typeEl = document.getElementById('ppe-type') as HTMLSelectElement;
+  const sizeEl = document.getElementById('ppe-size') as HTMLInputElement;
+  const colorEl = document.getElementById('ppe-color') as HTMLInputElement;
+  const reasonEl = document.getElementById('ppe-reason') as HTMLSelectElement;
+  const actionDateEl = document.getElementById('ppe-action-date') as HTMLInputElement;
+  const conditionEl = document.getElementById('ppe-condition') as HTMLTextAreaElement;
+  const supervisorEl = document.getElementById('ppe-supervisor') as HTMLInputElement;
+  const warningEl = document.getElementById('ppe-warning') as HTMLElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+    errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+
+  function today(): string {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function setWarning(kind: 'ok' | 'warn' | 'recent' | null, text: string): void {
+    if (kind == null) {
+      warningEl.hidden = true;
+      warningEl.textContent = '';
+      warningEl.className = 'ppe-warning-banner';
+      return;
+    }
+    warningEl.hidden = false;
+    warningEl.className = `ppe-warning-banner ppe-warning-${kind}`;
+    warningEl.textContent = text;
+  }
+
+  // 6-month warning: debounced fetch.
+  let warnTimer: number | null = null;
+  function scheduleWarnCheck(): void {
+    if (warnTimer != null) {
+      window.clearTimeout(warnTimer);
+      warnTimer = null;
+    }
+    warnTimer = window.setTimeout(() => {
+      warnTimer = null;
+      void runWarnCheck();
+    }, 500);
+  }
+
+  async function runWarnCheck(): Promise<void> {
+    if (!supabase) return;
+    const sid = staffIdEl.value.trim();
+    const ptype = typeEl.value;
+    if (!sid || !ptype) {
+      setWarning(null, '');
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc('check_last_ppe_issue', {
+        p_staff_id: sid,
+        p_ppe_type: ptype,
+      });
+      if (error) throw error;
+      const rows = (data ?? []) as Array<{ found: boolean; last_date: string; diff_months: number }>;
+      if (rows.length === 0) {
+        setWarning('ok', 'First time issuing this PPE to this staff member.');
+        return;
+      }
+      const r = rows[0];
+      const last = formatDate(r.last_date);
+      if (typeof r.diff_months === 'number' && r.diff_months < 6) {
+        setWarning('recent', `⚠ Last issued on ${last} (${r.diff_months} month${r.diff_months === 1 ? '' : 's'} ago). Is replacement really needed?`);
+      } else {
+        setWarning('ok', `Last issued on ${last} (${r.diff_months} month${r.diff_months === 1 ? '' : 's'} ago) — replacement due.`);
+      }
+    } catch {
+      setWarning(null, '');
+    }
+  }
+
+  let authUserId: string | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    submitBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+    actionDateEl.value = today();
+
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      authUserId = userData.user.id;
+
+      // Populate PPE Type + Department dropdowns from tenant settings.
+      try {
+        const [typesRes, deptsRes] = await Promise.all([
+          supabase.rpc('get_ppe_types'),
+          supabase.rpc('get_departments'),
+        ]);
+        const types = (typesRes.data ?? []) as string[];
+        const depts = (deptsRes.data ?? []) as string[];
+        for (const t of types) {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          typeEl.appendChild(opt);
+        }
+        for (const d of depts) {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          deptEl.appendChild(opt);
+        }
+      } catch {
+        // leave defaults as-is
+      }
+    })().catch(() => {
+      showError('Failed to initialise form.');
+    });
+  }
+
+  // Trigger 6-month warning whenever staff_id or ppe_type change.
+  staffIdEl.addEventListener('input', scheduleWarnCheck);
+  typeEl.addEventListener('change', scheduleWarnCheck);
+
+  formEl.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    if (!supabase || !authUserId) return;
+    clearError();
+
+    const staffId = staffIdEl.value.trim();
+    const staffName = staffNameEl.value.trim();
+    const department = deptEl.value;
+    const ppeType = typeEl.value;
+    const size = sizeEl.value.trim() || null;
+    const colorSpecs = colorEl.value.trim() || null;
+    const replacementReason = reasonEl.value;
+    const actionDate = actionDateEl.value;
+    const conditionRemarks = conditionEl.value.trim() || null;
+    const supervisor = supervisorEl.value.trim() || 'SHO';
+
+    if (!staffId) { showError('Staff ID is required.'); return; }
+    if (!staffName) { showError('Staff name is required.'); return; }
+    if (!department) { showError('Department is required.'); return; }
+    if (!ppeType) { showError('PPE Type is required.'); return; }
+    if (!replacementReason) { showError('Replacement reason is required.'); return; }
+    if (!actionDate) { showError('Action date is required.'); return; }
+    if (actionDate > today()) { showError('Action date cannot be in the future.'); return; }
+
+    submitBtn.disabled = true;
+    const original = submitBtn.textContent;
+    submitBtn.textContent = 'Saving…';
+
+    (async () => {
+      try {
+        // 1. Get the next request code.
+        const { data: codeData, error: codeErr } = await supabase.rpc('next_ppe_request_code');
+        if (codeErr) throw codeErr;
+        const requestCode = String(codeData ?? '').trim();
+        if (!/^REQ-\d{5}$/.test(requestCode)) {
+          throw new Error('Failed to generate request code.');
+        }
+
+        // 2. Insert the row. tenant_id is auto-set by RLS WITH CHECK.
+        const insertPayload: Omit<PpeRequest, 'id' | 'tenant_id' | 'created_at' | 'updated_at'> = {
+          request_code: requestCode,
+          request_date: new Date().toISOString(),
+          staff_id: staffId,
+          staff_name: staffName,
+          department,
+          ppe_type: ppeType,
+          size,
+          color_specs: colorSpecs,
+          replacement_reason: replacementReason,
+          condition_remarks: conditionRemarks,
+          status: 'approved_dispatched',
+          authorized_by: supervisor,
+          action_date: actionDate,
+          recorded_by: authUserId!,
+        };
+        const { data: created, error: createErr } = await supabase
+          .from('ppe_requests')
+          .insert(insertPayload)
+          .select('id')
+          .single<{ id: string }>();
+        if (createErr) throw createErr;
+        window.location.href = `/app/ppe/${created.id}`;
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Failed to save issue.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = original;
+      }
+    })();
+  });
+</script>
+
+<style>
+  .ppe-new-page { padding: 32px 0 64px; }
+  .ppe-warning,
+  .ppe-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ppe-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ppe-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ppe-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ppe-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .ppe-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ppe-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .ppe-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ppe-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .ppe-fieldset {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .ppe-fieldset legend {
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 8px;
+  }
+  .ppe-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .ppe-row-2 { grid-template-columns: 1fr; } }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
+  .field-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 4px;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+
+  .ppe-warning-banner {
+    padding: 10px 14px;
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    border-width: 1px;
+    border-style: solid;
+  }
+  .ppe-warning-banner.ppe-warning-ok      { background: #E8F5E9; border-color: #1F7A4D; color: #1F7A4D; }
+  .ppe-warning-banner.ppe-warning-recent  { background: #FFF7E6; border-color: #E58E1A; color: #6A4A0F; font-weight: 700; }
+  .ppe-warning-banner.ppe-warning-warn    { background: #FDECEC; border-color: #C0392B; color: #8B1A1A; font-weight: 700; }
+
+  .ppe-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ppe-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ppe-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ppe-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .ppe-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .ppe-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .ppe-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+</style>

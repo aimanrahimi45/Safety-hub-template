@@ -1,0 +1,316 @@
+---
+// Register a new contractor company.
+//
+// Does NOT induct any workers (that's a separate step via the
+// induct form). On submit, inserts a single contractors row and
+// redirects to /app/contractors/<id>.
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="Register Contractor - AmerisPro">
+  <main class="ct-new-page">
+    <div class="container">
+      <div id="ct-setup-warning" class="ct-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ct-error" class="ct-error" hidden></div>
+
+      <header class="ct-header">
+        <div>
+          <h1>Register contractor</h1>
+          <p class="ct-sub">Add a new contractor company. Worker inductions happen on the next step.</p>
+        </div>
+        <a href="/app/contractors" class="ct-link-btn">← Back to list</a>
+      </header>
+
+      <form id="ct-form" novalidate>
+        <fieldset class="ct-fieldset">
+          <legend>Company information</legend>
+
+          <label class="field">
+            <span class="field-label">Company name <em>*</em></span>
+            <input type="text" name="company_name" id="ct-company" required placeholder="e.g. Acme Engineering Sdn Bhd" />
+          </label>
+
+          <div class="ct-row-2">
+            <label class="field">
+              <span class="field-label">Contact person <em>*</em></span>
+              <input type="text" name="contact_person" id="ct-contact-person" required placeholder="e.g. John Doe" />
+            </label>
+            <label class="field">
+              <span class="field-label">Contact email <em>*</em></span>
+              <input type="email" name="contact_email" id="ct-email" required placeholder="e.g. john@acme.com" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Contact phone <em>*</em></span>
+            <input type="text" name="contact_phone" id="ct-phone" required placeholder="e.g. +60 12-345 6789" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Work scope <em>*</em></span>
+            <textarea
+              name="work_scope"
+              id="ct-scope"
+              rows="3"
+              required
+              placeholder="Describe what work this contractor will perform on site"
+            ></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset class="ct-fieldset">
+          <legend>Status and validity</legend>
+
+          <div class="ct-row-2">
+            <label class="field">
+              <span class="field-label">Status</span>
+              <select name="status" id="ct-status">
+                <option value="pending_induction" selected>Pending induction</option>
+                <option value="inducted">Inducted</option>
+              </select>
+              <span class="field-hint">Will flip to "inducted" automatically when the first worker is inducted.</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Valid from</span>
+              <input type="date" name="valid_from" id="ct-valid-from" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Valid until</span>
+            <input type="date" name="valid_until" id="ct-valid-until" />
+            <span class="field-hint">Optional. If set, must be after the valid-from date.</span>
+          </label>
+        </fieldset>
+
+        <div class="ct-form-actions">
+          <a href="/app/contractors" class="ct-secondary-btn">Cancel</a>
+          <button type="submit" id="ct-submit" class="ct-primary-btn">Register</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { Contractor } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('ct-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ct-error') as HTMLElement;
+  const formEl = document.getElementById('ct-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('ct-submit') as HTMLButtonElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+    errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+
+  function today(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    submitBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+    (document.getElementById('ct-valid-from') as HTMLInputElement).value = today();
+  }
+
+  formEl.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    if (!supabase) return;
+    clearError();
+
+    const companyName = (document.getElementById('ct-company') as HTMLInputElement).value.trim();
+    const contactPerson = (document.getElementById('ct-contact-person') as HTMLInputElement).value.trim();
+    const email = (document.getElementById('ct-email') as HTMLInputElement).value.trim();
+    const phone = (document.getElementById('ct-phone') as HTMLInputElement).value.trim();
+    const scope = (document.getElementById('ct-scope') as HTMLTextAreaElement).value.trim();
+    const status = (document.getElementById('ct-status') as HTMLSelectElement).value as Contractor['status'];
+    const validFrom = (document.getElementById('ct-valid-from') as HTMLInputElement).value || null;
+    const validUntil = (document.getElementById('ct-valid-until') as HTMLInputElement).value || null;
+
+    if (!companyName) { showError('Company name is required.'); return; }
+    if (!contactPerson) { showError('Contact person is required.'); return; }
+    if (!email) { showError('Contact email is required.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('Please enter a valid email address.'); return; }
+    if (!phone) { showError('Contact phone is required.'); return; }
+    if (!scope) { showError('Work scope is required.'); return; }
+    if (validFrom && validUntil && validUntil < validFrom) {
+      showError('Valid until cannot be earlier than valid from.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const original = submitBtn.textContent;
+    submitBtn.textContent = 'Saving…';
+
+    (async () => {
+      try {
+        const insertPayload: Omit<Contractor, 'id' | 'tenant_id' | 'created_at' | 'updated_at'> = {
+          company_name: companyName,
+          contact_person: contactPerson,
+          contact_email: email,
+          contact_phone: phone,
+          work_scope: scope,
+          status,
+          valid_from: validFrom,
+          valid_until: validUntil,
+        };
+        const { data: created, error: createErr } = await supabase!
+          .from('contractors')
+          .insert(insertPayload)
+          .select('id')
+          .single<{ id: string }>();
+        if (createErr) throw createErr;
+        window.location.href = `/app/contractors/${created.id}`;
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Failed to register contractor.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = original;
+      }
+    })();
+  });
+</script>
+
+<style>
+  .ct-new-page { padding: 32px 0 64px; }
+  .ct-warning,
+  .ct-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ct-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ct-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ct-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ct-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .ct-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ct-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .ct-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ct-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .ct-fieldset {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .ct-fieldset legend {
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 8px;
+  }
+  .ct-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .ct-row-2 { grid-template-columns: 1fr; } }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
+  .field-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 4px;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+
+  .ct-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ct-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ct-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ct-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .ct-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .ct-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .ct-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+</style>

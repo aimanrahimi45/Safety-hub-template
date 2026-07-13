@@ -1,0 +1,528 @@
+---
+// Incidents log — detail view.
+//
+// Read-only display of a single incident. Edit, Delete, and Print
+// actions. Edit navigates to /app/incidents/new?id=<id> (the form
+// handles both create and edit). Delete uses a window.confirm guard
+// then a hard delete. Print calls window.print() — the page includes
+// the shared print stylesheet which strips chrome.
+
+import AppLayout from '../../../layouts/AppLayout.astro';
+import '../../../styles/print.css';
+
+export function getStaticPaths() {
+  return [{ params: { id: '_' } }];
+}
+---
+<AppLayout title="Incident - AmerisPro">
+  <main class="inc-detail-page">
+    <div class="container">
+      <div id="inc-setup-warning" class="inc-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="inc-error" class="inc-error" hidden></div>
+
+      <section id="inc-loading" class="inc-loading">
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="inc-not-found" class="inc-not-found" hidden>
+        <h1>Incident not found</h1>
+        <p>This incident doesn't exist, or you don't have permission to view it.</p>
+        <a href="/app/incidents" class="inc-link-btn">← Back to list</a>
+      </section>
+
+      <section id="inc-content" hidden>
+        <header class="inc-header inc-print-header">
+          <div>
+            <h1>Incident <span class="inc-code-inline" id="inc-code">…</span></h1>
+            <p class="inc-sub" id="inc-sub">…</p>
+            <div class="inc-badges no-print">
+              <span class="inc-sev-badge" id="inc-severity-badge">…</span>
+              <span class="inc-flag-badge" id="inc-jkkp-badge">JKKP: …</span>
+              <span class="inc-flag-badge" id="inc-investigation-badge">Investigation: …</span>
+            </div>
+          </div>
+          <div class="inc-header-actions no-print">
+            <a href="/app/incidents" class="inc-link-btn">← Back to list</a>
+          </div>
+        </header>
+
+        <section class="inc-card inc-print-block">
+          <h2 class="inc-print-only">Incident Report</h2>
+          <div class="inc-grid-2">
+            <div><span class="inc-label">Incident date</span><span id="inc-incident-date">…</span></div>
+            <div><span class="inc-label">Incident time</span><span id="inc-incident-time">…</span></div>
+            <div><span class="inc-label">Location / Department</span><span id="inc-location">…</span></div>
+            <div><span class="inc-label">Victim name</span><span id="inc-victim">…</span></div>
+            <div><span class="inc-label">Staff ID</span><span id="inc-staff-id">…</span></div>
+            <div><span class="inc-label">Body part injured</span><span id="inc-body-part">…</span></div>
+            <div><span class="inc-label">Severity type</span><span id="inc-severity">…</span></div>
+            <div><span class="inc-label">Man-days lost</span><span id="inc-man-days">…</span></div>
+            <div class="inc-grid-full">
+              <span class="inc-label">Description</span>
+              <div class="inc-block" id="inc-description">—</div>
+            </div>
+            <div><span class="inc-label">Reported to JKKP</span><span id="inc-jkkp">…</span></div>
+            <div><span class="inc-label">Investigation submitted</span><span id="inc-investigation">…</span></div>
+          </div>
+        </section>
+
+        <section class="inc-card">
+          <h2>
+            <button type="button" id="inc-meta-toggle" class="inc-disclosure" aria-expanded="false" aria-controls="inc-meta-body">
+              <span class="inc-disclosure-arrow" aria-hidden="true">▸</span>
+              Audit metadata
+            </button>
+          </h2>
+          <div id="inc-meta-body" class="inc-meta-body" hidden>
+            <div><span class="inc-label">Recorded by</span><span id="inc-recorded-by">…</span></div>
+            <div><span class="inc-label">Recorded at</span><span id="inc-recorded-at">…</span></div>
+            <div><span class="inc-label">Created at</span><span id="inc-created">…</span></div>
+            <div><span class="inc-label">Updated at</span><span id="inc-updated">…</span></div>
+            <div class="inc-grid-full"><span class="inc-label">Tenant ID</span><code class="inc-mono" id="inc-tenant">…</code></div>
+            <div><span class="inc-label">UUID</span><code class="inc-mono" id="inc-uuid">…</code></div>
+            <div><span class="inc-label">Incident code</span><code class="inc-mono" id="inc-code-mono">…</code></div>
+          </div>
+        </section>
+
+        <section id="inc-actions-card" class="inc-card no-print">
+          <h2>Actions</h2>
+          <div id="inc-action-error" class="inc-error" hidden></div>
+          <div class="inc-action-row">
+            <a id="inc-edit-btn" href="#" class="inc-primary-btn">Edit</a>
+            <button type="button" id="inc-print-btn" class="inc-secondary-btn">Print</button>
+            <button type="button" id="inc-delete-btn" class="inc-secondary-btn inc-danger">Delete</button>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { Incident, IncidentSeverityType } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('inc-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('inc-error') as HTMLElement;
+  const loadingEl = document.getElementById('inc-loading') as HTMLElement;
+  const notFoundEl = document.getElementById('inc-not-found') as HTMLElement;
+  const contentEl = document.getElementById('inc-content') as HTMLElement;
+
+  const codeEl = document.getElementById('inc-code') as HTMLElement;
+  const codeMonoEl = document.getElementById('inc-code-mono') as HTMLElement;
+  const subEl = document.getElementById('inc-sub') as HTMLElement;
+  const severityBadgeEl = document.getElementById('inc-severity-badge') as HTMLElement;
+  const jkkpBadgeEl = document.getElementById('inc-jkkp-badge') as HTMLElement;
+  const investigationBadgeEl = document.getElementById('inc-investigation-badge') as HTMLElement;
+
+  const incidentDateEl = document.getElementById('inc-incident-date') as HTMLElement;
+  const incidentTimeEl = document.getElementById('inc-incident-time') as HTMLElement;
+  const locationEl = document.getElementById('inc-location') as HTMLElement;
+  const victimEl = document.getElementById('inc-victim') as HTMLElement;
+  const staffIdEl = document.getElementById('inc-staff-id') as HTMLElement;
+  const bodyPartEl = document.getElementById('inc-body-part') as HTMLElement;
+  const severityEl = document.getElementById('inc-severity') as HTMLElement;
+  const manDaysEl = document.getElementById('inc-man-days') as HTMLElement;
+  const descriptionEl = document.getElementById('inc-description') as HTMLElement;
+  const jkkpEl = document.getElementById('inc-jkkp') as HTMLElement;
+  const investigationEl = document.getElementById('inc-investigation') as HTMLElement;
+
+  const metaToggle = document.getElementById('inc-meta-toggle') as HTMLButtonElement;
+  const metaBody = document.getElementById('inc-meta-body') as HTMLElement;
+  const metaArrow = metaToggle.querySelector('.inc-disclosure-arrow') as HTMLElement;
+  const recordedByEl = document.getElementById('inc-recorded-by') as HTMLElement;
+  const recordedAtEl = document.getElementById('inc-recorded-at') as HTMLElement;
+  const createdEl = document.getElementById('inc-created') as HTMLElement;
+  const updatedEl = document.getElementById('inc-updated') as HTMLElement;
+  const tenantEl = document.getElementById('inc-tenant') as HTMLElement;
+  const uuidEl = document.getElementById('inc-uuid') as HTMLElement;
+
+  const actionError = document.getElementById('inc-action-error') as HTMLElement;
+  const editBtn = document.getElementById('inc-edit-btn') as HTMLAnchorElement;
+  const printBtn = document.getElementById('inc-print-btn') as HTMLButtonElement;
+  const deleteBtn = document.getElementById('inc-delete-btn') as HTMLButtonElement;
+
+  const SEVERITY_COLORS: Record<IncidentSeverityType, string> = {
+    'First Aid': 'inc-sev-firstaid',
+    Minor: 'inc-sev-minor',
+    Major: 'inc-sev-major',
+    Fatal: 'inc-sev-fatal',
+    Other: 'inc-sev-other',
+  };
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function showActionError(msg: string): void {
+    actionError.hidden = false;
+    actionError.textContent = msg;
+  }
+  function clearActionError(): void { actionError.hidden = true; actionError.textContent = ''; }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatDateTime(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  function formatTime(hhmm: string | null | undefined): string {
+    if (!hhmm) return '—';
+    return hhmm.length >= 5 ? hhmm.substring(0, 5) : hhmm;
+  }
+
+  function getIncidentId(): string {
+    const path = window.location.pathname;
+    const m = path.match(/\/app\/incidents\/([^/]+)/);
+    return m ? m[1] : '';
+  }
+
+  metaToggle.addEventListener('click', () => {
+    const expanded = metaToggle.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+      metaBody.hidden = true;
+      metaToggle.setAttribute('aria-expanded', 'false');
+      metaArrow.textContent = '▸';
+    } else {
+      metaBody.hidden = false;
+      metaToggle.setAttribute('aria-expanded', 'true');
+      metaArrow.textContent = '▾';
+    }
+  });
+
+  function render(r: Incident, userEmail: string | null): void {
+    codeEl.textContent = r.incident_code;
+    codeMonoEl.textContent = r.incident_code;
+
+    const dateStr = formatDate(r.incident_date);
+    const timeStr = formatTime(r.incident_time);
+    subEl.textContent = `Occurred on ${dateStr}${timeStr && timeStr !== '—' ? ' at ' + timeStr : ''}`;
+
+    const sevClass = SEVERITY_COLORS[r.severity_type] || 'inc-sev-other';
+    const sevLabel = r.severity_type === 'Other' && r.severity_other
+      ? `Other: ${r.severity_other}`
+      : r.severity_type;
+    severityBadgeEl.textContent = sevLabel;
+    severityBadgeEl.className = `inc-sev-badge ${sevClass}`;
+
+    jkkpBadgeEl.textContent = r.reported_to_jkkp ? 'JKKP: Yes' : 'JKKP: No';
+    jkkpBadgeEl.className = `inc-flag-badge ${r.reported_to_jkkp ? 'inc-flag-yes' : 'inc-flag-no'}`;
+
+    investigationBadgeEl.textContent = r.investigation_submitted ? 'Investigation: Submitted' : 'Investigation: Not submitted';
+    investigationBadgeEl.className = `inc-flag-badge ${r.investigation_submitted ? 'inc-flag-yes' : 'inc-flag-no'}`;
+
+    incidentDateEl.textContent = dateStr;
+    incidentTimeEl.textContent = timeStr;
+    locationEl.textContent = r.location_dept;
+    victimEl.textContent = r.victim_name;
+    staffIdEl.textContent = r.staff_id ?? '—';
+    bodyPartEl.textContent = r.body_part_injured ?? '—';
+    severityEl.textContent = sevLabel;
+    manDaysEl.textContent = String(r.man_days_lost);
+    descriptionEl.textContent = r.description;
+    jkkpEl.textContent = r.reported_to_jkkp ? 'Yes' : 'No';
+    investigationEl.textContent = r.investigation_submitted ? 'Yes' : 'No';
+
+    recordedByEl.textContent = userEmail ?? r.reported_by;
+    recordedAtEl.textContent = formatDateTime(r.recorded_at);
+    createdEl.textContent = formatDateTime(r.created_at);
+    updatedEl.textContent = formatDateTime(r.updated_at);
+    tenantEl.textContent = r.tenant_id;
+    uuidEl.textContent = r.id;
+
+    editBtn.href = `/app/incidents/new?id=${encodeURIComponent(r.id)}`;
+
+    loadingEl.hidden = true;
+    contentEl.hidden = false;
+  }
+
+  let currentIncident: Incident | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  let cachedUserEmail: string | null = null;
+
+  async function load(): Promise<void> {
+    if (!supabase) return;
+    const id = getIncidentId();
+    if (!id || id === '_') {
+      loadingEl.hidden = true;
+      notFoundEl.hidden = false;
+      return;
+    }
+    try {
+      const { data: row, error: rowErr } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle<Incident>();
+      if (rowErr || !row) {
+        loadingEl.hidden = true;
+        notFoundEl.hidden = false;
+        return;
+      }
+      currentIncident = row;
+      render(row, cachedUserEmail);
+    } catch (e) {
+      loadingEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load incident.');
+    }
+  }
+
+  printBtn.addEventListener('click', () => {
+    window.print();
+  });
+
+  deleteBtn.addEventListener('click', () => {
+    if (!currentIncident || !supabase) return;
+    if (!window.confirm(`Delete incident ${currentIncident.incident_code}? This cannot be undone.`)) return;
+    clearActionError();
+    deleteBtn.disabled = true;
+    const original = deleteBtn.textContent;
+    deleteBtn.textContent = 'Deleting…';
+    (async () => {
+      try {
+        const { error } = await supabase!
+          .from('incidents')
+          .delete()
+          .eq('id', currentIncident!.id);
+        if (error) throw error;
+        window.location.href = '/app/incidents';
+      } catch (e) {
+        showActionError(e instanceof Error ? e.message : 'Delete failed.');
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = original;
+      }
+    })();
+  });
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    loadingEl.hidden = true;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      cachedUserEmail = userData.user.email ?? null;
+      await load();
+    })().catch(() => {
+      loadingEl.hidden = true;
+      showError('Failed to load incident.');
+    });
+  }
+</script>
+
+<style>
+  .inc-detail-page { padding: 32px 0 64px; }
+  .inc-warning,
+  .inc-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .inc-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .inc-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .inc-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .inc-loading { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .inc-not-found {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 40px;
+    text-align: center;
+  }
+  .inc-not-found h1 { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+
+  .inc-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .inc-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .inc-code-inline {
+    color: var(--color-primary, #E58E1A);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 1.2rem;
+  }
+  .inc-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .inc-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .inc-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .inc-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .inc-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .inc-sev-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .inc-sev-firstaid { background: #E3F2FD; color: #1565C0; }
+  .inc-sev-minor    { background: #FFF7E6; color: #6A4A0F; }
+  .inc-sev-major    { background: #FFE0B2; color: #B0540E; }
+  .inc-sev-fatal    { background: #FDECEC; color: #8B1A1A; }
+  .inc-sev-other    { background: var(--color-bg-grey, #F4F4F4); color: var(--color-text-muted, #6A6A69); }
+
+  .inc-flag-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .inc-flag-yes { background: #E8F5E9; color: #1F7A4D; }
+  .inc-flag-no  { background: var(--color-bg-grey, #F4F4F4); color: var(--color-text-muted, #6A6A69); }
+
+  .inc-card {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .inc-card h2 {
+    font-size: 1.05rem;
+    font-weight: 900;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+
+  .inc-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  @media (max-width: 600px) { .inc-grid-2 { grid-template-columns: 1fr; } }
+  .inc-grid-full { grid-column: 1 / -1; }
+  .inc-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 4px;
+  }
+  .inc-block {
+    white-space: pre-wrap;
+    padding: 10px 12px;
+    background: var(--color-bg-grey, #F4F4F4);
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    font-size: 0.92rem;
+  }
+  .inc-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; word-break: break-all; }
+
+  .inc-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .inc-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .inc-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .inc-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .inc-secondary-btn.inc-danger { color: #8B1A1A; border-color: #C0392B; }
+  .inc-secondary-btn.inc-danger:hover:not(:disabled) { background: #FDECEC; }
+  .inc-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .inc-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+
+  .inc-disclosure {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .inc-disclosure-arrow { font-size: 0.85rem; }
+  .inc-meta-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    font-size: 0.88rem;
+  }
+  @media (max-width: 600px) { .inc-meta-body { grid-template-columns: 1fr; } }
+</style>

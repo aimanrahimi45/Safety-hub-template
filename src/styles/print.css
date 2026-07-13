@@ -1,0 +1,170 @@
+/* Print stylesheet for the PPE request detail page (src/pages/app/ppe/[id].astro).
+ *
+ * SHOs frequently need to print a PPE request and hand the paper copy to
+ * procurement, the warehouse, or the new hire's supervisor. This sheet
+ * strips the navigation / actions / error UI and lays out the request
+ * in a paper-friendly, 1cm-margin format.
+ *
+ * Anything that should NOT appear in print is tagged with `.no-print`
+ * (the top bar is hidden globally via the body class). Anything that
+ * should ONLY appear in print is tagged with `.ppe-print-only` (e.g.
+ * a paper title heading on the first card).
+ */
+
+@media print {
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  /* Hide the global app shell (top bar) and the body padding */
+  .app-page main {
+    padding: 0 !important;
+  }
+
+  /* Hide anything tagged as "no print": actions card, header buttons,
+     back link, error banners, the in-page status badge in the header
+     (we'll show a clean status line in the header text instead). */
+  .no-print,
+  #ppe-actions-card,
+  #ppe-setup-warning,
+  #ppe-error,
+  .ppe-error,
+  .ppe-loading,
+  .ppe-not-found,
+  nav,
+  header.app-top-bar,
+  .app-top-bar,
+  .ppe-header-actions,
+  button {
+    display: none !important;
+  }
+
+  /* The h1 status badge inside the header is also hidden; the status
+     is shown as text in the header's <p class="ppe-sub"> line via the
+     client script. */
+  .ppe-status-badge {
+    display: none !important;
+  }
+
+  /* Cards become clean paper sections, no border, no shadow. */
+  .ppe-detail-page,
+  .ppe-card,
+  .ppe-print-block {
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 0 12pt !important;
+  }
+
+  /* The first card gets a clean printed title above the body. */
+  .ppe-print-only {
+    display: block !important;
+    font-size: 18pt;
+    font-weight: 900;
+    margin: 0 0 8pt;
+    color: #000 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Header: stack title + sub, no badge, no buttons. */
+  .ppe-header {
+    display: block !important;
+    margin: 0 0 12pt !important;
+    border-bottom: 1pt solid #000;
+    padding-bottom: 6pt;
+  }
+  .ppe-header h1 {
+    font-size: 16pt;
+    margin: 0 0 4pt;
+    color: #000 !important;
+  }
+  .ppe-id {
+    color: #555 !important;
+    font-size: 12pt;
+  }
+  .ppe-sub {
+    color: #000 !important;
+    font-size: 10pt;
+    margin: 0;
+  }
+
+  /* Grid: 2 columns stays; labels are bold uppercase. */
+  .ppe-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6pt 16pt;
+  }
+  .ppe-label {
+    color: #555 !important;
+    font-size: 8pt;
+  }
+  .ppe-grid-full {
+    grid-column: 1 / -1;
+  }
+  .ppe-block {
+    background: transparent !important;
+    border: 1pt solid #ccc !important;
+    padding: 4pt 6pt !important;
+    font-size: 10pt;
+    white-space: pre-wrap;
+  }
+
+  /* Items table: keep it readable on paper, no zebra striping, simple
+     black borders. */
+  .ppe-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+  .ppe-items-table th,
+  .ppe-items-table td {
+    border: 0.5pt solid #999 !important;
+    padding: 4pt 6pt !important;
+    color: #000 !important;
+  }
+  .ppe-items-table th {
+    background: #eee !important;
+    font-size: 8.5pt;
+  }
+  .ppe-totals {
+    background: #f4f4f4 !important;
+    color: #000 !important;
+    font-size: 9pt;
+    font-weight: 700;
+    border-top: 0.5pt solid #000 !important;
+  }
+
+  /* Avoid awkward page breaks inside table rows / cards. */
+  .ppe-card,
+  .ppe-items-table tr,
+  .ppe-items-table thead,
+  .ppe-items-table tfoot {
+    page-break-inside: avoid;
+  }
+  h2 {
+    page-break-after: avoid;
+  }
+
+  /* Show URLs after links so a printed copy is traceable. */
+  a[href^="http"]::after,
+  a[href^="/"]::after {
+    content: "";
+  }
+}
+
+/* Outside print media, the .ppe-print-only label is hidden so the
+ * screen layout is unaffected. */
+.ppe-print-only {
+  display: none;
+}

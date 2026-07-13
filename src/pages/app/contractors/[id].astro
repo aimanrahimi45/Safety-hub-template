@@ -1,0 +1,586 @@
+---
+// Contractor company detail page.
+//
+// Shows the company info, list of inducted workers, and status
+// actions (mark inducted / suspend / reinstate / remove from
+// blacklist). Delete is allowed only when no induction_records
+// reference the company.
+import AppLayout from '../../../layouts/AppLayout.astro';
+
+export function getStaticPaths() {
+  return [{ params: { id: '_' } }];
+}
+---
+<AppLayout title="Contractor - AmerisPro">
+  <main class="ct-detail-page">
+    <div class="container">
+      <div id="ct-setup-warning" class="ct-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ct-error" class="ct-error" hidden></div>
+
+      <section id="ct-loading" class="ct-loading">
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="ct-not-found" class="ct-not-found" hidden>
+        <h1>Contractor not found</h1>
+        <p>This contractor doesn't exist, or you don't have permission to view it.</p>
+        <a href="/app/contractors" class="ct-link-btn">← Back to list</a>
+      </section>
+
+      <section id="ct-content" hidden>
+        <header class="ct-header">
+          <div>
+            <h1 id="ct-name">…</h1>
+            <p class="ct-sub" id="ct-sub">…</p>
+          </div>
+          <div class="ct-header-actions">
+            <a href="/app/contractors" class="ct-link-btn">← Back to list</a>
+            <span class="ct-status-badge" id="ct-status-badge">…</span>
+          </div>
+        </header>
+
+        <section class="ct-card">
+          <h2>Company information</h2>
+          <div class="ct-grid-2">
+            <div><span class="ct-label">Contact person</span><span id="ct-contact-person">…</span></div>
+            <div><span class="ct-label">Email</span><span id="ct-email">…</span></div>
+            <div><span class="ct-label">Phone</span><span id="ct-phone">…</span></div>
+            <div><span class="ct-label">Status</span><span id="ct-status">…</span></div>
+            <div><span class="ct-label">Valid from</span><span id="ct-valid-from">…</span></div>
+            <div><span class="ct-label">Valid until</span><span id="ct-valid-until">…</span></div>
+            <div class="ct-grid-full">
+              <span class="ct-label">Work scope</span>
+              <div class="ct-block" id="ct-scope">…</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="ct-card">
+          <div class="ct-card-head">
+            <h2>Workers inducted</h2>
+            <a id="ct-induct-link" href="#" class="ct-primary-btn">+ Induct new worker</a>
+          </div>
+          <div id="ct-workers-empty" class="ct-empty-inline" hidden>No workers inducted yet.</div>
+          <table id="ct-workers-table" class="ct-workers-table" hidden>
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">IC</th>
+                <th scope="col">Induction date</th>
+                <th scope="col">Expires</th>
+                <th scope="col">Photo</th>
+                <th scope="col">Signature</th>
+              </tr>
+            </thead>
+            <tbody id="ct-workers-tbody"></tbody>
+          </table>
+        </section>
+
+        <section class="ct-card">
+          <h2>Status actions</h2>
+          <div id="ct-action-error" class="ct-error" hidden></div>
+          <div class="ct-action-row">
+            <button type="button" id="ct-action-pending" class="ct-secondary-btn" hidden>Mark as inducted</button>
+            <button type="button" id="ct-action-suspend" class="ct-secondary-btn" hidden>Suspend contractor</button>
+            <button type="button" id="ct-action-reinstate" class="ct-secondary-btn" hidden>Reinstate</button>
+            <button type="button" id="ct-action-unblacklist" class="ct-secondary-btn" hidden>Remove from blacklist</button>
+            <button type="button" id="ct-delete" class="ct-secondary-btn ct-danger">Delete contractor</button>
+          </div>
+        </section>
+
+        <section class="ct-card">
+          <h2>
+            <button type="button" id="ct-meta-toggle" class="ct-disclosure" aria-expanded="false" aria-controls="ct-meta-body">
+              <span class="ct-disclosure-arrow" aria-hidden="true">▸</span>
+              Metadata
+            </button>
+          </h2>
+          <div id="ct-meta-body" class="ct-meta-body" hidden>
+            <div><span class="ct-label">UUID</span><code class="ct-mono" id="ct-uuid">…</code></div>
+            <div><span class="ct-label">Tenant ID</span><code class="ct-mono" id="ct-tenant">…</code></div>
+            <div><span class="ct-label">Created at</span><span id="ct-created">…</span></div>
+            <div><span class="ct-label">Updated at</span><span id="ct-updated">…</span></div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { Contractor, ContractorStatus, InductionRecord } from '../../../lib/types';
+
+  type Row = Contractor & { induction_records: InductionRecord[] };
+
+  const setupWarning = document.getElementById('ct-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ct-error') as HTMLElement;
+  const loadingEl = document.getElementById('ct-loading') as HTMLElement;
+  const notFoundEl = document.getElementById('ct-not-found') as HTMLElement;
+  const contentEl = document.getElementById('ct-content') as HTMLElement;
+
+  const nameEl = document.getElementById('ct-name') as HTMLElement;
+  const subEl = document.getElementById('ct-sub') as HTMLElement;
+  const statusBadgeEl = document.getElementById('ct-status-badge') as HTMLElement;
+  const contactPersonEl = document.getElementById('ct-contact-person') as HTMLElement;
+  const emailEl = document.getElementById('ct-email') as HTMLElement;
+  const phoneEl = document.getElementById('ct-phone') as HTMLElement;
+  const statusEl = document.getElementById('ct-status') as HTMLElement;
+  const validFromEl = document.getElementById('ct-valid-from') as HTMLElement;
+  const validUntilEl = document.getElementById('ct-valid-until') as HTMLElement;
+  const scopeEl = document.getElementById('ct-scope') as HTMLElement;
+  const inductLinkEl = document.getElementById('ct-induct-link') as HTMLAnchorElement;
+  const workersEmptyEl = document.getElementById('ct-workers-empty') as HTMLElement;
+  const workersTableEl = document.getElementById('ct-workers-table') as HTMLElement;
+  const workersTbodyEl = document.getElementById('ct-workers-tbody') as HTMLElement;
+  const metaToggle = document.getElementById('ct-meta-toggle') as HTMLButtonElement;
+  const metaBody = document.getElementById('ct-meta-body') as HTMLElement;
+  const metaArrow = metaToggle.querySelector('.ct-disclosure-arrow') as HTMLElement;
+  const uuidEl = document.getElementById('ct-uuid') as HTMLElement;
+  const tenantEl = document.getElementById('ct-tenant') as HTMLElement;
+  const createdEl = document.getElementById('ct-created') as HTMLElement;
+  const updatedEl = document.getElementById('ct-updated') as HTMLElement;
+
+  const actionError = document.getElementById('ct-action-error') as HTMLElement;
+  const actionPendingBtn = document.getElementById('ct-action-pending') as HTMLButtonElement;
+  const actionSuspendBtn = document.getElementById('ct-action-suspend') as HTMLButtonElement;
+  const actionReinstateBtn = document.getElementById('ct-action-reinstate') as HTMLButtonElement;
+  const actionUnblacklistBtn = document.getElementById('ct-action-unblacklist') as HTMLButtonElement;
+  const deleteBtn = document.getElementById('ct-delete') as HTMLButtonElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function showActionError(msg: string): void {
+    actionError.hidden = false;
+    actionError.textContent = msg;
+  }
+  function clearActionError(): void { actionError.hidden = true; actionError.textContent = ''; }
+
+  function escapeHtml(s: string | null | undefined): string {
+    return (s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatDateTime(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function statusLabel(s: ContractorStatus): string {
+    switch (s) {
+      case 'pending_induction': return 'Pending induction';
+      case 'inducted':          return 'Inducted';
+      case 'suspended':         return 'Suspended';
+      case 'blacklisted':       return 'Blacklisted';
+    }
+  }
+
+  function getContractorId(): string {
+    const path = window.location.pathname;
+    const m = path.match(/\/app\/contractors\/([^/]+)/);
+    return m ? m[1] : '';
+  }
+
+  function renderActions(status: ContractorStatus): void {
+    actionPendingBtn.hidden     = status !== 'pending_induction';
+    actionSuspendBtn.hidden     = status !== 'inducted';
+    actionReinstateBtn.hidden   = status !== 'suspended';
+    actionUnblacklistBtn.hidden = status !== 'blacklisted';
+  }
+
+  let currentContractor: Row | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  metaToggle.addEventListener('click', () => {
+    const expanded = metaToggle.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+      metaBody.hidden = true;
+      metaToggle.setAttribute('aria-expanded', 'false');
+      metaArrow.textContent = '▸';
+    } else {
+      metaBody.hidden = false;
+      metaToggle.setAttribute('aria-expanded', 'true');
+      metaArrow.textContent = '▾';
+    }
+  });
+
+  function render(c: Row): void {
+    currentContractor = c;
+    nameEl.textContent = c.company_name;
+    subEl.textContent = `${(c.induction_records ?? []).length} worker${(c.induction_records ?? []).length === 1 ? '' : 's'} inducted`;
+    statusBadgeEl.textContent = statusLabel(c.status);
+    statusBadgeEl.className = `ct-status-badge ct-status-${c.status}`;
+    contactPersonEl.textContent = c.contact_person ?? '—';
+    emailEl.textContent = c.contact_email ?? '—';
+    phoneEl.textContent = c.contact_phone ?? '—';
+    statusEl.textContent = statusLabel(c.status);
+    validFromEl.textContent = formatDate(c.valid_from);
+    validUntilEl.textContent = formatDate(c.valid_until);
+    scopeEl.textContent = c.work_scope ?? '—';
+    inductLinkEl.href = `/app/contractors/${c.id}/induct`;
+
+    const records = (c.induction_records ?? []).slice().sort((a, b) =>
+      (b.induction_date ?? '').localeCompare(a.induction_date ?? ''));
+    workersTbodyEl.innerHTML = '';
+    if (records.length === 0) {
+      workersEmptyEl.hidden = false;
+      workersTableEl.hidden = true;
+    } else {
+      workersEmptyEl.hidden = true;
+      workersTableEl.hidden = false;
+      for (const r of records) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(r.worker_name)}</td>
+          <td>${escapeHtml(r.worker_ic)}</td>
+          <td>${formatDate(r.induction_date)}</td>
+          <td>${formatDate(r.expires_at)}</td>
+          <td>${r.photo_url ? `<a href="${escapeHtml(r.photo_url)}" target="_blank" rel="noopener" class="ct-thumb-link">Photo</a>` : '—'}</td>
+          <td>${r.signature_url ? `<a href="${escapeHtml(r.signature_url)}" target="_blank" rel="noopener" class="ct-thumb-link">Signature</a>` : '—'}</td>
+        `;
+        workersTbodyEl.appendChild(tr);
+      }
+    }
+
+    uuidEl.textContent = c.id;
+    tenantEl.textContent = c.tenant_id;
+    createdEl.textContent = formatDateTime(c.created_at);
+    updatedEl.textContent = formatDateTime(c.updated_at);
+
+    renderActions(c.status);
+
+    loadingEl.hidden = true;
+    contentEl.hidden = false;
+  }
+
+  async function load(): Promise<void> {
+    if (!supabase) return;
+    const id = getContractorId();
+    if (!id || id === '_') {
+      loadingEl.hidden = true;
+      notFoundEl.hidden = false;
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('contractors')
+        .select('*, induction_records(*)')
+        .eq('id', id)
+        .maybeSingle<Row>();
+      if (error || !data) {
+        loadingEl.hidden = true;
+        notFoundEl.hidden = false;
+        return;
+      }
+      render(data);
+    } catch (e) {
+      loadingEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load contractor.');
+    }
+  }
+
+  async function setStatus(newStatus: ContractorStatus, confirmMsg: string): Promise<void> {
+    if (!currentContractor || !supabase) return;
+    if (!window.confirm(confirmMsg)) return;
+    clearActionError();
+    try {
+      const { data, error } = await supabase
+        .from('contractors')
+        .update({ status: newStatus })
+        .eq('id', currentContractor.id)
+        .select('*, induction_records(*)')
+        .single<Row>();
+      if (error) throw error;
+      render(data);
+    } catch (e) {
+      showActionError(e instanceof Error ? e.message : 'Status update failed.');
+    }
+  }
+
+  actionPendingBtn.addEventListener('click', () => {
+    void setStatus('inducted', 'Mark this contractor as inducted?');
+  });
+  actionSuspendBtn.addEventListener('click', () => {
+    void setStatus('suspended', 'Suspend this contractor? They will not appear in the IC lookup.');
+  });
+  actionReinstateBtn.addEventListener('click', () => {
+    void setStatus('inducted', 'Reinstate this contractor to inducted status?');
+  });
+  actionUnblacklistBtn.addEventListener('click', () => {
+    void setStatus('inducted', 'Remove this contractor from the blacklist?');
+  });
+
+  deleteBtn.addEventListener('click', () => {
+    if (!currentContractor || !supabase) return;
+    const workerCount = (currentContractor.induction_records ?? []).length;
+    if (workerCount > 0) {
+      if (!window.confirm(`This contractor has ${workerCount} inducted worker${workerCount === 1 ? '' : 's'}. Deleting is only allowed when there are no linked inductions. Abort?`)) {
+        return;
+      }
+      showActionError(`Cannot delete: ${workerCount} worker${workerCount === 1 ? '' : 's'} still linked. Mark them or contact support.`);
+      return;
+    }
+    if (!window.confirm(`Delete contractor "${currentContractor.company_name}"? This cannot be undone.`)) return;
+    clearActionError();
+    deleteBtn.disabled = true;
+    const original = deleteBtn.textContent;
+    deleteBtn.textContent = 'Deleting…';
+    (async () => {
+      try {
+        const { error } = await supabase!
+          .from('contractors')
+          .delete()
+          .eq('id', currentContractor!.id);
+        if (error) throw error;
+        window.location.href = '/app/contractors';
+      } catch (e) {
+        showActionError(e instanceof Error ? e.message : 'Delete failed.');
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = original;
+      }
+    })();
+  });
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    loadingEl.hidden = true;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      await load();
+    })().catch(() => {
+      loadingEl.hidden = true;
+      showError('Failed to load contractor.');
+    });
+  }
+</script>
+
+<style>
+  .ct-detail-page { padding: 32px 0 64px; }
+  .ct-warning,
+  .ct-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ct-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ct-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ct-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ct-loading { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .ct-not-found {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 40px;
+    text-align: center;
+  }
+  .ct-not-found h1 { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+
+  .ct-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .ct-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ct-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .ct-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ct-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ct-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ct-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .ct-status-pending_induction { background: #FFF7E6; color: #6A4A0F; }
+  .ct-status-inducted          { background: #E8F5E9; color: #1F7A4D; }
+  .ct-status-suspended         { background: #FDECEC; color: #8B1A1A; }
+  .ct-status-blacklisted       { background: #1E1E1D; color: #FFFFFF; }
+
+  .ct-card {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .ct-card h2 {
+    font-size: 1.05rem;
+    font-weight: 900;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .ct-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .ct-card-head h2 { margin: 0; }
+
+  .ct-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ct-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+
+  .ct-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  @media (max-width: 600px) { .ct-grid-2 { grid-template-columns: 1fr; } }
+  .ct-grid-full { grid-column: 1 / -1; }
+  .ct-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 4px;
+  }
+  .ct-block {
+    white-space: pre-wrap;
+    padding: 10px 12px;
+    background: var(--color-bg-grey, #F4F4F4);
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    font-size: 0.92rem;
+  }
+  .ct-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; word-break: break-all; }
+
+  .ct-workers-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .ct-workers-table th, .ct-workers-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+  .ct-workers-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .ct-empty-inline { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; padding: 12px 0; }
+  .ct-thumb-link {
+    color: var(--color-primary, #E58E1A);
+    text-decoration: none;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+  .ct-thumb-link:hover { text-decoration: underline; }
+
+  .ct-action-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ct-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .ct-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ct-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ct-secondary-btn.ct-danger { color: #8B1A1A; border-color: #C0392B; }
+  .ct-secondary-btn.ct-danger:hover:not(:disabled) { background: #FDECEC; }
+
+  .ct-disclosure {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ct-disclosure-arrow { font-size: 0.85rem; }
+  .ct-meta-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    font-size: 0.88rem;
+  }
+  @media (max-width: 600px) { .ct-meta-body { grid-template-columns: 1fr; } }
+</style>

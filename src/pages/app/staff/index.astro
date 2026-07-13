@@ -1,0 +1,921 @@
+---
+// Staff database — single page with 3 tabs: Roster, Add/Edit, Import.
+//
+// * Roster: search by employee_id / name / department / position;
+//   status filter (all / active / inactive); 15/page; sorted by
+//   full_name ASC. "Edit" opens the Add tab with the row pre-filled
+//   and the employee_id input disabled.
+// * Add/Edit: same form for both. Department is a free-text input
+//   backed by a <datalist> populated from the existing distinct
+//   department values in the tenant's staff table.
+// * Import: launches the generic Import Wizard (src/lib/importWizard.ts)
+//   and bulk-inserts in batches of 500. RLS auto-scopes to the
+//   current tenant.
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="Staff Database - AmerisPro">
+  <main class="staff-page">
+    <div class="container">
+      <div id="staff-setup-warning" class="staff-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="staff-error" class="staff-error" hidden></div>
+
+      <header class="staff-header">
+        <div>
+          <h1>Staff Database</h1>
+          <p class="staff-sub">Manage and import your employee roster.</p>
+        </div>
+      </header>
+
+      <nav class="staff-tabs" role="tablist" aria-label="Staff tabs">
+        <button type="button" class="staff-tab-btn active" data-tab="roster" role="tab" aria-selected="true" id="staff-tab-roster">📋 Roster</button>
+        <button type="button" class="staff-tab-btn" data-tab="add" role="tab" aria-selected="false" id="staff-tab-add">➕ Add Member</button>
+        <button type="button" class="staff-tab-btn" data-tab="import" role="tab" aria-selected="false" id="staff-tab-import">📥 Import Excel/CSV</button>
+      </nav>
+
+      <!-- ====================== TAB: ROSTER ====================== -->
+      <section id="staff-panel-roster" class="staff-panel active" role="tabpanel" aria-labelledby="staff-tab-roster">
+        <section class="staff-filters">
+          <label class="staff-filter-field staff-filter-grow">
+            <span>Search</span>
+            <input type="search" id="staff-filter-q" placeholder="Employee ID, name, department, or position" />
+          </label>
+          <label class="staff-filter-field">
+            <span>Status</span>
+            <select id="staff-filter-status">
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </label>
+          <div class="staff-filter-buttons">
+            <button type="button" id="staff-filter-apply" class="staff-secondary-btn">Apply</button>
+            <button type="button" id="staff-filter-clear" class="staff-secondary-btn">Clear</button>
+            <button type="button" id="staff-export-csv" class="staff-secondary-btn">📥 Export CSV</button>
+          </div>
+        </section>
+
+        <section id="staff-skeleton" class="staff-skeleton" hidden>
+          <div class="skel-row"></div>
+          <div class="skel-row"></div>
+          <div class="skel-row"></div>
+          <div class="skel-row"></div>
+        </section>
+
+        <section id="staff-table-wrap" hidden>
+          <div class="staff-table-scroll">
+            <table class="staff-table" aria-label="Staff roster">
+              <thead>
+                <tr>
+                  <th scope="col">Employee ID</th>
+                  <th scope="col">Full Name</th>
+                  <th scope="col">Department</th>
+                  <th scope="col">Position</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="staff-actions-col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="staff-tbody"></tbody>
+            </table>
+          </div>
+          <nav class="staff-pager" aria-label="Pagination">
+            <button type="button" id="staff-prev" class="staff-secondary-btn" disabled>← Previous</button>
+            <span class="staff-page-info" id="staff-page-info">Page 1</span>
+            <button type="button" id="staff-next" class="staff-secondary-btn" disabled>Next →</button>
+          </nav>
+        </section>
+
+        <section id="staff-empty" class="staff-empty" hidden>
+          <p>No staff records yet. Click "Add Member" or "Import" to get started.</p>
+        </section>
+      </section>
+
+      <!-- ====================== TAB: ADD / EDIT ====================== -->
+      <section id="staff-panel-add" class="staff-panel" role="tabpanel" aria-labelledby="staff-tab-add" hidden>
+        <h2 id="staff-form-title" class="staff-form-title">Add New Staff Member</h2>
+        <form id="staff-form" novalidate>
+          <div class="staff-row-2">
+            <label class="field">
+              <span class="field-label">Employee ID <em>*</em></span>
+              <input type="text" name="employee_id" id="staff-input-id" required placeholder="e.g. EMP-001" autocomplete="off" />
+              <span class="field-hint">The unique staff identifier (cannot be changed later).</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Full Name <em>*</em></span>
+              <input type="text" name="full_name" id="staff-input-name" required placeholder="e.g. Ahmad bin Ali" autocomplete="off" />
+            </label>
+          </div>
+          <div class="staff-row-2">
+            <label class="field">
+              <span class="field-label">Department <em>*</em></span>
+              <input type="text" name="department" id="staff-input-dept" required placeholder="e.g. Production" list="staff-dept-list" autocomplete="off" />
+              <datalist id="staff-dept-list"></datalist>
+              <span class="field-hint">Start typing to pick a previous value, or enter a new one.</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Position</span>
+              <input type="text" name="position" id="staff-input-pos" placeholder="e.g. Operator" autocomplete="off" />
+            </label>
+          </div>
+          <div class="staff-row-2">
+            <label class="field">
+              <span class="field-label">Email</span>
+              <input type="email" name="email" id="staff-input-email" placeholder="e.g. ahmad@example.com" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span class="field-label">Status</span>
+              <select name="is_active" id="staff-input-status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </label>
+          </div>
+          <div class="staff-form-actions">
+            <button type="button" id="staff-form-cancel" class="staff-secondary-btn">Cancel</button>
+            <button type="submit" id="staff-form-submit" class="staff-primary-btn">Save Staff Record</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ====================== TAB: IMPORT ====================== -->
+      <section id="staff-panel-import" class="staff-panel" role="tabpanel" aria-labelledby="staff-tab-import" hidden>
+        <div class="staff-import-card">
+          <div class="staff-import-icon" aria-hidden="true">📥</div>
+          <h2 class="staff-import-title">Import Staff List from Excel/CSV</h2>
+          <p class="staff-import-desc">
+            Upload a standard Excel file (<code>.xlsx</code>, <code>.xls</code>) or CSV file
+            exported from your HR database. The wizard will let you select the header row
+            and map columns to target fields (Employee ID, Name, Department, etc.). All
+            imported rows default to <strong>Active</strong>.
+          </p>
+          <button type="button" id="staff-launch-wizard" class="staff-primary-btn">⚡ Launch Import Wizard</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import { openImportWizard } from '../../../lib/importWizard';
+  import type { Staff } from '../../../lib/types';
+  import type { WizardField } from '../../../lib/types';
+
+  // -------------------------------------------------------------------
+  // Refs
+  // -------------------------------------------------------------------
+  const setupWarning = document.getElementById('staff-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('staff-error') as HTMLElement;
+
+  const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.staff-tab-btn'));
+  const tabPanels: Record<'roster' | 'add' | 'import', HTMLElement> = {
+    roster: document.getElementById('staff-panel-roster') as HTMLElement,
+    add: document.getElementById('staff-panel-add') as HTMLElement,
+    import: document.getElementById('staff-panel-import') as HTMLElement,
+  };
+  const formTitle = document.getElementById('staff-form-title') as HTMLElement;
+  const form = document.getElementById('staff-form') as HTMLFormElement;
+  const inputId = document.getElementById('staff-input-id') as HTMLInputElement;
+  const inputName = document.getElementById('staff-input-name') as HTMLInputElement;
+  const inputDept = document.getElementById('staff-input-dept') as HTMLInputElement;
+  const inputPos = document.getElementById('staff-input-pos') as HTMLInputElement;
+  const inputEmail = document.getElementById('staff-input-email') as HTMLInputElement;
+  const inputStatus = document.getElementById('staff-input-status') as HTMLSelectElement;
+  const submitBtn = document.getElementById('staff-form-submit') as HTMLButtonElement;
+  const cancelBtn = document.getElementById('staff-form-cancel') as HTMLButtonElement;
+  const deptList = document.getElementById('staff-dept-list') as HTMLDataListElement;
+  const launchWizardBtn = document.getElementById('staff-launch-wizard') as HTMLButtonElement;
+
+  const skelEl = document.getElementById('staff-skeleton') as HTMLElement;
+  const tableWrap = document.getElementById('staff-table-wrap') as HTMLElement;
+  const tbody = document.getElementById('staff-tbody') as HTMLElement;
+  const emptyEl = document.getElementById('staff-empty') as HTMLElement;
+  const filterQ = document.getElementById('staff-filter-q') as HTMLInputElement;
+  const filterStatus = document.getElementById('staff-filter-status') as HTMLSelectElement;
+  const applyBtn = document.getElementById('staff-filter-apply') as HTMLButtonElement;
+  const clearBtn = document.getElementById('staff-filter-clear') as HTMLButtonElement;
+  const prevBtn = document.getElementById('staff-prev') as HTMLButtonElement;
+  const nextBtn = document.getElementById('staff-next') as HTMLButtonElement;
+  const pageInfo = document.getElementById('staff-page-info') as HTMLElement;
+
+  // -------------------------------------------------------------------
+  // Constants & state
+  // -------------------------------------------------------------------
+  const PAGE_SIZE = 15;
+  let currentPage = 1;
+  let currentMaxPage = 1;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  /** UUID of the row being edited (null = create mode). */
+  let editingId: string | null = null;
+
+  // -------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+
+  function escapeHtml(s: string | null | undefined): string {
+    return (s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+  function truncate(s: string, n: number): string {
+    if (s.length <= n) return s;
+    return s.slice(0, n - 1).trimEnd() + '…';
+  }
+
+  function readFiltersFromUrl(): { page: number; q: string; status: string } {
+    const params = new URLSearchParams(window.location.search);
+    const pageRaw = params.get('page');
+    const page = pageRaw ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
+    const q = params.get('q') ?? '';
+    const status = params.get('status') ?? '';
+    if (q) filterQ.value = q;
+    if (status) filterStatus.value = status;
+    return { page, q, status };
+  }
+
+  function writeFiltersToUrl(page: number): void {
+    const params = new URLSearchParams(window.location.search);
+    if (page > 1) params.set('page', String(page)); else params.delete('page');
+    const q = filterQ.value.trim();
+    if (q) params.set('q', q); else params.delete('q');
+    const status = filterStatus.value;
+    if (status) params.set('status', status); else params.delete('status');
+    const qs = params.toString();
+    const url = window.location.pathname + (qs ? '?' + qs : '');
+    window.history.replaceState({}, '', url);
+  }
+
+  // -------------------------------------------------------------------
+  // Tab switching
+  // -------------------------------------------------------------------
+  function switchTab(tab: 'roster' | 'add' | 'import', opts: { resetForm?: boolean } = {}): void {
+    const { resetForm = true } = opts;
+    for (const btn of tabButtons) {
+      const isActive = btn.dataset.tab === tab;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    }
+    for (const [key, el] of Object.entries(tabPanels) as Array<['roster' | 'add' | 'import', HTMLElement]>) {
+      const isActive = key === tab;
+      el.hidden = !isActive;
+      el.classList.toggle('active', isActive);
+    }
+    if (tab === 'roster') {
+      void loadRoster();
+    } else if (tab === 'add' && resetForm) {
+      resetFormToCreate();
+    }
+  }
+
+  for (const btn of tabButtons) {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab as 'roster' | 'add' | 'import';
+      switchTab(tab);
+    });
+  }
+
+  // -------------------------------------------------------------------
+  // Roster
+  // -------------------------------------------------------------------
+  async function loadRoster(): Promise<void> {
+    if (!supabase) return;
+    skelEl.hidden = false;
+    tableWrap.hidden = true;
+    emptyEl.hidden = true;
+    const { page, q, status } = readFiltersFromUrl();
+    currentPage = page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const offsetEnd = offset + PAGE_SIZE - 1;
+
+    let query = supabase
+      .from('staff')
+      .select('*', { count: 'estimated' })
+      .order('full_name', { ascending: true });
+    if (status === 'active') query = query.eq('is_active', true);
+    if (status === 'inactive') query = query.eq('is_active', false);
+    if (q) {
+      // Single ilike across the 4 searchable fields; RLS already
+      // narrows to the caller's tenant.
+      query = query.or(
+        `employee_id.ilike.%${q}%,full_name.ilike.%${q}%,department.ilike.%${q}%,position.ilike.%${q}%`,
+      );
+    }
+    query = query.range(offset, offsetEnd);
+
+    try {
+      const { data, error, count } = await query;
+      if (error) throw error;
+      const rows = (data ?? []) as Staff[];
+      skelEl.hidden = true;
+
+      if (rows.length === 0) {
+        tableWrap.hidden = true;
+        emptyEl.hidden = false;
+        prevBtn.disabled = page <= 1;
+        nextBtn.disabled = true;
+        currentMaxPage = page;
+        pageInfo.textContent = `Page ${page}`;
+        return;
+      }
+      emptyEl.hidden = true;
+      tableWrap.hidden = false;
+
+      tbody.innerHTML = '';
+      for (const r of rows) {
+        const tr = document.createElement('tr');
+        const statusClass = r.is_active ? 'staff-status-active' : 'staff-status-inactive';
+        const statusLabel = r.is_active ? 'Active' : 'Inactive';
+        tr.innerHTML = `
+          <td class="staff-mono">${escapeHtml(r.employee_id)}</td>
+          <td><strong>${escapeHtml(r.full_name)}</strong></td>
+          <td>${escapeHtml(r.department)}</td>
+          <td>${escapeHtml(r.position)}</td>
+          <td class="staff-muted" title="${escapeHtml(r.email)}">${escapeHtml(truncate(r.email ?? '—', 36))}</td>
+          <td><span class="staff-status-badge ${statusClass}">${statusLabel}</span></td>
+          <td class="staff-actions-col">
+            <button type="button" class="staff-edit-btn" data-id="${r.id}" data-eid="${escapeHtml(r.employee_id)}">✏️ Edit</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      // Wire edit buttons.
+      tbody.querySelectorAll<HTMLButtonElement>('.staff-edit-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          const id = b.dataset.id;
+          if (id) void editStaffMember(id);
+        });
+      });
+
+      const total = count ?? null;
+      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (rows.length === PAGE_SIZE ? page + 1 : page);
+      currentMaxPage = maxPage;
+      prevBtn.disabled = page <= 1;
+      nextBtn.disabled = page >= maxPage;
+      pageInfo.textContent = total != null
+        ? `Page ${page} of ${maxPage} (${total} total)`
+        : `Page ${page}`;
+    } catch (e) {
+      skelEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load staff.');
+    }
+  }
+
+  applyBtn.addEventListener('click', () => {
+    currentPage = 1;
+    writeFiltersToUrl(1);
+    void loadRoster();
+  });
+  clearBtn.addEventListener('click', () => {
+    filterQ.value = '';
+    filterStatus.value = '';
+    currentPage = 1;
+    writeFiltersToUrl(1);
+    void loadRoster();
+  });
+  prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage -= 1;
+      writeFiltersToUrl(currentPage);
+      void loadRoster();
+    }
+  });
+  nextBtn.addEventListener('click', () => {
+    if (currentPage < currentMaxPage) {
+      currentPage += 1;
+      writeFiltersToUrl(currentPage);
+      void loadRoster();
+    }
+  });
+
+  const exportBtn = document.getElementById('staff-export-csv') as HTMLButtonElement;
+  exportBtn.addEventListener('click', () => {
+    window.location.href = '/api/export/staff.csv';
+  });
+
+  // -------------------------------------------------------------------
+  // Add / Edit form
+  // -------------------------------------------------------------------
+  function resetFormToCreate(): void {
+    editingId = null;
+    formTitle.textContent = 'Add New Staff Member';
+    inputId.disabled = false;
+    inputId.value = '';
+    inputName.value = '';
+    inputDept.value = '';
+    inputPos.value = '';
+    inputEmail.value = '';
+    inputStatus.value = 'active';
+    submitBtn.textContent = 'Save Staff Record';
+    submitBtn.disabled = false;
+  }
+
+  async function editStaffMember(id: string): Promise<void> {
+    if (!supabase) return;
+    clearError();
+    try {
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle<Staff>();
+      if (error) throw error;
+      if (!data) {
+        showError('Staff record not found.');
+        return;
+      }
+      editingId = data.id;
+      formTitle.textContent = `Edit Staff Member: ${data.full_name}`;
+      inputId.disabled = true;
+      inputId.value = data.employee_id;
+      inputName.value = data.full_name;
+      inputDept.value = data.department ?? '';
+      inputPos.value = data.position ?? '';
+      inputEmail.value = data.email ?? '';
+      inputStatus.value = data.is_active ? 'active' : 'inactive';
+      submitBtn.textContent = 'Save Changes';
+      switchTab('add', { resetForm: false });
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Failed to load staff record.');
+    }
+  }
+
+  cancelBtn.addEventListener('click', () => {
+    switchTab('roster');
+  });
+
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    if (!supabase) return;
+    clearError();
+
+    const employeeId = inputId.value.trim();
+    const fullName = inputName.value.trim();
+    const department = inputDept.value.trim();
+    const position = inputPos.value.trim() || null;
+    const email = inputEmail.value.trim() || null;
+    const isActive = inputStatus.value === 'active';
+
+    if (!employeeId) { showError('Employee ID is required.'); return; }
+    if (!fullName) { showError('Full name is required.'); return; }
+    if (!department) { showError('Department is required.'); return; }
+    if (email && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email)) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const original = submitBtn.textContent ?? 'Save';
+    submitBtn.textContent = 'Saving…';
+
+    (async () => {
+      try {
+        if (editingId) {
+          // UPDATE path — employee_id is immutable, status is_active, all others
+          // can change.
+          const updatePayload: Partial<Staff> = {
+            full_name: fullName,
+            department,
+            position,
+            email,
+            is_active: isActive,
+          };
+          const { error: updErr } = await supabase
+            .from('staff')
+            .update(updatePayload)
+            .eq('id', editingId);
+          if (updErr) throw updErr;
+          resetFormToCreate();
+          switchTab('roster', { resetForm: false });
+        } else {
+          // CREATE path — tenant_id auto-set by RLS WITH CHECK.
+          const insertPayload: Omit<Staff, 'id' | 'tenant_id' | 'created_at' | 'updated_at'> = {
+            employee_id: employeeId,
+            full_name: fullName,
+            department,
+            position,
+            email,
+            is_active: isActive,
+            phone: null,
+            join_date: null,
+            leave_date: null,
+          };
+          const { error: createErr } = await supabase
+            .from('staff')
+            .insert(insertPayload);
+          if (createErr) throw createErr;
+          resetFormToCreate();
+          switchTab('roster', { resetForm: false });
+        }
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Failed to save staff record.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = original;
+      }
+    })();
+  });
+
+  // -------------------------------------------------------------------
+  // Department autocomplete — query distinct, non-null department
+  // values from the staff table once on page load, dedupe client-side,
+  // and populate the <datalist>.
+  // -------------------------------------------------------------------
+  async function loadDepartmentSuggestions(): Promise<void> {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('staff')
+        .select('department')
+        .not('department', 'is', null);
+      if (error) throw error;
+      const set = new Set<string>();
+      for (const r of (data ?? []) as Array<{ department: string | null }>) {
+        if (r.department && r.department.trim()) set.add(r.department.trim());
+      }
+      const sorted = Array.from(set).sort((a, b) => a.localeCompare(b));
+      deptList.innerHTML = '';
+      for (const d of sorted) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        deptList.appendChild(opt);
+      }
+    } catch {
+      // Silently ignore — the datalist stays empty.
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // Import wizard
+  // -------------------------------------------------------------------
+  const STAFF_FIELDS: WizardField[] = [
+    { id: 'Employee ID', label: 'Employee ID', required: true, autoMatches: ['id', 'staff id', 'employee id', 'emp id', 'no card', 'no. card', 'no. kad', 'no kad', 'staff no', 'employee no'] },
+    { id: 'Name', label: 'Name', required: true, autoMatches: ['name', 'full name', 'employee name', 'staff name', 'nama', 'nama penuh'] },
+    { id: 'Department', label: 'Department', required: false, autoMatches: ['dept', 'department', 'bahagian', 'unit', 'section'] },
+    { id: 'Position', label: 'Position', required: false, autoMatches: ['role', 'position', 'designation', 'job title', 'jawatan', 'title'] },
+    { id: 'Email', label: 'Email', required: false, autoMatches: ['email', 'e-mail', 'email address', 'e mail'] },
+  ];
+
+  async function handleImport(mappedRows: Record<string, string>[]): Promise<void> {
+    if (!supabase) return;
+    // Transform wizard output (string keys) to the Supabase staff
+    // schema. tenant_id auto-set by RLS. is_active defaults to true
+    // for all imported rows (per product decision).
+    const rows = mappedRows.map((r) => ({
+      employee_id: (r['Employee ID'] ?? '').trim(),
+      full_name: (r['Name'] ?? '').trim(),
+      department: r['Department']?.trim() || null,
+      position: r['Position']?.trim() || null,
+      email: r['Email']?.trim() || null,
+      is_active: true,
+      phone: null,
+      join_date: null,
+      leave_date: null,
+    }));
+
+    // Reject rows that have a missing required field at the wizard
+    // boundary (the wizard already enforces this, but defence in
+    // depth — better to surface a clear error than ship a 400).
+    const bad = rows.findIndex((r) => !r.employee_id || !r.full_name);
+    if (bad >= 0) {
+      throw new Error(`Row ${bad + 1} is missing Employee ID or Name — fix the mapping and try again.`);
+    }
+
+    // Batch insert at 500 rows (Supabase's hard cap is 1000 per
+    // request, 500 leaves headroom for URL/JSON overhead).
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      const { error } = await supabase.from('staff').insert(batch);
+      if (error) {
+        const n = Math.floor(i / BATCH_SIZE) + 1;
+        throw new Error(`Batch ${n} failed: ${error.message}`);
+      }
+    }
+
+    // The wizard closes on success; switch to roster and refresh.
+    // Use a microtask delay so the wizard's close animation finishes
+    // before we trigger alert/tab switch.
+    window.setTimeout(() => {
+      window.alert(`Imported ${rows.length} staff record${rows.length === 1 ? '' : 's'}.`);
+      currentPage = 1;
+      writeFiltersToUrl(1);
+      switchTab('roster', { resetForm: false });
+      void loadDepartmentSuggestions();
+    }, 50);
+  }
+
+  launchWizardBtn.addEventListener('click', () => {
+    openImportWizard({
+      title: 'Import Staff Roster',
+      fields: STAFF_FIELDS,
+      onComplete: (rows) => handleImport(rows),
+    });
+  });
+
+  // -------------------------------------------------------------------
+  // Bootstrap
+  // -------------------------------------------------------------------
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    submitBtn.disabled = true;
+    launchWizardBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      await Promise.all([loadRoster(), loadDepartmentSuggestions()]);
+    })().catch(() => {
+      showError('Failed to initialise staff page.');
+    });
+  }
+</script>
+
+<style>
+  .staff-page { padding: 32px 0 64px; }
+  .staff-warning,
+  .staff-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .staff-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .staff-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .staff-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .staff-header { margin-bottom: 20px; }
+  .staff-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .staff-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+
+  /* Tabs */
+  .staff-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--color-border, #E0E0E0);
+  }
+  .staff-tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    cursor: pointer;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .staff-tab-btn:hover { color: var(--color-primary, #E58E1A); }
+  .staff-tab-btn.active {
+    color: var(--color-primary, #E58E1A);
+    border-bottom-color: var(--color-primary, #E58E1A);
+  }
+  .staff-panel { padding: 8px 0 0; }
+  .staff-panel[hidden] { display: none; }
+
+  /* Buttons */
+  .staff-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .staff-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .staff-primary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .staff-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .staff-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .staff-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Filters */
+  .staff-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .staff-filter-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; }
+  .staff-filter-grow { flex: 1 1 240px; }
+  .staff-filter-field input,
+  .staff-filter-field select {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: var(--color-bg, #fff);
+    min-width: 160px;
+  }
+  .staff-filter-field input:focus,
+  .staff-filter-field select:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .staff-filter-buttons { display: flex; gap: 6px; }
+
+  /* Skeleton */
+  .staff-skeleton { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  /* Table */
+  .staff-table-scroll { overflow-x: auto; }
+  .staff-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.85rem;
+  }
+  .staff-table th, .staff-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    vertical-align: top;
+  }
+  .staff-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    white-space: nowrap;
+  }
+  .staff-table tbody tr:hover { background: #FAFAFA; }
+  .staff-mono { font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+  .staff-muted { color: var(--color-text-muted, #6A6A69); }
+  .staff-actions-col { white-space: nowrap; text-align: right; }
+
+  .staff-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .staff-status-active { background: #E8F5E9; color: #1F7A4D; }
+  .staff-status-inactive { background: var(--color-bg-grey, #F4F4F4); color: var(--color-text-muted, #6A6A69); }
+
+  .staff-edit-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-primary, #E58E1A);
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .staff-edit-btn:hover { background: var(--color-primary, #E58E1A); color: #fff; }
+
+  .staff-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .staff-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
+
+  .staff-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted, #6A6A69);
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+
+  /* Form */
+  .staff-form-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border, #E0E0E0);
+  }
+  .staff-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .staff-row-2 { grid-template-columns: 1fr; } }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
+  .field-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 4px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus, .field select:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .field input:disabled {
+    background: var(--color-bg-grey, #F4F4F4);
+    color: var(--color-text-muted, #6A6A69);
+    cursor: not-allowed;
+  }
+
+  .staff-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* Import */
+  .staff-import-card {
+    padding: 50px 24px;
+    text-align: center;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+  .staff-import-icon { font-size: 3.5rem; margin-bottom: 12px; }
+  .staff-import-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .staff-import-desc {
+    max-width: 560px;
+    margin: 0 auto 24px;
+    color: var(--color-text-muted, #6A6A69);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .staff-import-desc code {
+    background: var(--color-bg-grey, #F4F4F4);
+    padding: 1px 4px;
+    font-size: 0.85em;
+  }
+</style>

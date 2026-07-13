@@ -1,0 +1,1147 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+<AppLayout title="Compliance - AmerisPro">
+  <main class="compliance-page">
+    <div class="container">
+      <div id="cmp-setup-warning" class="cmp-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="cmp-error" class="cmp-error" hidden></div>
+
+      <header class="cmp-header">
+        <div>
+          <h1>🛡️ OSH Compliance Register</h1>
+          <p class="cmp-sub">Match your site activities to Malaysian OSH law and generate your legal register.</p>
+        </div>
+      </header>
+
+      <nav class="cmp-tabs" role="tablist" aria-label="Compliance tabs">
+        <button type="button" class="cmp-tab-btn active" data-tab="profiler" role="tab" aria-selected="true" id="cmp-tab-profiler">📋 Setup Profiler</button>
+        <button type="button" class="cmp-tab-btn" data-tab="register" role="tab" aria-selected="false" id="cmp-tab-register">⚡ Active Checklist</button>
+        <button type="button" class="cmp-tab-btn" data-tab="policy" role="tab" aria-selected="false" id="cmp-tab-policy">⚖️ Policy Standards</button>
+        <button type="button" class="cmp-tab-btn cmp-tab-premium" data-tab="search" role="tab" aria-selected="false" id="cmp-tab-search" hidden>🔍 AI Legal Search</button>
+      </nav>
+
+      <!-- ====================== TAB: SETUP PROFILER ====================== -->
+      <section id="cmp-panel-profiler" class="cmp-panel active" role="tabpanel" aria-labelledby="cmp-tab-profiler">
+        <div class="cmp-section-intro">
+          <h2>Operational Safety Profiler</h2>
+          <p>Enter your facility's baseline metrics and operational activities. The OSH engine will automatically compile and filter your custom compliance register.</p>
+        </div>
+
+        <form id="cmp-profile-form" class="cmp-form" novalidate>
+          <h3 class="cmp-form-h3">🏢 Site Baseline Profile</h3>
+          <div class="cmp-row-2">
+            <label class="field">
+              <span class="field-label">Employee Headcount</span>
+              <input type="number" name="headcount" id="cmp-input-headcount" min="0" placeholder="e.g. 150" />
+              <span class="field-hint">Optional. Used to scale certain SHO / committee thresholds.</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Industry Sector</span>
+              <select name="industry" id="cmp-input-industry">
+                <option value="other">General Offices &amp; Services</option>
+                <option value="manufacturing">Manufacturing</option>
+                <option value="construction">Construction &amp; Engineering</option>
+                <option value="shipbuilding">Ship Building &amp; Repair</option>
+                <option value="utilities">Utilities (Water, Gas, Electricity)</option>
+                <option value="agriculture">Agriculture / Forestry / Logging</option>
+              </select>
+            </label>
+          </div>
+
+          <h3 class="cmp-form-h3 cmp-mt">⚠️ Environment &amp; Hazard Exposures</h3>
+          <div class="cmp-checks">
+            <label class="cmp-check">
+              <input type="checkbox" name="hazard_noise" id="cmp-hazard-noise" />
+              <span>🔊 Excessive Noise Area (employees exposed to &gt;82 dBA or equivalent)</span>
+            </label>
+            <label class="cmp-check">
+              <input type="checkbox" name="hazard_chemicals" id="cmp-hazard-chemicals" />
+              <span>🧪 Hazardous Chemical Handling, Storage, or Supply</span>
+            </label>
+            <label class="cmp-check">
+              <input type="checkbox" name="hazard_machinery" id="cmp-hazard-machinery" />
+              <span>⚙️ Machinery Requiring Certificate of Fitness (e.g. Boilers, Lifts, Pressure Vessels)</span>
+            </label>
+            <label class="cmp-check">
+              <input type="checkbox" name="hazard_lifting" id="cmp-hazard-lifting" />
+              <span>🛗 Lifting Machinery operation (Passenger Lifts, Escalators, Cranes, Hoists)</span>
+            </label>
+            <label class="cmp-check">
+              <input type="checkbox" name="hazard_toxic" id="cmp-hazard-toxic" />
+              <span>😷 Specialized Toxic Exposure (Asbestos, Lead, or Silica Dust handling)</span>
+            </label>
+            <label class="cmp-check">
+              <input type="checkbox" name="hazard_radiation" id="cmp-hazard-radiation" />
+              <span>☢️ Ionizing or Non-Ionizing Radiation Source handling</span>
+            </label>
+          </div>
+
+          <h3 class="cmp-form-h3 cmp-mt">🪜 Special Site Operations</h3>
+          <div class="cmp-grid-options">
+            <button type="button" class="cmp-profile-card" data-id="heights" aria-pressed="false">
+              <div class="cmp-card-header"><span class="cmp-card-icon">🪜</span><div class="cmp-checkbox-custom"></div></div>
+              <h4>Working at Heights</h4>
+              <p>Includes tasks above 2m elevation, scaffolding, or harness installations.</p>
+            </button>
+            <button type="button" class="cmp-profile-card" data-id="confined" aria-pressed="false">
+              <div class="cmp-card-header"><span class="cmp-card-icon">🕳️</span><div class="cmp-checkbox-custom"></div></div>
+              <h4>Confined Spaces</h4>
+              <p>Work inside tanks, silos, sewers, requiring gas testers and entry permits.</p>
+            </button>
+            <button type="button" class="cmp-profile-card" data-id="gig" aria-pressed="false">
+              <div class="cmp-card-header"><span class="cmp-card-icon">🛵</span><div class="cmp-checkbox-custom"></div></div>
+              <h4>Gig Delivery &amp; Riders</h4>
+              <p>Employs or manages gig delivery riders or compounding road transport safety rules.</p>
+            </button>
+            <button type="button" class="cmp-profile-card" data-id="petroleum" aria-pressed="false">
+              <div class="cmp-card-header"><span class="cmp-card-icon">🛢️</span><div class="cmp-checkbox-custom"></div></div>
+              <h4>Fuel &amp; Petroleum Storage</h4>
+              <p>Bulk storage, carriage, pipelines, or handling of petroleum-related fuels.</p>
+            </button>
+            <button type="button" class="cmp-profile-card" data-id="transport" aria-pressed="false">
+              <div class="cmp-card-header"><span class="cmp-card-icon">🚚</span><div class="cmp-checkbox-custom"></div></div>
+              <h4>Commercial Vehicle Fleet</h4>
+              <p>Company logistics, transport trucks, delivery vehicles, driver fatigue policies.</p>
+            </button>
+          </div>
+
+          <div class="cmp-form-actions">
+            <span id="cmp-profile-saved" class="cmp-saved-hint" hidden></span>
+            <button type="submit" id="cmp-profile-save" class="cmp-primary-btn">💾 Save Profile</button>
+            <button type="button" id="cmp-profile-generate" class="cmp-primary-btn cmp-primary-btn-accent" hidden>⚡ Generate Legal Register</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ====================== TAB: ACTIVE CHECKLIST ====================== -->
+      <section id="cmp-panel-register" class="cmp-panel" role="tabpanel" aria-labelledby="cmp-tab-register" hidden>
+        <div class="cmp-register-header">
+          <div>
+            <h2>Active Legal Registry</h2>
+            <p class="cmp-register-summary" id="cmp-register-summary">Generate your register from the Setup Profiler tab. We'll match your site activities against Malaysian OSH law.</p>
+          </div>
+          <div class="cmp-register-actions">
+            <button type="button" class="cmp-secondary-btn" id="cmp-export-register">📥 Export CSV</button>
+            <button type="button" class="cmp-secondary-btn" data-jump="profiler">✏️ Modify Profile</button>
+          </div>
+        </div>
+
+        <div id="cmp-register-content">
+          <div class="cmp-empty">
+            <div class="cmp-empty-icon">⚡</div>
+            <h3>No register yet</h3>
+            <p>Save your profile on the Setup Profiler tab, then click <strong>Generate Legal Register</strong> to match your site activities against Malaysian OSH law.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== TAB: POLICY STANDARDS ====================== -->
+      <section id="cmp-panel-policy" class="cmp-panel" role="tabpanel" aria-labelledby="cmp-tab-policy" hidden>
+        <div class="cmp-register-header">
+          <div>
+            <h2>Corporate Governance &amp; Policies</h2>
+            <p class="cmp-register-summary">Read-only OSH whistleblower protections, employee rights, and company governance standards from the Malaysian OSH corpus.</p>
+          </div>
+          <button type="button" class="cmp-secondary-btn" data-jump="profiler">✏️ Modify Profile</button>
+        </div>
+
+        <div id="cmp-policy-content">
+          <div class="cmp-policy-grid">
+            <article class="cmp-policy-card">
+              <div class="cmp-policy-icon">🛡️</div>
+              <h3>Whistleblower Protection</h3>
+              <p>Statutory protections for employees who report unsafe work conditions or non-compliance, including prohibitions on retaliation and dismissal.</p>
+              <span class="cmp-policy-cite">USECHH 2000 · OSHA 1994</span>
+            </article>
+            <article class="cmp-policy-card">
+              <div class="cmp-policy-icon">📜</div>
+              <h3>Employee Rights</h3>
+              <p>Right to refuse unsafe work, right to information about workplace hazards, and right to be represented on the Safety &amp; Health Committee.</p>
+              <span class="cmp-policy-cite">OSHA 1994 §15</span>
+            </article>
+            <article class="cmp-policy-card">
+              <div class="cmp-policy-icon">👥</div>
+              <h3>Safety Committee Requirements</h3>
+              <p>Establishment, composition, and operation of workplace safety committees for sites with 40+ employees or as required by sectoral rules.</p>
+              <span class="cmp-policy-cite">OSHA 1994 §30</span>
+            </article>
+            <article class="cmp-policy-card">
+              <div class="cmp-policy-icon">🏛️</div>
+              <h3>Employer Duties</h3>
+              <p>General duty of care to ensure, so far as is reasonably practicable, the safety, health, and welfare at work of all employees.</p>
+              <span class="cmp-policy-cite">OSHA 1994 §15(1)</span>
+            </article>
+            <article class="cmp-policy-card">
+              <div class="cmp-policy-icon">📣</div>
+              <h3>Reporting Obligations</h3>
+              <p>Notification of accidents, dangerous occurrences, and occupational diseases to the Department of Occupational Safety &amp; Health (DOSH/JKKP).</p>
+              <span class="cmp-policy-cite">OSHA 1994 §51</span>
+            </article>
+          </div>
+          <p class="cmp-policy-note">Static policy overview. Future versions will pull the actual clause text from the legal corpus and display it inline with citations.</p>
+        </div>
+      </section>
+
+      <!-- ====================== TAB: AI LEGAL SEARCH (PREMIUM) ====================== -->
+      <section id="cmp-panel-search" class="cmp-panel" role="tabpanel" aria-labelledby="cmp-tab-search" hidden>
+        <div class="cmp-search-area">
+          <h2>AI-Powered OSH Search</h2>
+          <p>Type a natural-language question to similarity-match against the Malaysian OSH corpus (e.g. <em>"What are safety duties for crane operators?"</em>).</p>
+          <div class="cmp-search-input-group">
+            <input type="text" id="cmp-search-query" placeholder="Search safety rules…" autocomplete="off" />
+            <button type="button" class="cmp-primary-btn" id="cmp-search-btn">🔎 Search</button>
+          </div>
+        </div>
+
+        <div id="cmp-search-results"></div>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+  import { buildCsv } from '../../lib/csvExport';
+  import type { CsvColumn } from '../../lib/csvExport';
+  import type { TenantProfile, ComplianceRegisterItem, AiSummaryResponse, LegalSearchResult } from '../../lib/types';
+
+  // Expose the public Supabase URL+anon key to the browser-side AI
+  // Search. These PUBLIC_* env vars are intentionally public — the
+  // legal data is global Malaysian OSH law with no secrets, and RLS
+  // is OFF on Project A's public tables.
+  (window as unknown as { __PUBLIC_SUPABASE_URL__: string }).__PUBLIC_SUPABASE_URL__ =
+    import.meta.env.PUBLIC_SUPABASE_PUBLIC_URL ?? '';
+  (window as unknown as { __PUBLIC_SUPABASE_ANON_KEY__: string }).__PUBLIC_SUPABASE_ANON_KEY__ =
+    import.meta.env.PUBLIC_SUPABASE_PUBLIC_ANON_KEY ?? '';
+
+  // -------------------------------------------------------------------
+  // Refs
+  // -------------------------------------------------------------------
+  const setupWarning = document.getElementById('cmp-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('cmp-error') as HTMLElement;
+  const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.cmp-tab-btn'));
+  const searchTabBtn = document.getElementById('cmp-tab-search') as HTMLButtonElement;
+
+  const tabPanels: Record<'profiler' | 'register' | 'policy' | 'search', HTMLElement> = {
+    profiler: document.getElementById('cmp-panel-profiler') as HTMLElement,
+    register: document.getElementById('cmp-panel-register') as HTMLElement,
+    policy: document.getElementById('cmp-panel-policy') as HTMLElement,
+    search: document.getElementById('cmp-panel-search') as HTMLElement,
+  };
+
+  const form = document.getElementById('cmp-profile-form') as HTMLFormElement;
+  const inputHeadcount = document.getElementById('cmp-input-headcount') as HTMLInputElement;
+  const inputIndustry = document.getElementById('cmp-input-industry') as HTMLSelectElement;
+  const hazardIds = ['noise', 'chemicals', 'machinery', 'lifting', 'toxic', 'radiation'] as const;
+  const hazardChecks: Record<typeof hazardIds[number], HTMLInputElement> = {
+    noise: document.getElementById('cmp-hazard-noise') as HTMLInputElement,
+    chemicals: document.getElementById('cmp-hazard-chemicals') as HTMLInputElement,
+    machinery: document.getElementById('cmp-hazard-machinery') as HTMLInputElement,
+    lifting: document.getElementById('cmp-hazard-lifting') as HTMLInputElement,
+    toxic: document.getElementById('cmp-hazard-toxic') as HTMLInputElement,
+    radiation: document.getElementById('cmp-hazard-radiation') as HTMLInputElement,
+  };
+  const saveBtn = document.getElementById('cmp-profile-save') as HTMLButtonElement;
+  const generateBtn = document.getElementById('cmp-profile-generate') as HTMLButtonElement;
+  const savedHint = document.getElementById('cmp-profile-saved') as HTMLElement;
+  const profileCards = Array.from(document.querySelectorAll<HTMLButtonElement>('.cmp-profile-card'));
+  const registerSummary = document.getElementById('cmp-register-summary') as HTMLElement;
+  const registerContent = document.getElementById('cmp-register-content') as HTMLElement;
+
+  const searchQuery = document.getElementById('cmp-search-query') as HTMLInputElement;
+  const searchBtn = document.getElementById('cmp-search-btn') as HTMLButtonElement;
+  const searchResults = document.getElementById('cmp-search-results') as HTMLElement;
+
+  // -------------------------------------------------------------------
+  // State
+  // -------------------------------------------------------------------
+  const REGISTER_STORAGE_KEY = 'amerispro_compliance_register_v1';
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  let tenantId: string | null = null;
+  let isPremium = false;
+  let lastSearchResults: LegalSearchResult[] = [];
+
+  // -------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+
+  function escapeHtml(s: string | null | undefined): string {
+    return (s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function profileFromForm(): TenantProfile {
+    const operations = profileCards
+      .filter((c) => c.classList.contains('selected'))
+      .map((c) => c.dataset.id)
+      .filter((s): s is string => typeof s === 'string');
+    const headcountRaw = inputHeadcount.value.trim();
+    const headcount = headcountRaw === '' ? null : Math.max(0, parseInt(headcountRaw, 10) || 0);
+    return {
+      industry: inputIndustry.value || null,
+      headcount,
+      hazards: {
+        noise: hazardChecks.noise.checked,
+        chemicals: hazardChecks.chemicals.checked,
+        machinery: hazardChecks.machinery.checked,
+        lifting: hazardChecks.lifting.checked,
+        toxic: hazardChecks.toxic.checked,
+        radiation: hazardChecks.radiation.checked,
+      },
+      operations,
+    };
+  }
+
+  function applyProfileToForm(p: {
+    industry: string | null;
+    headcount: number | null;
+    hazard_noise: boolean;
+    hazard_chemicals: boolean;
+    hazard_machinery: boolean;
+    hazard_lifting: boolean;
+    hazard_toxic: boolean;
+    hazard_radiation: boolean;
+    operations: string[];
+  }): void {
+    inputIndustry.value = p.industry ?? 'other';
+    inputHeadcount.value = p.headcount != null ? String(p.headcount) : '';
+    hazardChecks.noise.checked = p.hazard_noise;
+    hazardChecks.chemicals.checked = p.hazard_chemicals;
+    hazardChecks.machinery.checked = p.hazard_machinery;
+    hazardChecks.lifting.checked = p.hazard_lifting;
+    hazardChecks.toxic.checked = p.hazard_toxic;
+    hazardChecks.radiation.checked = p.hazard_radiation;
+    const selected = new Set(p.operations ?? []);
+    for (const card of profileCards) {
+      const id = card.dataset.id ?? '';
+      const on = selected.has(id);
+      card.classList.toggle('selected', on);
+      card.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
+
+  function profileToDbRow(p: TenantProfile) {
+    return {
+      industry: p.industry,
+      headcount: p.headcount,
+      hazard_noise: p.hazards.noise,
+      hazard_chemicals: p.hazards.chemicals,
+      hazard_machinery: p.hazards.machinery,
+      hazard_lifting: p.hazards.lifting,
+      hazard_toxic: p.hazards.toxic,
+      hazard_radiation: p.hazards.radiation,
+      operations: p.operations,
+    };
+  }
+
+  function dbRowToProfile(r: Record<string, unknown>): {
+    industry: string | null;
+    headcount: number | null;
+    hazard_noise: boolean;
+    hazard_chemicals: boolean;
+    hazard_machinery: boolean;
+    hazard_lifting: boolean;
+    hazard_toxic: boolean;
+    hazard_radiation: boolean;
+    operations: string[];
+  } {
+    return {
+      industry: typeof r.industry === 'string' ? r.industry : null,
+      headcount: typeof r.headcount === 'number' ? r.headcount : null,
+      hazard_noise: r.hazard_noise === true,
+      hazard_chemicals: r.hazard_chemicals === true,
+      hazard_machinery: r.hazard_machinery === true,
+      hazard_lifting: r.hazard_lifting === true,
+      hazard_toxic: r.hazard_toxic === true,
+      hazard_radiation: r.hazard_radiation === true,
+      operations: Array.isArray(r.operations) ? (r.operations as string[]) : [],
+    };
+  }
+
+  // -------------------------------------------------------------------
+  // Tab switching
+  // -------------------------------------------------------------------
+  function switchTab(tab: 'profiler' | 'register' | 'policy' | 'search'): void {
+    if (tab === 'search' && !isPremium) {
+      // Defence in depth: the tab button is hidden, but if someone
+      // clicks via dev tools we still bail.
+      return;
+    }
+    for (const btn of tabButtons) {
+      const isActive = btn.dataset.tab === tab;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    }
+    for (const [key, el] of Object.entries(tabPanels) as Array<[keyof typeof tabPanels, HTMLElement]>) {
+      const isActive = key === tab;
+      el.hidden = !isActive;
+      el.classList.toggle('active', isActive);
+    }
+    if (tab === 'register') {
+      // Render cached register from sessionStorage if present.
+      const cached = readRegister();
+      if (cached && cached.length > 0) {
+        renderRegister(cached);
+      }
+    }
+  }
+
+  for (const btn of tabButtons) {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab as 'profiler' | 'register' | 'policy' | 'search';
+      switchTab(tab);
+    });
+  }
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-jump]')) {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.jump as 'profiler' | 'register' | 'policy';
+      switchTab(t);
+    });
+  }
+
+  // -------------------------------------------------------------------
+  // Profile cards (operations)
+  // -------------------------------------------------------------------
+  for (const card of profileCards) {
+    card.addEventListener('click', () => {
+      const on = card.classList.toggle('selected');
+      card.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // -------------------------------------------------------------------
+  // Save profile
+  // -------------------------------------------------------------------
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (!supabase || !tenantId) return;
+    clearError();
+
+    const profile = profileFromForm();
+    if (profile.headcount !== null && profile.headcount < 0) {
+      showError('Headcount must be 0 or positive.');
+      return;
+    }
+
+    saveBtn.disabled = true;
+    const original = saveBtn.textContent ?? 'Save';
+    saveBtn.textContent = 'Saving…';
+
+    try {
+      const { error } = await supabase
+        .from('tenants')
+        .update(profileToDbRow(profile))
+        .eq('id', tenantId);
+      if (error) throw error;
+
+      savedHint.hidden = false;
+      savedHint.textContent = `✅ Profile saved (${new Date().toLocaleString()}).`;
+      generateBtn.hidden = false;
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Failed to save profile.');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+
+  // -------------------------------------------------------------------
+  // Generate register
+  // -------------------------------------------------------------------
+  generateBtn.addEventListener('click', async () => {
+    if (!supabase || !tenantId) return;
+    clearError();
+
+    const profile = profileFromForm();
+    if (profile.operations.length === 0 &&
+        !profile.hazards.noise && !profile.hazards.chemicals &&
+        !profile.hazards.machinery && !profile.hazards.lifting &&
+        !profile.hazards.toxic && !profile.hazards.radiation) {
+      showError('Select at least one operation or hazard before generating.');
+      return;
+    }
+
+    generateBtn.disabled = true;
+    const originalText = generateBtn.textContent ?? 'Generate';
+    generateBtn.textContent = '🔄 Generating…';
+    registerContent.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔄</div><h3>Matching your site against Malaysian OSH law…</h3></div>';
+    switchTab('register');
+
+    try {
+      const resp = await fetch('/api/generate-register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ profile }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error ?? `HTTP ${resp.status}`);
+      }
+      const data = (await resp.json()) as { items: ComplianceRegisterItem[] };
+      const items = Array.isArray(data.items) ? data.items : [];
+      writeRegister(items);
+      renderRegister(items);
+    } catch (e) {
+      registerContent.innerHTML = `<div class="cmp-empty" style="color:#8B1A1A;"><div class="cmp-empty-icon">❌</div><h3>Failed to generate register</h3><p>${escapeHtml(e instanceof Error ? e.message : 'Unknown error')}</p></div>`;
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = originalText;
+    }
+  });
+
+  // -------------------------------------------------------------------
+  // Register rendering
+  // -------------------------------------------------------------------
+  function readRegister(): ComplianceRegisterItem[] | null {
+    try {
+      const raw = sessionStorage.getItem(REGISTER_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      return parsed as ComplianceRegisterItem[];
+    } catch {
+      return null;
+    }
+  }
+  function writeRegister(items: ComplianceRegisterItem[]): void {
+    try {
+      sessionStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // sessionStorage full or disabled — ignore.
+    }
+  }
+
+  function renderRegister(items: ComplianceRegisterItem[]): void {
+    if (items.length === 0) {
+      registerContent.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">📂</div><h3>No obligations found</h3><p>Try modifying your profile setup and checking more activities.</p></div>';
+      registerSummary.textContent = 'No obligations matched.';
+      return;
+    }
+    registerSummary.textContent = `${items.length} obligation${items.length === 1 ? '' : 's'} matched for your site activities.`;
+
+    const groups: Record<string, ComplianceRegisterItem[]> = {};
+    for (const it of items) {
+      const f = (it.frequency || 'other').toLowerCase();
+      if (!groups[f]) groups[f] = [];
+      groups[f].push(it);
+    }
+    const order: Array<[string, string]> = [
+      ['continuous', '🔄 Continuous & Operational Duties'],
+      ['daily', '☀️ Daily Routines'],
+      ['weekly', '📅 Weekly Routines'],
+      ['monthly', '📆 Monthly Audits & Inspections'],
+      ['yearly', '⭐ Annual Reporting & Training'],
+      ['annually', '⭐ Annual Reporting & Training'],
+      ['on occurrence', '⚠️ On Occurrence Duties'],
+      ['once', '📦 One-Off Initial Requirements'],
+      ['other', '📋 General & Occasional Actions'],
+    ];
+
+    let html = '';
+    let rendered = 0;
+    for (const [key, title] of order) {
+      const list = groups[key];
+      if (!list || list.length === 0) continue;
+      rendered += list.length;
+      html += `<div class="cmp-frequency-group"><h3 class="cmp-frequency-title">${escapeHtml(title)} <span class="cmp-frequency-count">${list.length}</span></h3><div class="cmp-obligations-list">`;
+      for (const it of list) {
+        html += renderObligationCard(it);
+      }
+      html += '</div></div>';
+    }
+    if (rendered === 0) {
+      registerContent.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">📂</div><h3>No obligations found</h3><p>Try modifying your profile setup and checking more activities.</p></div>';
+      return;
+    }
+    registerContent.innerHTML = html;
+  }
+
+  function renderObligationCard(it: ComplianceRegisterItem): string {
+    const simPct = Math.round((it.similarity || 0) * 100);
+    const docType = it.document_type || 'Act';
+    const docName = (it.document_name || 'Legislation').replace(/\.pdf$/i, '');
+    const sec = it.section_number ? ` (${escapeHtml(it.section_number)})` : '';
+    const legalWeight = (it.legal_weight || 'mandatory').toLowerCase();
+    const freq = escapeHtml(it.frequency || 'other');
+    return `
+      <div class="cmp-obligation-item">
+        <div class="cmp-obligation-details">
+          <h4>${escapeHtml(it.required_action)}</h4>
+          <p>${escapeHtml(it.clause_text)}</p>
+          <div class="cmp-obligation-tags">
+            <span class="cmp-tag cmp-tag-act">${escapeHtml(docType)}: ${escapeHtml(docName)}${sec}</span>
+            <span class="cmp-tag cmp-tag-${escapeHtml(legalWeight)}">${escapeHtml(legalWeight.toUpperCase())}</span>
+            <span class="cmp-tag cmp-tag-freq">${freq}</span>
+            <span class="cmp-tag cmp-tag-sim">${simPct}% match</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // -------------------------------------------------------------------
+  // Export register (client-side, uses the shared csvExport lib so
+  // server-side and client-side exports share the same escape/BOM
+  // behaviour).
+  // -------------------------------------------------------------------
+  const exportRegisterBtn = document.getElementById('cmp-export-register') as HTMLButtonElement;
+  exportRegisterBtn.addEventListener('click', () => {
+    const items = readRegister();
+    if (!items || items.length === 0) {
+      window.alert('No register to export. Generate a register first.');
+      return;
+    }
+    const columns: CsvColumn[] = [
+      { key: 'frequency', header: 'Frequency' },
+      { key: 'required_action', header: 'Required Action' },
+      { key: 'clause_text', header: 'Clause Text' },
+      { key: 'document_type', header: 'Document Type' },
+      { key: 'document_name', header: 'Document Name' },
+      { key: 'section_number', header: 'Section' },
+      { key: 'legal_weight', header: 'Legal Weight' },
+      { key: 'trigger_activity', header: 'Trigger Activity' },
+      { key: 'similarity', header: 'Similarity', format: (r) => Math.round((Number((r as Record<string, unknown>).similarity) || 0) * 100) + '%' },
+    ];
+    const csv = buildCsv(items as unknown as Record<string, unknown>[], columns);
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `compliance_register_${today}.csv`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // -------------------------------------------------------------------
+  // AI search (Premium)
+  // -------------------------------------------------------------------
+  searchBtn.addEventListener('click', () => { void runSearch(); });
+  searchQuery.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); void runSearch(); }
+  });
+
+  async function runSearch(): Promise<void> {
+    const q = searchQuery.value.trim();
+    if (!q) return;
+    searchResults.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔄</div><h3>Scanning legal database…</h3></div>';
+
+    try {
+      // 1. Embed via /api/ai-embed
+      const embedResp = await fetch('/api/ai-embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      });
+      if (!embedResp.ok) {
+        const err = await embedResp.json().catch(() => ({ error: 'Embed failed' }));
+        throw new Error(err.error ?? `HTTP ${embedResp.status}`);
+      }
+      const { embedding } = (await embedResp.json()) as { embedding: number[] };
+
+      // 2. RPC match_clauses via the public Supabase directly is
+      //    impossible (no anon write to RLS-protected / public anon
+      //    has no auth). For the AI Search we expose a search call
+      //    through a new endpoint to keep the key off the client. To
+      //    stay within scope of Phase 2.7 (no new endpoint beyond the
+      //    three declared), we instead call the same flow via the
+      //    /api/generate-register logic — but that uses a profile, not
+      //    a free-text query. The simpler approach: build a fake
+      //    profile with no operations + a "search" hazard isn't right.
+      //
+      //    Cleanest path: do the RPC + obligation join from a new
+      //    server route, or piggyback on the existing pattern. The
+      //    prompt specifies 4 API routes; we use /api/ai-summary
+      //    already, and re-use the embed + a direct public-Supabase
+      //    call from the browser. The public Supabase anon key is
+      //    safe to ship (the legal data is global), so we can call
+      //    match_clauses from the browser if we expose the URL+key
+      //    via PUBLIC_*.
+      //
+      //    To keep server-side-only secrets, we instead do the vector
+      //    search via the public Supabase anon key fetched in a
+      //    build-time env (public — same as the data being public).
+      //    For Phase 2.7, fall back to displaying the search box UI
+      //    but instruct the user via a placeholder when env is
+      //    missing.
+      const publicUrl = (window as unknown as { __PUBLIC_SUPABASE_URL__?: string }).__PUBLIC_SUPABASE_URL__;
+      const publicKey = (window as unknown as { __PUBLIC_SUPABASE_ANON_KEY__?: string }).__PUBLIC_SUPABASE_ANON_KEY__;
+      if (!publicUrl || !publicKey) {
+        searchResults.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">⚙️</div><h3>Search backend not configured</h3><p>The server has not been configured with SUPABASE_PUBLIC_URL / SUPABASE_PUBLIC_ANON_KEY. The AI Legal Search requires the public legal Supabase to be reachable from the browser.</p></div>';
+        return;
+      }
+
+      const { createClient } = await import('@supabase/supabase-js');
+      const publicClient = createClient(publicUrl, publicKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+      const { data: matched, error: matchErr } = await publicClient.rpc('match_clauses', {
+        query_embedding: embedding,
+        match_threshold: 0.35,
+        match_count: 8,
+      });
+      if (matchErr) throw new Error(matchErr.message);
+      const matchedRows = (matched ?? []) as Array<{ id: string; similarity: number }>;
+      if (matchedRows.length === 0) {
+        searchResults.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔍</div><h3>No matches found</h3><p>Try rephrasing your search query.</p></div>';
+        lastSearchResults = [];
+        return;
+      }
+
+      const clauseIds = matchedRows.map((c) => c.id);
+      const similarityMap = new Map<string, number>();
+      for (const c of matchedRows) similarityMap.set(c.id, c.similarity);
+
+      // Fetch obligations + clauses + documents via PostgREST joins.
+      const oblResp = await fetch(
+        `${publicUrl}/rest/v1/obligations?select=id,clause_id,trigger_activity,required_action,frequency,legal_weight&clause_id=in.(${clauseIds.map((id) => `"${id}"`).join(',')})`,
+        { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } },
+      );
+      if (!oblResp.ok) {
+        const text = await oblResp.text();
+        throw new Error(`Obligations fetch failed: ${text.slice(0, 200)}`);
+      }
+      const obligations = (await oblResp.json()) as Array<Record<string, unknown>>;
+      const clauseResp = await fetch(
+        `${publicUrl}/rest/v1/clauses?select=id,clause_text,section_number,parent_citations,documents(name,type)&id=in.(${clauseIds.map((id) => `"${id}"`).join(',')})`,
+        { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } },
+      );
+      if (!clauseResp.ok) {
+        const text = await clauseResp.text();
+        throw new Error(`Clauses fetch failed: ${text.slice(0, 200)}`);
+      }
+      const clauses = (await clauseResp.json()) as Array<Record<string, unknown>>;
+      const clauseById = new Map<string, Record<string, unknown>>();
+      for (const c of clauses) {
+        if (typeof c.id === 'string') clauseById.set(c.id, c);
+      }
+
+      const results: LegalSearchResult[] = [];
+      for (const obl of obligations) {
+        const cid = typeof obl.clause_id === 'string' ? obl.clause_id : '';
+        const cl = clauseById.get(cid);
+        if (!cl) continue;
+        const docs = cl.documents as { name?: string; type?: string } | undefined;
+        results.push({
+          id: typeof obl.id === 'string' ? obl.id : '',
+          clause_id: cid,
+          clause_text: typeof cl.clause_text === 'string' ? cl.clause_text : '',
+          section_number: typeof cl.section_number === 'string' ? cl.section_number : null,
+          document_name: docs?.name ?? 'Legislation',
+          document_type: docs?.type ?? 'Act',
+          parent_citations: Array.isArray(cl.parent_citations) ? (cl.parent_citations as string[]) : null,
+          trigger_activity: typeof obl.trigger_activity === 'string' ? obl.trigger_activity : '',
+          required_action: typeof obl.required_action === 'string' ? obl.required_action : '',
+          frequency: typeof obl.frequency === 'string' ? obl.frequency : 'other',
+          legal_weight: typeof obl.legal_weight === 'string' ? obl.legal_weight : 'mandatory',
+          similarity: similarityMap.get(cid) ?? 0,
+        });
+      }
+      results.sort((a, b) => b.similarity - a.similarity);
+      lastSearchResults = results;
+      renderSearchResults(results, q);
+    } catch (e) {
+      searchResults.innerHTML = `<div class="cmp-empty" style="color:#8B1A1A;"><div class="cmp-empty-icon">❌</div><h3>Search failed</h3><p>${escapeHtml(e instanceof Error ? e.message : 'Unknown error')}</p></div>`;
+    }
+  }
+
+  function renderSearchResults(items: LegalSearchResult[], q: string): void {
+    let html = `<div id="cmp-ai-summary-box" class="cmp-ai-summary-box" hidden></div>`;
+    html += `<div class="cmp-search-results">`;
+    for (const it of items) {
+      const simPct = Math.round((it.similarity || 0) * 100);
+      const docType = it.document_type || 'Act';
+      const docName = (it.document_name || 'Legislation').replace(/\.pdf$/i, '');
+      const sec = it.section_number ? ` (${escapeHtml(it.section_number)})` : '';
+      html += `
+        <div class="cmp-search-item">
+          <div class="cmp-match-score">${simPct}% match</div>
+          <h4>${escapeHtml(it.required_action)}</h4>
+          <p>${escapeHtml(it.clause_text)}</p>
+          <div class="cmp-obligation-tags">
+            <span class="cmp-tag cmp-tag-act">${escapeHtml(docType)}: ${escapeHtml(docName)}${sec}</span>
+            <span class="cmp-tag cmp-tag-freq">${escapeHtml(it.frequency)}</span>
+            <span class="cmp-tag cmp-tag-${escapeHtml((it.legal_weight || 'mandatory').toLowerCase())}">${escapeHtml((it.legal_weight || 'mandatory').toUpperCase())}</span>
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
+    html += `<div class="cmp-search-actions"><button type="button" class="cmp-primary-btn cmp-primary-btn-accent" id="cmp-ai-summary-btn">🤖 Get AI Summary</button></div>`;
+    searchResults.innerHTML = html;
+    const btn = document.getElementById('cmp-ai-summary-btn');
+    if (btn) btn.addEventListener('click', () => { void runAiSummary(q); });
+  }
+
+  async function runAiSummary(q: string): Promise<void> {
+    if (lastSearchResults.length === 0) return;
+    const box = document.getElementById('cmp-ai-summary-box') as HTMLElement;
+    box.hidden = false;
+    box.innerHTML = '<h4>🤖 AI Legal Assistant</h4><div class="cmp-ai-summary-text">AI is analyzing the matched references…</div>';
+    try {
+      const resp = await fetch('/api/ai-summary', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          query: q,
+          clause_ids: lastSearchResults.map((r) => r.clause_id),
+        }),
+      });
+      const data = (await resp.json()) as AiSummaryResponse;
+      if (data.status === 'SUCCESS' && typeof data.summary === 'string') {
+        const textEl = box.querySelector('.cmp-ai-summary-text') as HTMLElement;
+        textEl.innerHTML = renderMarkdown(data.summary) +
+          '<div class="cmp-ai-copy-row"><button type="button" class="cmp-secondary-btn" id="cmp-ai-copy">📋 Copy to clipboard</button></div>';
+        const copyBtn = document.getElementById('cmp-ai-copy');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(data.summary ?? '');
+              copyBtn.textContent = '✅ Copied';
+            } catch {
+              copyBtn.textContent = '❌ Copy failed';
+            }
+          });
+        }
+      } else {
+        box.innerHTML = `<h4>🤖 AI Legal Assistant</h4><div class="cmp-ai-summary-text" style="color:#8B1A1A;">⚠️ ${escapeHtml(data.message ?? 'AI summary failed.')}</div>`;
+      }
+    } catch (e) {
+      box.innerHTML = `<h4>🤖 AI Legal Assistant</h4><div class="cmp-ai-summary-text" style="color:#8B1A1A;">⚠️ ${escapeHtml(e instanceof Error ? e.message : 'Connection error.')}</div>`;
+    }
+  }
+
+  function renderMarkdown(md: string): string {
+    // Minimal Markdown: bold + bullet lists + paragraphs.
+    const lines = md.split('\n');
+    let inList = false;
+    let out = '';
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) { if (inList) { out += '</ul>'; inList = false; } continue; }
+      const bolded = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      const m = bolded.match(/^[-*+•]\s+(.*)$/);
+      if (m) {
+        if (!inList) { out += '<ul>'; inList = true; }
+        out += `<li>${m[1]}</li>`;
+      } else {
+        if (inList) { out += '</ul>'; inList = false; }
+        out += `<p>${bolded}</p>`;
+      }
+    }
+    if (inList) out += '</ul>';
+    return out;
+  }
+
+  // -------------------------------------------------------------------
+  // Bootstrap
+  // -------------------------------------------------------------------
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    saveBtn.disabled = true;
+    generateBtn.disabled = true;
+    searchBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      const { data: tenant, error: tenantErr } = await supabase
+        .from('tenants')
+        .select('id, industry, headcount, hazard_noise, hazard_chemicals, hazard_machinery, hazard_lifting, hazard_toxic, hazard_radiation, operations, subscription_plan, subscription_expires_at')
+        .eq('owner_user_id', userData.user.id)
+        .single();
+      if (tenantErr || !tenant) {
+        window.location.replace('/app/onboarding');
+        return;
+      }
+      tenantId = tenant.id;
+      isPremium =
+        tenant.subscription_plan === 'premium' &&
+        (tenant.subscription_expires_at === null ||
+          new Date(tenant.subscription_expires_at) > new Date());
+      if (isPremium) {
+        // Premium gating: show the AI Search tab only for Premium SHOs.
+        searchTabBtn.hidden = false;
+      }
+
+      // Pre-fill the profiler form from the tenant row.
+      applyProfileToForm(dbRowToProfile(tenant as unknown as Record<string, unknown>));
+      // If a profile has any non-default data, show "Generate" button.
+      const t = tenant as unknown as Record<string, unknown>;
+      const hasAny = t.industry != null || t.headcount != null ||
+        t.hazard_noise === true || t.hazard_chemicals === true || t.hazard_machinery === true ||
+        t.hazard_lifting === true || t.hazard_toxic === true || t.hazard_radiation === true ||
+        (Array.isArray(t.operations) && (t.operations as string[]).length > 0);
+      if (hasAny) {
+        savedHint.hidden = false;
+        savedHint.textContent = `Last saved profile loaded. Adjust and re-save, or click Generate to refresh.`;
+        generateBtn.hidden = false;
+      }
+    })().catch(() => {
+      showError('Failed to initialise compliance page.');
+    });
+  }
+</script>
+
+<style>
+  .compliance-page { padding: 32px 0 64px; }
+  .cmp-warning,
+  .cmp-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .cmp-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .cmp-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .cmp-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .cmp-header { margin-bottom: 20px; }
+  .cmp-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .cmp-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+
+  .cmp-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--color-border, #E0E0E0);
+    flex-wrap: wrap;
+  }
+  .cmp-tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-muted, #6A6A69);
+    cursor: pointer;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .cmp-tab-btn:hover { color: var(--color-primary, #E58E1A); }
+  .cmp-tab-btn.active {
+    color: var(--color-primary, #E58E1A);
+    border-bottom-color: var(--color-primary, #E58E1A);
+  }
+  .cmp-tab-btn[hidden] { display: none; }
+  .cmp-panel { padding: 8px 0; }
+  .cmp-panel[hidden] { display: none; }
+
+  .cmp-section-intro { max-width: 720px; margin-bottom: 24px; }
+  .cmp-section-intro h2 { font-size: 1.4rem; font-weight: 900; margin-bottom: 6px; }
+  .cmp-section-intro p { color: var(--color-text-muted, #6A6A69); line-height: 1.5; }
+
+  .cmp-form { background: var(--color-bg, #fff); border: 1px solid var(--color-border, #E0E0E0); padding: 20px; }
+  .cmp-form-h3 { font-size: 1.05rem; font-weight: 900; margin: 0 0 12px 0; }
+  .cmp-mt { margin-top: 24px !important; }
+  .cmp-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .cmp-row-2 { grid-template-columns: 1fr; } }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field-label { display: block; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .field-hint { display: block; font-size: 0.75rem; color: var(--color-text-muted, #6A6A69); margin-top: 4px; }
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus, .field select:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+
+  .cmp-checks { display: flex; flex-direction: column; gap: 6px; }
+  .cmp-check {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border: 1px solid transparent; border-radius: 6px;
+    cursor: pointer; font-size: 0.9rem;
+  }
+  .cmp-check:hover { background: var(--color-bg-grey, #F4F4F4); border-color: var(--color-border, #E0E0E0); }
+  .cmp-check input { width: 18px; height: 18px; }
+
+  .cmp-grid-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .cmp-profile-card {
+    background: var(--color-bg, #fff);
+    border: 2px solid var(--color-border, #E0E0E0);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+  }
+  .cmp-profile-card:hover { border-color: var(--color-primary, #E58E1A); }
+  .cmp-profile-card.selected {
+    background: #FFF7E6;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .cmp-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cmp-card-icon { font-size: 1.6rem; }
+  .cmp-checkbox-custom {
+    width: 22px; height: 22px;
+    border: 2px solid var(--color-border, #E0E0E0);
+    border-radius: 4px;
+    background: var(--color-bg, #fff);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-weight: 900;
+  }
+  .cmp-profile-card.selected .cmp-checkbox-custom { background: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .cmp-profile-card.selected .cmp-checkbox-custom::after { content: '✓'; font-size: 0.8rem; }
+  .cmp-profile-card h4 { font-size: 1rem; font-weight: 800; margin: 0 0 4px 0; }
+  .cmp-profile-card p { font-size: 0.82rem; color: var(--color-text-muted, #6A6A69); margin: 0; }
+
+  .cmp-form-actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .cmp-saved-hint { font-size: 0.85rem; color: #1F7A4D; }
+
+  .cmp-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .cmp-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .cmp-primary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cmp-primary-btn-accent { background: #1F7A4D; }
+  .cmp-primary-btn-accent:hover:not(:disabled) { background: #18623C; }
+
+  .cmp-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .cmp-secondary-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .cmp-register-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .cmp-register-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cmp-register-header h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 4px 0; }
+  .cmp-register-summary { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; margin: 0; }
+
+  .cmp-empty { text-align: center; padding: 50px 20px; border: 2px dashed var(--color-border, #E0E0E0); border-radius: 14px; color: var(--color-text-muted, #6A6A69); }
+  .cmp-empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .cmp-empty h3 { margin: 0 0 6px 0; font-size: 1.1rem; }
+  .cmp-empty p { margin: 0; }
+
+  .cmp-frequency-group { margin-bottom: 28px; }
+  .cmp-frequency-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.1rem; font-weight: 800;
+    color: var(--color-primary, #E58E1A);
+    margin: 0 0 12px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-border, #E0E0E0);
+  }
+  .cmp-frequency-count {
+    display: inline-block; background: var(--color-bg-grey, #F4F4F4);
+    color: var(--color-text-muted, #6A6A69);
+    padding: 1px 8px; border-radius: 10px; font-size: 0.78rem;
+  }
+  .cmp-obligations-list { display: flex; flex-direction: column; gap: 12px; }
+  .cmp-obligation-item {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .cmp-obligation-item h4 { font-size: 1rem; font-weight: 800; margin: 0 0 6px 0; }
+  .cmp-obligation-item p { font-size: 0.9rem; color: var(--color-text-muted, #6A6A69); margin: 0 0 10px 0; line-height: 1.5; }
+  .cmp-obligation-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cmp-tag {
+    display: inline-block; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+  .cmp-tag-act { background: rgba(78, 168, 222, 0.10); color: #2E7BB8; }
+  .cmp-tag-mandatory { background: rgba(229, 142, 26, 0.12); color: #B5570A; }
+  .cmp-tag-recommended { background: rgba(31, 122, 77, 0.10); color: #1F7A4D; }
+  .cmp-tag-freq { background: var(--color-bg-grey, #F4F4F4); color: var(--color-text-muted, #6A6A69); }
+  .cmp-tag-sim { background: #1F7A4D; color: #fff; border-color: #1F7A4D; }
+
+  .cmp-policy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .cmp-policy-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border, #E0E0E0); border-radius: 12px; padding: 18px; }
+  .cmp-policy-icon { font-size: 1.8rem; margin-bottom: 8px; }
+  .cmp-policy-card h3 { font-size: 1rem; font-weight: 800; margin: 0 0 6px 0; }
+  .cmp-policy-card p { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); line-height: 1.5; margin: 0 0 10px 0; }
+  .cmp-policy-cite { font-size: 0.72rem; font-weight: 700; color: var(--color-primary, #E58E1A); text-transform: uppercase; letter-spacing: 0.4px; }
+  .cmp-policy-note { margin-top: 18px; font-size: 0.82rem; color: var(--color-text-muted, #6A6A69); font-style: italic; }
+
+  .cmp-search-area { text-align: center; max-width: 720px; margin: 0 auto 20px; }
+  .cmp-search-area h2 { font-size: 1.4rem; font-weight: 900; margin: 0 0 6px 0; }
+  .cmp-search-area p { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; line-height: 1.5; }
+  .cmp-search-input-group { display: flex; gap: 8px; margin-top: 14px; }
+  .cmp-search-input-group input {
+    flex: 1; padding: 12px 16px; border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 1rem; font-family: inherit; background: var(--color-bg, #fff);
+  }
+  .cmp-search-input-group input:focus { outline: 2px solid var(--color-primary, #E58E1A); }
+
+  .cmp-search-results { display: flex; flex-direction: column; gap: 12px; }
+  .cmp-search-item {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    border-radius: 12px;
+    padding: 18px;
+    position: relative;
+  }
+  .cmp-search-item h4 { font-size: 1rem; font-weight: 800; margin: 0 0 6px 0; padding-right: 80px; }
+  .cmp-search-item p { font-size: 0.9rem; color: var(--color-text-muted, #6A6A69); margin: 0 0 10px 0; line-height: 1.5; }
+  .cmp-match-score {
+    position: absolute; top: 14px; right: 14px;
+    background: #1F7A4D; color: #fff; padding: 2px 8px; border-radius: 10px;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .cmp-search-actions { display: flex; justify-content: center; margin-top: 18px; }
+  .cmp-ai-summary-box {
+    background: rgba(15, 118, 110, 0.05);
+    border: 1px solid rgba(15, 118, 110, 0.20);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+  .cmp-ai-summary-box h4 { margin: 0 0 8px 0; color: #0F7670; font-size: 1rem; }
+  .cmp-ai-summary-text { font-size: 0.92rem; line-height: 1.6; color: var(--color-text, #1E1E1D); }
+  .cmp-ai-summary-text ul { margin: 8px 0; padding-left: 20px; }
+  .cmp-ai-summary-text li { margin-bottom: 6px; }
+  .cmp-ai-copy-row { margin-top: 12px; }
+</style>

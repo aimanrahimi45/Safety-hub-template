@@ -1,0 +1,927 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="First Aid Inventory - AmerisPro">
+  <main class="inv-page">
+    <div class="container">
+      <div id="inv-setup-warning" class="inv-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="inv-error" class="inv-error" hidden></div>
+
+      <header class="inv-header">
+        <div>
+          <h1>First Aid Inventory</h1>
+          <p class="inv-sub" id="inv-sub">…</p>
+        </div>
+        <div class="inv-header-actions">
+          <a href="/app/first-aid" class="inv-link-btn">← Back to First Aid</a>
+          <button type="button" id="inv-add-btn" class="inv-primary-btn">+ Add item</button>
+        </div>
+      </header>
+
+      <section class="inv-toolbar">
+        <input
+          type="search"
+          id="inv-search"
+          class="inv-search"
+          placeholder="Search by name or code…"
+          aria-label="Search inventory"
+        />
+      </section>
+
+      <section id="inv-seed-banner" class="inv-seed-banner" hidden>
+        <div>
+          <strong>Your inventory is empty.</strong>
+          <p>Seed the standard 23 first-aid items to get started, or add your own.</p>
+        </div>
+        <button type="button" id="inv-seed-btn" class="inv-primary-btn">Seed default 23 items</button>
+      </section>
+
+      <section id="inv-skeleton" class="inv-skeleton" hidden>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="inv-table-wrap" hidden>
+        <table class="inv-table" aria-label="First aid inventory">
+          <thead>
+            <tr>
+              <th scope="col">Code</th>
+              <th scope="col">Name</th>
+              <th scope="col">Unit</th>
+              <th scope="col">Stock</th>
+              <th scope="col">Min</th>
+              <th scope="col">Required</th>
+              <th scope="col">Group</th>
+              <th scope="col">Last updated</th>
+              <th scope="col" class="inv-actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </section>
+
+      <section id="inv-empty" class="inv-empty" hidden>
+        <p>No inventory items yet. Click "Add item" to add your first.</p>
+      </section>
+    </div>
+  </main>
+
+  <!-- Add/Edit modal -->
+  <div id="inv-modal" class="inv-modal" hidden role="dialog" aria-modal="true" aria-labelledby="inv-modal-title">
+    <div class="inv-modal-card">
+      <header class="inv-modal-head">
+        <h2 id="inv-modal-title">Add item</h2>
+        <button type="button" class="inv-modal-close" id="inv-modal-close" aria-label="Close">×</button>
+      </header>
+      <form id="inv-form" novalidate>
+        <input type="hidden" name="id" id="inv-form-id" />
+        <div id="inv-form-error" class="inv-error" hidden></div>
+        <label class="field">
+          <span class="field-label">Item code <em>*</em></span>
+          <input type="text" name="item_code" id="inv-form-code" required placeholder="e.g. FA-24" />
+        </label>
+        <label class="field">
+          <span class="field-label">Item name <em>*</em></span>
+          <input type="text" name="item_name" id="inv-form-name" required placeholder="e.g. Antiseptic Wipes" />
+        </label>
+        <label class="field">
+          <span class="field-label">Unit <em>*</em></span>
+          <select name="unit" id="inv-form-unit" required>
+            <option value="pcs">pcs</option>
+            <option value="pkt">pkt</option>
+            <option value="box">box</option>
+            <option value="set">set</option>
+            <option value="bottle">bottle</option>
+            <option value="other">other</option>
+          </select>
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Current stock <em>*</em></span>
+            <input type="number" name="current_stock" id="inv-form-stock" required min="0" value="0" />
+          </label>
+          <label class="field">
+            <span class="field-label">Min alert level <em>*</em></span>
+            <input type="number" name="min_alert_level" id="inv-form-min" required min="0" value="0" />
+          </label>
+        </div>
+        <label class="field">
+          <span class="field-label">Required standard</span>
+          <input type="text" name="required_std" id="inv-form-std" placeholder="e.g. 5pcs per 50 workers" />
+        </label>
+        <label class="field">
+          <span class="field-label">Category group</span>
+          <input type="number" name="category_group" id="inv-form-cat" min="1" placeholder="e.g. 1" />
+          <span class="field-hint">Optional. Used to group items in UI.</span>
+        </label>
+        <label class="field-check">
+          <input type="checkbox" name="is_active" id="inv-form-active" checked />
+          <span>Active</span>
+        </label>
+        <div class="inv-modal-actions">
+          <button type="button" class="inv-secondary-btn" id="inv-form-cancel">Cancel</button>
+          <button type="submit" class="inv-primary-btn" id="inv-form-save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Restock modal -->
+  <div id="inv-restock-modal" class="inv-modal" hidden role="dialog" aria-modal="true" aria-labelledby="inv-restock-title">
+    <div class="inv-modal-card">
+      <header class="inv-modal-head">
+        <h2 id="inv-restock-title">Restock item</h2>
+        <button type="button" class="inv-modal-close" id="inv-restock-close" aria-label="Close">×</button>
+      </header>
+      <form id="inv-restock-form" novalidate>
+        <p class="inv-restock-name" id="inv-restock-name"></p>
+        <div id="inv-restock-error" class="inv-error" hidden></div>
+        <label class="field">
+          <span class="field-label">Quantity to add <em>*</em></span>
+          <input type="number" name="quantity" id="inv-restock-qty" required min="1" value="1" />
+        </label>
+        <label class="field">
+          <span class="field-label">Notes</span>
+          <textarea name="notes" id="inv-restock-notes" rows="3" placeholder="e.g. PO #1234, supplier ABC"></textarea>
+        </label>
+        <div class="inv-modal-actions">
+          <button type="button" class="inv-secondary-btn" id="inv-restock-cancel">Cancel</button>
+          <button type="submit" class="inv-primary-btn" id="inv-restock-save">Restock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manual adjust modal -->
+  <div id="inv-adjust-modal" class="inv-modal" hidden role="dialog" aria-modal="true" aria-labelledby="inv-adjust-title">
+    <div class="inv-modal-card">
+      <header class="inv-modal-head">
+        <h2 id="inv-adjust-title">Manual adjust</h2>
+        <button type="button" class="inv-modal-close" id="inv-adjust-close" aria-label="Close">×</button>
+      </header>
+      <form id="inv-adjust-form" novalidate>
+        <p class="inv-restock-name" id="inv-adjust-name"></p>
+        <div id="inv-adjust-error" class="inv-error" hidden></div>
+        <label class="field">
+          <span class="field-label">Quantity delta <em>*</em></span>
+          <input type="number" name="delta" id="inv-adjust-delta" required placeholder="e.g. -2 or 5" />
+          <span class="field-hint">Use a negative number to subtract. Cannot go below zero.</span>
+        </label>
+        <label class="field">
+          <span class="field-label">Notes <em>*</em></span>
+          <textarea name="notes" id="inv-adjust-notes" rows="3" required placeholder="Reason for adjustment"></textarea>
+        </label>
+        <div class="inv-modal-actions">
+          <button type="button" class="inv-secondary-btn" id="inv-adjust-cancel">Cancel</button>
+          <button type="submit" class="inv-primary-btn" id="inv-adjust-save">Adjust</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import { DEFAULT_FIRST_AID_ITEMS } from '../../../lib/defaults/firstAidItems';
+  import type { FirstAidInventory } from '../../../lib/types';
+
+  type InventoryRow = FirstAidInventory;
+
+  const setupWarning = document.getElementById('inv-setup-warning') as HTMLElement;
+  const errorBanner = document.getElementById('inv-error') as HTMLElement;
+  const subEl = document.getElementById('inv-sub') as HTMLElement;
+  const searchEl = document.getElementById('inv-search') as HTMLInputElement;
+  const addBtn = document.getElementById('inv-add-btn') as HTMLButtonElement;
+  const seedBanner = document.getElementById('inv-seed-banner') as HTMLElement;
+  const seedBtn = document.getElementById('inv-seed-btn') as HTMLButtonElement;
+  const skelEl = document.getElementById('inv-skeleton') as HTMLElement;
+  const tableWrap = document.getElementById('inv-table-wrap') as HTMLElement;
+  const tbody = document.getElementById('inv-tbody') as HTMLElement;
+  const emptyEl = document.getElementById('inv-empty') as HTMLElement;
+
+  const formModal = document.getElementById('inv-modal') as HTMLElement;
+  const formEl = document.getElementById('inv-form') as HTMLFormElement;
+  const formId = document.getElementById('inv-form-id') as HTMLInputElement;
+  const formCode = document.getElementById('inv-form-code') as HTMLInputElement;
+  const formName = document.getElementById('inv-form-name') as HTMLInputElement;
+  const formUnit = document.getElementById('inv-form-unit') as HTMLSelectElement;
+  const formStock = document.getElementById('inv-form-stock') as HTMLInputElement;
+  const formMin = document.getElementById('inv-form-min') as HTMLInputElement;
+  const formStd = document.getElementById('inv-form-std') as HTMLInputElement;
+  const formCat = document.getElementById('inv-form-cat') as HTMLInputElement;
+  const formActive = document.getElementById('inv-form-active') as HTMLInputElement;
+  const formTitle = document.getElementById('inv-modal-title') as HTMLElement;
+  const formError = document.getElementById('inv-form-error') as HTMLElement;
+  const formClose = document.getElementById('inv-modal-close') as HTMLButtonElement;
+  const formCancel = document.getElementById('inv-form-cancel') as HTMLButtonElement;
+  const formSave = document.getElementById('inv-form-save') as HTMLButtonElement;
+
+  const restockModal = document.getElementById('inv-restock-modal') as HTMLElement;
+  const restockForm = document.getElementById('inv-restock-form') as HTMLFormElement;
+  const restockName = document.getElementById('inv-restock-name') as HTMLElement;
+  const restockQty = document.getElementById('inv-restock-qty') as HTMLInputElement;
+  const restockNotes = document.getElementById('inv-restock-notes') as HTMLTextAreaElement;
+  const restockError = document.getElementById('inv-restock-error') as HTMLElement;
+  const restockClose = document.getElementById('inv-restock-close') as HTMLButtonElement;
+  const restockCancel = document.getElementById('inv-restock-cancel') as HTMLButtonElement;
+  const restockSave = document.getElementById('inv-restock-save') as HTMLButtonElement;
+
+  const adjustModal = document.getElementById('inv-adjust-modal') as HTMLElement;
+  const adjustForm = document.getElementById('inv-adjust-form') as HTMLFormElement;
+  const adjustName = document.getElementById('inv-adjust-name') as HTMLElement;
+  const adjustDelta = document.getElementById('inv-adjust-delta') as HTMLInputElement;
+  const adjustNotes = document.getElementById('inv-adjust-notes') as HTMLTextAreaElement;
+  const adjustError = document.getElementById('inv-adjust-error') as HTMLElement;
+  const adjustClose = document.getElementById('inv-adjust-close') as HTMLButtonElement;
+  const adjustCancel = document.getElementById('inv-adjust-cancel') as HTMLButtonElement;
+  const adjustSave = document.getElementById('inv-adjust-save') as HTMLButtonElement;
+
+  let allRows: InventoryRow[] = [];
+  let activeRow: InventoryRow | null = null;
+  let authUserId: string | null = null;
+
+  function showError(msg: string): void {
+    errorBanner.hidden = false;
+    errorBanner.textContent = msg;
+  }
+
+  function showFormError(msg: string): void {
+    formError.hidden = false; formError.textContent = msg;
+  }
+  function clearFormError(): void { formError.hidden = true; formError.textContent = ''; }
+
+  function showRestockError(msg: string): void {
+    restockError.hidden = false; restockError.textContent = msg;
+  }
+  function clearRestockError(): void { restockError.hidden = true; restockError.textContent = ''; }
+
+  function showAdjustError(msg: string): void {
+    adjustError.hidden = false; adjustError.textContent = msg;
+  }
+  function clearAdjustError(): void { adjustError.hidden = true; adjustError.textContent = ''; }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function renderTable(): void {
+    tbody.innerHTML = '';
+    const q = searchEl.value.trim().toLowerCase();
+    const filtered = allRows.filter((r) => {
+      if (!q) return true;
+      return r.item_name.toLowerCase().includes(q) || r.item_code.toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+      tableWrap.hidden = true;
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+    tableWrap.hidden = false;
+
+    for (const row of filtered) {
+      const tr = document.createElement('tr');
+      const lowStock = row.current_stock < row.min_alert_level;
+      tr.innerHTML = `
+        <td>${escapeHtml(row.item_code)}</td>
+        <td>${escapeHtml(row.item_name)}</td>
+        <td>${escapeHtml(row.unit)}</td>
+        <td class="${lowStock ? 'inv-low' : ''}">${row.current_stock}${lowStock ? ' ⚠' : ''}</td>
+        <td>${row.min_alert_level}</td>
+        <td>${escapeHtml(row.required_std ?? '')}</td>
+        <td>${row.category_group ?? '—'}</td>
+        <td>${formatDate(row.last_updated)}</td>
+        <td class="inv-actions-col">
+          <button type="button" class="inv-action" data-action="edit" data-id="${row.id}">Edit</button>
+          <button type="button" class="inv-action" data-action="restock" data-id="${row.id}">Restock</button>
+          <button type="button" class="inv-action" data-action="adjust" data-id="${row.id}">Adjust</button>
+          <button type="button" class="inv-action inv-action-danger" data-action="delete" data-id="${row.id}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function updateSub(): void {
+    const active = allRows.filter((r) => r.is_active);
+    const below = active.filter((r) => r.current_stock < r.min_alert_level).length;
+    subEl.textContent = `${active.length} active item${active.length === 1 ? '' : 's'} • ${below} below minimum stock`;
+  }
+
+  async function load(): Promise<void> {
+    if (!supabase) return;
+    skelEl.hidden = false;
+    tableWrap.hidden = true;
+    emptyEl.hidden = true;
+    seedBanner.hidden = true;
+    try {
+      const { data, error } = await supabase
+        .from('first_aid_inventory')
+        .select('*')
+        .order('category_group', { ascending: true, nullsFirst: false })
+        .order('item_name', { ascending: true });
+      if (error) throw error;
+      allRows = (data ?? []) as InventoryRow[];
+      skelEl.hidden = true;
+      updateSub();
+      if (allRows.length === 0) {
+        seedBanner.hidden = false;
+        emptyEl.hidden = true;
+        tableWrap.hidden = true;
+      } else {
+        renderTable();
+      }
+    } catch (e) {
+      skelEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load inventory.');
+    }
+  }
+
+  function openForm(row: InventoryRow | null): void {
+    clearFormError();
+    if (row) {
+      formTitle.textContent = 'Edit item';
+      formId.value = row.id;
+      formCode.value = row.item_code;
+      formCode.disabled = true;
+      formName.value = row.item_name;
+      formUnit.value = row.unit;
+      formStock.value = String(row.current_stock);
+      formMin.value = String(row.min_alert_level);
+      formStd.value = row.required_std ?? '';
+      formCat.value = row.category_group != null ? String(row.category_group) : '';
+      formActive.checked = row.is_active;
+    } else {
+      formTitle.textContent = 'Add item';
+      formEl.reset();
+      formId.value = '';
+      formCode.disabled = false;
+      formActive.checked = true;
+    }
+    formModal.hidden = false;
+    setTimeout(() => formCode.focus(), 30);
+  }
+
+  function closeForm(): void { formModal.hidden = true; }
+
+  function openRestock(row: InventoryRow): void {
+    activeRow = row;
+    clearRestockError();
+    restockName.textContent = `${row.item_name} (${row.item_code}) — current: ${row.current_stock} ${row.unit}`;
+    restockForm.reset();
+    restockQty.value = '1';
+    restockModal.hidden = false;
+    setTimeout(() => restockQty.focus(), 30);
+  }
+  function closeRestock(): void { restockModal.hidden = true; activeRow = null; }
+
+  function openAdjust(row: InventoryRow): void {
+    activeRow = row;
+    clearAdjustError();
+    adjustName.textContent = `${row.item_name} (${row.item_code}) — current: ${row.current_stock} ${row.unit}`;
+    adjustForm.reset();
+    adjustModal.hidden = false;
+    setTimeout(() => adjustDelta.focus(), 30);
+  }
+  function closeAdjust(): void { adjustModal.hidden = true; activeRow = null; }
+
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+  } else {
+    supabase = getSupabase();
+
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      authUserId = userData.user.id;
+      await load();
+    })().catch(() => {
+      showError('Failed to initialise inventory page.');
+    });
+
+    searchEl.addEventListener('input', renderTable);
+
+    addBtn.addEventListener('click', () => openForm(null));
+    formClose.addEventListener('click', closeForm);
+    formCancel.addEventListener('click', closeForm);
+    restockClose.addEventListener('click', closeRestock);
+    restockCancel.addEventListener('click', closeRestock);
+    adjustClose.addEventListener('click', closeAdjust);
+    adjustCancel.addEventListener('click', closeAdjust);
+
+    tbody.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      const action = t.getAttribute('data-action');
+      const id = t.getAttribute('data-id');
+      if (!action || !id) return;
+      const row = allRows.find((r) => r.id === id);
+      if (!row) return;
+      if (action === 'edit') openForm(row);
+      else if (action === 'restock') openRestock(row);
+      else if (action === 'adjust') openAdjust(row);
+      else if (action === 'delete') {
+        if (window.confirm(`Delete "${row.item_name}" (${row.item_code})? Past transaction history will be retained.`)) {
+          (async () => {
+            try {
+              const { error } = await supabase!
+                .from('first_aid_inventory')
+                .delete()
+                .eq('id', id);
+              if (error) {
+                if (/transaction history|foreign key/i.test(error.message)) {
+                  showError('Cannot delete: this item has transaction history. Mark it inactive instead.');
+                } else {
+                  showError(error.message);
+                }
+                return;
+              }
+              await load();
+            } catch (e) {
+              showError(e instanceof Error ? e.message : 'Delete failed.');
+            }
+          })();
+        }
+      }
+    });
+
+    seedBtn.addEventListener('click', () => {
+      seedBtn.disabled = true;
+      seedBtn.textContent = 'Seeding…';
+      (async () => {
+        try {
+          // RLS auto-fills tenant_id on INSERT; we just pass the row data.
+          const rows = DEFAULT_FIRST_AID_ITEMS.map((it) => ({
+            item_code: it.item_code,
+            item_name: it.item_name,
+            unit: it.unit,
+            current_stock: it.current_stock,
+            min_alert_level: it.min_alert_level,
+            required_std: it.required_std,
+            category_group: it.category_group,
+            is_active: true,
+          }));
+          const { error } = await supabase!
+            .from('first_aid_inventory')
+            .insert(rows);
+          if (error) throw error;
+          await load();
+        } catch (e) {
+          showError(e instanceof Error ? e.message : 'Failed to seed default items.');
+        } finally {
+          seedBtn.disabled = false;
+          seedBtn.textContent = 'Seed default 23 items';
+        }
+      })();
+    });
+
+    formEl.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      clearFormError();
+      const id = formId.value;
+      const itemCode = formCode.value.trim();
+      const itemName = formName.value.trim();
+      const unit = formUnit.value;
+      const currentStock = Number(formStock.value);
+      const minAlert = Number(formMin.value);
+      const requiredStd = formStd.value.trim() || null;
+      const categoryGroup = formCat.value ? Number(formCat.value) : null;
+      const isActive = formActive.checked;
+
+      if (!itemCode || !itemName || !unit) {
+        showFormError('Item code, name, and unit are required.');
+        return;
+      }
+      if (!Number.isFinite(currentStock) || currentStock < 0) {
+        showFormError('Current stock must be a non-negative number.');
+        return;
+      }
+      if (!Number.isFinite(minAlert) || minAlert < 0) {
+        showFormError('Min alert level must be a non-negative number.');
+        return;
+      }
+      if (categoryGroup !== null && (!Number.isFinite(categoryGroup) || categoryGroup < 1)) {
+        showFormError('Category group must be 1 or greater.');
+        return;
+      }
+
+      formSave.disabled = true;
+      const originalLabel = formSave.textContent;
+      formSave.textContent = 'Saving…';
+
+      (async () => {
+        try {
+          if (id) {
+            const { error } = await supabase!
+              .from('first_aid_inventory')
+              .update({
+                item_name: itemName,
+                unit,
+                current_stock: currentStock,
+                min_alert_level: minAlert,
+                required_std: requiredStd,
+                category_group: categoryGroup,
+                is_active: isActive,
+              })
+              .eq('id', id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase!
+              .from('first_aid_inventory')
+              .insert({
+                item_code: itemCode,
+                item_name: itemName,
+                unit,
+                current_stock: currentStock,
+                min_alert_level: minAlert,
+                required_std: requiredStd,
+                category_group: categoryGroup,
+                is_active: isActive,
+              });
+            if (error) {
+              if (/duplicate key|unique/i.test(error.message)) {
+                throw new Error(`Item code "${itemCode}" is already in use.`);
+              }
+              throw error;
+            }
+          }
+          closeForm();
+          await load();
+        } catch (e) {
+          showFormError(e instanceof Error ? e.message : 'Save failed.');
+        } finally {
+          formSave.disabled = false;
+          formSave.textContent = originalLabel;
+        }
+      })();
+    });
+
+    restockForm.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      if (!activeRow || !authUserId) return;
+      clearRestockError();
+      const qty = Number(restockQty.value);
+      const notes = restockNotes.value.trim() || null;
+      if (!Number.isFinite(qty) || qty <= 0) {
+        showRestockError('Quantity must be a positive number.');
+        return;
+      }
+      restockSave.disabled = true;
+      const original = restockSave.textContent;
+      restockSave.textContent = 'Restocking…';
+      (async () => {
+        try {
+          const { data, error } = await supabase!.rpc('restock_inventory', {
+            p_item_id: activeRow!.id,
+            p_quantity: qty,
+            p_actor_id: authUserId,
+            p_notes: notes,
+          });
+          if (error) throw error;
+          closeRestock();
+          await load();
+          const tx = Array.isArray(data) ? data[0] : data;
+          const bal = tx && typeof tx === 'object' && 'balance_after' in tx ? (tx as { balance_after: number }).balance_after : null;
+          if (bal !== null) {
+            window.alert(`Restocked. New balance: ${bal}`);
+          }
+        } catch (e) {
+          showRestockError(e instanceof Error ? e.message : 'Restock failed.');
+        } finally {
+          restockSave.disabled = false;
+          restockSave.textContent = original;
+        }
+      })();
+    });
+
+    adjustForm.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      if (!activeRow || !authUserId) return;
+      clearAdjustError();
+      const delta = Number(adjustDelta.value);
+      const notes = adjustNotes.value.trim();
+      if (!Number.isFinite(delta) || delta === 0) {
+        showAdjustError('Delta must be a non-zero number.');
+        return;
+      }
+      if (!notes) {
+        showAdjustError('Notes are required.');
+        return;
+      }
+      adjustSave.disabled = true;
+      const original = adjustSave.textContent;
+      adjustSave.textContent = 'Adjusting…';
+      (async () => {
+        try {
+          const { data, error } = await supabase!.rpc('adjust_inventory_manual', {
+            p_item_id: activeRow!.id,
+            p_delta: delta,
+            p_actor_id: authUserId,
+            p_notes: notes,
+          });
+          if (error) throw error;
+          closeAdjust();
+          await load();
+          const tx = Array.isArray(data) ? data[0] : data;
+          const bal = tx && typeof tx === 'object' && 'balance_after' in tx ? (tx as { balance_after: number }).balance_after : null;
+          if (bal !== null) {
+            window.alert(`Adjusted. New balance: ${bal}`);
+          }
+        } catch (e) {
+          showAdjustError(e instanceof Error ? e.message : 'Adjustment failed.');
+        } finally {
+          adjustSave.disabled = false;
+          adjustSave.textContent = original;
+        }
+      })();
+    });
+  }
+</script>
+
+<style>
+  .inv-page {
+    padding: 32px 0 64px;
+  }
+  .inv-warning,
+  .inv-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .inv-warning {
+    background: #FFF7E6;
+    border: 1px solid #E58E1A;
+    color: #6A4A0F;
+  }
+  .inv-warning code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 4px;
+    font-size: 0.85rem;
+  }
+  .inv-error {
+    background: #FDECEC;
+    border: 1px solid #C0392B;
+    color: #8B1A1A;
+  }
+  .inv-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .inv-header h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+  .inv-sub {
+    color: var(--color-text-muted, #6A6A69);
+    font-size: 0.9rem;
+  }
+  .inv-header-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .inv-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .inv-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .inv-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .inv-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .inv-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .inv-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .inv-toolbar {
+    margin-bottom: 16px;
+  }
+  .inv-search {
+    width: 100%;
+    max-width: 360px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+  .inv-search:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .inv-seed-banner {
+    background: #F4F8FF;
+    border: 1px solid #B0C4DE;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .inv-seed-banner p { margin: 4px 0 0; font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
+
+  .inv-skeleton {
+    display: grid;
+    gap: 12px;
+  }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.88rem;
+  }
+  .inv-table th, .inv-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+  .inv-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .inv-table tbody tr:hover { background: #FAFAFA; }
+  .inv-low { color: #C0392B; font-weight: 700; }
+  .inv-actions-col { white-space: nowrap; text-align: right; }
+  .inv-action {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 4px 8px;
+    margin-left: 4px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .inv-action:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .inv-action-danger:hover { color: #C0392B; border-color: #C0392B; }
+  .inv-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted, #6A6A69);
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+
+  .inv-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+  .inv-modal-card {
+    background: var(--color-bg, #fff);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow: auto;
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+  .inv-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+  .inv-modal-head h2 { font-size: 1.1rem; font-weight: 900; margin: 0; }
+  .inv-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-muted, #6A6A69);
+    padding: 4px 8px;
+  }
+  #inv-form, #inv-restock-form, #inv-adjust-form { padding: 20px; }
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .field-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 4px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .field-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+  }
+  .inv-restock-name {
+    font-size: 0.88rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 16px;
+  }
+  .inv-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+</style>

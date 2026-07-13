@@ -1,0 +1,510 @@
+---
+// PPE Issue Log — list view.
+//
+// One row per PPE issue, sorted by request_date DESC. Filters:
+// PPE type, department, staff search (id or name), date range.
+// Pagination 20/page. RLS scopes to the current tenant.
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="PPE Issue Log - AmerisPro">
+  <main class="ppe-list-page">
+    <div class="container">
+      <div id="ppe-setup-warning" class="ppe-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ppe-error" class="ppe-error" hidden></div>
+
+      <header class="ppe-header">
+        <div>
+          <h1>PPE Issue Log</h1>
+          <p class="ppe-sub" id="ppe-sub">…</p>
+        </div>
+        <div class="ppe-header-actions">
+          <a href="/app/ppe/new" class="ppe-primary-btn">+ Record PPE Issue</a>
+        </div>
+      </header>
+
+      <section class="ppe-filters">
+        <label class="ppe-filter-field">
+          <span>PPE Type</span>
+          <select id="ppe-filter-type">
+            <option value="">All</option>
+          </select>
+        </label>
+        <label class="ppe-filter-field">
+          <span>Department</span>
+          <select id="ppe-filter-dept">
+            <option value="">All</option>
+          </select>
+        </label>
+        <label class="ppe-filter-field">
+          <span>Staff</span>
+          <input type="search" id="ppe-filter-staff" placeholder="ID or name" />
+        </label>
+        <label class="ppe-filter-field">
+          <span>From</span>
+          <input type="date" id="ppe-from" />
+        </label>
+        <label class="ppe-filter-field">
+          <span>To</span>
+          <input type="date" id="ppe-to" />
+        </label>
+        <button type="button" id="ppe-filter-apply" class="ppe-secondary-btn">Apply</button>
+        <button type="button" id="ppe-filter-clear" class="ppe-secondary-btn">Clear</button>
+        <button type="button" id="ppe-export-csv" class="ppe-secondary-btn">📥 Export CSV</button>
+      </section>
+
+      <section id="ppe-skeleton" class="ppe-skeleton" hidden>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="ppe-table-wrap" hidden>
+        <div class="ppe-table-scroll">
+          <table class="ppe-table" aria-label="PPE issues">
+            <thead>
+              <tr>
+                <th scope="col">Code</th>
+                <th scope="col">Date</th>
+                <th scope="col">Staff ID</th>
+                <th scope="col">Staff name</th>
+                <th scope="col">Department</th>
+                <th scope="col">PPE Type</th>
+                <th scope="col">Size</th>
+                <th scope="col">Reason</th>
+                <th scope="col">Status</th>
+                <th scope="col">Action date</th>
+                <th scope="col" class="ppe-actions-col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="ppe-tbody"></tbody>
+          </table>
+        </div>
+        <nav class="ppe-pager" aria-label="Pagination">
+          <button type="button" id="ppe-prev" class="ppe-secondary-btn" disabled>← Previous</button>
+          <span class="ppe-page-info" id="ppe-page-info">Page 1</span>
+          <button type="button" id="ppe-next" class="ppe-secondary-btn" disabled>Next →</button>
+        </nav>
+      </section>
+
+      <section id="ppe-empty" class="ppe-empty" hidden>
+        <p>No PPE issues recorded yet. Click "Record PPE Issue" to log your first.</p>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { PpeRequest, PpeRequestStatus } from '../../../lib/types';
+
+  type Row = PpeRequest;
+
+  const setupWarning = document.getElementById('ppe-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ppe-error') as HTMLElement;
+  const subEl = document.getElementById('ppe-sub') as HTMLElement;
+  const skelEl = document.getElementById('ppe-skeleton') as HTMLElement;
+  const tableWrap = document.getElementById('ppe-table-wrap') as HTMLElement;
+  const tbody = document.getElementById('ppe-tbody') as HTMLElement;
+  const emptyEl = document.getElementById('ppe-empty') as HTMLElement;
+  const typeFilterEl = document.getElementById('ppe-filter-type') as HTMLSelectElement;
+  const deptFilterEl = document.getElementById('ppe-filter-dept') as HTMLSelectElement;
+  const staffFilterEl = document.getElementById('ppe-filter-staff') as HTMLInputElement;
+  const fromEl = document.getElementById('ppe-from') as HTMLInputElement;
+  const toEl = document.getElementById('ppe-to') as HTMLInputElement;
+  const applyBtn = document.getElementById('ppe-filter-apply') as HTMLButtonElement;
+  const clearBtn = document.getElementById('ppe-filter-clear') as HTMLButtonElement;
+  const prevBtn = document.getElementById('ppe-prev') as HTMLButtonElement;
+  const nextBtn = document.getElementById('ppe-next') as HTMLButtonElement;
+  const pageInfo = document.getElementById('ppe-page-info') as HTMLElement;
+
+  const PAGE_SIZE = 20;
+  let currentPage = 1;
+  let currentMaxPage = 1;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function statusLabel(s: PpeRequestStatus): string {
+    return s === 'approved_dispatched' ? 'Approved / Dispatched' : 'Pending Approval';
+  }
+
+  function readFiltersFromUrl(): { page: number; ppeType: string; dept: string; staff: string; from: string | null; to: string | null } {
+    const params = new URLSearchParams(window.location.search);
+    const pageRaw = params.get('page');
+    const page = pageRaw ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
+    const ppeType = params.get('type') ?? '';
+    const dept = params.get('dept') ?? '';
+    const staff = params.get('staff') ?? '';
+    const from = params.get('from');
+    const to = params.get('to');
+    if (ppeType) typeFilterEl.value = ppeType;
+    if (dept) deptFilterEl.value = dept;
+    if (staff) staffFilterEl.value = staff;
+    if (from) fromEl.value = from;
+    if (to) toEl.value = to;
+    return { page, ppeType, dept, staff, from, to };
+  }
+
+  function writeFiltersToUrl(page: number): void {
+    const params = new URLSearchParams(window.location.search);
+    if (page > 1) params.set('page', String(page)); else params.delete('page');
+    const ppeType = typeFilterEl.value;
+    if (ppeType) params.set('type', ppeType); else params.delete('type');
+    const dept = deptFilterEl.value;
+    if (dept) params.set('dept', dept); else params.delete('dept');
+    const staff = staffFilterEl.value.trim();
+    if (staff) params.set('staff', staff); else params.delete('staff');
+    const from = fromEl.value;
+    const to = toEl.value;
+    if (from) params.set('from', from); else params.delete('from');
+    if (to) params.set('to', to); else params.delete('to');
+    const qs = params.toString();
+    const url = window.location.pathname + (qs ? '?' + qs : '');
+    window.history.replaceState({}, '', url);
+  }
+
+  async function loadFilterOptions(): Promise<void> {
+    if (!supabase) return;
+    try {
+      const [typesRes, deptsRes] = await Promise.all([
+        supabase.rpc('get_ppe_types'),
+        supabase.rpc('get_departments'),
+      ]);
+      const types = (typesRes.data ?? []) as string[];
+      const depts = (deptsRes.data ?? []) as string[];
+      typeFilterEl.innerHTML = '<option value="">All</option>' +
+        types.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+      deptFilterEl.innerHTML = '<option value="">All</option>' +
+        depts.map((d) => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+    } catch {
+      // Non-fatal: filter dropdowns just stay at "All".
+    }
+  }
+
+  async function refresh(): Promise<void> {
+    if (!supabase) return;
+    const { page, ppeType, dept, staff, from, to } = readFiltersFromUrl();
+    currentPage = page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const offsetEnd = offset + PAGE_SIZE - 1;
+
+    let q = supabase
+      .from('ppe_requests')
+      .select('*', { count: 'estimated' })
+      .order('request_date', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (ppeType) q = q.eq('ppe_type', ppeType);
+    if (dept) q = q.eq('department', dept);
+    if (staff) {
+      // Match either staff_id (ilike) or staff_name (ilike). Use OR.
+      q = q.or(`staff_id.ilike.%${staff}%,staff_name.ilike.%${staff}%`);
+    }
+    if (from) q = q.gte('request_date', from);
+    if (to) q = q.lte('request_date', to);
+    q = q.range(offset, offsetEnd);
+
+    try {
+      const { data, error, count } = await q;
+      if (error) throw error;
+      const rows = (data ?? []) as Row[];
+      skelEl.hidden = true;
+
+      // Sub-header counts: "X issues this year • Y issues to Z staff members"
+      const year = new Date().getFullYear();
+      const yearStart = `${year}-01-01`;
+      const yearEnd = `${year}-12-31`;
+      const [yrRes, distinctStaffRes] = await Promise.all([
+        supabase.from('ppe_requests').select('id', { count: 'estimated', head: true })
+          .gte('request_date', yearStart).lte('request_date', yearEnd),
+        supabase.from('ppe_requests').select('staff_id')
+          .gte('request_date', yearStart).lte('request_date', yearEnd),
+      ]);
+      const totalThisYear = yrRes.count ?? 0;
+      const distinctStaff = new Set(
+        ((distinctStaffRes.data ?? []) as Array<{ staff_id: string }>).map((r) => r.staff_id)
+      ).size;
+      subEl.textContent = `${totalThisYear} issue${totalThisYear === 1 ? '' : 's'} this year • ${totalThisYear} to ${distinctStaff} staff member${distinctStaff === 1 ? '' : 's'}`;
+
+      if (rows.length === 0) {
+        tableWrap.hidden = true;
+        emptyEl.hidden = false;
+        prevBtn.disabled = page <= 1;
+        nextBtn.disabled = true;
+        currentMaxPage = page;
+        pageInfo.textContent = `Page ${page}`;
+        return;
+      }
+      emptyEl.hidden = true;
+      tableWrap.hidden = false;
+
+      tbody.innerHTML = '';
+      for (const r of rows) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code class="ppe-code">${escapeHtml(r.request_code)}</code></td>
+          <td>${formatDate(r.request_date)}</td>
+          <td>${escapeHtml(r.staff_id)}</td>
+          <td>${escapeHtml(r.staff_name)}</td>
+          <td>${escapeHtml(r.department)}</td>
+          <td>${escapeHtml(r.ppe_type)}</td>
+          <td>${escapeHtml(r.size ?? '—')}</td>
+          <td>${escapeHtml(r.replacement_reason)}</td>
+          <td><span class="ppe-status-badge ppe-status-${r.status}">${statusLabel(r.status)}</span></td>
+          <td>${formatDate(r.action_date)}</td>
+          <td class="ppe-actions-col"><a href="/app/ppe/${r.id}" class="ppe-view-link">View</a></td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      const total = count ?? null;
+      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (rows.length === PAGE_SIZE ? page + 1 : page);
+      currentMaxPage = maxPage;
+      prevBtn.disabled = page <= 1;
+      nextBtn.disabled = page >= maxPage;
+      pageInfo.textContent = total != null
+        ? `Page ${page} of ${maxPage} (${total} total)`
+        : `Page ${page}`;
+    } catch (e) {
+      skelEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load PPE issues.');
+    }
+  }
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      await loadFilterOptions();
+      await refresh();
+    })().catch(() => {
+      showError('Failed to initialise PPE list.');
+    });
+
+    applyBtn.addEventListener('click', () => {
+      currentPage = 1;
+      writeFiltersToUrl(1);
+      void refresh();
+    });
+    clearBtn.addEventListener('click', () => {
+      typeFilterEl.value = '';
+      deptFilterEl.value = '';
+      staffFilterEl.value = '';
+      fromEl.value = '';
+      toEl.value = '';
+      currentPage = 1;
+      writeFiltersToUrl(1);
+      void refresh();
+    });
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        writeFiltersToUrl(currentPage);
+        void refresh();
+      }
+    });
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < currentMaxPage) {
+        currentPage += 1;
+        writeFiltersToUrl(currentPage);
+        void refresh();
+      }
+    });
+
+    const exportBtn = document.getElementById('ppe-export-csv') as HTMLButtonElement;
+    exportBtn.addEventListener('click', () => {
+      const params = new URLSearchParams();
+      if (typeFilterEl.value) params.set('type', typeFilterEl.value);
+      if (deptFilterEl.value) params.set('dept', deptFilterEl.value);
+      const staff = staffFilterEl.value.trim();
+      if (staff) params.set('staff', staff);
+      if (fromEl.value) params.set('from', fromEl.value);
+      if (toEl.value) params.set('to', toEl.value);
+      const qs = params.toString();
+      window.location.href = `/api/export/ppe.csv${qs ? '?' + qs : ''}`;
+    });
+  }
+</script>
+
+<style>
+  .ppe-list-page { padding: 32px 0 64px; }
+  .ppe-warning,
+  .ppe-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ppe-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ppe-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ppe-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ppe-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .ppe-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ppe-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .ppe-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ppe-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ppe-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+  .ppe-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .ppe-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ppe-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .ppe-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .ppe-filter-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; }
+  .ppe-filter-field input,
+  .ppe-filter-field select {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: var(--color-bg, #fff);
+    min-width: 160px;
+  }
+
+  .ppe-skeleton { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .ppe-table-scroll { overflow-x: auto; }
+  .ppe-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.85rem;
+  }
+  .ppe-table th, .ppe-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    vertical-align: top;
+  }
+  .ppe-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    white-space: nowrap;
+  }
+  .ppe-table tbody tr:hover { background: #FAFAFA; }
+  .ppe-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.82rem;
+    color: var(--color-primary, #E58E1A);
+    font-weight: 700;
+  }
+  .ppe-actions-col { white-space: nowrap; text-align: right; }
+  .ppe-view-link {
+    color: var(--color-primary, #E58E1A);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .ppe-view-link:hover { text-decoration: underline; }
+
+  .ppe-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .ppe-status-pending_approval  { background: #FFF7E6; color: #6A4A0F; }
+  .ppe-status-approved_dispatched { background: #E8F5E9; color: #1F7A4D; }
+
+  .ppe-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .ppe-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
+
+  .ppe-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted, #6A6A69);
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+</style>

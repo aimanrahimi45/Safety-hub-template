@@ -1,0 +1,711 @@
+---
+// Incidents log — new + edit form.
+//
+// The form handles both create and edit. Edit mode is triggered by
+// `?id=<uuid>` in the query string; the form then loads the existing
+// record and updates it instead of inserting a new one.
+//
+// Staff ID lookup is a Premium feature: the page calls
+// is_my_tenant_premium() on load and, when true, wires the Staff ID
+// input to call lookup_staff_by_id on blur. Free users see a plain
+// text input and an "Upgrade to Premium" hint.
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="Report Incident - AmerisPro">
+  <main class="inc-new-page">
+    <div class="container">
+      <div id="inc-setup-warning" class="inc-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="inc-error" class="inc-error" hidden></div>
+
+      <header class="inc-header">
+        <div>
+          <h1 id="inc-title">Report incident</h1>
+          <p class="inc-sub" id="inc-sub">Log a new safety incident.</p>
+        </div>
+        <a href="/app/incidents" class="inc-link-btn">← Back to list</a>
+      </header>
+
+      <form id="inc-form" novalidate>
+        <!-- A. When did it happen? -->
+        <fieldset class="inc-fieldset">
+          <legend>A. When did it happen?</legend>
+
+          <div class="inc-row-2">
+            <label class="field">
+              <span class="field-label">Incident date <em>*</em></span>
+              <input type="date" name="incident_date" id="inc-incident-date" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Incident time <em>*</em></span>
+              <input type="time" name="incident_time" id="inc-incident-time" required />
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- B. Who was injured? -->
+        <fieldset class="inc-fieldset">
+          <legend>B. Who was injured?</legend>
+
+          <label class="field">
+            <span class="field-label">Victim name <em>*</em></span>
+            <input type="text" name="victim_name" id="inc-victim-name" required placeholder="e.g. Ahmad bin Ali" />
+          </label>
+
+          <label class="field" id="inc-staff-id-field">
+            <span class="field-label">
+              Staff ID
+              <span class="inc-premium-pill" id="inc-staff-premium-pill" hidden>Premium</span>
+            </span>
+            <input type="text" name="staff_id" id="inc-staff-id" placeholder="e.g. EMP-001" />
+            <span class="field-hint" id="inc-staff-hint"></span>
+          </label>
+
+          <div id="inc-staff-lookup-card" class="inc-staff-card" hidden>
+            <span class="inc-staff-card-icon" aria-hidden="true">✓</span>
+            <div class="inc-staff-card-body">
+              <strong id="inc-staff-card-name">…</strong>
+              <span id="inc-staff-card-meta" class="inc-staff-card-meta">…</span>
+            </div>
+          </div>
+
+          <div id="inc-staff-lookup-error" class="inc-staff-error" hidden>
+            <span class="inc-staff-card-icon" aria-hidden="true">✗</span>
+            <span id="inc-staff-error-text">No staff found with that ID.</span>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Location / Department <em>*</em></span>
+            <input type="text" name="location_dept" id="inc-location-dept" required placeholder="e.g. Production Line 2, Building A" />
+          </label>
+        </fieldset>
+
+        <!-- C. What happened? -->
+        <fieldset class="inc-fieldset">
+          <legend>C. What happened?</legend>
+
+          <label class="field">
+            <span class="field-label">Body part injured</span>
+            <input type="text" name="body_part_injured" id="inc-body-part" list="inc-body-part-list" placeholder="e.g. left hand" />
+            <datalist id="inc-body-part-list">
+              <option value="head"></option>
+              <option value="face"></option>
+              <option value="left eye"></option>
+              <option value="right eye"></option>
+              <option value="left hand"></option>
+              <option value="right hand"></option>
+              <option value="left arm"></option>
+              <option value="right arm"></option>
+              <option value="left leg"></option>
+              <option value="right leg"></option>
+              <option value="left foot"></option>
+              <option value="right foot"></option>
+              <option value="back"></option>
+              <option value="chest"></option>
+              <option value="abdomen"></option>
+              <option value="multiple"></option>
+              <option value="other"></option>
+            </datalist>
+            <span class="field-hint">Optional. Pick a common value or type free text.</span>
+          </label>
+
+          <div class="inc-row-2">
+            <label class="field">
+              <span class="field-label">Severity type <em>*</em></span>
+              <select name="severity_type" id="inc-severity-type" required>
+                <option value="First Aid">First Aid</option>
+                <option value="Minor">Minor</option>
+                <option value="Major">Major</option>
+                <option value="Fatal">Fatal</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Man-days lost</span>
+              <input type="number" name="man_days_lost" id="inc-man-days" min="0" step="1" value="0" />
+            </label>
+          </div>
+
+          <label class="field" id="inc-severity-other-field" hidden>
+            <span class="field-label">Specify severity <em>*</em></span>
+            <input type="text" name="severity_other" id="inc-severity-other" placeholder="e.g. Near-miss with no injury" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Description <em>*</em></span>
+            <textarea
+              name="description"
+              id="inc-description"
+              rows="4"
+              required
+              placeholder="Describe what happened in detail"
+            ></textarea>
+          </label>
+        </fieldset>
+
+        <!-- D. Regulatory status -->
+        <fieldset class="inc-fieldset">
+          <legend>D. Regulatory status</legend>
+          <label class="field-check">
+            <input type="checkbox" name="reported_to_jkkp" id="inc-jkkp" />
+            <span>Reported to JKKP</span>
+          </label>
+          <label class="field-check">
+            <input type="checkbox" name="investigation_submitted" id="inc-investigation" />
+            <span>Incident investigation submitted</span>
+          </label>
+        </fieldset>
+
+        <div class="inc-form-actions">
+          <a href="/app/incidents" class="inc-secondary-btn">Cancel</a>
+          <button type="submit" id="inc-submit" class="inc-primary-btn">Save incident</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { Incident, IncidentSeverityType, StaffLookupResult } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('inc-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('inc-error') as HTMLElement;
+  const formEl = document.getElementById('inc-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('inc-submit') as HTMLButtonElement;
+  const titleEl = document.getElementById('inc-title') as HTMLElement;
+  const subEl = document.getElementById('inc-sub') as HTMLElement;
+
+  const dateEl = document.getElementById('inc-incident-date') as HTMLInputElement;
+  const timeEl = document.getElementById('inc-incident-time') as HTMLInputElement;
+  const victimEl = document.getElementById('inc-victim-name') as HTMLInputElement;
+  const staffIdEl = document.getElementById('inc-staff-id') as HTMLInputElement;
+  const staffHintEl = document.getElementById('inc-staff-hint') as HTMLElement;
+  const staffPillEl = document.getElementById('inc-staff-premium-pill') as HTMLElement;
+  const staffCardEl = document.getElementById('inc-staff-lookup-card') as HTMLElement;
+  const staffCardNameEl = document.getElementById('inc-staff-card-name') as HTMLElement;
+  const staffCardMetaEl = document.getElementById('inc-staff-card-meta') as HTMLElement;
+  const staffErrorEl = document.getElementById('inc-staff-lookup-error') as HTMLElement;
+  const staffErrorTextEl = document.getElementById('inc-staff-error-text') as HTMLElement;
+  const locationEl = document.getElementById('inc-location-dept') as HTMLInputElement;
+  const bodyPartEl = document.getElementById('inc-body-part') as HTMLInputElement;
+  const severityEl = document.getElementById('inc-severity-type') as HTMLSelectElement;
+  const severityOtherField = document.getElementById('inc-severity-other-field') as HTMLElement;
+  const severityOtherEl = document.getElementById('inc-severity-other') as HTMLInputElement;
+  const manDaysEl = document.getElementById('inc-man-days') as HTMLInputElement;
+  const descriptionEl = document.getElementById('inc-description') as HTMLTextAreaElement;
+  const jkkpEl = document.getElementById('inc-jkkp') as HTMLInputElement;
+  const investigationEl = document.getElementById('inc-investigation') as HTMLInputElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+    errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+
+  function today(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function nowTime(): string {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  function readQueryId(): string {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id') ?? '';
+  }
+
+  function hideStaffCard(): void {
+    staffCardEl.hidden = true;
+    staffErrorEl.hidden = true;
+  }
+
+  function showStaffCard(name: string, meta: string): void {
+    staffCardNameEl.textContent = name;
+    staffCardMetaEl.textContent = meta;
+    staffCardEl.hidden = false;
+    staffErrorEl.hidden = true;
+  }
+
+  function showStaffError(msg: string): void {
+    staffErrorTextEl.textContent = msg;
+    staffErrorEl.hidden = false;
+    staffCardEl.hidden = true;
+  }
+
+  let authUserId: string | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  let isPremium = false;
+  let editId: string | null = null;
+
+  severityEl.addEventListener('change', () => {
+    if (severityEl.value === 'Other') {
+      severityOtherField.hidden = false;
+      severityOtherEl.required = true;
+    } else {
+      severityOtherField.hidden = true;
+      severityOtherEl.required = false;
+      severityOtherEl.value = '';
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // Premium staff lookup (on blur). Only wires up when the tenant is Premium.
+  // -------------------------------------------------------------------------
+  let lookupTimer: number | null = null;
+  let lastLookedUpId = '';
+
+  function scheduleLookup(): void {
+    if (lookupTimer != null) window.clearTimeout(lookupTimer);
+    lookupTimer = window.setTimeout(() => {
+      lookupTimer = null;
+      void runLookup();
+    }, 250);
+  }
+
+  async function runLookup(): Promise<void> {
+    if (!supabase) return;
+    const sid = staffIdEl.value.trim();
+    if (!sid) {
+      hideStaffCard();
+      return;
+    }
+    if (sid === lastLookedUpId) return;
+    lastLookedUpId = sid;
+    try {
+      const { data, error } = await supabase.rpc('lookup_staff_by_id', { p_staff_id: sid });
+      if (error) throw error;
+      const rows = (data ?? []) as StaffLookupResult[];
+      if (rows.length === 0) {
+        showStaffError('No staff found with that ID.');
+        return;
+      }
+      const r = rows[0];
+      const meta: string[] = [];
+      if (r.department) meta.push(r.department);
+      if (r.position) meta.push(r.position);
+      const histParts: string[] = [`${r.total_incidents} previous incident${r.total_incidents === 1 ? '' : 's'}`];
+      if (r.last_incident_date) histParts.push(`last: ${r.last_incident_date}`);
+      const status = r.is_active ? '' : ' (inactive)';
+      showStaffCard(
+        r.full_name + status,
+        `${meta.join(' | ')}${meta.length ? ' | ' : ''}${histParts.join(' • ')}`
+      );
+    } catch {
+      showStaffError('Staff lookup failed.');
+    }
+  }
+
+  staffIdEl.addEventListener('blur', () => {
+    if (!isPremium) return;
+    void runLookup();
+  });
+  staffIdEl.addEventListener('input', () => {
+    if (!isPremium) return;
+    scheduleLookup();
+  });
+
+  async function loadForEdit(id: string): Promise<void> {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle<Incident>();
+      if (error || !data) {
+        showError('Incident not found.');
+        submitBtn.disabled = true;
+        return;
+      }
+
+      titleEl.textContent = `Edit incident ${data.incident_code}`;
+      subEl.textContent = `Editing record ${data.incident_code}.`;
+
+      // incident_date is timestamptz; slice YYYY-MM-DD and HH:MM out of it.
+      const d = new Date(data.incident_date);
+      if (!Number.isNaN(d.getTime())) {
+        dateEl.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+      if (data.incident_time) {
+        timeEl.value = data.incident_time.length >= 5 ? data.incident_time.substring(0, 5) : data.incident_time;
+      }
+      victimEl.value = data.victim_name;
+      staffIdEl.value = data.staff_id ?? '';
+      locationEl.value = data.location_dept;
+      bodyPartEl.value = data.body_part_injured ?? '';
+      severityEl.value = data.severity_type;
+      if (data.severity_type === 'Other') {
+        severityOtherField.hidden = false;
+        severityOtherEl.required = true;
+        severityOtherEl.value = data.severity_other ?? '';
+      } else {
+        severityOtherField.hidden = true;
+        severityOtherEl.required = false;
+        severityOtherEl.value = '';
+      }
+      manDaysEl.value = String(data.man_days_lost);
+      descriptionEl.value = data.description;
+      jkkpEl.checked = data.reported_to_jkkp;
+      investigationEl.checked = data.investigation_submitted;
+
+      // For edit mode also run the staff lookup if Premium, to show
+      // the inline card for context.
+      if (isPremium && staffIdEl.value.trim()) {
+        void runLookup();
+      }
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Failed to load incident.');
+      submitBtn.disabled = true;
+    }
+  }
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    submitBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+    dateEl.value = today();
+    timeEl.value = nowTime();
+
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      authUserId = userData.user.id;
+
+      // Premium check.
+      try {
+        const { data: premium } = await supabase.rpc('is_my_tenant_premium');
+        isPremium = premium === true;
+      } catch {
+        isPremium = false;
+      }
+
+      if (isPremium) {
+        staffPillEl.hidden = false;
+        staffHintEl.textContent = 'Type a Staff ID and tab out — we will auto-fill details from your staff database.';
+      } else {
+        staffPillEl.hidden = true;
+        staffHintEl.innerHTML = 'Free plan. <a href="/app/settings">Upgrade to Premium</a> to auto-fill staff details from your staff database.';
+      }
+
+      // Edit mode?
+      editId = readQueryId();
+      if (editId) {
+        await loadForEdit(editId);
+      }
+    })().catch(() => {
+      showError('Failed to initialise form.');
+    });
+  }
+
+  formEl.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    if (!supabase || !authUserId) return;
+    clearError();
+
+    const incidentDate = dateEl.value;
+    const incidentTime = timeEl.value;
+    const victimName = victimEl.value.trim();
+    const staffId = staffIdEl.value.trim() || null;
+    const locationDept = locationEl.value.trim();
+    const bodyPart = bodyPartEl.value.trim() || null;
+    const severityType = severityEl.value as IncidentSeverityType;
+    const severityOther = severityType === 'Other' ? severityOtherEl.value.trim() || null : null;
+    const manDaysRaw = manDaysEl.value;
+    const manDaysLost = manDaysRaw === '' ? 0 : Math.max(0, Math.floor(Number(manDaysRaw) || 0));
+    const description = descriptionEl.value.trim();
+    const reportedToJkkp = jkkpEl.checked;
+    const investigationSubmitted = investigationEl.checked;
+
+    if (!incidentDate) { showError('Incident date is required.'); return; }
+    if (!incidentTime) { showError('Incident time is required.'); return; }
+    if (incidentDate > today()) { showError('Incident date cannot be in the future.'); return; }
+    if (!victimName) { showError('Victim name is required.'); return; }
+    if (!locationDept) { showError('Location / Department is required.'); return; }
+    if (!description) { showError('Description is required.'); return; }
+    if (severityType === 'Other' && !severityOther) {
+      showError('Please specify the severity.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const original = submitBtn.textContent;
+    submitBtn.textContent = 'Saving…';
+
+    // Build the timestamptz from the local date + time inputs.
+    const localDateTime = new Date(`${incidentDate}T${incidentTime}:00`);
+    if (Number.isNaN(localDateTime.getTime())) {
+      showError('Invalid date or time.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = original;
+      return;
+    }
+    const incidentDateIso = localDateTime.toISOString();
+    // PG `time` column accepts "HH:MM" (defaults seconds to 00).
+    const incidentTimeVal = incidentTime.length === 5 ? `${incidentTime}:00` : incidentTime;
+
+    (async () => {
+      try {
+        if (editId) {
+          // UPDATE path
+          const updatePayload: Partial<Incident> = {
+            incident_date: incidentDateIso,
+            incident_time: incidentTimeVal,
+            victim_name: victimName,
+            staff_id: staffId,
+            location_dept: locationDept,
+            body_part_injured: bodyPart,
+            description,
+            man_days_lost: manDaysLost,
+            severity_type: severityType,
+            severity_other: severityOther,
+            reported_to_jkkp: reportedToJkkp,
+            investigation_submitted: investigationSubmitted,
+          };
+          const { error: updErr } = await supabase
+            .from('incidents')
+            .update(updatePayload)
+            .eq('id', editId);
+          if (updErr) throw updErr;
+          window.location.href = `/app/incidents/${editId}`;
+          return;
+        }
+
+        // CREATE path: get next incident_code, then insert.
+        const { data: codeData, error: codeErr } = await supabase.rpc('next_incident_code');
+        if (codeErr) throw codeErr;
+        const incidentCode = String(codeData ?? '').trim();
+        if (!/^INC-\d{4}-\d{4}$/.test(incidentCode)) {
+          throw new Error('Failed to generate incident code.');
+        }
+
+        // NOTE: tenant_id is auto-set by RLS WITH CHECK. Do NOT pass it.
+        const insertPayload: Omit<Incident, 'id' | 'tenant_id' | 'reported_by' | 'recorded_at' | 'created_at' | 'updated_at' | 'incident_code'> = {
+          incident_date: incidentDateIso,
+          incident_time: incidentTimeVal,
+          victim_name: victimName,
+          staff_id: staffId,
+          location_dept: locationDept,
+          body_part_injured: bodyPart,
+          description,
+          man_days_lost: manDaysLost,
+          severity_type: severityType,
+          severity_other: severityOther,
+          reported_to_jkkp: reportedToJkkp,
+          investigation_submitted: investigationSubmitted,
+        };
+
+        const { data: created, error: createErr } = await supabase
+          .from('incidents')
+          .insert({ ...insertPayload, incident_code: incidentCode })
+          .select('id')
+          .single<{ id: string }>();
+        if (createErr) throw createErr;
+        window.location.href = `/app/incidents/${created.id}`;
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Failed to save incident.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = original;
+      }
+    })();
+  });
+</script>
+
+<style>
+  .inc-new-page { padding: 32px 0 64px; }
+  .inc-warning,
+  .inc-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .inc-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .inc-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .inc-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .inc-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .inc-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .inc-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .inc-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .inc-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .inc-fieldset {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .inc-fieldset legend {
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 8px;
+  }
+  .inc-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .inc-row-2 { grid-template-columns: 1fr; } }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
+  .field-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 4px;
+  }
+  .field-hint a { color: var(--color-primary, #E58E1A); }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .field-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+  }
+
+  .inc-premium-pill {
+    display: inline-block;
+    background: #1F7A4D;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .inc-staff-card,
+  .inc-staff-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    border-width: 1px;
+    border-style: solid;
+  }
+  .inc-staff-card {
+    background: #E8F5E9;
+    border-color: #1F7A4D;
+    color: #1F7A4D;
+  }
+  .inc-staff-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-weight: 900;
+    background: rgba(255,255,255,0.5);
+    flex-shrink: 0;
+  }
+  .inc-staff-card-body { display: flex; flex-direction: column; gap: 2px; }
+  .inc-staff-card-meta { font-size: 0.78rem; opacity: 0.9; }
+  .inc-staff-error {
+    background: #FDECEC;
+    border-color: #C0392B;
+    color: #8B1A1A;
+  }
+
+  .inc-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .inc-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .inc-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .inc-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .inc-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .inc-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .inc-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+</style>

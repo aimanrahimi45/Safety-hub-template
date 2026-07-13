@@ -1,0 +1,609 @@
+---
+// Workspace settings.
+//
+// The SHO can edit two comma-separated lists that drive the dropdown
+// options in the PPE module (and will be reused by other modules in
+// the future): PPE Types and Departments. Values are stored on the
+// tenants row as comma-separated strings; the client converts
+// textareas to/from that representation.
+//
+// Phase 3.1 added two more sections: the workspace name (tenants.name)
+// and the license key (validate against the GAS Web App + persist onto
+// the tenant row).
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+<AppLayout title="Workspace Settings - AmerisPro">
+  <main class="settings-page">
+    <div class="container">
+      <div id="settings-setup-warning" class="settings-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="settings-error" class="settings-error" hidden></div>
+
+      <header class="settings-header">
+        <h1>Workspace Settings</h1>
+        <p class="settings-sub">
+          Configure the dropdown options used by the PPE module. Each
+          item goes on its own line; they are stored as a single
+          comma-separated list.
+        </p>
+      </header>
+
+      <section id="settings-skeleton" class="settings-skeleton" hidden>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <!-- PPE Types -->
+      <section class="settings-card" id="settings-ppe-card" hidden>
+        <h2>PPE Types</h2>
+        <p class="settings-hint">
+          The list shown in the <strong>PPE Type</strong> dropdown on
+          the Record PPE Issue form. Add or remove items to match what
+          your facility actually issues.
+        </p>
+        <label class="field">
+          <span class="field-label">PPE Types (one per line)</span>
+          <textarea id="settings-ppe-types" rows="8" placeholder="Safety Shoe&#10;Safety Helmet&#10;Respirator"></textarea>
+        </label>
+        <div class="settings-actions">
+          <span id="settings-ppe-toast" class="settings-toast" hidden>Saved</span>
+          <button type="button" id="settings-ppe-save" class="settings-primary-btn">Save PPE types</button>
+        </div>
+      </section>
+
+      <!-- Departments -->
+      <section class="settings-card" id="settings-dept-card" hidden>
+        <h2>Departments</h2>
+        <p class="settings-hint">
+          The list shown in the <strong>Department</strong> dropdown on
+          the Record PPE Issue form. Add or remove items to match the
+          departments in your facility.
+        </p>
+        <label class="field">
+          <span class="field-label">Departments (one per line)</span>
+          <textarea id="settings-departments" rows="10" placeholder="Production&#10;Maintenance&#10;QA/QC"></textarea>
+        </label>
+        <div class="settings-actions">
+          <span id="settings-dept-toast" class="settings-toast" hidden>Saved</span>
+          <button type="button" id="settings-dept-save" class="settings-primary-btn">Save departments</button>
+        </div>
+      </section>
+
+      <!-- Contractor declaration -->
+      <section class="settings-card" id="settings-decl-card" hidden>
+        <h2>Contractor Declaration</h2>
+        <p class="settings-hint">
+          Text shown to workers during induction. The worker
+          acknowledges they have read and agreed to it before
+          signing. Edit this to match your facility's actual
+          induction topics.
+        </p>
+        <label class="field">
+          <span class="field-label">Declaration text</span>
+          <textarea
+            id="settings-decl-text"
+            rows="4"
+            placeholder="Agreed: Emergency Evac, PPE Rules, Incident Reporting"
+          ></textarea>
+        </label>
+        <div class="settings-actions">
+          <span id="settings-decl-toast" class="settings-toast" hidden>Saved</span>
+          <button type="button" id="settings-decl-save" class="settings-primary-btn">Save declaration</button>
+        </div>
+      </section>
+
+      <!-- Workspace name (Phase 3.1) -->
+      <section class="settings-card" id="settings-ws-card" hidden>
+        <h2>Workspace Name</h2>
+        <p class="settings-hint">
+          The name shown in the dashboard greeting and on all your
+          reports. Set during onboarding; editable here.
+        </p>
+        <label class="field">
+          <span class="field-label">Workspace name</span>
+          <input
+            type="text"
+            id="settings-ws-name"
+            maxlength="100"
+            autocomplete="organization"
+            placeholder="e.g. Acme Safety Dept"
+          />
+        </label>
+        <div class="settings-actions">
+          <span id="settings-ws-toast" class="settings-toast" hidden>Workspace name updated</span>
+          <button type="button" id="settings-ws-save" class="settings-primary-btn">Save workspace name</button>
+        </div>
+      </section>
+
+      <!-- License key (Phase 3.1) -->
+      <section class="settings-card" id="settings-lic-card" hidden>
+        <h2>License Key</h2>
+        <p class="settings-hint">
+          Enter your license key to unlock Premium features
+          (AI Legal Search, Staff Lookup at incidents, longer
+          retention). Validate against our license server; on success,
+          your subscription plan and expiry date are updated
+          automatically.
+        </p>
+
+        <dl class="settings-meta">
+          <div class="settings-meta-row">
+            <dt>Current Plan</dt>
+            <dd>
+              <span id="settings-lic-plan" class="settings-plan-badge settings-plan-free">Free</span>
+            </dd>
+          </div>
+          <div class="settings-meta-row">
+            <dt>Expires</dt>
+            <dd id="settings-lic-expires">No expiry set</dd>
+          </div>
+          <div class="settings-meta-row">
+            <dt>Activated</dt>
+            <dd id="settings-lic-activated">Never</dd>
+          </div>
+        </dl>
+
+        <label class="field">
+          <span class="field-label">License key</span>
+          <input
+            type="text"
+            id="settings-lic-key"
+            class="settings-mono-input"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="AMER-XXXX-XXXX-XXXX"
+          />
+        </label>
+        <div class="settings-actions">
+          <span id="settings-lic-toast" class="settings-toast" hidden>Premium activated!</span>
+          <button type="button" id="settings-lic-save" class="settings-primary-btn">Validate &amp; Activate</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+  import type { LicensePlanType } from '../../lib/types';
+
+  const setupWarning = document.getElementById('settings-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('settings-error') as HTMLElement;
+  const skelEl = document.getElementById('settings-skeleton') as HTMLElement;
+  const ppeCard = document.getElementById('settings-ppe-card') as HTMLElement;
+  const deptCard = document.getElementById('settings-dept-card') as HTMLElement;
+  const declCard = document.getElementById('settings-decl-card') as HTMLElement;
+  const wsCard = document.getElementById('settings-ws-card') as HTMLElement;
+  const licCard = document.getElementById('settings-lic-card') as HTMLElement;
+  const ppeTextarea = document.getElementById('settings-ppe-types') as HTMLTextAreaElement;
+  const deptTextarea = document.getElementById('settings-departments') as HTMLTextAreaElement;
+  const declTextarea = document.getElementById('settings-decl-text') as HTMLTextAreaElement;
+  const wsInput = document.getElementById('settings-ws-name') as HTMLInputElement;
+  const licKeyInput = document.getElementById('settings-lic-key') as HTMLInputElement;
+  const licPlanEl = document.getElementById('settings-lic-plan') as HTMLElement;
+  const licExpiresEl = document.getElementById('settings-lic-expires') as HTMLElement;
+  const licActivatedEl = document.getElementById('settings-lic-activated') as HTMLElement;
+  const ppeSave = document.getElementById('settings-ppe-save') as HTMLButtonElement;
+  const deptSave = document.getElementById('settings-dept-save') as HTMLButtonElement;
+  const declSave = document.getElementById('settings-decl-save') as HTMLButtonElement;
+  const wsSave = document.getElementById('settings-ws-save') as HTMLButtonElement;
+  const licSave = document.getElementById('settings-lic-save') as HTMLButtonElement;
+  const ppeToast = document.getElementById('settings-ppe-toast') as HTMLElement;
+  const deptToast = document.getElementById('settings-dept-toast') as HTMLElement;
+  const declToast = document.getElementById('settings-decl-toast') as HTMLElement;
+  const wsToast = document.getElementById('settings-ws-toast') as HTMLElement;
+  const licToast = document.getElementById('settings-lic-toast') as HTMLElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+
+  function linesToCsv(s: string): string {
+    return s
+      .split(/\r?\n/)
+      .map((x) => x.trim())
+      .filter((x) => x.length > 0)
+      .join(',');
+  }
+  function csvToTextarea(s: string | null | undefined): string {
+    if (!s) return '';
+    return s.split(',').map((x) => x.trim()).filter((x) => x.length > 0).join('\n');
+  }
+
+  function formatDate(s: string | null | undefined): string {
+    if (!s) return '';
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  let tenantId: string | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  let ppeToastTimer: number | null = null;
+  let deptToastTimer: number | null = null;
+  let declToastTimer: number | null = null;
+  let wsToastTimer: number | null = null;
+  let licToastTimer: number | null = null;
+
+  function flashToast(el: HTMLElement, timer: number | null, msg?: string): number | null {
+    el.hidden = false;
+    if (msg) el.textContent = msg;
+    if (timer != null) window.clearTimeout(timer);
+    return window.setTimeout(() => { el.hidden = true; }, 2000);
+  }
+
+  function setPlanBadge(plan: LicensePlanType): void {
+    licPlanEl.textContent = plan === 'premium' ? 'Premium' : 'Free';
+    licPlanEl.classList.remove('settings-plan-free', 'settings-plan-premium');
+    licPlanEl.classList.add(plan === 'premium' ? 'settings-plan-premium' : 'settings-plan-free');
+  }
+
+  interface TenantRow {
+    id: string;
+    ppe_types: string;
+    departments: string;
+    contractor_declaration: string;
+    name: string;
+    subscription_plan: LicensePlanType;
+    subscription_expires_at: string | null;
+    subscription_activated_at: string | null;
+  }
+
+  async function loadSettings(): Promise<void> {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('id, ppe_types, departments, contractor_declaration, name, subscription_plan, subscription_expires_at, subscription_activated_at')
+        .maybeSingle<TenantRow>();
+      if (error) throw error;
+      if (!data) {
+        showError('Workspace not found. Complete onboarding first.');
+        skelEl.hidden = true;
+        return;
+      }
+      tenantId = data.id;
+      ppeTextarea.value = csvToTextarea(data.ppe_types);
+      deptTextarea.value = csvToTextarea(data.departments);
+      declTextarea.value = data.contractor_declaration ?? 'Agreed: Emergency Evac, PPE Rules, Incident Reporting';
+      wsInput.value = data.name ?? '';
+      setPlanBadge(data.subscription_plan);
+      licExpiresEl.textContent = formatDate(data.subscription_expires_at) || 'No expiry set';
+      licActivatedEl.textContent = formatDate(data.subscription_activated_at) || 'Never';
+      skelEl.hidden = true;
+      ppeCard.hidden = false;
+      deptCard.hidden = false;
+      declCard.hidden = false;
+      wsCard.hidden = false;
+      licCard.hidden = false;
+    } catch (e) {
+      skelEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load settings.');
+    }
+  }
+
+  ppeSave.addEventListener('click', () => {
+    if (!supabase || !tenantId) return;
+    clearError();
+    const value = linesToCsv(ppeTextarea.value);
+    ppeSave.disabled = true;
+    const original = ppeSave.textContent;
+    ppeSave.textContent = 'Saving…';
+    (async () => {
+      try {
+        const { error } = await supabase!
+          .from('tenants')
+          .update({ ppe_types: value })
+          .eq('id', tenantId);
+        if (error) throw error;
+        ppeToastTimer = flashToast(ppeToast, ppeToastTimer);
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Save failed.');
+      } finally {
+        ppeSave.disabled = false;
+        ppeSave.textContent = original;
+      }
+    })();
+  });
+
+  deptSave.addEventListener('click', () => {
+    if (!supabase || !tenantId) return;
+    clearError();
+    const value = linesToCsv(deptTextarea.value);
+    deptSave.disabled = true;
+    const original = deptSave.textContent;
+    deptSave.textContent = 'Saving…';
+    (async () => {
+      try {
+        const { error } = await supabase!
+          .from('tenants')
+          .update({ departments: value })
+          .eq('id', tenantId);
+        if (error) throw error;
+        deptToastTimer = flashToast(deptToast, deptToastTimer);
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Save failed.');
+      } finally {
+        deptSave.disabled = false;
+        deptSave.textContent = original;
+      }
+    })();
+  });
+
+  declSave.addEventListener('click', () => {
+    if (!supabase || !tenantId) return;
+    clearError();
+    const value = declTextarea.value.trim();
+    if (!value) { showError('Declaration text cannot be empty.'); return; }
+    declSave.disabled = true;
+    const original = declSave.textContent;
+    declSave.textContent = 'Saving…';
+    (async () => {
+      try {
+        const { error } = await supabase!
+          .from('tenants')
+          .update({ contractor_declaration: value })
+          .eq('id', tenantId);
+        if (error) throw error;
+        declToastTimer = flashToast(declToast, declToastTimer);
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Save failed.');
+      } finally {
+        declSave.disabled = false;
+        declSave.textContent = original;
+      }
+    })();
+  });
+
+  wsSave.addEventListener('click', () => {
+    if (!supabase || !tenantId) return;
+    clearError();
+    const value = wsInput.value.trim();
+    if (!value) { showError('Workspace name cannot be empty.'); return; }
+    if (value.length > 100) { showError('Workspace name must be 100 characters or fewer.'); return; }
+    wsSave.disabled = true;
+    const original = wsSave.textContent;
+    wsSave.textContent = 'Saving…';
+    (async () => {
+      try {
+        const { error } = await supabase!
+          .from('tenants')
+          .update({ name: value })
+          .eq('id', tenantId);
+        if (error) throw error;
+        wsToastTimer = flashToast(wsToast, wsToastTimer);
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Save failed.');
+      } finally {
+        wsSave.disabled = false;
+        wsSave.textContent = original;
+      }
+    })();
+  });
+
+  licSave.addEventListener('click', () => {
+    if (!supabase) return;
+    clearError();
+    const value = licKeyInput.value.trim();
+    if (!value) { showError('Please enter a license key.'); return; }
+    licSave.disabled = true;
+    const original = licSave.textContent;
+    licSave.textContent = 'Validating…';
+    (async () => {
+      try {
+        const resp = await fetch('/api/activate-license', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ licenseKey: value }),
+        });
+        const result = (await resp.json()) as {
+          status: 'SUCCESS' | 'ERROR';
+          plan?: LicensePlanType;
+          expires_at?: string | null;
+          message?: string;
+        };
+        if (!resp.ok || result.status !== 'SUCCESS') {
+          throw new Error(result.message || 'License activation failed.');
+        }
+        // Refresh local state from the server response.
+        const plan: LicensePlanType = result.plan ?? 'free';
+        setPlanBadge(plan);
+        const expiresText = formatDate(result.expires_at);
+        licExpiresEl.textContent = expiresText || 'No expiry set';
+        licActivatedEl.textContent = formatDate(new Date().toISOString()) || 'Never';
+        const msg = plan === 'premium' ? 'Premium activated!' : 'License key updated';
+        licToastTimer = flashToast(licToast, licToastTimer, msg);
+        licKeyInput.value = '';
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'License activation failed.');
+      } finally {
+        licSave.disabled = false;
+        licSave.textContent = original;
+      }
+    })();
+  });
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      await loadSettings();
+    })().catch(() => {
+      skelEl.hidden = true;
+      showError('Failed to load settings.');
+    });
+  }
+</script>
+
+<style>
+  .settings-page { padding: 32px 0 64px; }
+  .settings-warning,
+  .settings-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .settings-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .settings-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .settings-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .settings-header { margin-bottom: 24px; }
+  .settings-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .settings-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; max-width: 640px; }
+
+  .settings-skeleton { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .settings-card {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .settings-card h2 {
+    font-size: 1.05rem;
+    font-weight: 900;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .settings-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin: 0 0 16px;
+  }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field textarea,
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+    color: var(--color-text, #1E1E1D);
+  }
+  .field textarea {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    resize: vertical;
+  }
+  .field textarea:focus,
+  .field input:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .field input.settings-mono-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.5px;
+  }
+
+  .settings-meta {
+    margin: 0 0 20px;
+    padding: 12px 14px;
+    background: #F8F8F7;
+    border: 1px solid var(--color-border, #E0E0E0);
+    display: grid;
+    gap: 8px;
+  }
+  .settings-meta-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: center;
+    gap: 12px;
+  }
+  .settings-meta dt {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .settings-meta dd {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text, #1E1E1D);
+  }
+  .settings-plan-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+  }
+  .settings-plan-free {
+    background: #ECECEC;
+    color: #4A4A48;
+    border-color: #D4D4D2;
+  }
+  .settings-plan-premium {
+    background: #FFF1D6;
+    color: #7A4F0B;
+    border-color: #E58E1A;
+  }
+
+  .settings-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+  }
+  .settings-toast {
+    background: #E8F5E9;
+    color: #1F7A4D;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .settings-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .settings-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .settings-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>

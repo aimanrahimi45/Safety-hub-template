@@ -1,0 +1,267 @@
+---
+// IC lookup tool. Lets the SHO quickly check whether a worker has a
+// current safety induction, by IC number. RLS still scopes the
+// result to the calling tenant; foreign-tenant ICs return "not
+// found".
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+<AppLayout title="Induction Lookup - AmerisPro">
+  <main class="ct-lookup-page">
+    <div class="container">
+      <div id="ct-setup-warning" class="ct-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ct-error" class="ct-error" hidden></div>
+
+      <header class="ct-header">
+        <div>
+          <h1>Induction Lookup</h1>
+          <p class="ct-sub">Enter a worker's IC number to check if they have a current safety induction.</p>
+        </div>
+        <a href="/app/contractors" class="ct-link-btn">← Back to contractors</a>
+      </header>
+
+      <form id="ct-form" class="ct-lookup-form" novalidate>
+        <label class="field ct-lookup-field">
+          <span class="field-label">IC number</span>
+          <input
+            type="search"
+            name="ic"
+            id="ct-ic"
+            placeholder="e.g. 880515-14-5678"
+            autocomplete="off"
+            required
+          />
+        </label>
+        <button type="submit" id="ct-search" class="ct-primary-btn">Search</button>
+      </form>
+
+      <div id="ct-loading" class="ct-loading-banner" hidden>Searching…</div>
+      <div id="ct-result-wrap" hidden>
+        <div id="ct-result-ok" class="ct-result ct-result-ok" hidden>
+          <strong id="ct-result-ok-head">✓</strong>
+          <span id="ct-result-ok-msg"></span>
+        </div>
+        <div id="ct-result-warn" class="ct-result ct-result-warn" hidden>
+          <strong id="ct-result-warn-head">⚠</strong>
+          <span id="ct-result-warn-msg"></span>
+        </div>
+        <div id="ct-result-bad" class="ct-result ct-result-bad" hidden>
+          <strong id="ct-result-bad-head">✗</strong>
+          <span id="ct-result-bad-msg"></span>
+          <div class="ct-result-action">
+            <a id="ct-result-induct" class="ct-primary-btn" href="#">Induct this worker</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+  import type { WorkerLookupResult } from '../../lib/types';
+
+  const setupWarning = document.getElementById('ct-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ct-error') as HTMLElement;
+  const formEl = document.getElementById('ct-form') as HTMLFormElement;
+  const searchBtn = document.getElementById('ct-search') as HTMLButtonElement;
+  const icEl = document.getElementById('ct-ic') as HTMLInputElement;
+  const loadingEl = document.getElementById('ct-loading') as HTMLElement;
+  const resultWrap = document.getElementById('ct-result-wrap') as HTMLElement;
+  const resultOk = document.getElementById('ct-result-ok') as HTMLElement;
+  const resultWarn = document.getElementById('ct-result-warn') as HTMLElement;
+  const resultBad = document.getElementById('ct-result-bad') as HTMLElement;
+  const resultOkMsg = document.getElementById('ct-result-ok-msg') as HTMLElement;
+  const resultWarnMsg = document.getElementById('ct-result-warn-msg') as HTMLElement;
+  const resultBadMsg = document.getElementById('ct-result-bad-msg') as HTMLElement;
+  const resultInduct = document.getElementById('ct-result-induct') as HTMLAnchorElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function hideAll(): void {
+    resultWrap.hidden = true;
+    resultOk.hidden = true;
+    resultWarn.hidden = true;
+    resultBad.hidden = true;
+  }
+
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    searchBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+  }
+
+  formEl.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (!supabase) return;
+    clearError();
+    const ic = icEl.value.trim();
+    if (!ic) { showError('Please enter an IC number.'); return; }
+
+    searchBtn.disabled = true;
+    const original = searchBtn.textContent;
+    searchBtn.textContent = 'Searching…';
+    loadingEl.hidden = false;
+    hideAll();
+    try {
+      const { data, error } = await supabase.rpc('lookup_worker_by_ic', { p_ic: ic });
+      if (error) throw error;
+      const rows = (data ?? []) as WorkerLookupResult[];
+      loadingEl.hidden = true;
+      if (rows.length === 0) {
+        resultWrap.hidden = false;
+        resultBad.hidden = false;
+        resultBadMsg.textContent = `No induction record found for IC ${ic}.`;
+        resultInduct.href = '#';
+        resultInduct.hidden = true;
+        return;
+      }
+      const r = rows[0];
+      if (r.is_expired) {
+        resultWrap.hidden = false;
+        resultWarn.hidden = false;
+        resultWarnMsg.textContent =
+          `${r.worker_name} from ${r.company_name} was inducted on ${formatDate(r.induction_date)} but the induction has expired (${formatDate(r.expires_at)}). Re-induction required.`;
+        resultInduct.href = `/app/contractors?ic=${encodeURIComponent(ic)}`;
+        resultInduct.hidden = false;
+        resultBad.hidden = false;
+        resultBadMsg.textContent = '';
+        resultBad.hidden = true;
+      } else {
+        resultWrap.hidden = false;
+        resultOk.hidden = false;
+        resultOkMsg.textContent =
+          `${r.worker_name} from ${r.company_name} was inducted on ${formatDate(r.induction_date)}. Valid until ${formatDate(r.expires_at)}.`;
+      }
+    } catch (e) {
+      loadingEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Lookup failed.');
+    } finally {
+      searchBtn.disabled = false;
+      searchBtn.textContent = original;
+    }
+  });
+</script>
+
+<style>
+  .ct-lookup-page { padding: 32px 0 64px; max-width: 720px; }
+  .ct-warning,
+  .ct-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ct-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ct-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ct-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ct-header { margin-bottom: 24px; display: flex; justify-content: space-between; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .ct-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ct-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .ct-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ct-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .ct-lookup-form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .ct-lookup-field { flex: 1 1 280px; margin-bottom: 0; }
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+
+  .ct-loading-banner {
+    padding: 12px 16px;
+    background: var(--color-bg-grey, #F4F4F4);
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    font-size: 0.9rem;
+  }
+
+  .ct-result {
+    padding: 16px 20px;
+    border-width: 1px;
+    border-style: solid;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  .ct-result strong { margin-right: 8px; }
+  .ct-result-ok   { background: #E8F5E9; border-color: #1F7A4D; color: #1F7A4D; }
+  .ct-result-warn { background: #FFF7E6; border-color: #E58E1A; color: #6A4A0F; }
+  .ct-result-bad  { background: #FDECEC; border-color: #C0392B; color: #8B1A1A; }
+  .ct-result-action { margin-top: 12px; }
+
+  .ct-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .ct-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+  .ct-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>

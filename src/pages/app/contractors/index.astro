@@ -1,0 +1,463 @@
+---
+// Contractors list view.
+//
+// One row per contractor company, sorted by company_name ASC.
+// Filters: status (all / pending_induction / inducted / suspended /
+// blacklisted) and company name search. Pagination 20/page.
+// Per-row "Induct worker" quick-action links to the induct form
+// for that contractor. RLS scopes to the current tenant.
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="Contractors - AmerisPro">
+  <main class="ct-list-page">
+    <div class="container">
+      <div id="ct-setup-warning" class="ct-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ct-error" class="ct-error" hidden></div>
+
+      <header class="ct-header">
+        <div>
+          <h1>Contractors</h1>
+          <p class="ct-sub" id="ct-sub">…</p>
+        </div>
+        <div class="ct-header-actions">
+          <a href="/app/induction-lookup" class="ct-secondary-btn">IC lookup</a>
+          <a href="/app/contractors/new" class="ct-primary-btn">+ Register contractor</a>
+        </div>
+      </header>
+
+      <section class="ct-filters">
+        <label class="ct-filter-field">
+          <span>Status</span>
+          <select id="ct-filter-status">
+            <option value="">All</option>
+            <option value="pending_induction">Pending induction</option>
+            <option value="inducted">Inducted</option>
+            <option value="suspended">Suspended</option>
+            <option value="blacklisted">Blacklisted</option>
+          </select>
+        </label>
+        <label class="ct-filter-field ct-filter-grow">
+          <span>Search</span>
+          <input type="search" id="ct-filter-q" placeholder="Company name" />
+        </label>
+        <button type="button" id="ct-filter-apply" class="ct-secondary-btn">Apply</button>
+        <button type="button" id="ct-filter-clear" class="ct-secondary-btn">Clear</button>
+        <button type="button" id="ct-export-csv" class="ct-secondary-btn">📥 Export CSV</button>
+      </section>
+
+      <section id="ct-skeleton" class="ct-skeleton" hidden>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="ct-table-wrap" hidden>
+        <div class="ct-table-scroll">
+          <table class="ct-table" aria-label="Contractors">
+            <thead>
+              <tr>
+                <th scope="col">Company</th>
+                <th scope="col">Contact</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Work scope</th>
+                <th scope="col">Workers</th>
+                <th scope="col">Status</th>
+                <th scope="col">Valid until</th>
+                <th scope="col" class="ct-actions-col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="ct-tbody"></tbody>
+          </table>
+        </div>
+        <nav class="ct-pager" aria-label="Pagination">
+          <button type="button" id="ct-prev" class="ct-secondary-btn" disabled>← Previous</button>
+          <span class="ct-page-info" id="ct-page-info">Page 1</span>
+          <button type="button" id="ct-next" class="ct-secondary-btn" disabled>Next →</button>
+        </nav>
+      </section>
+
+      <section id="ct-empty" class="ct-empty" hidden>
+        <p>No contractors yet. Click "Register contractor" to add your first.</p>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { Contractor, ContractorStatus, InductionRecord } from '../../../lib/types';
+
+  type Row = Contractor & {
+    induction_records: Array<Pick<InductionRecord, 'id'>>;
+  };
+
+  const setupWarning = document.getElementById('ct-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ct-error') as HTMLElement;
+  const subEl = document.getElementById('ct-sub') as HTMLElement;
+  const skelEl = document.getElementById('ct-skeleton') as HTMLElement;
+  const tableWrap = document.getElementById('ct-table-wrap') as HTMLElement;
+  const tbody = document.getElementById('ct-tbody') as HTMLElement;
+  const emptyEl = document.getElementById('ct-empty') as HTMLElement;
+  const statusFilterEl = document.getElementById('ct-filter-status') as HTMLSelectElement;
+  const qFilterEl = document.getElementById('ct-filter-q') as HTMLInputElement;
+  const applyBtn = document.getElementById('ct-filter-apply') as HTMLButtonElement;
+  const clearBtn = document.getElementById('ct-filter-clear') as HTMLButtonElement;
+  const prevBtn = document.getElementById('ct-prev') as HTMLButtonElement;
+  const nextBtn = document.getElementById('ct-next') as HTMLButtonElement;
+  const pageInfo = document.getElementById('ct-page-info') as HTMLElement;
+
+  const PAGE_SIZE = 20;
+  let currentPage = 1;
+  let currentMaxPage = 1;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+
+  function escapeHtml(s: string | null | undefined): string {
+    return (s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function truncate(s: string, n: number): string {
+    if (s.length <= n) return s;
+    return s.slice(0, n - 1).trimEnd() + '…';
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function statusLabel(s: ContractorStatus): string {
+    switch (s) {
+      case 'pending_induction': return 'Pending';
+      case 'inducted':          return 'Inducted';
+      case 'suspended':         return 'Suspended';
+      case 'blacklisted':       return 'Blacklisted';
+    }
+  }
+
+  function readFiltersFromUrl(): { page: number; status: string; q: string } {
+    const params = new URLSearchParams(window.location.search);
+    const pageRaw = params.get('page');
+    const page = pageRaw ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
+    const status = params.get('status') ?? '';
+    const q = params.get('q') ?? '';
+    if (status) statusFilterEl.value = status;
+    if (q) qFilterEl.value = q;
+    return { page, status, q };
+  }
+
+  function writeFiltersToUrl(page: number): void {
+    const params = new URLSearchParams(window.location.search);
+    if (page > 1) params.set('page', String(page)); else params.delete('page');
+    const status = statusFilterEl.value;
+    if (status) params.set('status', status); else params.delete('status');
+    const q = qFilterEl.value.trim();
+    if (q) params.set('q', q); else params.delete('q');
+    const qs = params.toString();
+    const url = window.location.pathname + (qs ? '?' + qs : '');
+    window.history.replaceState({}, '', url);
+  }
+
+  async function refresh(): Promise<void> {
+    if (!supabase) return;
+    const { page, status, q } = readFiltersFromUrl();
+    currentPage = page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const offsetEnd = offset + PAGE_SIZE - 1;
+
+    let query = supabase
+      .from('contractors')
+      .select('*, induction_records(id)', { count: 'estimated' })
+      .order('company_name', { ascending: true });
+    if (status) query = query.eq('status', status);
+    if (q) query = query.ilike('company_name', `%${q}%`);
+    query = query.range(offset, offsetEnd);
+
+    try {
+      const { data, error, count } = await query;
+      if (error) throw error;
+      const rows = (data ?? []) as Row[];
+      skelEl.hidden = true;
+
+      const [activeRes, pendingRes] = await Promise.all([
+        supabase.from('contractors').select('id', { count: 'estimated', head: true })
+          .eq('status', 'inducted'),
+        supabase.from('contractors').select('id', { count: 'estimated', head: true })
+          .eq('status', 'pending_induction'),
+      ]);
+      const activeN = activeRes.count ?? 0;
+      const pendingN = pendingRes.count ?? 0;
+      subEl.textContent = `${activeN} active contractor${activeN === 1 ? '' : 's'} • ${pendingN} pending induction`;
+
+      if (rows.length === 0) {
+        tableWrap.hidden = true;
+        emptyEl.hidden = false;
+        prevBtn.disabled = page <= 1;
+        nextBtn.disabled = true;
+        currentMaxPage = page;
+        pageInfo.textContent = `Page ${page}`;
+        return;
+      }
+      emptyEl.hidden = true;
+      tableWrap.hidden = false;
+
+      tbody.innerHTML = '';
+      for (const r of rows) {
+        const workerCount = (r.induction_records ?? []).length;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(r.company_name)}</strong></td>
+          <td>${escapeHtml(r.contact_person)}</td>
+          <td>${escapeHtml(r.contact_email)}</td>
+          <td>${escapeHtml(r.contact_phone)}</td>
+          <td title="${escapeHtml(r.work_scope)}">${escapeHtml(truncate(r.work_scope ?? '—', 50))}</td>
+          <td>${workerCount}</td>
+          <td><span class="ct-status-badge ct-status-${r.status}">${statusLabel(r.status)}</span></td>
+          <td>${formatDate(r.valid_until)}</td>
+          <td class="ct-actions-col">
+            <a href="/app/contractors/${r.id}" class="ct-view-link">View</a>
+            <a href="/app/contractors/${r.id}/induct" class="ct-view-link">Induct</a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      const total = count ?? null;
+      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (rows.length === PAGE_SIZE ? page + 1 : page);
+      currentMaxPage = maxPage;
+      prevBtn.disabled = page <= 1;
+      nextBtn.disabled = page >= maxPage;
+      pageInfo.textContent = total != null
+        ? `Page ${page} of ${maxPage} (${total} total)`
+        : `Page ${page}`;
+    } catch (e) {
+      skelEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load contractors.');
+    }
+  }
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      await refresh();
+    })().catch(() => {
+      showError('Failed to initialise contractor list.');
+    });
+
+    applyBtn.addEventListener('click', () => {
+      currentPage = 1;
+      writeFiltersToUrl(1);
+      void refresh();
+    });
+    clearBtn.addEventListener('click', () => {
+      statusFilterEl.value = '';
+      qFilterEl.value = '';
+      currentPage = 1;
+      writeFiltersToUrl(1);
+      void refresh();
+    });
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        writeFiltersToUrl(currentPage);
+        void refresh();
+      }
+    });
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < currentMaxPage) {
+        currentPage += 1;
+        writeFiltersToUrl(currentPage);
+        void refresh();
+      }
+    });
+
+    const exportBtn = document.getElementById('ct-export-csv') as HTMLButtonElement;
+    exportBtn.addEventListener('click', () => {
+      const params = new URLSearchParams();
+      if (statusFilterEl.value) params.set('status', statusFilterEl.value);
+      const q = qFilterEl.value.trim();
+      if (q) params.set('q', q);
+      const qs = params.toString();
+      window.location.href = `/api/export/contractors.csv${qs ? '?' + qs : ''}`;
+    });
+  }
+</script>
+
+<style>
+  .ct-list-page { padding: 32px 0 64px; }
+  .ct-warning,
+  .ct-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ct-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ct-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ct-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ct-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .ct-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ct-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .ct-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ct-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ct-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+  .ct-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ct-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ct-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .ct-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .ct-filter-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; }
+  .ct-filter-grow { flex: 1 1 220px; }
+  .ct-filter-field input,
+  .ct-filter-field select {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: var(--color-bg, #fff);
+    min-width: 160px;
+  }
+
+  .ct-skeleton { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .ct-table-scroll { overflow-x: auto; }
+  .ct-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.85rem;
+  }
+  .ct-table th, .ct-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    vertical-align: top;
+  }
+  .ct-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    white-space: nowrap;
+  }
+  .ct-table tbody tr:hover { background: #FAFAFA; }
+  .ct-actions-col { white-space: nowrap; text-align: right; }
+  .ct-view-link {
+    color: var(--color-primary, #E58E1A);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+  }
+  .ct-view-link:first-child { margin-left: 0; }
+  .ct-view-link:hover { text-decoration: underline; }
+
+  .ct-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .ct-status-pending_induction { background: #FFF7E6; color: #6A4A0F; }
+  .ct-status-inducted          { background: #E8F5E9; color: #1F7A4D; }
+  .ct-status-suspended         { background: #FDECEC; color: #8B1A1A; }
+  .ct-status-blacklisted       { background: #1E1E1D; color: #FFFFFF; }
+
+  .ct-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .ct-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
+
+  .ct-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted, #6A6A69);
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+</style>

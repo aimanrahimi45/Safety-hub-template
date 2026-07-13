@@ -1,0 +1,518 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import '../../../styles/print.css';
+
+// In static (default) build mode Astro requires getStaticPaths even for
+// fully client-rendered pages. We pre-render a single placeholder route;
+// the client script reads the real id from window.location.pathname and
+// the placeholder will resolve to "Issue not found" if visited directly.
+export function getStaticPaths() {
+  return [{ params: { id: '_' } }];
+}
+---
+<AppLayout title="PPE Issue - AmerisPro">
+  <main class="ppe-detail-page">
+    <div class="container">
+      <div id="ppe-setup-warning" class="ppe-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ppe-error" class="ppe-error" hidden></div>
+
+      <section id="ppe-loading" class="ppe-loading">
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="ppe-not-found" class="ppe-not-found" hidden>
+        <h1>Issue not found</h1>
+        <p>This PPE issue doesn't exist, or you don't have permission to view it.</p>
+        <a href="/app/ppe" class="ppe-link-btn">← Back to list</a>
+      </section>
+
+      <section id="ppe-content" hidden>
+        <header class="ppe-header ppe-print-header">
+          <div>
+            <h1>PPE Issue <span class="ppe-code-inline" id="ppe-code">…</span></h1>
+            <p class="ppe-sub" id="ppe-sub">…</p>
+          </div>
+          <div class="ppe-header-actions no-print">
+            <a href="/app/ppe" class="ppe-link-btn">← Back to list</a>
+            <span class="ppe-status-badge" id="ppe-status">…</span>
+          </div>
+        </header>
+
+        <section class="ppe-card ppe-print-block">
+          <h2 class="ppe-print-only">PPE Issue</h2>
+          <div class="ppe-grid-2">
+            <div><span class="ppe-label">Staff ID</span><span id="ppe-staff-id">…</span></div>
+            <div><span class="ppe-label">Staff name</span><span id="ppe-staff-name">…</span></div>
+            <div><span class="ppe-label">Department</span><span id="ppe-department">…</span></div>
+            <div><span class="ppe-label">Supervisor</span><span id="ppe-supervisor">…</span></div>
+            <div class="ppe-grid-full"><span class="ppe-label">PPE Type</span><span id="ppe-type">…</span></div>
+            <div><span class="ppe-label">Size</span><span id="ppe-size">…</span></div>
+            <div><span class="ppe-label">Color / Specs</span><span id="ppe-color">…</span></div>
+            <div><span class="ppe-label">Replacement reason</span><span id="ppe-reason">…</span></div>
+            <div><span class="ppe-label">Action date</span><span id="ppe-action-date">…</span></div>
+            <div class="ppe-grid-full">
+              <span class="ppe-label">Condition remarks</span>
+              <div class="ppe-block" id="ppe-condition">—</div>
+            </div>
+            <div><span class="ppe-label">Status</span><span id="ppe-status-text">…</span></div>
+            <div><span class="ppe-label">Authorized by</span><span id="ppe-authorized">…</span></div>
+          </div>
+        </section>
+
+        <section class="ppe-card">
+          <h2>
+            <button type="button" id="ppe-meta-toggle" class="ppe-disclosure" aria-expanded="false" aria-controls="ppe-meta-body">
+              <span class="ppe-disclosure-arrow" aria-hidden="true">▸</span>
+              Audit metadata
+            </button>
+          </h2>
+          <div id="ppe-meta-body" class="ppe-meta-body" hidden>
+            <div><span class="ppe-label">Recorded by</span><span id="ppe-recorded-by">…</span></div>
+            <div><span class="ppe-label">Request date</span><span id="ppe-request-date">…</span></div>
+            <div><span class="ppe-label">Created at</span><span id="ppe-created">…</span></div>
+            <div><span class="ppe-label">Updated at</span><span id="ppe-updated">…</span></div>
+            <div class="ppe-grid-full"><span class="ppe-label">Tenant ID</span><code class="ppe-mono" id="ppe-tenant">…</code></div>
+            <div><span class="ppe-label">UUID</span><code class="ppe-mono" id="ppe-uuid">…</code></div>
+            <div><span class="ppe-label">Request code</span><code class="ppe-mono" id="ppe-code-mono">…</code></div>
+          </div>
+        </section>
+
+        <section id="ppe-actions-card" class="ppe-card no-print">
+          <h2>Actions</h2>
+          <div id="ppe-action-error" class="ppe-error" hidden></div>
+          <div class="ppe-action-row">
+            <button type="button" id="ppe-dispatch-btn" class="ppe-primary-btn" hidden>Mark as dispatched</button>
+            <button type="button" id="ppe-revert-btn" class="ppe-secondary-btn" hidden>Revert to pending</button>
+            <button type="button" id="ppe-print-btn" class="ppe-secondary-btn">Print</button>
+            <button type="button" id="ppe-delete-btn" class="ppe-secondary-btn ppe-danger">Delete</button>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { PpeRequest, PpeRequestStatus } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('ppe-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ppe-error') as HTMLElement;
+  const loadingEl = document.getElementById('ppe-loading') as HTMLElement;
+  const notFoundEl = document.getElementById('ppe-not-found') as HTMLElement;
+  const contentEl = document.getElementById('ppe-content') as HTMLElement;
+  const codeEl = document.getElementById('ppe-code') as HTMLElement;
+  const codeMonoEl = document.getElementById('ppe-code-mono') as HTMLElement;
+  const subEl = document.getElementById('ppe-sub') as HTMLElement;
+  const statusBadgeEl = document.getElementById('ppe-status') as HTMLElement;
+  const statusTextEl = document.getElementById('ppe-status-text') as HTMLElement;
+  const staffIdEl = document.getElementById('ppe-staff-id') as HTMLElement;
+  const staffNameEl = document.getElementById('ppe-staff-name') as HTMLElement;
+  const departmentEl = document.getElementById('ppe-department') as HTMLElement;
+  const supervisorEl = document.getElementById('ppe-supervisor') as HTMLElement;
+  const typeEl = document.getElementById('ppe-type') as HTMLElement;
+  const sizeEl = document.getElementById('ppe-size') as HTMLElement;
+  const colorEl = document.getElementById('ppe-color') as HTMLElement;
+  const reasonEl = document.getElementById('ppe-reason') as HTMLElement;
+  const actionDateEl = document.getElementById('ppe-action-date') as HTMLElement;
+  const conditionEl = document.getElementById('ppe-condition') as HTMLElement;
+  const authorizedEl = document.getElementById('ppe-authorized') as HTMLElement;
+  const metaToggle = document.getElementById('ppe-meta-toggle') as HTMLButtonElement;
+  const metaBody = document.getElementById('ppe-meta-body') as HTMLElement;
+  const metaArrow = metaToggle.querySelector('.ppe-disclosure-arrow') as HTMLElement;
+  const recordedByEl = document.getElementById('ppe-recorded-by') as HTMLElement;
+  const requestDateEl = document.getElementById('ppe-request-date') as HTMLElement;
+  const createdEl = document.getElementById('ppe-created') as HTMLElement;
+  const updatedEl = document.getElementById('ppe-updated') as HTMLElement;
+  const tenantEl = document.getElementById('ppe-tenant') as HTMLElement;
+  const uuidEl = document.getElementById('ppe-uuid') as HTMLElement;
+
+  const actionError = document.getElementById('ppe-action-error') as HTMLElement;
+  const dispatchBtn = document.getElementById('ppe-dispatch-btn') as HTMLButtonElement;
+  const revertBtn = document.getElementById('ppe-revert-btn') as HTMLButtonElement;
+  const printBtn = document.getElementById('ppe-print-btn') as HTMLButtonElement;
+  const deleteBtn = document.getElementById('ppe-delete-btn') as HTMLButtonElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function showActionError(msg: string): void {
+    actionError.hidden = false;
+    actionError.textContent = msg;
+  }
+  function clearActionError(): void { actionError.hidden = true; actionError.textContent = ''; }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatDateTime(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function statusLabel(s: PpeRequestStatus): string {
+    return s === 'approved_dispatched' ? 'Approved / Dispatched' : 'Pending Approval';
+  }
+
+  function getIssueId(): string {
+    const path = window.location.pathname;
+    const m = path.match(/\/app\/ppe\/([^/]+)/);
+    return m ? m[1] : '';
+  }
+
+  metaToggle.addEventListener('click', () => {
+    const expanded = metaToggle.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+      metaBody.hidden = true;
+      metaToggle.setAttribute('aria-expanded', 'false');
+      metaArrow.textContent = '▸';
+    } else {
+      metaBody.hidden = false;
+      metaToggle.setAttribute('aria-expanded', 'true');
+      metaArrow.textContent = '▾';
+    }
+  });
+
+  function renderActions(r: PpeRequest): void {
+    dispatchBtn.hidden = r.status !== 'pending_approval';
+    revertBtn.hidden   = r.status !== 'approved_dispatched';
+  }
+
+  function render(r: PpeRequest, userEmail: string | null): void {
+    codeEl.textContent = r.request_code;
+    codeMonoEl.textContent = r.request_code;
+    subEl.textContent = `Issued on ${formatDate(r.action_date)} • Recorded ${formatDateTime(r.request_date)}`;
+    statusBadgeEl.textContent = statusLabel(r.status);
+    statusBadgeEl.className = `ppe-status-badge ppe-status-${r.status}`;
+
+    staffIdEl.textContent = r.staff_id;
+    staffNameEl.textContent = r.staff_name;
+    departmentEl.textContent = r.department;
+    supervisorEl.textContent = (r as unknown as { supervisor?: string | null }).supervisor ?? 'SHO';
+    typeEl.textContent = r.ppe_type;
+    sizeEl.textContent = r.size ?? '—';
+    colorEl.textContent = r.color_specs ?? '—';
+    reasonEl.textContent = r.replacement_reason;
+    actionDateEl.textContent = formatDate(r.action_date);
+    conditionEl.textContent = r.condition_remarks ?? '—';
+    statusTextEl.textContent = statusLabel(r.status);
+    authorizedEl.textContent = r.authorized_by ?? '—';
+
+    recordedByEl.textContent = userEmail ?? r.recorded_by;
+    requestDateEl.textContent = formatDateTime(r.request_date);
+    createdEl.textContent = formatDateTime(r.created_at);
+    updatedEl.textContent = formatDateTime(r.updated_at);
+    tenantEl.textContent = r.tenant_id;
+    uuidEl.textContent = r.id;
+
+    renderActions(r);
+
+    loadingEl.hidden = true;
+    contentEl.hidden = false;
+  }
+
+  let currentIssue: PpeRequest | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  let cachedUserEmail: string | null = null;
+
+  async function load(): Promise<void> {
+    if (!supabase) return;
+    const id = getIssueId();
+    if (!id || id === '_') {
+      loadingEl.hidden = true;
+      notFoundEl.hidden = false;
+      return;
+    }
+    try {
+      const { data: row, error: rowErr } = await supabase
+        .from('ppe_requests')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle<PpeRequest>();
+      if (rowErr || !row) {
+        loadingEl.hidden = true;
+        notFoundEl.hidden = false;
+        return;
+      }
+      currentIssue = row;
+      render(row, cachedUserEmail);
+    } catch (e) {
+      loadingEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load PPE issue.');
+    }
+  }
+
+  function todayIso(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  async function setStatus(newStatus: PpeRequestStatus, confirmMsg: string): Promise<void> {
+    if (!currentIssue || !supabase) return;
+    if (!window.confirm(confirmMsg)) return;
+    clearActionError();
+    try {
+      const patch: Partial<PpeRequest> = { status: newStatus };
+      if (newStatus === 'approved_dispatched') {
+        // Bump action_date to today on dispatch. (SHO can edit it in a
+        // future release if the date should remain as-issued.)
+        patch.action_date = todayIso();
+      }
+      const { data, error } = await supabase
+        .from('ppe_requests')
+        .update(patch)
+        .eq('id', currentIssue.id)
+        .select('*')
+        .single<PpeRequest>();
+      if (error) throw error;
+      currentIssue = data;
+      render(data, cachedUserEmail);
+    } catch (e) {
+      showActionError(e instanceof Error ? e.message : 'Status update failed.');
+    }
+  }
+
+  dispatchBtn.addEventListener('click', () => {
+    void setStatus('approved_dispatched', 'Mark this PPE issue as dispatched? This records today as the action date.');
+  });
+  revertBtn.addEventListener('click', () => {
+    void setStatus('pending_approval', 'Revert this issue to pending approval?');
+  });
+
+  printBtn.addEventListener('click', () => {
+    window.print();
+  });
+
+  deleteBtn.addEventListener('click', () => {
+    if (!currentIssue || !supabase) return;
+    if (!window.confirm(`Delete PPE issue ${currentIssue.request_code}? This cannot be undone.`)) return;
+    clearActionError();
+    deleteBtn.disabled = true;
+    const original = deleteBtn.textContent;
+    deleteBtn.textContent = 'Deleting…';
+    (async () => {
+      try {
+        const { error } = await supabase!
+          .from('ppe_requests')
+          .delete()
+          .eq('id', currentIssue!.id);
+        if (error) throw error;
+        window.location.href = '/app/ppe';
+      } catch (e) {
+        showActionError(e instanceof Error ? e.message : 'Delete failed.');
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = original;
+      }
+    })();
+  });
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    loadingEl.hidden = true;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      cachedUserEmail = userData.user.email ?? null;
+      await load();
+    })().catch(() => {
+      loadingEl.hidden = true;
+      showError('Failed to load issue.');
+    });
+  }
+</script>
+
+<style>
+  .ppe-detail-page { padding: 32px 0 64px; }
+  .ppe-warning,
+  .ppe-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ppe-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ppe-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ppe-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ppe-loading { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .ppe-not-found {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 40px;
+    text-align: center;
+  }
+  .ppe-not-found h1 { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+
+  .ppe-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .ppe-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ppe-code-inline {
+    color: var(--color-primary, #E58E1A);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 1.2rem;
+  }
+  .ppe-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .ppe-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ppe-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ppe-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ppe-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .ppe-status-pending_approval  { background: #FFF7E6; color: #6A4A0F; }
+  .ppe-status-approved_dispatched { background: #E8F5E9; color: #1F7A4D; }
+
+  .ppe-card {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .ppe-card h2 {
+    font-size: 1.05rem;
+    font-weight: 900;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+
+  .ppe-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  @media (max-width: 600px) { .ppe-grid-2 { grid-template-columns: 1fr; } }
+  .ppe-grid-full { grid-column: 1 / -1; }
+  .ppe-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 4px;
+  }
+  .ppe-block {
+    white-space: pre-wrap;
+    padding: 10px 12px;
+    background: var(--color-bg-grey, #F4F4F4);
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    font-size: 0.92rem;
+  }
+  .ppe-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; word-break: break-all; }
+
+  .ppe-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ppe-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .ppe-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .ppe-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ppe-secondary-btn.ppe-danger { color: #8B1A1A; border-color: #C0392B; }
+  .ppe-secondary-btn.ppe-danger:hover:not(:disabled) { background: #FDECEC; }
+  .ppe-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .ppe-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .ppe-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .ppe-disclosure {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ppe-disclosure-arrow { font-size: 0.85rem; }
+  .ppe-meta-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    font-size: 0.88rem;
+  }
+  @media (max-width: 600px) { .ppe-meta-body { grid-template-columns: 1fr; } }
+</style>

@@ -1,0 +1,166 @@
+---
+// AppTopBar — a thin bar that sits above the main site Header on /app/*
+// pages. Shows the signed-in user's email on the left and a Sign-out
+// button on the right. Uses the same colour palette as the existing
+// top-bar in Layout.astro (#F4F4F4 background, muted text).
+---
+<div class="app-top-bar">
+  <div class="container app-top-bar-row">
+    <div class="app-top-bar-left">
+      <span class="app-top-bar-workspace" id="app-top-bar-workspace" hidden>🏢 <span id="app-top-bar-workspace-name"></span></span>
+      <span class="app-top-bar-sep" id="app-top-bar-sep" hidden>·</span>
+      <span class="app-top-bar-label">Signed in as</span>
+      <span class="app-top-bar-email" id="app-top-bar-email">…</span>
+    </div>
+    <div class="app-top-bar-right">
+      <a href="/app/settings" class="app-top-bar-link">Settings</a>
+      <button type="button" id="app-top-bar-signout" class="app-top-bar-signout">
+        Sign out
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+
+  const emailEl = document.getElementById('app-top-bar-email');
+  const wsEl = document.getElementById('app-top-bar-workspace');
+  const wsNameEl = document.getElementById('app-top-bar-workspace-name');
+  const sepEl = document.getElementById('app-top-bar-sep');
+  const signOutBtn = document.getElementById('app-top-bar-signout') as HTMLButtonElement | null;
+
+  function showWorkspace(name: string | null | undefined): void {
+    if (!wsEl || !wsNameEl || !sepEl) return;
+    const trimmed = (name ?? '').trim();
+    if (!trimmed) {
+      wsEl.hidden = true;
+      sepEl.hidden = true;
+      return;
+    }
+    wsNameEl.textContent = trimmed;
+    wsEl.hidden = false;
+    sepEl.hidden = false;
+  }
+
+  if (emailEl) {
+    if (!isSupabaseConfigured()) {
+      emailEl.textContent = 'Supabase not configured';
+    } else {
+      const supabase = getSupabase();
+      supabase.auth.getUser().then(async ({ data }) => {
+        emailEl.textContent = data.user?.email ?? 'unknown user';
+        if (!data.user) return;
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('name')
+          .maybeSingle<{ name: string }>();
+        showWorkspace(tenant?.name);
+      });
+    }
+  }
+
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', async () => {
+      signOutBtn.disabled = true;
+      try {
+        if (isSupabaseConfigured()) {
+          const supabase = getSupabase();
+          await supabase.auth.signOut();
+        }
+      } catch {
+        // Even if signOut throws, we still redirect — the user wanted
+        // to leave the app either way.
+      }
+      window.location.href = '/';
+    });
+  }
+</script>
+
+<style>
+  .app-top-bar {
+    background: #F4F4F4;
+    border-bottom: 1px solid var(--color-border, #E0E0E0);
+    padding: 6px 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .app-top-bar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .app-top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-muted, #6A6A69);
+    min-width: 0;
+  }
+  .app-top-bar-label {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .app-top-bar-workspace {
+    color: var(--color-text, #1E1E1D);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 240px;
+  }
+  .app-top-bar-sep {
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .app-top-bar-email {
+    color: var(--color-text, #1E1E1D);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 320px;
+  }
+  .app-top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .app-top-bar-link {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 4px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .app-top-bar-link:hover {
+    color: var(--color-primary, #E58E1A);
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .app-top-bar-signout {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .app-top-bar-signout:hover {
+    color: var(--color-primary, #E58E1A);
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .app-top-bar-signout:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>

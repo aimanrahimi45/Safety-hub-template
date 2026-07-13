@@ -1,0 +1,800 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="New First Aid Record - AmerisPro">
+  <main class="fa-new-page">
+    <div class="container">
+      <div id="fa-setup-warning" class="fa-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="fa-error" class="fa-error" hidden></div>
+
+      <header class="fa-header">
+        <div>
+          <h1>New First Aid Record</h1>
+          <p class="fa-sub">Log an incident and any first aid items used.</p>
+        </div>
+        <a href="/app/first-aid" class="fa-link-btn">← Back to list</a>
+      </header>
+
+      <form id="fa-form" novalidate>
+        <!-- Section A: Incident details -->
+        <fieldset class="fa-fieldset">
+          <legend>A. Incident details</legend>
+
+          <div class="fa-row-2">
+            <label class="field">
+              <span class="field-label">Date of incident <em>*</em></span>
+              <input type="date" name="incident_date" id="fa-incident-date" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Time of incident <em>*</em></span>
+              <input type="time" name="incident_time" id="fa-incident-time" required />
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Location <em>*</em></span>
+            <input
+              type="text"
+              name="location"
+              id="fa-location"
+              required
+              placeholder="e.g. Workshop A, Building 2, Level 3"
+            />
+          </label>
+
+          <div class="fa-row-2">
+            <label class="field">
+              <span class="field-label">Injured person name <em>*</em></span>
+              <input type="text" name="injured_person_name" id="fa-injured-name" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Injured person employee ID</span>
+              <input type="text" name="injured_person_id" id="fa-injured-id" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Injury type <em>*</em></span>
+            <input
+              type="text"
+              name="injury_type"
+              id="fa-injury-type"
+              required
+              placeholder="e.g. Cut on left hand, Chemical burn"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Treatment given <em>*</em></span>
+            <textarea
+              name="treatment_given"
+              id="fa-treatment"
+              rows="4"
+              required
+              placeholder="Describe treatment provided"
+            ></textarea>
+          </label>
+
+          <label class="field-check">
+            <input type="checkbox" name="referred_to_hospital" id="fa-referred" />
+            <span>Referred to hospital</span>
+          </label>
+
+          <label class="field" id="fa-hospital-wrap" hidden>
+            <span class="field-label">Hospital name <em>*</em></span>
+            <input type="text" name="hospital_name" id="fa-hospital-name" placeholder="e.g. Hospital Kuala Lumpur" />
+          </label>
+        </fieldset>
+
+        <!-- Section B: Items used -->
+        <fieldset class="fa-fieldset">
+          <legend>B. Items used</legend>
+          <p class="fa-hint" id="fa-items-hint">Add any first aid items used during treatment.</p>
+          <table class="fa-items-table" aria-label="Items used">
+            <thead>
+              <tr>
+                <th scope="col">Item name</th>
+                <th scope="col" class="fa-qty-col">Qty</th>
+                <th scope="col">Notes</th>
+                <th scope="col" class="fa-rm-col"><span class="sr-only">Remove</span></th>
+              </tr>
+            </thead>
+            <tbody id="fa-items-tbody"></tbody>
+          </table>
+          <button type="button" id="fa-add-item" class="fa-secondary-btn">+ Add item</button>
+        </fieldset>
+
+        <!-- Section C: Signature (Premium) -->
+        <fieldset class="fa-fieldset" id="fa-sig-fieldset" hidden>
+          <legend>C. Signature</legend>
+          <div id="fa-sig-free">
+            <p>Signature capture is a Premium feature. <a href="/app/settings">Learn more</a></p>
+          </div>
+          <div id="fa-sig-premium" hidden>
+            <p class="fa-hint">Capture the reporter's signature (Premium). The image is resized client-side and uploaded to Supabase Storage.</p>
+            <div class="fa-sig-controls">
+              <button type="button" id="fa-sig-capture" class="fa-secondary-btn">Capture signature</button>
+              <button type="button" id="fa-sig-clear" class="fa-secondary-btn" hidden>Clear</button>
+            </div>
+            <div id="fa-sig-pad-wrap" hidden>
+              <canvas id="fa-sig-pad" class="fa-sig-pad" width="600" height="160" aria-label="Signature pad"></canvas>
+              <button type="button" id="fa-sig-save" class="fa-secondary-btn">Save signature</button>
+            </div>
+            <input type="hidden" name="signature_url" id="fa-sig-data" />
+            <div id="fa-sig-preview-wrap" hidden>
+              <p class="fa-hint">Saved signature:</p>
+              <img id="fa-sig-preview" class="fa-sig-preview" alt="Signature preview" />
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="fa-form-actions">
+          <a href="/app/first-aid" class="fa-secondary-btn">Cancel</a>
+          <button type="submit" id="fa-submit" class="fa-primary-btn">Save record</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Deduction prompt modal -->
+  <div id="fa-deduct-modal" class="fa-modal" hidden role="dialog" aria-modal="true" aria-labelledby="fa-deduct-title">
+    <div class="fa-modal-card">
+      <header class="fa-modal-head">
+        <h2 id="fa-deduct-title">Deduct from inventory?</h2>
+        <button type="button" class="fa-modal-close" id="fa-deduct-close" aria-label="Close">×</button>
+      </header>
+      <div class="fa-modal-body">
+        <p>You used:</p>
+        <ul id="fa-deduct-list" class="fa-deduct-list"></ul>
+        <p>Deduct these quantities from your inventory now?</p>
+      </div>
+      <div id="fa-deduct-error" class="fa-error" hidden></div>
+      <div class="fa-modal-actions">
+        <button type="button" class="fa-secondary-btn" id="fa-deduct-skip">No, skip</button>
+        <button type="button" class="fa-primary-btn" id="fa-deduct-go">Yes, deduct</button>
+      </div>
+    </div>
+  </div>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import { resizeImage } from '../../../lib/imageResize';
+  import { uploadToStorage } from '../../../lib/storage';
+  import type { FirstAidLog, FirstAidDetail } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('fa-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('fa-error') as HTMLElement;
+  const formEl = document.getElementById('fa-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('fa-submit') as HTMLButtonElement;
+  const dateEl = document.getElementById('fa-incident-date') as HTMLInputElement;
+  const timeEl = document.getElementById('fa-incident-time') as HTMLInputElement;
+  const referredEl = document.getElementById('fa-referred') as HTMLInputElement;
+  const hospitalWrap = document.getElementById('fa-hospital-wrap') as HTMLElement;
+  const hospitalNameEl = document.getElementById('fa-hospital-name') as HTMLInputElement;
+  const itemsTbody = document.getElementById('fa-items-tbody') as HTMLElement;
+  const itemsHint = document.getElementById('fa-items-hint') as HTMLElement;
+  const addItemBtn = document.getElementById('fa-add-item') as HTMLButtonElement;
+
+  const sigFieldset = document.getElementById('fa-sig-fieldset') as HTMLElement;
+  const sigFree = document.getElementById('fa-sig-free') as HTMLElement;
+  const sigPremium = document.getElementById('fa-sig-premium') as HTMLElement;
+  const sigCapture = document.getElementById('fa-sig-capture') as HTMLButtonElement;
+  const sigClear = document.getElementById('fa-sig-clear') as HTMLButtonElement;
+  const sigPadWrap = document.getElementById('fa-sig-pad-wrap') as HTMLElement;
+  const sigPad = document.getElementById('fa-sig-pad') as HTMLCanvasElement;
+  const sigSave = document.getElementById('fa-sig-save') as HTMLButtonElement;
+  const sigData = document.getElementById('fa-sig-data') as HTMLInputElement;
+  const sigPreviewWrap = document.getElementById('fa-sig-preview-wrap') as HTMLElement;
+  const sigPreview = document.getElementById('fa-sig-preview') as HTMLImageElement;
+  let sigLocalDataUrl: string | null = null;
+
+  const deductModal = document.getElementById('fa-deduct-modal') as HTMLElement;
+  const deductList = document.getElementById('fa-deduct-list') as HTMLElement;
+  const deductError = document.getElementById('fa-deduct-error') as HTMLElement;
+  const deductClose = document.getElementById('fa-deduct-close') as HTMLButtonElement;
+  const deductSkip = document.getElementById('fa-deduct-skip') as HTMLButtonElement;
+  const deductGo = document.getElementById('fa-deduct-go') as HTMLButtonElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+    errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function clearError(): void { errorEl.hidden = true; errorEl.textContent = ''; }
+  function showDeductError(msg: string): void { deductError.hidden = false; deductError.textContent = msg; }
+  function clearDeductError(): void { deductError.hidden = true; deductError.textContent = ''; }
+
+  function today(): string {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function nowTime(): string {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  // Reserved for future sanitisation needs.
+
+  function renderItems(): void {
+    const rows = itemsTbody.querySelectorAll<HTMLTableRowElement>('tr');
+    rows.forEach((row) => {
+      const rm = row.querySelector<HTMLButtonElement>('button.fa-rm-item');
+      if (rm) rm.disabled = rows.length === 1;
+    });
+  }
+
+  function addItemRow(): void {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" name="item_description" class="fa-item-name" list="fa-inv-datalist" required /></td>
+      <td class="fa-qty-col"><input type="number" name="quantity" class="fa-item-qty" min="1" value="1" required /></td>
+      <td><input type="text" name="notes" class="fa-item-notes" placeholder="Optional" /></td>
+      <td class="fa-rm-col"><button type="button" class="fa-rm-item" aria-label="Remove item">×</button></td>
+    `;
+    itemsTbody.appendChild(tr);
+    renderItems();
+  }
+
+  function readItems(): Array<{ item_description: string; quantity: number; notes: string | null }> {
+    const out: Array<{ item_description: string; quantity: number; notes: string | null }> = [];
+    itemsTbody.querySelectorAll<HTMLTableRowElement>('tr').forEach((row) => {
+      const name = (row.querySelector<HTMLInputElement>('input.fa-item-name')?.value ?? '').trim();
+      const qty = Number(row.querySelector<HTMLInputElement>('input.fa-item-qty')?.value ?? '0');
+      const notes = (row.querySelector<HTMLInputElement>('input.fa-item-notes')?.value ?? '').trim();
+      if (!name) return;
+      const safeQty = Number.isFinite(qty) && qty > 0 ? Math.floor(qty) : 1;
+      out.push({ item_description: name, quantity: safeQty, notes: notes || null });
+    });
+    return out;
+  }
+
+  let savedLogId: string | null = null;
+  let authUserId: string | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    submitBtn.disabled = true;
+  } else {
+    supabase = getSupabase();
+
+    dateEl.value = today();
+    timeEl.value = nowTime();
+    addItemRow();
+
+    // Setup initial state
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      authUserId = userData.user.id;
+
+      // Build inventory datalist for item-name autocomplete.
+      const datalist = document.createElement('datalist');
+      datalist.id = 'fa-inv-datalist';
+      try {
+        const { data: inv, error: invErr } = await supabase
+          .from('first_aid_inventory')
+          .select('item_name')
+          .eq('is_active', true)
+          .order('item_name');
+        if (!invErr && inv) {
+          for (const r of inv as Array<{ item_name: string }>) {
+            const opt = document.createElement('option');
+            opt.value = r.item_name;
+            datalist.appendChild(opt);
+          }
+        } else {
+          itemsHint.textContent = 'Your inventory is empty. Add items in Inventory Management to use auto-lookup, or type free-text item names here.';
+        }
+      } catch {
+        itemsHint.textContent = 'Your inventory is empty. Add items in Inventory Management to use auto-lookup, or type free-text item names here.';
+      }
+      document.body.appendChild(datalist);
+
+      // Premium check
+      try {
+        const { data: premium } = await supabase.rpc('is_my_tenant_premium');
+        if (premium === true) {
+          sigFieldset.hidden = false;
+          sigFree.hidden = true;
+          sigPremium.hidden = false;
+        } else {
+          sigFieldset.hidden = false;
+          sigFree.hidden = false;
+          sigPremium.hidden = true;
+        }
+      } catch {
+        sigFieldset.hidden = true;
+      }
+    })().catch(() => {
+      showError('Failed to initialise form.');
+    });
+  }
+
+  // Referred checkbox toggle
+  referredEl.addEventListener('change', () => {
+    if (referredEl.checked) {
+      hospitalWrap.hidden = false;
+      hospitalNameEl.required = true;
+    } else {
+      hospitalWrap.hidden = true;
+      hospitalNameEl.required = false;
+      hospitalNameEl.value = '';
+    }
+  });
+
+  // Items add/remove
+  addItemBtn.addEventListener('click', () => addItemRow());
+  itemsTbody.addEventListener('click', (ev) => {
+    const t = ev.target as HTMLElement;
+    if (t.classList.contains('fa-rm-item')) {
+      const row = t.closest('tr');
+      if (row && itemsTbody.querySelectorAll('tr').length > 1) {
+        row.remove();
+        renderItems();
+      }
+    }
+  });
+
+  // Signature pad (basic)
+  let drawing = false;
+  function getCtx(): CanvasRenderingContext2D | null { return sigPad.getContext('2d'); }
+  function clearCanvas(): void {
+    const ctx = getCtx();
+    if (ctx) ctx.clearRect(0, 0, sigPad.width, sigPad.height);
+  }
+  function pos(ev: MouseEvent | TouchEvent): { x: number; y: number } {
+    const rect = sigPad.getBoundingClientRect();
+    const scaleX = sigPad.width / rect.width;
+    const scaleY = sigPad.height / rect.height;
+    if (ev instanceof TouchEvent) {
+      const t = ev.touches[0] ?? ev.changedTouches[0];
+      return { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY };
+    }
+    return { x: (ev.clientX - rect.left) * scaleX, y: (ev.clientY - rect.top) * scaleY };
+  }
+  function bindPad(): void {
+    const ctx = getCtx();
+    if (!ctx) return;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1E1E1D';
+
+    sigPad.addEventListener('mousedown', (e) => { drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    sigPad.addEventListener('mousemove', (e) => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    sigPad.addEventListener('mouseup', () => { drawing = false; });
+    sigPad.addEventListener('mouseleave', () => { drawing = false; });
+    sigPad.addEventListener('touchstart', (e) => { e.preventDefault(); drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+    sigPad.addEventListener('touchmove', (e) => { e.preventDefault(); if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+    sigPad.addEventListener('touchend', () => { drawing = false; });
+  }
+  sigCapture.addEventListener('click', () => {
+    sigPadWrap.hidden = false;
+    sigClear.hidden = false;
+    sigCapture.hidden = true;
+    clearCanvas();
+    setTimeout(bindPad, 50);
+  });
+  sigClear.addEventListener('click', () => {
+    clearCanvas();
+    sigData.value = '';
+    sigPreviewWrap.hidden = true;
+  });
+  sigSave.addEventListener('click', () => {
+    sigLocalDataUrl = sigPad.toDataURL('image/png');
+    sigPreview.src = sigLocalDataUrl;
+    sigPreviewWrap.hidden = false;
+    sigData.value = 'pending-upload';
+  });
+
+  function openDeductPrompt(logId: string, items: Array<{ item_description: string; quantity: number }>): void {
+    savedLogId = logId;
+    deductList.innerHTML = '';
+    for (const it of items) {
+      const li = document.createElement('li');
+      li.textContent = `${it.quantity} × ${it.item_description}`;
+      deductList.appendChild(li);
+    }
+    clearDeductError();
+    deductModal.hidden = false;
+  }
+  deductClose.addEventListener('click', () => { window.location.href = savedLogId ? `/app/first-aid/${savedLogId}` : '/app/first-aid'; });
+  deductSkip.addEventListener('click', () => { window.location.href = savedLogId ? `/app/first-aid/${savedLogId}` : '/app/first-aid'; });
+  deductGo.addEventListener('click', () => {
+    if (!savedLogId || !authUserId) return;
+    clearDeductError();
+    deductGo.disabled = true;
+    const original = deductGo.textContent;
+    deductGo.textContent = 'Deducting…';
+    (async () => {
+      try {
+        const { error } = await supabase!.rpc('deduct_inventory_for_first_aid', {
+          p_first_aid_log_id: savedLogId,
+          p_actor_id: authUserId,
+        });
+        if (error) {
+          // Map common error messages to friendlier text.
+          const m = error.message;
+          if (/No matching inventory item for:/i.test(m)) {
+            const detail = m.replace(/^No matching inventory item for:\s*/i, '').trim();
+            const itemName = detail.split(',')[0]?.trim() ?? detail;
+            throw new Error(`Item "${itemName}" not found in your inventory. Add it in Inventory Management, or skip deduction and update inventory manually.`);
+          }
+          if (/Insufficient stock:/i.test(m)) {
+            throw new Error('Some items have insufficient stock. Please restock before deducting, or adjust quantities.');
+          }
+          throw error;
+        }
+        window.location.href = `/app/first-aid/${savedLogId}`;
+      } catch (e) {
+        showDeductError(e instanceof Error ? e.message : 'Deduction failed.');
+        deductGo.disabled = false;
+        deductGo.textContent = original;
+      }
+    })();
+  });
+
+  formEl.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    if (!supabase) return;
+    clearError();
+
+    const incidentDate = dateEl.value;
+    const incidentTime = timeEl.value;
+    const location = (document.getElementById('fa-location') as HTMLInputElement).value.trim();
+    const injuredName = (document.getElementById('fa-injured-name') as HTMLInputElement).value.trim();
+    const injuredId = ((document.getElementById('fa-injured-id') as HTMLInputElement).value || '').trim() || null;
+    const injuryType = (document.getElementById('fa-injury-type') as HTMLInputElement).value.trim();
+    const treatment = (document.getElementById('fa-treatment') as HTMLTextAreaElement).value.trim();
+    const referred = referredEl.checked;
+    const hospitalName = referred ? hospitalNameEl.value.trim() : null;
+
+    if (!incidentDate || !incidentTime) {
+      showError('Date and time of incident are required.');
+      return;
+    }
+    if (!location || !injuredName || !injuryType || !treatment) {
+      showError('Location, injured person, injury type, and treatment are all required.');
+      return;
+    }
+    if (referred && !hospitalName) {
+      showError('Hospital name is required when referred.');
+      return;
+    }
+    const items = readItems();
+
+    submitBtn.disabled = true;
+    const original = submitBtn.textContent;
+    submitBtn.textContent = 'Saving…';
+
+    (async () => {
+      try {
+        let signatureUrl: string | null = null;
+        let signatureUploadedAt: string | null = null;
+        if (sigLocalDataUrl) {
+          const sigBlob = await (await fetch(sigLocalDataUrl)).blob();
+          const resized = await resizeImage(sigBlob, {
+            maxWidth: 200,
+            maxHeight: 100,
+            quality: 0.7,
+            outputType: 'image/png',
+          });
+          const uploaded = await uploadToStorage('signatures', resized.blob, 'sig', 'png');
+          if (uploaded.error) {
+            throw new Error(`Signature upload failed: ${uploaded.error}`);
+          }
+          signatureUrl = uploaded.url;
+          signatureUploadedAt = new Date().toISOString();
+        }
+
+        // NOTE: tenant_id is auto-set by RLS WITH CHECK. Do NOT pass it.
+        const insertPayload: Omit<FirstAidLog, 'id' | 'tenant_id' | 'reported_by' | 'created_at' | 'updated_at' | 'deducted_from_inventory' | 'status'> = {
+          incident_date: incidentDate,
+          incident_time: incidentTime,
+          location,
+          injured_person_name: injuredName,
+          injured_person_id: injuredId,
+          injury_type: injuryType,
+          treatment_given: treatment,
+          referred_to_hospital: referred,
+          hospital_name: hospitalName,
+          signature_url: signatureUrl,
+          signature_uploaded_at: signatureUploadedAt,
+        };
+        const { data: created, error: createErr } = await supabase
+          .from('first_aid_logs')
+          .insert(insertPayload)
+          .select('id')
+          .single<{ id: string }>();
+        if (createErr) throw createErr;
+        const logId = created.id;
+
+        if (items.length > 0) {
+          const detailRows: Array<Omit<FirstAidDetail, 'id' | 'created_at'>> = items.map((it) => ({
+            first_aid_log_id: logId,
+            item_description: it.item_description,
+            quantity: it.quantity,
+            notes: it.notes,
+          }));
+          const { error: detailErr } = await supabase.from('first_aid_details').insert(detailRows);
+          if (detailErr) throw detailErr;
+        }
+
+        if (items.length === 0) {
+          // No items: skip the deduction prompt entirely.
+          window.location.href = `/app/first-aid/${logId}`;
+          return;
+        }
+        openDeductPrompt(logId, items.map((i) => ({ item_description: i.item_description, quantity: i.quantity })));
+      } catch (e) {
+        showError(e instanceof Error ? e.message : 'Failed to save record.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = original;
+      }
+    })();
+  });
+</script>
+
+<style>
+  .fa-new-page { padding: 32px 0 64px; }
+  .fa-warning,
+  .fa-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .fa-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .fa-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .fa-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .fa-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .fa-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .fa-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .fa-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .fa-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .fa-fieldset {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .fa-fieldset legend {
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 8px;
+  }
+  .fa-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 12px;
+  }
+  .fa-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .fa-row-2 { grid-template-columns: 1fr; } }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-bg, #fff);
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .field-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+  }
+
+  .fa-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 0.88rem;
+  }
+  .fa-items-table th, .fa-items-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    vertical-align: top;
+  }
+  .fa-items-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .fa-qty-col { width: 80px; }
+  .fa-rm-col { width: 40px; text-align: center; }
+  .fa-items-table input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.88rem;
+  }
+  .fa-rm-item {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text-muted, #6A6A69);
+    width: 28px;
+    height: 28px;
+    line-height: 1;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .fa-rm-item:hover:not(:disabled) { color: #C0392B; border-color: #C0392B; }
+  .fa-rm-item:disabled { opacity: 0.3; cursor: not-allowed; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+  }
+
+  .fa-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .fa-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .fa-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fa-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .fa-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .fa-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .fa-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .fa-sig-controls { display: flex; gap: 8px; margin-bottom: 12px; }
+  .fa-sig-pad {
+    border: 1px solid var(--color-border, #E0E0E0);
+    background: #fff;
+    display: block;
+    width: 100%;
+    max-width: 600px;
+    height: 160px;
+    touch-action: none;
+    margin-bottom: 8px;
+    cursor: crosshair;
+  }
+  .fa-sig-preview {
+    border: 1px solid var(--color-border, #E0E0E0);
+    background: #fff;
+    max-width: 320px;
+    height: auto;
+  }
+
+  .fa-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+  .fa-modal-card {
+    background: var(--color-bg, #fff);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow: auto;
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+  .fa-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+  .fa-modal-head h2 { font-size: 1.1rem; font-weight: 900; margin: 0; }
+  .fa-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-muted, #6A6A69);
+    padding: 4px 8px;
+  }
+  .fa-modal-body { padding: 20px; }
+  .fa-deduct-list { padding-left: 20px; margin: 8px 0 16px; }
+  .fa-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 20px 20px;
+  }
+</style>

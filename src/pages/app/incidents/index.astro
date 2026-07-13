@@ -1,0 +1,637 @@
+---
+// Incidents log — list view.
+//
+// One row per incident, sorted by incident_date DESC then recorded_at
+// DESC (newest first). Filters: year, severity (multi-select via
+// checkboxes), JKKP reported, investigation submitted. Pagination
+// 20/page. RLS scopes to the current tenant.
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="Incident Reports - AmerisPro">
+  <main class="inc-list-page">
+    <div class="container">
+      <div id="inc-setup-warning" class="inc-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="inc-error" class="inc-error" hidden></div>
+
+      <header class="inc-header">
+        <div>
+          <h1>Incident Reports</h1>
+          <p class="inc-sub" id="inc-sub">…</p>
+        </div>
+        <div class="inc-header-actions">
+          <a href="/app/incidents/new" class="inc-primary-btn">+ Report incident</a>
+        </div>
+      </header>
+
+      <section class="inc-filters">
+        <label class="inc-filter-field">
+          <span>Year</span>
+          <select id="inc-filter-year">
+            <option value="">All years</option>
+          </select>
+        </label>
+
+        <fieldset class="inc-severity-group">
+          <legend>Severity</legend>
+          <label class="inc-check"><input type="checkbox" name="severity" value="First Aid" checked /> First Aid</label>
+          <label class="inc-check"><input type="checkbox" name="severity" value="Minor" checked /> Minor</label>
+          <label class="inc-check"><input type="checkbox" name="severity" value="Major" checked /> Major</label>
+          <label class="inc-check"><input type="checkbox" name="severity" value="Fatal" checked /> Fatal</label>
+          <label class="inc-check"><input type="checkbox" name="severity" value="Other" checked /> Other</label>
+        </fieldset>
+
+        <label class="inc-filter-field">
+          <span>JKKP reported</span>
+          <select id="inc-filter-jkkp">
+            <option value="">All</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+
+        <label class="inc-filter-field">
+          <span>Investigation</span>
+          <select id="inc-filter-investigation">
+            <option value="">All</option>
+            <option value="yes">Submitted</option>
+            <option value="no">Not submitted</option>
+          </select>
+        </label>
+
+        <div class="inc-filter-buttons">
+          <button type="button" id="inc-filter-apply" class="inc-secondary-btn">Apply</button>
+          <button type="button" id="inc-filter-clear" class="inc-secondary-btn">Clear</button>
+          <button type="button" id="inc-export-csv" class="inc-secondary-btn">📥 Export CSV</button>
+        </div>
+      </section>
+
+      <section id="inc-skeleton" class="inc-skeleton" hidden>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="inc-table-wrap" hidden>
+        <div class="inc-table-scroll">
+          <table class="inc-table" aria-label="Incidents">
+            <thead>
+              <tr>
+                <th scope="col">Code</th>
+                <th scope="col">Date &amp; time</th>
+                <th scope="col">Victim</th>
+                <th scope="col">Staff ID</th>
+                <th scope="col">Location / Dept</th>
+                <th scope="col">Body part</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Man-days</th>
+                <th scope="col">JKKP</th>
+                <th scope="col" class="inc-actions-col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="inc-tbody"></tbody>
+          </table>
+        </div>
+        <nav class="inc-pager" aria-label="Pagination">
+          <button type="button" id="inc-prev" class="inc-secondary-btn" disabled>← Previous</button>
+          <span class="inc-page-info" id="inc-page-info">Page 1</span>
+          <button type="button" id="inc-next" class="inc-secondary-btn" disabled>Next →</button>
+        </nav>
+      </section>
+
+      <section id="inc-empty" class="inc-empty" hidden>
+        <p>No incidents recorded yet. Click "Report incident" to file your first.</p>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { Incident, IncidentSeverityType } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('inc-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('inc-error') as HTMLElement;
+  const subEl = document.getElementById('inc-sub') as HTMLElement;
+  const skelEl = document.getElementById('inc-skeleton') as HTMLElement;
+  const tableWrap = document.getElementById('inc-table-wrap') as HTMLElement;
+  const tbody = document.getElementById('inc-tbody') as HTMLElement;
+  const emptyEl = document.getElementById('inc-empty') as HTMLElement;
+
+  const yearFilterEl = document.getElementById('inc-filter-year') as HTMLSelectElement;
+  const severityBoxes = Array.from(
+    document.querySelectorAll<HTMLInputElement>('input[name="severity"]')
+  );
+  const jkkpFilterEl = document.getElementById('inc-filter-jkkp') as HTMLSelectElement;
+  const investigationFilterEl = document.getElementById('inc-filter-investigation') as HTMLSelectElement;
+  const applyBtn = document.getElementById('inc-filter-apply') as HTMLButtonElement;
+  const clearBtn = document.getElementById('inc-filter-clear') as HTMLButtonElement;
+  const prevBtn = document.getElementById('inc-prev') as HTMLButtonElement;
+  const nextBtn = document.getElementById('inc-next') as HTMLButtonElement;
+  const pageInfo = document.getElementById('inc-page-info') as HTMLElement;
+
+  const PAGE_SIZE = 20;
+  let currentPage = 1;
+  let currentMaxPage = 1;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  const SEVERITY_COLORS: Record<IncidentSeverityType, string> = {
+    'First Aid': 'inc-sev-firstaid',
+    Minor: 'inc-sev-minor',
+    Major: 'inc-sev-major',
+    Fatal: 'inc-sev-fatal',
+    Other: 'inc-sev-other',
+  };
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+
+  function escapeHtml(s: string | null | undefined): string {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string
+    );
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function formatTime(hhmm: string | null | undefined): string {
+    if (!hhmm) return '';
+    return hhmm.length >= 5 ? hhmm.substring(0, 5) : hhmm;
+  }
+
+  function formatDateTime(iso: string | null | undefined, time: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = formatDate(iso);
+    const t = formatTime(time);
+    return t ? `${d} ${t}` : d;
+  }
+
+  function selectedSeverities(): IncidentSeverityType[] {
+    return severityBoxes
+      .filter((b) => b.checked)
+      .map((b) => b.value as IncidentSeverityType);
+  }
+
+  function readFiltersFromUrl(): {
+    page: number;
+    year: string;
+    severities: IncidentSeverityType[];
+    jkkp: string;
+    investigation: string;
+  } {
+    const params = new URLSearchParams(window.location.search);
+    const pageRaw = params.get('page');
+    const page = pageRaw ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
+    const year = params.get('year') ?? '';
+    const jkkp = params.get('jkkp') ?? '';
+    const investigation = params.get('investigation') ?? '';
+
+    // Severity: list of names, or "all" sentinel
+    const sevRaw = params.get('sev');
+    let severities: IncidentSeverityType[];
+    if (sevRaw === 'all' || sevRaw == null) {
+      severities = ['First Aid', 'Minor', 'Major', 'Fatal', 'Other'];
+    } else if (sevRaw === '') {
+      severities = [];
+    } else {
+      severities = sevRaw.split(',') as IncidentSeverityType[];
+    }
+
+    if (year) yearFilterEl.value = year;
+    if (jkkp) jkkpFilterEl.value = jkkp;
+    if (investigation) investigationFilterEl.value = investigation;
+    const sevSet = new Set(severities);
+    for (const box of severityBoxes) {
+      box.checked = sevSet.has(box.value as IncidentSeverityType);
+    }
+
+    return { page, year, severities, jkkp, investigation };
+  }
+
+  function writeFiltersToUrl(page: number): void {
+    const params = new URLSearchParams(window.location.search);
+    if (page > 1) params.set('page', String(page)); else params.delete('page');
+
+    const year = yearFilterEl.value;
+    if (year) params.set('year', year); else params.delete('year');
+
+    const sevs = selectedSeverities();
+    if (sevs.length === 5) {
+      params.set('sev', 'all');
+    } else if (sevs.length === 0) {
+      params.set('sev', '');
+    } else {
+      params.set('sev', sevs.join(','));
+    }
+
+    const jkkp = jkkpFilterEl.value;
+    if (jkkp) params.set('jkkp', jkkp); else params.delete('jkkp');
+
+    const inv = investigationFilterEl.value;
+    if (inv) params.set('investigation', inv); else params.delete('investigation');
+
+    const qs = params.toString();
+    const url = window.location.pathname + (qs ? '?' + qs : '');
+    window.history.replaceState({}, '', url);
+  }
+
+  async function loadYearOptions(): Promise<void> {
+    if (!supabase) return;
+    // Use date_part on incident_date; this is cheap on the indexed
+    // (tenant_id, incident_date DESC) composite and RLS already
+    // restricts the scan to the caller's tenant.
+    try {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('incident_date');
+      if (error) throw error;
+      const years = new Set<number>();
+      for (const r of (data ?? []) as Array<{ incident_date: string }>) {
+        if (r.incident_date) {
+          const d = new Date(r.incident_date);
+          if (!Number.isNaN(d.getTime())) years.add(d.getFullYear());
+        }
+      }
+      years.add(new Date().getFullYear());
+      const sorted = Array.from(years).sort((a, b) => b - a);
+      yearFilterEl.innerHTML = '<option value="">All years</option>' +
+        sorted.map((y) => `<option value="${y}">${y}</option>`).join('');
+    } catch {
+      yearFilterEl.innerHTML = '<option value="">All years</option>' +
+        `<option value="${new Date().getFullYear()}">${new Date().getFullYear()}</option>`;
+    }
+  }
+
+  async function refresh(): Promise<void> {
+    if (!supabase) return;
+    const { page, year, severities, jkkp, investigation } = readFiltersFromUrl();
+    currentPage = page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const offsetEnd = offset + PAGE_SIZE - 1;
+
+    let q = supabase
+      .from('incidents')
+      .select('*', { count: 'estimated' })
+      .order('incident_date', { ascending: false })
+      .order('recorded_at', { ascending: false });
+
+    if (year) {
+      // incident_date is timestamptz; year is matched by gte Jan 1 / lt Jan 1+1
+      const yStart = `${year}-01-01T00:00:00.000Z`;
+      const nextYear = String(Number(year) + 1);
+      const yEnd = `${nextYear}-01-01T00:00:00.000Z`;
+      q = q.gte('incident_date', yStart).lt('incident_date', yEnd);
+    }
+    if (severities.length > 0 && severities.length < 5) {
+      q = q.in('severity_type', severities);
+    } else if (severities.length === 0) {
+      // no severities selected -> show nothing
+      tbody.innerHTML = '';
+      skelEl.hidden = true;
+      tableWrap.hidden = true;
+      emptyEl.hidden = false;
+      emptyEl.querySelector('p')!.textContent =
+        'No severities selected. Pick at least one severity to filter.';
+      subEl.textContent = '0 incidents';
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      pageInfo.textContent = `Page ${page}`;
+      currentMaxPage = 1;
+      return;
+    }
+    if (jkkp === 'yes') q = q.eq('reported_to_jkkp', true);
+    if (jkkp === 'no')  q = q.eq('reported_to_jkkp', false);
+    if (investigation === 'yes') q = q.eq('investigation_submitted', true);
+    if (investigation === 'no')  q = q.eq('investigation_submitted', false);
+
+    q = q.range(offset, offsetEnd);
+
+    try {
+      const { data, error, count } = await q;
+      if (error) throw error;
+      const rows = (data ?? []) as Incident[];
+      skelEl.hidden = true;
+
+      // Sub-header: total this calendar year + reported to JKKP
+      const yearStart = `${new Date().getFullYear()}-01-01T00:00:00.000Z`;
+      const yearEnd = `${new Date().getFullYear() + 1}-01-01T00:00:00.000Z`;
+      const [yrRes, jkkpRes] = await Promise.all([
+        supabase.from('incidents').select('id', { count: 'estimated', head: true })
+          .gte('incident_date', yearStart).lt('incident_date', yearEnd),
+        supabase.from('incidents').select('id', { count: 'estimated', head: true })
+          .gte('incident_date', yearStart).lt('incident_date', yearEnd)
+          .eq('reported_to_jkkp', true),
+      ]);
+      const totalThisYear = yrRes.count ?? 0;
+      const jkkpCount = jkkpRes.count ?? 0;
+      subEl.textContent = `${totalThisYear} incident${totalThisYear === 1 ? '' : 's'} this year • ${jkkpCount} reported to JKKP`;
+
+      if (rows.length === 0) {
+        tableWrap.hidden = true;
+        emptyEl.hidden = false;
+        emptyEl.querySelector('p')!.textContent =
+          'No incidents recorded yet. Click "Report incident" to file your first.';
+        prevBtn.disabled = page <= 1;
+        nextBtn.disabled = true;
+        currentMaxPage = page;
+        pageInfo.textContent = `Page ${page}`;
+        return;
+      }
+      emptyEl.hidden = true;
+      tableWrap.hidden = false;
+
+      tbody.innerHTML = '';
+      for (const r of rows) {
+        const tr = document.createElement('tr');
+        const sevClass = SEVERITY_COLORS[r.severity_type] || 'inc-sev-other';
+        const sevLabel = r.severity_type === 'Other' && r.severity_other
+          ? `Other: ${escapeHtml(r.severity_other)}`
+          : r.severity_type;
+        tr.innerHTML = `
+          <td><code class="inc-code">${escapeHtml(r.incident_code)}</code></td>
+          <td>${escapeHtml(formatDateTime(r.incident_date, r.incident_time))}</td>
+          <td>${escapeHtml(r.victim_name)}</td>
+          <td>${escapeHtml(r.staff_id ?? '—')}</td>
+          <td>${escapeHtml(r.location_dept)}</td>
+          <td>${escapeHtml(r.body_part_injured ?? '—')}</td>
+          <td><span class="inc-sev-badge ${sevClass}">${escapeHtml(sevLabel)}</span></td>
+          <td>${r.man_days_lost}</td>
+          <td><span class="inc-flag-badge ${r.reported_to_jkkp ? 'inc-flag-yes' : 'inc-flag-no'}">${r.reported_to_jkkp ? 'Yes' : 'No'}</span></td>
+          <td class="inc-actions-col"><a href="/app/incidents/${r.id}" class="inc-view-link">View</a></td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      const total = count ?? null;
+      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (rows.length === PAGE_SIZE ? page + 1 : page);
+      currentMaxPage = maxPage;
+      prevBtn.disabled = page <= 1;
+      nextBtn.disabled = page >= maxPage;
+      pageInfo.textContent = total != null
+        ? `Page ${page} of ${maxPage} (${total} total)`
+        : `Page ${page}`;
+    } catch (e) {
+      skelEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load incidents.');
+    }
+  }
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      await loadYearOptions();
+      await refresh();
+    })().catch(() => {
+      showError('Failed to initialise incident list.');
+    });
+
+    applyBtn.addEventListener('click', () => {
+      currentPage = 1;
+      writeFiltersToUrl(1);
+      void refresh();
+    });
+    clearBtn.addEventListener('click', () => {
+      yearFilterEl.value = '';
+      for (const box of severityBoxes) box.checked = true;
+      jkkpFilterEl.value = '';
+      investigationFilterEl.value = '';
+      currentPage = 1;
+      writeFiltersToUrl(1);
+      void refresh();
+    });
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        writeFiltersToUrl(currentPage);
+        void refresh();
+      }
+    });
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < currentMaxPage) {
+        currentPage += 1;
+        writeFiltersToUrl(currentPage);
+        void refresh();
+      }
+    });
+
+    const exportBtn = document.getElementById('inc-export-csv') as HTMLButtonElement;
+    exportBtn.addEventListener('click', () => {
+      const params = new URLSearchParams();
+      if (yearFilterEl.value) params.set('year', yearFilterEl.value);
+      if (jkkpFilterEl.value) params.set('jkkp', jkkpFilterEl.value);
+      if (investigationFilterEl.value) params.set('investigation', investigationFilterEl.value);
+      const qs = params.toString();
+      window.location.href = `/api/export/incidents.csv${qs ? '?' + qs : ''}`;
+    });
+  }
+</script>
+
+<style>
+  .inc-list-page { padding: 32px 0 64px; }
+  .inc-warning,
+  .inc-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .inc-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .inc-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .inc-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .inc-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .inc-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .inc-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .inc-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .inc-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .inc-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+  .inc-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .inc-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .inc-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .inc-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .inc-filter-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; }
+  .inc-filter-field input,
+  .inc-filter-field select {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: var(--color-bg, #fff);
+    min-width: 130px;
+  }
+  .inc-severity-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+  .inc-severity-group legend {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    padding: 0 4px;
+  }
+  .inc-check { display: inline-flex; align-items: center; gap: 4px; }
+  .inc-filter-buttons { display: flex; gap: 8px; }
+
+  .inc-skeleton { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .inc-table-scroll { overflow-x: auto; }
+  .inc-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.85rem;
+  }
+  .inc-table th, .inc-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    vertical-align: top;
+  }
+  .inc-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    white-space: nowrap;
+  }
+  .inc-table tbody tr:hover { background: #FAFAFA; }
+  .inc-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.82rem;
+    color: var(--color-primary, #E58E1A);
+    font-weight: 700;
+  }
+  .inc-actions-col { white-space: nowrap; text-align: right; }
+  .inc-view-link {
+    color: var(--color-primary, #E58E1A);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .inc-view-link:hover { text-decoration: underline; }
+
+  .inc-sev-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .inc-sev-firstaid { background: #E3F2FD; color: #1565C0; }
+  .inc-sev-minor    { background: #FFF7E6; color: #6A4A0F; }
+  .inc-sev-major    { background: #FFE0B2; color: #B0540E; }
+  .inc-sev-fatal    { background: #FDECEC; color: #8B1A1A; }
+  .inc-sev-other    { background: var(--color-bg-grey, #F4F4F4); color: var(--color-text-muted, #6A6A69); }
+
+  .inc-flag-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .inc-flag-yes { background: #E8F5E9; color: #1F7A4D; }
+  .inc-flag-no  { background: var(--color-bg-grey, #F4F4F4); color: var(--color-text-muted, #6A6A69); }
+
+  .inc-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .inc-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
+
+  .inc-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted, #6A6A69);
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+</style>

@@ -1,0 +1,402 @@
+---
+// Workplace Inspections — detail view.
+//
+// Read-only display of a single completed inspection. RLS auto-scopes
+// to the calling tenant; no manual filter needed. Edit / delete are
+// out of scope for Phase 2.6 (the legacy spreadsheet also did not
+// expose edit). Print uses the shared print stylesheet.
+import AppLayout from '../../../layouts/AppLayout.astro';
+import '../../../styles/print.css';
+
+export function getStaticPaths() {
+  return [{ params: { id: '_' } }];
+}
+---
+<AppLayout title="Inspection - AmerisPro">
+  <main class="ins-detail-page">
+    <div class="container">
+      <div id="ins-setup-warning" class="ins-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="ins-error" class="ins-error" hidden></div>
+
+      <section id="ins-loading" class="ins-skeleton">
+        <div class="ins-skel-row"></div>
+        <div class="ins-skel-row"></div>
+        <div class="ins-skel-row"></div>
+      </section>
+
+      <section id="ins-not-found" class="ins-not-found" hidden>
+        <h1>Inspection not found</h1>
+        <p>This audit doesn't exist, or you don't have permission to view it.</p>
+        <a href="/app/inspections" class="ins-secondary-btn">← Back to list</a>
+      </section>
+
+      <section id="ins-content" hidden>
+        <header class="ins-detail-header ins-print-block">
+          <div>
+            <h1>Audit <span id="ins-audit-code">…</span></h1>
+            <p class="ins-sub" id="ins-sub">…</p>
+          </div>
+          <a href="/app/inspections" class="ins-secondary-btn no-print">← Back to list</a>
+        </header>
+
+        <section class="ins-detail-card ins-print-block">
+          <h2 class="ins-print-only">Safety Inspection Audit Report</h2>
+          <div class="ins-grid-2">
+            <div><span class="ins-label">Audit code</span><span class="ins-mono" id="ins-meta-code">…</span></div>
+            <div><span class="ins-label">Date of inspection</span><span id="ins-meta-date">…</span></div>
+            <div><span class="ins-label">Status</span><span id="ins-meta-status">…</span></div>
+            <div><span class="ins-label">Department / Area</span><span id="ins-meta-location">…</span></div>
+            <div><span class="ins-label">Auditor</span><span id="ins-meta-auditor">…</span></div>
+            <div><span class="ins-label">Position</span><span id="ins-meta-position">…</span></div>
+          </div>
+        </section>
+
+        <section class="ins-detail-card" id="ins-sig-card" hidden>
+          <h2>Auditor digital sign-off</h2>
+          <div class="ins-sig-display">
+            <img id="ins-sig-img" alt="Digital signature" />
+          </div>
+        </section>
+
+        <section class="ins-detail-card ins-print-block">
+          <h2>Overall findings / corrective action</h2>
+          <div class="ins-block" id="ins-findings">—</div>
+        </section>
+
+        <section class="ins-detail-card ins-print-block">
+          <h2>Question responses</h2>
+          <div class="ins-table-scroll">
+            <table class="ins-table" aria-label="Question responses">
+              <thead>
+                <tr>
+                  <th class="ins-col-id">ID</th>
+                  <th>Question</th>
+                  <th class="ins-col-ans">Answer</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="ins-items-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="ins-detail-card no-print">
+          <h2>Actions</h2>
+          <div class="ins-action-row">
+            <button type="button" id="ins-print-btn" class="ins-secondary-btn">🖨️ Print</button>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { Inspection, InspectionItem } from '../../../lib/types';
+
+  const setupWarning = document.getElementById('ins-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('ins-error') as HTMLElement;
+  const loadingEl = document.getElementById('ins-loading') as HTMLElement;
+  const notFoundEl = document.getElementById('ins-not-found') as HTMLElement;
+  const contentEl = document.getElementById('ins-content') as HTMLElement;
+
+  const auditCodeEl = document.getElementById('ins-audit-code') as HTMLElement;
+  const subEl = document.getElementById('ins-sub') as HTMLElement;
+  const metaCodeEl = document.getElementById('ins-meta-code') as HTMLElement;
+  const metaDateEl = document.getElementById('ins-meta-date') as HTMLElement;
+  const metaStatusEl = document.getElementById('ins-meta-status') as HTMLElement;
+  const metaLocationEl = document.getElementById('ins-meta-location') as HTMLElement;
+  const metaAuditorEl = document.getElementById('ins-meta-auditor') as HTMLElement;
+  const metaPositionEl = document.getElementById('ins-meta-position') as HTMLElement;
+  const sigCardEl = document.getElementById('ins-sig-card') as HTMLElement;
+  const sigImgEl = document.getElementById('ins-sig-img') as HTMLImageElement;
+  const findingsEl = document.getElementById('ins-findings') as HTMLElement;
+  const itemsTbody = document.getElementById('ins-items-tbody') as HTMLElement;
+  const printBtn = document.getElementById('ins-print-btn') as HTMLButtonElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function escapeHtml(s: string | null | undefined): string {
+    return (s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+  function getInspectionId(): string {
+    const path = window.location.pathname;
+    const m = path.match(/\/app\/inspections\/([^/]+)/);
+    return m ? m[1] : '';
+  }
+
+  interface InspectionWithItems extends Inspection {
+    inspection_items: InspectionItem[];
+  }
+
+  printBtn.addEventListener('click', () => {
+    window.print();
+  });
+
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+  } else {
+    supabase = getSupabase();
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function render(ins: InspectionWithItems): void {
+    const code = ins.audit_code ?? '—';
+    auditCodeEl.textContent = code;
+    metaCodeEl.textContent = code;
+    metaDateEl.textContent = formatDate(ins.scheduled_date);
+    metaStatusEl.textContent = ins.completed_date ? 'Completed' : 'Pending';
+    metaLocationEl.textContent = ins.location;
+    metaAuditorEl.textContent = ins.auditor_name ?? '—';
+    metaPositionEl.textContent = ins.auditor_position ?? '—';
+    const audPart = ins.auditor_name ? ` by ${ins.auditor_name}${ins.auditor_position ? ` (${ins.auditor_position})` : ''}` : '';
+    subEl.textContent = `Inspected on ${formatDate(ins.scheduled_date)}${audPart}`;
+
+    findingsEl.textContent = ins.overall_notes ?? '—';
+
+    if (ins.signature_url) {
+      sigImgEl.src = ins.signature_url;
+      sigCardEl.hidden = false;
+    } else {
+      sigCardEl.hidden = true;
+    }
+
+    itemsTbody.innerHTML = '';
+    const items = (ins.inspection_items ?? []).slice().sort((a, b) => {
+      const qa = (a.question_id ?? '').toString();
+      const qb = (b.question_id ?? '').toString();
+      return qa.localeCompare(qb, undefined, { numeric: true });
+    });
+    if (items.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="4" class="ins-empty-cell">No question responses recorded.</td>`;
+      itemsTbody.appendChild(tr);
+    } else {
+      for (const it of items) {
+        const tr = document.createElement('tr');
+        const qId = it.question_id ?? '—';
+        const answer = it.response_value ?? it.status ?? '—';
+        const remarks = it.notes ?? '—';
+        const ansClass = answerBadgeClass(answer);
+        tr.innerHTML = `
+          <td class="ins-mono">${escapeHtml(qId)}</td>
+          <td>${escapeHtml(it.item_description)}</td>
+          <td class="ins-center"><span class="ins-ans-badge ${ansClass}">${escapeHtml(answer)}</span></td>
+          <td class="ins-muted">${escapeHtml(remarks)}</td>
+        `;
+        itemsTbody.appendChild(tr);
+      }
+    }
+
+    loadingEl.hidden = true;
+    contentEl.hidden = false;
+  }
+
+  function answerBadgeClass(v: string): string {
+    const s = v.trim().toLowerCase();
+    if (s === 'yes') return 'ins-ans-yes';
+    if (s === 'no') return 'ins-ans-no';
+    if (s === 'pass') return 'ins-ans-yes';
+    if (s === 'fail') return 'ins-ans-no';
+    if (s === 'n/a' || s === 'na') return 'ins-ans-na';
+    return 'ins-ans-other';
+  }
+
+  async function load(): Promise<void> {
+    if (!supabase) return;
+    const id = getInspectionId();
+    if (!id || id === '_') {
+      loadingEl.hidden = true;
+      notFoundEl.hidden = false;
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('inspections')
+        .select('*, inspection_items(*)')
+        .eq('id', id)
+        .maybeSingle<InspectionWithItems>();
+      if (error || !data) {
+        loadingEl.hidden = true;
+        notFoundEl.hidden = false;
+        return;
+      }
+      render(data);
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Failed to load inspection.');
+    }
+  }
+
+  if (supabase) {
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      void load();
+    })().catch(() => {
+      showError('Failed to load inspection.');
+    });
+  }
+</script>
+
+<style>
+  .ins-detail-page { padding: 32px 0 64px; }
+  .ins-warning, .ins-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ins-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .ins-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .ins-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .ins-skeleton { display: grid; gap: 12px; }
+  .ins-skel-row {
+    height: 48px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: ins-skel-shimmer 1.4s infinite;
+  }
+  @keyframes ins-skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .ins-not-found {
+    padding: 60px 20px;
+    text-align: center;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+  .ins-not-found h1 { font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; }
+
+  .ins-detail-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+  }
+  .ins-detail-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .ins-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+
+  .ins-detail-card {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .ins-detail-card h2 {
+    font-size: 0.95rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+
+  .ins-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 18px;
+  }
+  @media (max-width: 720px) { .ins-grid-2 { grid-template-columns: 1fr; } }
+  .ins-grid-2 > div { display: flex; flex-direction: column; gap: 4px; }
+  .ins-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .ins-block { padding: 10px 12px; background: #FAFAFA; border: 1px solid var(--color-border-light, #F0F0F0); border-radius: 8px; min-height: 32px; }
+
+  .ins-sig-display {
+    background: #FAFAFA;
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .ins-sig-display img { max-width: 100%; max-height: 120px; object-fit: contain; }
+
+  .ins-table-scroll { overflow-x: auto; }
+  .ins-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.85rem;
+  }
+  .ins-table th, .ins-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    vertical-align: top;
+  }
+  .ins-table th {
+    background: #F4F4F4;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .ins-col-id { width: 80px; }
+  .ins-col-ans { width: 120px; text-align: center; }
+  .ins-center { text-align: center; }
+  .ins-mono { font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+  .ins-muted { color: var(--color-text-muted, #6A6A69); }
+  .ins-empty-cell { text-align: center; color: var(--color-text-muted, #6A6A69); padding: 20px; }
+
+  .ins-ans-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+  .ins-ans-yes { background: #DCFCE7; color: #166534; }
+  .ins-ans-no { background: #FEE2E2; color: #991B1B; }
+  .ins-ans-na { background: #E2E8F0; color: var(--color-text-muted, #6A6A69); }
+  .ins-ans-other { background: #DBEAFE; color: #1E40AF; }
+
+  .ins-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ins-secondary-btn:hover { color: #8B5CF6; border-color: #8B5CF6; }
+  .ins-action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .ins-print-only { display: none; }
+</style>

@@ -1,0 +1,447 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+---
+<AppLayout title="First Aid Records - AmerisPro">
+  <main class="fa-list-page">
+    <div class="container">
+      <div id="fa-setup-warning" class="fa-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="fa-error" class="fa-error" hidden></div>
+
+      <header class="fa-header">
+        <div>
+          <h1>First Aid Records</h1>
+          <p class="fa-sub" id="fa-sub">…</p>
+        </div>
+        <div class="fa-header-actions">
+          <a href="/app/inventory" class="fa-link-btn">Inventory</a>
+          <a href="/app/first-aid/new" class="fa-primary-btn">+ New inspection</a>
+        </div>
+      </header>
+
+      <section class="fa-filters">
+        <label class="fa-filter-field">
+          <span>From</span>
+          <input type="date" id="fa-from" />
+        </label>
+        <label class="fa-filter-field">
+          <span>To</span>
+          <input type="date" id="fa-to" />
+        </label>
+        <button type="button" id="fa-filter-apply" class="fa-secondary-btn">Apply</button>
+        <button type="button" id="fa-filter-clear" class="fa-secondary-btn">Clear</button>
+        <button type="button" id="fa-export-csv" class="fa-secondary-btn">📥 Export CSV</button>
+      </section>
+
+      <section id="fa-skeleton" class="fa-skeleton" hidden>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="fa-table-wrap" hidden>
+        <table class="fa-table" aria-label="First aid records">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Time</th>
+              <th scope="col">Location</th>
+              <th scope="col">Injured person</th>
+              <th scope="col">Injury type</th>
+              <th scope="col">Hospital</th>
+              <th scope="col">Inventory</th>
+              <th scope="col" class="fa-actions-col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="fa-tbody"></tbody>
+        </table>
+        <nav class="fa-pager" aria-label="Pagination">
+          <button type="button" id="fa-prev" class="fa-secondary-btn" disabled>← Previous</button>
+          <span class="fa-page-info" id="fa-page-info">Page 1</span>
+          <button type="button" id="fa-next" class="fa-secondary-btn" disabled>Next →</button>
+        </nav>
+      </section>
+
+      <section id="fa-empty" class="fa-empty" hidden>
+        <p>No First Aid records yet. Click "New inspection" to log your first one.</p>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { FirstAidLog } from '../../../lib/types';
+
+  type Row = FirstAidLog;
+
+  const setupWarning = document.getElementById('fa-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('fa-error') as HTMLElement;
+  const subEl = document.getElementById('fa-sub') as HTMLElement;
+  const skelEl = document.getElementById('fa-skeleton') as HTMLElement;
+  const tableWrap = document.getElementById('fa-table-wrap') as HTMLElement;
+  const tbody = document.getElementById('fa-tbody') as HTMLElement;
+  const emptyEl = document.getElementById('fa-empty') as HTMLElement;
+  const fromEl = document.getElementById('fa-from') as HTMLInputElement;
+  const toEl = document.getElementById('fa-to') as HTMLInputElement;
+  const applyBtn = document.getElementById('fa-filter-apply') as HTMLButtonElement;
+  const clearBtn = document.getElementById('fa-filter-clear') as HTMLButtonElement;
+  const prevBtn = document.getElementById('fa-prev') as HTMLButtonElement;
+  const nextBtn = document.getElementById('fa-next') as HTMLButtonElement;
+  const pageInfo = document.getElementById('fa-page-info') as HTMLElement;
+
+  const PAGE_SIZE = 20;
+  let currentPage = 1;
+  let allThisYear = 0;
+  let thisMonth = 0;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+  function escapeHtml(s: string): string {
+    return s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function formatDate(iso: string): string {
+    const d = new Date(iso + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function formatTime(t: string | null): string {
+    if (!t) return '—';
+    return t.slice(0, 5);
+  }
+
+  function readPageFromUrl(): { page: number; from: string | null; to: string | null } {
+    const params = new URLSearchParams(window.location.search);
+    const pageRaw = params.get('page');
+    const page = pageRaw ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
+    const from = params.get('from');
+    const to = params.get('to');
+    if (from) fromEl.value = from;
+    if (to) toEl.value = to;
+    return { page, from, to };
+  }
+
+  function writePageToUrl(page: number): void {
+    const params = new URLSearchParams(window.location.search);
+    if (page > 1) params.set('page', String(page)); else params.delete('page');
+    const from = fromEl.value;
+    const to = toEl.value;
+    if (from) params.set('from', from); else params.delete('from');
+    if (to) params.set('to', to); else params.delete('to');
+    const qs = params.toString();
+    const url = window.location.pathname + (qs ? '?' + qs : '');
+    window.history.replaceState({}, '', url);
+  }
+
+  async function refresh(): Promise<void> {
+    if (!supabase) return;
+    const { page, from, to } = readPageFromUrl();
+    currentPage = page;
+    const offset = (page - 1) * PAGE_SIZE;
+    const offsetEnd = offset + PAGE_SIZE - 1;
+
+    let q = supabase
+      .from('first_aid_logs')
+      .select('*', { count: 'estimated' })
+      .order('incident_date', { ascending: false })
+      .order('incident_time', { ascending: false });
+    if (from) q = q.gte('incident_date', from);
+    if (to) q = q.lte('incident_date', to);
+    q = q.range(offset, offsetEnd);
+
+    try {
+      const { data, error, count } = await q;
+      if (error) throw error;
+      const rows = (data ?? []) as Row[];
+      skelEl.hidden = true;
+
+      // Compute yearly/monthly counts with a separate count call, lightweight enough.
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth();
+      const yearStart = `${year}-01-01`;
+      const monthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const [yrRes, moRes] = await Promise.all([
+        supabase.from('first_aid_logs').select('id', { count: 'estimated', head: true })
+          .gte('incident_date', yearStart).lte('incident_date', `${year}-12-31`),
+        supabase.from('first_aid_logs').select('id', { count: 'estimated', head: true })
+          .gte('incident_date', monthStart),
+      ]);
+      allThisYear = yrRes.count ?? 0;
+      thisMonth = moRes.count ?? 0;
+      subEl.textContent = `${allThisYear} record${allThisYear === 1 ? '' : 's'} this year • ${thisMonth} this month`;
+
+      if (rows.length === 0) {
+        tableWrap.hidden = true;
+        emptyEl.hidden = false;
+        return;
+      }
+      emptyEl.hidden = true;
+      tableWrap.hidden = false;
+
+      tbody.innerHTML = '';
+      for (const r of rows) {
+        const tr = document.createElement('tr');
+        const hospitalBadge = r.referred_to_hospital
+          ? '<span class="fa-badge fa-badge-yes">Yes</span>'
+          : '<span class="fa-badge fa-badge-no">No</span>';
+        const invBadge = r.deducted_from_inventory
+          ? '<span class="fa-badge fa-badge-yes">Yes</span>'
+          : '<span class="fa-badge fa-badge-no">No</span>';
+        tr.innerHTML = `
+          <td>${formatDate(r.incident_date)}</td>
+          <td>${formatTime(r.incident_time)}</td>
+          <td>${escapeHtml(r.location)}</td>
+          <td>${escapeHtml(r.injured_person_name)}</td>
+          <td>${escapeHtml(r.injury_type)}</td>
+          <td>${hospitalBadge}</td>
+          <td>${invBadge}</td>
+          <td class="fa-actions-col"><a href="/app/first-aid/${r.id}" class="fa-view-link">View</a></td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      const totalApprox = count ?? (rows.length < PAGE_SIZE ? offset + rows.length : (offset + PAGE_SIZE + 1));
+      const hasMore = rows.length === PAGE_SIZE && offset + PAGE_SIZE < (totalApprox || Infinity);
+      // Use the returned count if available, else fall back to "hasMore" heuristic.
+      const total = count ?? null;
+      const maxPage = total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : (hasMore ? page + 1 : page);
+
+      prevBtn.disabled = page <= 1;
+      nextBtn.disabled = page >= maxPage;
+      pageInfo.textContent = total != null
+        ? `Page ${page} of ${maxPage} (${total} total)`
+        : `Page ${page}`;
+
+      // Stash maxPage for next-click handling
+      currentMaxPage = maxPage;
+    } catch (e) {
+      skelEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load records.');
+    }
+  }
+
+  let currentMaxPage = 1;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      await refresh();
+    })().catch(() => {
+      showError('Failed to initialise first aid list.');
+    });
+
+    applyBtn.addEventListener('click', () => {
+      currentPage = 1;
+      writePageToUrl(1);
+      void refresh();
+    });
+    clearBtn.addEventListener('click', () => {
+      fromEl.value = '';
+      toEl.value = '';
+      currentPage = 1;
+      writePageToUrl(1);
+      void refresh();
+    });
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        writePageToUrl(currentPage);
+        void refresh();
+      }
+    });
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < currentMaxPage) {
+        currentPage += 1;
+        writePageToUrl(currentPage);
+        void refresh();
+      }
+    });
+
+    const exportBtn = document.getElementById('fa-export-csv') as HTMLButtonElement;
+    exportBtn.addEventListener('click', () => {
+      const from = fromEl.value;
+      const to = toEl.value;
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      const qs = params.toString();
+      window.location.href = `/api/export/first-aid.csv${qs ? '?' + qs : ''}`;
+    });
+  }
+</script>
+
+<style>
+  .fa-list-page { padding: 32px 0 64px; }
+  .fa-warning,
+  .fa-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .fa-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .fa-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .fa-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .fa-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .fa-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .fa-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .fa-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fa-primary-btn {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .fa-primary-btn:hover { background: var(--color-primary-hover, #D07D12); }
+  .fa-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .fa-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .fa-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fa-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .fa-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  .fa-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .fa-filter-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; }
+  .fa-filter-field input {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.88rem;
+  }
+
+  .fa-skeleton { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .fa-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-size: 0.88rem;
+  }
+  .fa-table th, .fa-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+  .fa-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .fa-table tbody tr:hover { background: #FAFAFA; }
+  .fa-actions-col { white-space: nowrap; text-align: right; }
+  .fa-view-link {
+    color: var(--color-primary, #E58E1A);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .fa-view-link:hover { text-decoration: underline; }
+
+  .fa-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .fa-badge-yes { background: #E8F5E9; color: #1F7A4D; }
+  .fa-badge-no { background: #F4F4F4; color: var(--color-text-muted, #6A6A69); }
+
+  .fa-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .fa-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
+
+  .fa-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted, #6A6A69);
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+  }
+</style>

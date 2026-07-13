@@ -1,0 +1,300 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+<AppLayout title="Welcome - AmerisPro">
+  <main class="onboarding-page">
+    <div class="container">
+      <div class="onboarding-card">
+        <h1>Set up your workspace</h1>
+        <p class="onboarding-subtitle">
+          Tell us about your organisation. This information appears on your
+          inspection reports and contractor inductions.
+        </p>
+
+        <div id="ob-setup-warning" class="ob-warning" hidden>
+          <strong>Setup required.</strong>
+          <span>
+            Supabase environment variables are not configured. Copy
+            <code>.env.example</code> to <code>.env</code>, fill in your
+            Supabase credentials, then restart the dev server.
+          </span>
+        </div>
+
+        <div id="ob-error" class="ob-error" hidden></div>
+
+        <form id="onboarding-form" novalidate>
+          <label class="field">
+            <span class="field-label">Workspace name <em>*</em></span>
+            <input
+              type="text"
+              name="name"
+              required
+              autocomplete="organization"
+              placeholder="e.g. AmerisPro Solo Workspace"
+            />
+            <span class="field-hint">Used in headings and reports.</span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Company name <em>*</em></span>
+            <input
+              type="text"
+              name="company_name"
+              required
+              autocomplete="organization"
+              placeholder="e.g. Acme Safety Sdn Bhd"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Industry</span>
+            <input
+              type="text"
+              name="industry"
+              autocomplete="organization-title"
+              placeholder="e.g. Construction, Manufacturing"
+            />
+            <span class="field-hint">Optional. Helps tailor the legal register.</span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">License key</span>
+            <input
+              type="text"
+              name="license_key"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="AMER-XXXX-XXXX-XXXX"
+            />
+            <span class="field-hint">
+              Optional. If you have a premium license, enter it here to
+              unlock the full feature set.
+            </span>
+          </label>
+
+          <button type="submit" id="onboarding-submit" class="submit-btn">
+            Create workspace
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+  import type { LicensePlanType } from '../../lib/types';
+
+  const form = document.getElementById('onboarding-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('onboarding-submit') as HTMLButtonElement;
+  const errorEl = document.getElementById('ob-error') as HTMLElement;
+  const setupWarning = document.getElementById('ob-setup-warning') as HTMLElement;
+
+  function showError(message: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = message;
+  }
+  function clearError(): void {
+    errorEl.hidden = true;
+    errorEl.textContent = '';
+  }
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Setup required';
+  } else {
+    const supabase = getSupabase();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearError();
+
+      const data = new FormData(form);
+      const name = String(data.get('name') ?? '').trim();
+      const companyName = String(data.get('company_name') ?? '').trim();
+      const industry = String(data.get('industry') ?? '').trim() || null;
+      const licenseKey = String(data.get('license_key') ?? '').trim() || null;
+
+      if (!name || !companyName) {
+        showError('Workspace name and company name are required.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      const originalLabel = submitBtn.textContent;
+      submitBtn.textContent = 'Creating workspace…';
+
+      try {
+        const { data: tenantIdRaw, error: setupError } = await supabase.rpc(
+          'setup_tenant',
+          {
+            p_name: name,
+            p_company_name: companyName,
+            p_industry: industry,
+            p_license_key: licenseKey,
+          },
+        );
+
+        if (setupError) throw setupError;
+        const tenantId = tenantIdRaw as string | null;
+        if (!tenantId) throw new Error('setup_tenant did not return a tenant id.');
+
+        // If a license key was supplied, validate it against the GAS
+        // Web App. If it returns a premium plan, flip the tenant row.
+        if (licenseKey) {
+          submitBtn.textContent = 'Validating license…';
+          try {
+            const resp = await fetch('/api/validate-license', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ licenseKey }),
+            });
+            if (resp.ok) {
+              const result = (await resp.json()) as {
+                valid: boolean;
+                planType?: LicensePlanType;
+              };
+              if (result.valid && result.planType === 'premium') {
+                const { error: upgradeError } = await supabase
+                  .from('tenants')
+                  .update({
+                    subscription_plan: 'premium',
+                    subscription_activated_at: new Date().toISOString(),
+                  })
+                  .eq('id', tenantId);
+                if (upgradeError) {
+                  // Don't block onboarding — show a soft warning.
+                  showError(
+                    'Workspace created, but upgrading to premium failed: ' +
+                      upgradeError.message,
+                  );
+                }
+              }
+            }
+          } catch {
+            // License validation failure is non-fatal — workspace still
+            // created on the free plan.
+          }
+        }
+
+        window.location.replace('/app/dashboard');
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Failed to create workspace.';
+        showError(msg);
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalLabel;
+      }
+    });
+  }
+</script>
+
+<style>
+  .onboarding-page {
+    min-height: 100vh;
+    background: var(--color-bg-grey, #F4F4F4);
+    padding: 64px 32px;
+  }
+  .onboarding-card {
+    background: var(--color-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E0E0E0);
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 48px 40px;
+  }
+  .onboarding-card h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .onboarding-subtitle {
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+  }
+  .ob-warning,
+  .ob-error {
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .ob-warning {
+    background: #FFF7E6;
+    border: 1px solid #E58E1A;
+    color: #6A4A0F;
+  }
+  .ob-warning code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 4px;
+    font-size: 0.8rem;
+  }
+  .ob-error {
+    background: #FDECEC;
+    border: 1px solid #C0392B;
+    color: #8B1A1A;
+  }
+  .field {
+    display: block;
+    margin-bottom: 20px;
+  }
+  .field-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text, #1E1E1D);
+    margin-bottom: 6px;
+  }
+  .field-label em {
+    color: var(--color-primary, #E58E1A);
+    font-style: normal;
+  }
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text, #1E1E1D);
+    background: var(--color-bg, #FFFFFF);
+  }
+  .field input:focus {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 1px;
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .field-hint {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 4px;
+  }
+  .submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 8px;
+  }
+  .submit-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover, #D07D12);
+  }
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+</style>

@@ -1,0 +1,196 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+<Layout title="Sign in - AmerisPro">
+  <Header />
+
+  <main class="auth-page">
+    <div class="container">
+      <div class="auth-card">
+        <h1>Sign in to AmerisPro</h1>
+        <p class="auth-subtitle">
+          Use your Google account to access your safety compliance workspace.
+        </p>
+
+        <div id="auth-setup-warning" class="auth-warning" hidden>
+          <strong>Setup required.</strong>
+          <span>
+            Supabase environment variables are not configured. Copy
+            <code>.env.example</code> to <code>.env</code> and fill in
+            your <code>PUBLIC_SUPABASE_URL</code> and
+            <code>PUBLIC_SUPABASE_ANON_KEY</code>, then restart the dev server.
+          </span>
+        </div>
+
+        <div id="auth-error" class="auth-error" hidden></div>
+
+        <button type="button" id="google-signin-btn" class="google-btn">
+          <span class="google-btn-icon" aria-hidden="true">G</span>
+          <span>Sign in with Google</span>
+        </button>
+
+        <p class="auth-foot">
+          By signing in, you agree to our
+          <a href="/terms">Terms of Service</a> and
+          <a href="/privacy">Privacy Policy</a>.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+
+  const setupWarning = document.getElementById('auth-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('auth-error') as HTMLElement;
+  const btn = document.getElementById('google-signin-btn') as HTMLButtonElement;
+
+  const params = new URLSearchParams(window.location.search);
+  const nextPath = params.get('next') || '/app/dashboard';
+  const errParam = params.get('error');
+
+  if (errParam) {
+    errorEl.hidden = false;
+    errorEl.textContent = decodeURIComponent(errParam);
+  }
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    btn.disabled = true;
+    btn.textContent = 'Sign in unavailable — setup required';
+  } else {
+    const supabase = getSupabase();
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        window.location.replace(nextPath);
+      }
+    });
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Redirecting to Google…';
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin + '/auth/callback',
+          },
+        });
+        if (error) throw error;
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'Unknown sign-in error';
+        errorEl.hidden = false;
+        errorEl.textContent = message;
+        btn.disabled = false;
+        btn.innerHTML = '<span class="google-btn-icon" aria-hidden="true">G</span><span>Sign in with Google</span>';
+      }
+    });
+  }
+</script>
+
+<style>
+  .auth-page {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 32px 64px;
+    background: var(--color-bg-grey, #F4F4F4);
+  }
+  .auth-card {
+    background: var(--color-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 48px 40px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+  }
+  .auth-card h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .auth-subtitle {
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+  }
+  .auth-warning,
+  .auth-error {
+    text-align: left;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .auth-warning {
+    background: #FFF7E6;
+    border: 1px solid #E58E1A;
+    color: #6A4A0F;
+  }
+  .auth-warning code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 4px;
+    font-size: 0.8rem;
+  }
+  .auth-error {
+    background: #FDECEC;
+    border: 1px solid #C0392B;
+    color: #8B1A1A;
+  }
+  .google-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--color-bg, #FFFFFF);
+    color: var(--color-text, #1E1E1D);
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .google-btn:hover:not(:disabled) {
+    border-color: var(--color-primary, #E58E1A);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .google-btn:focus-visible {
+    outline: 2px solid var(--color-primary, #E58E1A);
+    outline-offset: 2px;
+  }
+  .google-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .google-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    font-weight: 900;
+    font-size: 0.85rem;
+  }
+  .auth-foot {
+    margin-top: 24px;
+    font-size: 0.78rem;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .auth-foot a {
+    color: var(--color-primary, #E58E1A);
+    text-decoration: underline;
+  }
+</style>

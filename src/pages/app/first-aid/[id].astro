@@ -1,0 +1,583 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+
+// In static (default) build mode Astro requires getStaticPaths even for
+// fully client-rendered pages. We pre-render a single placeholder route;
+// the client script reads the real id from window.location.pathname and
+// the placeholder will resolve to "Record not found" if visited directly.
+export function getStaticPaths() {
+  return [{ params: { id: '_' } }];
+}
+---
+<AppLayout title="First Aid Record - AmerisPro">
+  <main class="fa-detail-page">
+    <div class="container">
+      <div id="fa-setup-warning" class="fa-warning" hidden>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <div id="fa-error" class="fa-error" hidden></div>
+
+      <section id="fa-loading" class="fa-loading">
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+        <div class="skel-row"></div>
+      </section>
+
+      <section id="fa-not-found" class="fa-not-found" hidden>
+        <h1>Record not found</h1>
+        <p>This first aid record doesn't exist, or you don't have permission to view it.</p>
+        <a href="/app/first-aid" class="fa-link-btn">← Back to list</a>
+      </section>
+
+      <section id="fa-content" hidden>
+        <header class="fa-header">
+          <div>
+            <h1>First Aid Record <span class="fa-id" id="fa-id">…</span></h1>
+            <p class="fa-sub" id="fa-sub">…</p>
+          </div>
+          <div class="fa-header-actions">
+            <a href="/app/first-aid" class="fa-link-btn">← Back to list</a>
+            <span class="fa-status-badge" id="fa-status">…</span>
+          </div>
+        </header>
+
+        <section class="fa-card">
+          <h2>Incident details</h2>
+          <div class="fa-grid-2">
+            <div><span class="fa-label">Date</span><span id="fa-date">…</span></div>
+            <div><span class="fa-label">Time</span><span id="fa-time">…</span></div>
+            <div class="fa-grid-full"><span class="fa-label">Location</span><span id="fa-location">…</span></div>
+            <div><span class="fa-label">Injured person</span><span id="fa-injured">…</span></div>
+            <div><span class="fa-label">Employee ID</span><span id="fa-empid">…</span></div>
+            <div class="fa-grid-full"><span class="fa-label">Injury type</span><span id="fa-injury">…</span></div>
+            <div class="fa-grid-full">
+              <span class="fa-label">Treatment given</span>
+              <div class="fa-block" id="fa-treatment">…</div>
+            </div>
+            <div>
+              <span class="fa-label">Referred to hospital</span>
+              <span id="fa-referred">…</span>
+            </div>
+            <div id="fa-hospital-cell" hidden>
+              <span class="fa-label">Hospital</span>
+              <span id="fa-hospital">…</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="fa-card">
+          <h2>Items used</h2>
+          <div id="fa-items-empty" class="fa-empty-inline" hidden>No items recorded for this incident.</div>
+          <table id="fa-items-table" class="fa-items-table" hidden>
+            <thead>
+              <tr>
+                <th scope="col">Item description</th>
+                <th scope="col" class="fa-qty-col">Qty</th>
+                <th scope="col">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="fa-items-tbody"></tbody>
+          </table>
+        </section>
+
+        <section id="fa-deduct-card" class="fa-card" hidden>
+          <h2>Inventory deduction</h2>
+          <div id="fa-deduct-yes" class="fa-banner fa-banner-ok" hidden>
+            <span>✓ Inventory deducted automatically.</span>
+            <a href="/app/inventory" class="fa-banner-link">View transactions →</a>
+          </div>
+          <div id="fa-deduct-no" class="fa-banner fa-banner-warn" hidden>
+            <span>Inventory not yet deducted.</span>
+            <button type="button" id="fa-deduct-now" class="fa-secondary-btn">Deduct now</button>
+          </div>
+          <div id="fa-deduct-error" class="fa-error" hidden></div>
+        </section>
+
+        <section id="fa-sig-card" class="fa-card" hidden>
+          <h2>Signature</h2>
+          <div id="fa-sig-yes" hidden>
+            <img id="fa-sig-image" class="fa-sig-display" alt="Reporter signature" />
+            <div class="fa-muted" id="fa-sig-uploaded">…</div>
+          </div>
+          <div id="fa-sig-no" class="fa-empty-inline" hidden>No signature was captured for this record.</div>
+        </section>
+
+        <section class="fa-card">
+          <h2>
+            <button type="button" id="fa-meta-toggle" class="fa-disclosure" aria-expanded="false" aria-controls="fa-meta-body">
+              <span class="fa-disclosure-arrow" aria-hidden="true">▸</span>
+              Metadata
+            </button>
+          </h2>
+          <div id="fa-meta-body" class="fa-meta-body" hidden>
+            <div><span class="fa-label">Created at</span><span id="fa-created">…</span></div>
+            <div><span class="fa-label">Updated at</span><span id="fa-updated">…</span></div>
+            <div><span class="fa-label">Reported by</span><span id="fa-reporter">…</span></div>
+            <div class="fa-grid-full"><span class="fa-label">Tenant ID</span><code class="fa-mono" id="fa-tenant">…</code></div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import type { FirstAidLog, FirstAidDetail } from '../../../lib/types';
+
+  type Detail = FirstAidDetail;
+
+  const setupWarning = document.getElementById('fa-setup-warning') as HTMLElement;
+  const errorEl = document.getElementById('fa-error') as HTMLElement;
+  const loadingEl = document.getElementById('fa-loading') as HTMLElement;
+  const notFoundEl = document.getElementById('fa-not-found') as HTMLElement;
+  const contentEl = document.getElementById('fa-content') as HTMLElement;
+  const idEl = document.getElementById('fa-id') as HTMLElement;
+  const subEl = document.getElementById('fa-sub') as HTMLElement;
+  const statusEl = document.getElementById('fa-status') as HTMLElement;
+  const dateEl = document.getElementById('fa-date') as HTMLElement;
+  const timeEl = document.getElementById('fa-time') as HTMLElement;
+  const locationEl = document.getElementById('fa-location') as HTMLElement;
+  const injuredEl = document.getElementById('fa-injured') as HTMLElement;
+  const empIdEl = document.getElementById('fa-empid') as HTMLElement;
+  const injuryEl = document.getElementById('fa-injury') as HTMLElement;
+  const treatmentEl = document.getElementById('fa-treatment') as HTMLElement;
+  const referredEl = document.getElementById('fa-referred') as HTMLElement;
+  const hospitalCell = document.getElementById('fa-hospital-cell') as HTMLElement;
+  const hospitalEl = document.getElementById('fa-hospital') as HTMLElement;
+  const itemsEmpty = document.getElementById('fa-items-empty') as HTMLElement;
+  const itemsTable = document.getElementById('fa-items-table') as HTMLElement;
+  const itemsTbody = document.getElementById('fa-items-tbody') as HTMLElement;
+  const deductCard = document.getElementById('fa-deduct-card') as HTMLElement;
+  const deductYes = document.getElementById('fa-deduct-yes') as HTMLElement;
+  const deductNo = document.getElementById('fa-deduct-no') as HTMLElement;
+  const deductNowBtn = document.getElementById('fa-deduct-now') as HTMLButtonElement;
+  const deductErrEl = document.getElementById('fa-deduct-error') as HTMLElement;
+  const sigCard = document.getElementById('fa-sig-card') as HTMLElement;
+  const sigYes = document.getElementById('fa-sig-yes') as HTMLElement;
+  const sigNo = document.getElementById('fa-sig-no') as HTMLElement;
+  const sigImage = document.getElementById('fa-sig-image') as HTMLImageElement;
+  const sigUploaded = document.getElementById('fa-sig-uploaded') as HTMLElement;
+  const metaToggle = document.getElementById('fa-meta-toggle') as HTMLButtonElement;
+  const metaBody = document.getElementById('fa-meta-body') as HTMLElement;
+  const metaArrow = metaToggle.querySelector('.fa-disclosure-arrow') as HTMLElement;
+  const createdEl = document.getElementById('fa-created') as HTMLElement;
+  const updatedEl = document.getElementById('fa-updated') as HTMLElement;
+  const reporterEl = document.getElementById('fa-reporter') as HTMLElement;
+  const tenantEl = document.getElementById('fa-tenant') as HTMLElement;
+
+  function showError(msg: string): void {
+    errorEl.hidden = false;
+    errorEl.textContent = msg;
+  }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function formatDate(iso: string): string {
+    const d = new Date(iso + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return iso;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  function formatDateTime(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function getLogId(): string {
+    const path = window.location.pathname;
+    const m = path.match(/\/app\/first-aid\/([^/]+)/);
+    return m ? m[1] : '';
+  }
+
+  let currentLogId: string | null = null;
+  let currentUserId: string | null = null;
+  let supabase: ReturnType<typeof getSupabase> | null = null;
+
+  metaToggle.addEventListener('click', () => {
+    const expanded = metaToggle.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+      metaBody.hidden = true;
+      metaToggle.setAttribute('aria-expanded', 'false');
+      metaArrow.textContent = '▸';
+    } else {
+      metaBody.hidden = false;
+      metaToggle.setAttribute('aria-expanded', 'true');
+      metaArrow.textContent = '▾';
+    }
+  });
+
+  function renderLog(log: FirstAidLog, items: Detail[]): void {
+    currentLogId = log.id;
+    idEl.textContent = '#' + log.id.slice(0, 8);
+    subEl.textContent = `Logged on ${formatDate(log.incident_date)} at ${(log.incident_time ?? '').slice(0, 5) || '—'}`;
+    statusEl.textContent = (log.status || 'open').toUpperCase();
+    statusEl.className = 'fa-status-badge fa-status-' + (log.status || 'open');
+
+    dateEl.textContent = formatDate(log.incident_date);
+    timeEl.textContent = (log.incident_time ?? '').slice(0, 5) || '—';
+    locationEl.textContent = log.location;
+    injuredEl.textContent = log.injured_person_name;
+    empIdEl.textContent = log.injured_person_id ?? '—';
+    injuryEl.textContent = log.injury_type;
+    treatmentEl.textContent = log.treatment_given;
+    if (log.referred_to_hospital) {
+      referredEl.textContent = 'Yes';
+      hospitalCell.hidden = false;
+      hospitalEl.textContent = log.hospital_name ?? '—';
+    } else {
+      referredEl.textContent = 'No';
+      hospitalCell.hidden = true;
+    }
+
+    itemsTbody.innerHTML = '';
+    if (items.length === 0) {
+      itemsEmpty.hidden = false;
+      itemsTable.hidden = true;
+    } else {
+      itemsEmpty.hidden = true;
+      itemsTable.hidden = false;
+      for (const it of items) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(it.item_description)}</td>
+          <td class="fa-qty-col">${it.quantity}</td>
+          <td>${escapeHtml(it.notes ?? '')}</td>
+        `;
+        itemsTbody.appendChild(tr);
+      }
+    }
+
+    if (items.length > 0) {
+      deductCard.hidden = false;
+      if (log.deducted_from_inventory) {
+        deductYes.hidden = false;
+        deductNo.hidden = true;
+      } else {
+        deductYes.hidden = true;
+        deductNo.hidden = false;
+      }
+    } else {
+      deductCard.hidden = true;
+    }
+
+    sigCard.hidden = false;
+    if (log.signature_url) {
+      sigYes.hidden = false;
+      sigNo.hidden = true;
+      sigImage.src = log.signature_url;
+      sigImage.alt = 'Reporter signature';
+      sigUploaded.textContent = log.signature_uploaded_at
+        ? `Captured ${formatDateTime(log.signature_uploaded_at)}`
+        : 'Captured';
+    } else {
+      sigYes.hidden = true;
+      sigNo.hidden = false;
+    }
+
+    createdEl.textContent = formatDateTime(log.created_at);
+    updatedEl.textContent = formatDateTime(log.updated_at);
+    reporterEl.textContent = log.reported_by;
+    tenantEl.textContent = log.tenant_id;
+
+    loadingEl.hidden = true;
+    contentEl.hidden = false;
+  }
+
+  async function load(): Promise<void> {
+    if (!supabase) return;
+    const id = getLogId();
+    if (!id) {
+      loadingEl.hidden = true;
+      notFoundEl.hidden = false;
+      return;
+    }
+    try {
+      const { data: log, error: logErr } = await supabase
+        .from('first_aid_logs')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle<FirstAidLog>();
+      if (logErr) {
+        // RLS denial or actual error -> treat as not found
+        loadingEl.hidden = true;
+        notFoundEl.hidden = false;
+        return;
+      }
+      if (!log) {
+        loadingEl.hidden = true;
+        notFoundEl.hidden = false;
+        return;
+      }
+      const { data: items, error: itemsErr } = await supabase
+        .from('first_aid_details')
+        .select('*')
+        .eq('first_aid_log_id', id)
+        .order('created_at', { ascending: true });
+      if (itemsErr) throw itemsErr;
+      renderLog(log, (items ?? []) as Detail[]);
+    } catch (e) {
+      loadingEl.hidden = true;
+      showError(e instanceof Error ? e.message : 'Failed to load record.');
+    }
+  }
+
+  deductNowBtn.addEventListener('click', () => {
+    if (!currentLogId || !currentUserId) return;
+    deductErrEl.hidden = true;
+    deductNowBtn.disabled = true;
+    const original = deductNowBtn.textContent;
+    deductNowBtn.textContent = 'Deducting…';
+    (async () => {
+      try {
+        const { error } = await supabase!.rpc('deduct_inventory_for_first_aid', {
+          p_first_aid_log_id: currentLogId,
+          p_actor_id: currentUserId,
+        });
+        if (error) {
+          const m = error.message;
+          if (/No matching inventory item for:/i.test(m)) {
+            const detail = m.replace(/^No matching inventory item for:\s*/i, '').trim();
+            const itemName = detail.split(',')[0]?.trim() ?? detail;
+            throw new Error(`Item "${itemName}" not found in your inventory. Add it in Inventory Management.`);
+          }
+          if (/Insufficient stock:/i.test(m)) {
+            throw new Error('Some items have insufficient stock. Please restock before deducting.');
+          }
+          throw error;
+        }
+        await load();
+      } catch (e) {
+        deductErrEl.hidden = false;
+        deductErrEl.textContent = e instanceof Error ? e.message : 'Deduction failed.';
+      } finally {
+        deductNowBtn.disabled = false;
+        deductNowBtn.textContent = original;
+      }
+    })();
+  });
+
+  if (!isSupabaseConfigured()) {
+    setupWarning.hidden = false;
+    loadingEl.hidden = true;
+  } else {
+    supabase = getSupabase();
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      currentUserId = userData.user.id;
+      reporterEl.textContent = userData.user.email ?? userData.user.id;
+      await load();
+    })().catch(() => {
+      loadingEl.hidden = true;
+      showError('Failed to load record.');
+    });
+  }
+</script>
+
+<style>
+  .fa-detail-page { padding: 32px 0 64px; }
+  .fa-warning,
+  .fa-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .fa-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .fa-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
+  .fa-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+
+  .fa-loading { display: grid; gap: 12px; }
+  .skel-row {
+    height: 44px;
+    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.4s infinite;
+  }
+  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .fa-not-found {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 40px;
+    text-align: center;
+  }
+  .fa-not-found h1 { font-size: 1.4rem; font-weight: 900; margin-bottom: 8px; }
+
+  .fa-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .fa-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
+  .fa-id { color: var(--color-text-muted, #6A6A69); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.2rem; }
+  .fa-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
+  .fa-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .fa-link-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .fa-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .fa-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .fa-status-open { background: #FFF7E6; color: #6A4A0F; }
+
+  .fa-card {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .fa-card h2 {
+    font-size: 1.05rem;
+    font-weight: 900;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+
+  .fa-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  @media (max-width: 600px) { .fa-grid-2 { grid-template-columns: 1fr; } }
+  .fa-grid-full { grid-column: 1 / -1; }
+  .fa-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    margin-bottom: 4px;
+  }
+  .fa-block {
+    white-space: pre-wrap;
+    padding: 10px 12px;
+    background: var(--color-bg-grey, #F4F4F4);
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    font-size: 0.92rem;
+  }
+  .fa-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; word-break: break-all; }
+  .fa-muted { color: var(--color-text-muted, #6A6A69); font-size: 0.85rem; }
+
+  .fa-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .fa-items-table th, .fa-items-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+  .fa-items-table th {
+    background: var(--color-bg-grey, #F4F4F4);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .fa-qty-col { width: 80px; }
+  .fa-empty-inline {
+    color: var(--color-text-muted, #6A6A69);
+    font-size: 0.9rem;
+    padding: 12px 0;
+  }
+
+  .fa-sig-display {
+    display: block;
+    max-width: 320px;
+    height: auto;
+    border: 1px solid var(--color-border, #E0E0E0);
+    background: #fff;
+    padding: 8px;
+  }
+
+  .fa-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+  .fa-banner-ok { background: #E8F5E9; color: #1F7A4D; }
+  .fa-banner-warn { background: #FFF7E6; color: #6A4A0F; }
+  .fa-banner-link { color: #1F7A4D; font-weight: 700; text-decoration: none; font-size: 0.85rem; }
+  .fa-banner-link:hover { text-decoration: underline; }
+
+  .fa-secondary-btn {
+    background: transparent;
+    border: 1px solid var(--color-border, #E0E0E0);
+    color: var(--color-text, #1E1E1D);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .fa-secondary-btn:hover:not(:disabled) { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+  .fa-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .fa-disclosure {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted, #6A6A69);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fa-disclosure-arrow { font-size: 0.85rem; }
+  .fa-meta-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    font-size: 0.88rem;
+  }
+  @media (max-width: 600px) { .fa-meta-body { grid-template-columns: 1fr; } }
+</style>

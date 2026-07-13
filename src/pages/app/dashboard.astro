@@ -1,0 +1,739 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+---
+<AppLayout title="Dashboard - AmerisPro">
+  <Header />
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div id="dash-setup-warning" class="dash-warning" hidden={!setupWarning}>
+        <strong>Setup required.</strong>
+        <span>
+          Supabase environment variables are not configured. Copy
+          <code>.env.example</code> to <code>.env</code>, fill in your
+          Supabase credentials, then restart the dev server.
+        </span>
+      </div>
+
+      <section id="dash-hero" class="dash-hero" hidden>
+        <h1>Welcome, <span id="dash-tenant-name">…</span></h1>
+        <p class="dash-company" id="dash-company-name">…</p>
+        <div class="dash-meta">
+          <span id="dash-plan-badge" class="plan-badge plan-free">Free</span>
+          <span class="dash-expiry" id="dash-expiry">No expiry set</span>
+        </div>
+      </section>
+
+      <section id="dash-error" class="dash-error" hidden>
+        Failed to load workspace data. Please refresh the page.
+      </section>
+
+      <section id="dash-metrics" hidden>
+        <h2 class="dash-section-title">Overview</h2>
+        <div class="metric-grid">
+          <a href="/app/first-aid" class="metric-tile" id="metric-first-aid">
+            <div class="metric-tile-icon" aria-hidden="true">⛑️</div>
+            <div class="metric-tile-value" data-role="value">—</div>
+            <div class="metric-tile-sub" data-role="sub">…</div>
+            <div class="metric-tile-label">First Aid</div>
+          </a>
+          <a href="/app/ppe" class="metric-tile" id="metric-ppe">
+            <div class="metric-tile-icon" aria-hidden="true">🦺</div>
+            <div class="metric-tile-value" data-role="value">—</div>
+            <div class="metric-tile-sub" data-role="sub">…</div>
+            <div class="metric-tile-label">PPE</div>
+          </a>
+          <a href="/app/contractors" class="metric-tile" id="metric-contractors">
+            <div class="metric-tile-icon" aria-hidden="true">👷</div>
+            <div class="metric-tile-value" data-role="value">—</div>
+            <div class="metric-tile-sub" data-role="sub">…</div>
+            <div class="metric-tile-label">Contractors</div>
+          </a>
+          <a href="/app/incidents" class="metric-tile" id="metric-incidents">
+            <div class="metric-tile-icon" aria-hidden="true">🚨</div>
+            <div class="metric-tile-value" data-role="value">—</div>
+            <div class="metric-tile-sub" data-role="sub">…</div>
+            <div class="metric-tile-label">Incidents</div>
+          </a>
+          <a href="/app/staff" class="metric-tile" id="metric-staff">
+            <div class="metric-tile-icon" aria-hidden="true">🧑‍💼</div>
+            <div class="metric-tile-value" data-role="value">—</div>
+            <div class="metric-tile-sub" data-role="sub">…</div>
+            <div class="metric-tile-label">Staff</div>
+          </a>
+          <a href="/app/inspections" class="metric-tile" id="metric-inspections">
+            <div class="metric-tile-icon" aria-hidden="true">📋</div>
+            <div class="metric-tile-value" data-role="value">—</div>
+            <div class="metric-tile-sub" data-role="sub">…</div>
+            <div class="metric-tile-label">Inspections</div>
+          </a>
+        </div>
+      </section>
+
+      <section id="dash-activity" class="activity-feed" hidden>
+        <h2>Recent Activity</h2>
+        <div id="dash-activity-list"></div>
+        <div id="dash-activity-empty" class="activity-empty" hidden>
+          No recent activity yet. Start by logging a First Aid record, reporting an incident, or scheduling an inspection.
+        </div>
+      </section>
+
+      <section id="dash-modules" hidden>
+        <h2 class="dash-section-title">Modules</h2>
+        <div class="module-grid">
+          <a href="/app/first-aid" class="module-tile">
+            <div class="module-tile-icon" aria-hidden="true">⛑️</div>
+            <h3>First Aid</h3>
+            <p>Log first aid incidents and track inventory consumption.</p>
+          </a>
+          <a href="/app/ppe" class="module-tile">
+            <div class="module-tile-icon" aria-hidden="true">🦺</div>
+            <h3>PPE</h3>
+            <p>Request, approve, and fulfil personal protective equipment.</p>
+          </a>
+          <a href="/app/contractors" class="module-tile">
+            <div class="module-tile-icon" aria-hidden="true">👷</div>
+            <h3>Contractors</h3>
+            <p>Manage contractor companies and worker inductions.</p>
+          </a>
+          <a href="/app/incidents" class="module-tile">
+            <div class="module-tile-icon" aria-hidden="true">🚨</div>
+            <h3>Incidents</h3>
+            <p>Report and investigate safety incidents with root-cause tracking.</p>
+          </a>
+          <a href="/app/staff" class="module-tile">
+            <div class="module-tile-icon" aria-hidden="true">🧑‍💼</div>
+            <h3>Staff</h3>
+            <p>Maintain the HR roster, departments, and contact details.</p>
+          </a>
+          <a href="/app/inspections" class="module-tile">
+            <div class="module-tile-icon" aria-hidden="true">📋</div>
+            <h3>Inspections</h3>
+            <p>Build templates, schedule inspections, and capture findings.</p>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</AppLayout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+  import type { Tenant } from '../../lib/types';
+
+  // -------------------------------------------------------------------
+  // Refs
+  // -------------------------------------------------------------------
+  const heroEl = document.getElementById('dash-hero') as HTMLElement;
+  const metricsEl = document.getElementById('dash-metrics') as HTMLElement;
+  const activityEl = document.getElementById('dash-activity') as HTMLElement;
+  const activityListEl = document.getElementById('dash-activity-list') as HTMLElement;
+  const activityEmptyEl = document.getElementById('dash-activity-empty') as HTMLElement;
+  const modulesEl = document.getElementById('dash-modules') as HTMLElement;
+  const errorEl = document.getElementById('dash-error') as HTMLElement;
+  const tenantNameEl = document.getElementById('dash-tenant-name') as HTMLElement;
+  const companyNameEl = document.getElementById('dash-company-name') as HTMLElement;
+  const planBadgeEl = document.getElementById('dash-plan-badge') as HTMLElement;
+  const expiryEl = document.getElementById('dash-expiry') as HTMLElement;
+
+  // -------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------
+  function showError(): void {
+    errorEl.hidden = false;
+  }
+
+  function escapeHtml(s: string | null | undefined): string {
+    return (s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function formatDate(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  /**
+   * Relative time formatter. Matches the spec:
+   *   < 1 min  -> "just now"
+   *   < 60 min -> "{N} min ago"
+   *   < 24 hr  -> "{N} hours ago"
+   *   < 7 days -> "{N} days ago"
+   *   else     -> "DD MMM YYYY"
+   */
+  function relativeTime(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (diffSec < 60) return 'just now';
+    if (diffSec < 3600) {
+      const m = Math.floor(diffSec / 60);
+      return `${m} min ago`;
+    }
+    if (diffSec < 86400) {
+      const h = Math.floor(diffSec / 3600);
+      return `${h} hour${h === 1 ? '' : 's'} ago`;
+    }
+    if (diffSec < 604800) {
+      const dys = Math.floor(diffSec / 86400);
+      return `${dys} day${dys === 1 ? '' : 's'} ago`;
+    }
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  // -------------------------------------------------------------------
+  // Metric tile rendering
+  // -------------------------------------------------------------------
+  type Metric = {
+    id: string;
+    value: number | null;
+    sub: string;
+  };
+
+  function renderMetric(m: Metric): void {
+    const tile = document.getElementById(`metric-${m.id}`);
+    if (!tile) return;
+    const valueEl = tile.querySelector('[data-role="value"]') as HTMLElement | null;
+    const subEl = tile.querySelector('[data-role="sub"]') as HTMLElement | null;
+    if (valueEl) valueEl.textContent = m.value == null ? '—' : String(m.value);
+    if (subEl) subEl.textContent = m.sub;
+  }
+
+  // -------------------------------------------------------------------
+  // Activity feed rendering
+  // -------------------------------------------------------------------
+  type ActivityKind = 'first_aid' | 'ppe' | 'contractor' | 'incident' | 'staff' | 'inspection';
+
+  type ActivityItem = {
+    id: string;
+    kind: ActivityKind;
+    icon: string;
+    title: string;
+    sub: string;
+    createdAt: string;
+    href: string;
+  };
+
+  function renderActivity(items: ActivityItem[]): void {
+    activityListEl.innerHTML = '';
+    if (items.length === 0) {
+      activityEmptyEl.hidden = false;
+      return;
+    }
+    activityEmptyEl.hidden = true;
+    for (const a of items) {
+      const row = document.createElement('a');
+      row.className = 'activity-item';
+      row.href = a.href;
+      row.innerHTML = `
+        <div class="activity-item-icon" aria-hidden="true">${escapeHtml(a.icon)}</div>
+        <div class="activity-item-body">
+          <div class="activity-item-title">${escapeHtml(a.title)}</div>
+          <div class="activity-item-sub">${escapeHtml(a.sub)}</div>
+        </div>
+        <div class="activity-item-time">${escapeHtml(relativeTime(a.createdAt))}</div>
+      `;
+      activityListEl.appendChild(row);
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // Boot
+  // -------------------------------------------------------------------
+  if (!isSupabaseConfigured()) {
+    showError();
+  } else {
+    const supabase = getSupabase();
+
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+
+      const { data: tenant, error: tenantErr } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('owner_user_id', userData.user.id)
+        .single<Tenant>();
+
+      if (tenantErr || !tenant) {
+        // Middleware normally handles this redirect, but in a static
+        // build middleware does not run, so do it client-side too.
+        window.location.replace('/app/onboarding');
+        return;
+      }
+
+      tenantNameEl.textContent = tenant.name;
+      companyNameEl.textContent = tenant.company_name ?? '';
+
+      if (tenant.subscription_plan === 'premium') {
+        planBadgeEl.textContent = 'Premium';
+        planBadgeEl.classList.remove('plan-free');
+        planBadgeEl.classList.add('plan-premium');
+      } else {
+        planBadgeEl.textContent = 'Free';
+      }
+
+      if (tenant.subscription_expires_at) {
+        expiryEl.textContent = 'Expires: ' + formatDate(tenant.subscription_expires_at);
+      } else {
+        expiryEl.textContent = 'No expiry set';
+      }
+
+      heroEl.hidden = false;
+
+      // ---- Fire all 16 queries in parallel -----------------------------
+      // RLS auto-scopes every .from(...) to the caller's tenant, so we
+      // don't need to pass tenant_id explicitly.
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const monthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const yearStart = `${year}-01-01T00:00:00.000Z`;
+      const nextYearStart = `${year + 1}-01-01T00:00:00.000Z`;
+      const qStartMonth = Math.floor(month / 3) * 3;
+      const quarterStart = new Date(year, qStartMonth, 1);
+      const quarterStartIso = quarterStart.toISOString().slice(0, 10);
+
+      type CountRes = { count: number | null; error: unknown };
+      type RowsRes<T> = { data: T[] | null; error: unknown };
+
+      const safe = async <T,>(p: PromiseLike<T>): Promise<T | null> => {
+        try { return await p; } catch { return null; }
+      };
+
+      const [
+        faMonthRes,
+        ppeApprovedRes,
+        ppePendingRes,
+        ctInductedRes,
+        ctPendingRes,
+        incYearRes,
+        incAwaitingRes,
+        staffActiveRes,
+        staffInactiveRes,
+        insQuarterRes,
+        insOverdueRes,
+        faRecentRes,
+        ppeRecentRes,
+        ctRecentRes,
+        incRecentRes,
+        staffRecentRes,
+        insRecentRes,
+      ] = await Promise.all([
+        // -- Metric counts (10) --------------------------------------------
+        safe(supabase.from('first_aid_logs').select('*', { count: 'exact', head: true })
+          .gte('incident_date', monthStart)),
+        safe(supabase.from('ppe_requests').select('*', { count: 'exact', head: true })
+          .eq('status', 'approved_dispatched')),
+        safe(supabase.from('ppe_requests').select('*', { count: 'exact', head: true })
+          .eq('status', 'pending_approval')),
+        safe(supabase.from('contractors').select('*', { count: 'exact', head: true })
+          .eq('status', 'inducted')),
+        safe(supabase.from('contractors').select('*', { count: 'exact', head: true })
+          .eq('status', 'pending_induction')),
+        safe(supabase.from('incidents').select('*', { count: 'exact', head: true })
+          .gte('incident_date', yearStart).lt('incident_date', nextYearStart)),
+        safe(supabase.from('incidents').select('*', { count: 'exact', head: true })
+          .gte('incident_date', yearStart).lt('incident_date', nextYearStart)
+          .eq('investigation_submitted', false)),
+        safe(supabase.from('staff').select('*', { count: 'exact', head: true })
+          .eq('is_active', true)),
+        safe(supabase.from('staff').select('*', { count: 'exact', head: true })
+          .eq('is_active', false)),
+        safe(supabase.from('inspections').select('*', { count: 'exact', head: true })
+          .not('completed_date', 'is', null)
+          .gte('completed_date', quarterStartIso)),
+        safe(supabase.from('inspections').select('*', { count: 'exact', head: true })
+          .eq('status', 'overdue')),
+        // -- Activity rows (6) — top 3 from each module --------------------
+        safe(supabase.from('first_aid_logs')
+          .select('id, created_at, injured_person_name, injury_type')
+          .order('created_at', { ascending: false })
+          .limit(3)),
+        safe(supabase.from('ppe_requests')
+          .select('id, created_at, request_code, ppe_type, staff_name')
+          .order('created_at', { ascending: false })
+          .limit(3)),
+        safe(supabase.from('contractors')
+          .select('id, created_at, company_name')
+          .order('created_at', { ascending: false })
+          .limit(3)),
+        safe(supabase.from('incidents')
+          .select('id, created_at, incident_code, victim_name, severity_type')
+          .order('created_at', { ascending: false })
+          .limit(3)),
+        safe(supabase.from('staff')
+          .select('id, created_at, full_name, employee_id')
+          .order('created_at', { ascending: false })
+          .limit(3)),
+        safe(supabase.from('inspections')
+          .select('id, created_at, audit_code, location')
+          .order('created_at', { ascending: false })
+          .limit(3)),
+      ]);
+
+      // -- Render metric tiles -------------------------------------------
+      const monthName = now.toLocaleDateString(undefined, { month: 'long' });
+      const renderCount = (r: unknown): number | null => {
+        const res = r as CountRes | null;
+        if (!res || res.error) return null;
+        return res.count ?? 0;
+      };
+      const renderRows = <T,>(r: unknown): T[] => {
+        const res = r as RowsRes<T> | null;
+        if (!res || res.error) return [];
+        return res.data ?? [];
+      };
+
+      renderMetric({
+        id: 'first-aid',
+        value: renderCount(faMonthRes),
+        sub: `this month (${monthName})`,
+      });
+      renderMetric({
+        id: 'ppe',
+        value: renderCount(ppeApprovedRes),
+        sub: `${renderCount(ppePendingRes) ?? '—'} pending approval`,
+      });
+      const ctInductedN = renderCount(ctInductedRes);
+      renderMetric({
+        id: 'contractors',
+        value: ctInductedN,
+        sub: `${renderCount(ctPendingRes) ?? '—'} pending induction`,
+      });
+      renderMetric({
+        id: 'incidents',
+        value: renderCount(incYearRes),
+        sub: `${renderCount(incAwaitingRes) ?? '—'} awaiting investigation`,
+      });
+      const staffActiveN = renderCount(staffActiveRes);
+      renderMetric({
+        id: 'staff',
+        value: staffActiveN,
+        sub: `${renderCount(staffInactiveRes) ?? '—'} inactive`,
+      });
+      renderMetric({
+        id: 'inspections',
+        value: renderCount(insQuarterRes),
+        sub: `${renderCount(insOverdueRes) ?? '—'} overdue`,
+      });
+
+      // -- Build activity feed -------------------------------------------
+      type Raw = { id: string; created_at: string };
+      const items: ActivityItem[] = [];
+
+      for (const r of renderRows<Raw & { injured_person_name: string; injury_type: string }>(faRecentRes)) {
+        items.push({
+          id: r.id,
+          kind: 'first_aid',
+          icon: '⛑️',
+          title: r.injured_person_name || 'First aid record',
+          sub: r.injury_type ? `Injury: ${r.injury_type}` : 'First aid log',
+          createdAt: r.created_at,
+          href: `/app/first-aid/${encodeURIComponent(r.id)}`,
+        });
+      }
+      for (const r of renderRows<Raw & { request_code: string; ppe_type: string; staff_name: string }>(ppeRecentRes)) {
+        items.push({
+          id: r.id,
+          kind: 'ppe',
+          icon: '🦺',
+          title: `${r.request_code} — ${r.ppe_type}`,
+          sub: r.staff_name ? `PPE for ${r.staff_name}` : 'PPE issue recorded',
+          createdAt: r.created_at,
+          href: `/app/ppe/${encodeURIComponent(r.id)}`,
+        });
+      }
+      for (const r of renderRows<Raw & { company_name: string }>(ctRecentRes)) {
+        items.push({
+          id: r.id,
+          kind: 'contractor',
+          icon: '👷',
+          title: r.company_name || 'New contractor',
+          sub: 'Contractor registered',
+          createdAt: r.created_at,
+          href: `/app/contractors/${encodeURIComponent(r.id)}`,
+        });
+      }
+      for (const r of renderRows<Raw & { incident_code: string; victim_name: string; severity_type: string }>(incRecentRes)) {
+        items.push({
+          id: r.id,
+          kind: 'incident',
+          icon: '🚨',
+          title: `${r.incident_code} — ${r.victim_name || 'Unknown victim'}`,
+          sub: `Severity: ${r.severity_type}`,
+          createdAt: r.created_at,
+          href: `/app/incidents/new?id=${encodeURIComponent(r.id)}`,
+        });
+      }
+      for (const r of renderRows<Raw & { full_name: string; employee_id: string }>(staffRecentRes)) {
+        items.push({
+          id: r.id,
+          kind: 'staff',
+          icon: '🧑‍💼',
+          title: r.full_name || 'New staff member',
+          sub: `Added staff: ${r.full_name || ''} (${r.employee_id || '—'})`.trim(),
+          createdAt: r.created_at,
+          href: `/app/staff?id=${encodeURIComponent(r.id)}`,
+        });
+      }
+      for (const r of renderRows<Raw & { audit_code: string | null; location: string }>(insRecentRes)) {
+        items.push({
+          id: r.id,
+          kind: 'inspection',
+          icon: '📋',
+          title: r.audit_code || 'Inspection',
+          sub: r.location ? `Audit at ${r.location}` : 'Audit recorded',
+          createdAt: r.created_at,
+          href: `/app/inspections/${encodeURIComponent(r.id)}`,
+        });
+      }
+
+      items.sort((a, b) => {
+        const ta = new Date(a.createdAt).getTime();
+        const tb = new Date(b.createdAt).getTime();
+        return tb - ta;
+      });
+
+      renderActivity(items.slice(0, 5));
+
+      metricsEl.hidden = false;
+      activityEl.hidden = false;
+      modulesEl.hidden = false;
+    })().catch(() => {
+      showError();
+    });
+  }
+</script>
+
+<style>
+  .dashboard-page {
+    padding: 32px 0 64px;
+  }
+  .dash-warning,
+  .dash-error {
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .dash-warning {
+    background: #FFF7E6;
+    border: 1px solid #E58E1A;
+    color: #6A4A0F;
+  }
+  .dash-warning code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 4px;
+    font-size: 0.85rem;
+  }
+  .dash-error {
+    background: #FDECEC;
+    border: 1px solid #C0392B;
+    color: #8B1A1A;
+  }
+  .dash-hero {
+    margin-bottom: 40px;
+  }
+  .dash-hero h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+  .dash-company {
+    color: var(--color-text-muted, #6A6A69);
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  .dash-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .plan-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .plan-free {
+    background: var(--color-bg-grey, #F4F4F4);
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .plan-premium {
+    background: #1F7A4D;
+    color: #ffffff;
+  }
+  .dash-expiry {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .dash-section-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    margin-bottom: 16px;
+  }
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .module-tile {
+    display: block;
+    background: var(--color-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 24px;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+  .module-tile:hover {
+    border-color: var(--color-primary, #E58E1A);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+  }
+  .module-tile-icon {
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+  }
+  .module-tile h3 {
+    font-size: 1.05rem;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+  .module-tile p {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #6A6A69);
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+
+  /* Metric tiles */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 0 0 24px 0;
+  }
+  .metric-tile {
+    display: block;
+    background: var(--color-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E0E0E0);
+    border-radius: 8px;
+    padding: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+  .metric-tile:hover {
+    border-color: var(--color-primary, #E58E1A);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+  }
+  .metric-tile-icon {
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+  }
+  .metric-tile-value {
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--color-text, #1E1E1D);
+  }
+  .metric-tile-sub {
+    font-size: 0.78rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 4px;
+  }
+  .metric-tile-label {
+    font-size: 0.78rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Recent activity feed */
+  .activity-feed {
+    background: var(--color-bg, #FFFFFF);
+    border: 1px solid var(--color-border, #E0E0E0);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 0 0 32px 0;
+  }
+  .activity-feed h2 {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+  .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.1s;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-item:hover { background: var(--color-bg-grey, #F8FAFC); }
+  .activity-item-icon {
+    font-size: 1.2rem;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .activity-item-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .activity-item-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .activity-item-sub {
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #6A6A69);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .activity-item-time {
+    font-size: 0.78rem;
+    color: var(--color-text-muted, #6A6A69);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .activity-empty {
+    text-align: center;
+    color: var(--color-text-muted, #6A6A69);
+    padding: 20px;
+    font-size: 0.9rem;
+  }
+</style>

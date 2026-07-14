@@ -398,7 +398,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       formTitle.textContent = 'Edit item';
       formId.value = row.id;
       formCode.value = row.item_code;
-      formCode.disabled = true;
+      formCode.disabled = false;
       formName.value = row.item_name;
       formUnit.value = row.unit;
       formStock.value = String(row.current_stock);
@@ -600,6 +600,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             const { error } = await supabase!
               .from('first_aid_inventory')
               .update({
+                item_code: itemCode,
                 item_name: itemName,
                 unit,
                 current_stock: currentStock,
@@ -640,7 +641,12 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           closeForm();
           await load();
         } catch (e) {
-          showFormError(e instanceof Error ? e.message : 'Save failed.');
+          const msg = e instanceof Error ? e.message : 'Save failed.';
+          if (/duplicate key|unique/i.test(msg)) {
+            showFormError(`Item code "${itemCode}" is already in use.`);
+          } else {
+            showFormError(msg);
+          }
         } finally {
           formSave.disabled = false;
           formSave.textContent = originalLabel;

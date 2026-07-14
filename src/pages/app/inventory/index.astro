@@ -333,12 +333,12 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           ${row.category_group ? `<span class="inv-group-badge">Group ${row.category_group}</span>` : ''}
           ${!row.is_active ? `<span class="inv-inactive">Inactive</span>` : ''}
           <div class="inv-menu-wrap">
-            <button type="button" class="inv-menu-trigger" aria-label="Actions">⋮</button>
+            <div class="inv-menu-trigger" role="button" aria-label="Actions">⋮</div>
             <div class="inv-menu-dropdown">
-              <button type="button" class="inv-dropdown-item" data-action="restock" data-id="${row.id}">➕ Restock</button>
-              <button type="button" class="inv-dropdown-item" data-action="adjust" data-id="${row.id}">🔧 Adjust</button>
-              <button type="button" class="inv-dropdown-item" data-action="edit" data-id="${row.id}">✏️ Edit</button>
-              <button type="button" class="inv-dropdown-item btn-danger" data-action="delete" data-id="${row.id}">❌ Delete</button>
+              <div class="inv-dropdown-item" role="button" data-action="restock" data-id="${row.id}">➕ Restock</div>
+              <div class="inv-dropdown-item" role="button" data-action="adjust" data-id="${row.id}">🔧 Adjust</div>
+              <div class="inv-dropdown-item" role="button" data-action="edit" data-id="${row.id}">✏️ Edit</div>
+              <div class="inv-dropdown-item btn-danger" role="button" data-action="delete" data-id="${row.id}">❌ Delete</div>
             </div>
           </div>
         </div>
@@ -759,7 +759,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 </script>
 
-<style>
+<style is:global>
   .inv-page {
     padding: 32px 0 64px;
   }

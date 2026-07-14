@@ -7,14 +7,16 @@
 <div class="app-top-bar">
   <div class="container app-top-bar-row">
     <div class="app-top-bar-left">
-      <span class="app-top-bar-workspace" id="app-top-bar-workspace" hidden>🏢 <span id="app-top-bar-workspace-name"></span></span>
-      <span class="app-top-bar-sep" id="app-top-bar-sep" hidden>·</span>
-      <span class="app-top-bar-label">Signed in as</span>
-      <span class="app-top-bar-email" id="app-top-bar-email">…</span>
+      <span class="app-top-bar-workspace" id="app-top-bar-workspace" hidden>
+        <span class="badge badge-workspace">🏢 <span id="app-top-bar-workspace-name"></span></span>
+      </span>
+      <span class="app-top-bar-user">
+        <span class="badge badge-user">🧑‍💼 <span id="app-top-bar-email">…</span></span>
+      </span>
     </div>
     <div class="app-top-bar-right">
-      <a href="/app/settings" class="app-top-bar-link">Settings</a>
-      <button type="button" id="app-top-bar-signout" class="app-top-bar-signout">
+      <a href="/app/settings" class="app-top-bar-btn btn-settings">Settings</a>
+      <button type="button" id="app-top-bar-signout" class="app-top-bar-btn btn-signout">
         Sign out
       </button>
     </div>
@@ -27,20 +29,17 @@
   const emailEl = document.getElementById('app-top-bar-email');
   const wsEl = document.getElementById('app-top-bar-workspace');
   const wsNameEl = document.getElementById('app-top-bar-workspace-name');
-  const sepEl = document.getElementById('app-top-bar-sep');
   const signOutBtn = document.getElementById('app-top-bar-signout') as HTMLButtonElement | null;
 
   function showWorkspace(name: string | null | undefined): void {
-    if (!wsEl || !wsNameEl || !sepEl) return;
+    if (!wsEl || !wsNameEl) return;
     const trimmed = (name ?? '').trim();
     if (!trimmed) {
       wsEl.hidden = true;
-      sepEl.hidden = true;
       return;
     }
     wsNameEl.textContent = trimmed;
     wsEl.hidden = false;
-    sepEl.hidden = false;
   }
 
   if (emailEl) {
@@ -79,88 +78,125 @@
 
 <style>
   .app-top-bar {
-    background: #F4F4F4;
-    border-bottom: 1px solid var(--color-border, #E0E0E0);
-    padding: 6px 0;
-    font-size: 0.75rem;
-    font-weight: 600;
+    background: #FFF9EC;
+    border-bottom: 3px solid #2B2D42;
+    padding: 8px 0;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.8rem;
   }
   .app-top-bar-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
+    padding: 0 16px;
   }
   .app-top-bar-left {
     display: flex;
     align-items: center;
-    gap: 6px;
-    color: var(--color-text-muted, #6A6A69);
+    gap: 10px;
     min-width: 0;
   }
-  .app-top-bar-label {
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    font-weight: 700;
+    border: 2.5px solid #2B2D42;
+    border-radius: 8px;
+    box-shadow: 2px 2px 0px #2B2D42;
+    white-space: nowrap;
+  }
+  .badge-workspace {
+    background: #FFEED2;
+    color: #2B2D42;
+  }
+  .badge-user {
+    background: #FFFFFF;
+    color: #2B2D42;
   }
   .app-top-bar-workspace {
-    color: var(--color-text, #1E1E1D);
-    font-weight: 700;
+    display: inline-flex;
+  }
+  .app-top-bar-user {
+    display: inline-flex;
+    min-width: 0;
+  }
+  #app-top-bar-email {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 240px;
   }
-  .app-top-bar-sep {
-    color: var(--color-text-muted, #6A6A69);
-  }
-  .app-top-bar-email {
-    color: var(--color-text, #1E1E1D);
-    font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 320px;
-  }
+
   .app-top-bar-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
-  .app-top-bar-link {
-    background: transparent;
-    border: 1px solid var(--color-border, #E0E0E0);
-    color: var(--color-text, #1E1E1D);
-    padding: 4px 12px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-decoration: none;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .app-top-bar-link:hover {
-    color: var(--color-primary, #E58E1A);
-    border-color: var(--color-primary, #E58E1A);
-  }
-  .app-top-bar-signout {
-    background: transparent;
-    border: 1px solid var(--color-border, #E0E0E0);
-    color: var(--color-text, #1E1E1D);
-    padding: 4px 12px;
+
+  .app-top-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
     font-family: inherit;
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-decoration: none;
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
+    border: 2.5px solid #2B2D42;
+    border-radius: 8px;
+    box-shadow: 2px 2px 0px #2B2D42;
+    transition: transform 0.1s, box-shadow 0.1s;
+    background: #FFFFFF;
+    color: #2B2D42;
   }
-  .app-top-bar-signout:hover {
-    color: var(--color-primary, #E58E1A);
-    border-color: var(--color-primary, #E58E1A);
+  .app-top-bar-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #2B2D42;
   }
-  .app-top-bar-signout:disabled {
+  .app-top-bar-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #2B2D42;
+  }
+  
+  .btn-settings:hover {
+    background: #FFEED2;
+  }
+  .btn-signout {
+    background: #FF6B6B;
+    color: #FFFFFF;
+  }
+  .btn-signout:hover {
+    background: #FF8585;
+  }
+  .app-top-bar-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none !important;
+    box-shadow: 2px 2px 0px #2B2D42 !important;
+  }
+
+  @media (max-width: 768px) {
+    .app-top-bar {
+      padding: 6px 0;
+    }
+    .app-top-bar-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+    .app-top-bar-left {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .app-top-bar-right {
+      justify-content: center;
+    }
   }
 </style>

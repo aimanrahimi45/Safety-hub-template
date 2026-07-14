@@ -761,29 +761,174 @@ import AppLayout from '../../layouts/AppLayout.astro';
     }
   }
 
+  function formatDocName(name: string): string {
+    if (name.includes('OSHA_1994_Act_514')) return 'Akta 514 (OSHA 1994)';
+    if (name.includes('FMA_1967_Act_139')) return 'Akta 139 (FMA 1967)';
+    return name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+  }
+
+  interface DocGroup {
+    docName: string;
+    docDisplayName: string;
+    docType: string;
+    maxSimilarity: number;
+    sections: Record<string, {
+      baseSection: string;
+      maxSimilarity: number;
+      items: LegalSearchResult[];
+    }>;
+  }
+
   function renderSearchResults(items: LegalSearchResult[], q: string): void {
+    const docGroups: Record<string, DocGroup> = {};
+    for (const it of items) {
+      const docName = it.document_name || 'Legislation';
+      const docDisplayName = formatDocName(docName);
+      const docType = it.document_type || 'Act';
+
+      if (!docGroups[docName]) {
+        docGroups[docName] = {
+          docName,
+          docDisplayName,
+          docType,
+          maxSimilarity: it.similarity || 0,
+          sections: {}
+        };
+      }
+
+      if ((it.similarity || 0) > docGroups[docName].maxSimilarity) {
+        docGroups[docName].maxSimilarity = it.similarity || 0;
+      }
+
+      const sectionNum = it.section_number || '';
+      const baseMatch = sectionNum.match(/^([A-Za-z\s-]+\s+\d+[A-Za-z]*|[A-Za-z\s-]+\s+[A-Z0-9]+|\d+[A-Za-z]*)/i);
+      const baseSection = baseMatch ? baseMatch[0] : sectionNum || 'General';
+
+      if (!docGroups[docName].sections[baseSection]) {
+        docGroups[docName].sections[baseSection] = {
+          baseSection,
+          maxSimilarity: it.similarity || 0,
+          items: []
+        };
+      }
+
+      if ((it.similarity || 0) > docGroups[docName].sections[baseSection].maxSimilarity) {
+        docGroups[docName].sections[baseSection].maxSimilarity = it.similarity || 0;
+      }
+      docGroups[docName].sections[baseSection].items.push(it);
+    }
+
     let html = `<div id="cmp-ai-summary-box" class="cmp-ai-summary-box" hidden></div>`;
     html += `<div class="cmp-search-results">`;
-    for (const it of items) {
-      const simPct = Math.round((it.similarity || 0) * 100);
-      const docType = it.document_type || 'Act';
-      const docName = (it.document_name || 'Legislation').replace(/\.pdf$/i, '');
-      const sec = it.section_number ? ` (${escapeHtml(it.section_number)})` : '';
+
+    Object.values(docGroups).forEach((docGroup) => {
+      const docSimilarityPct = Math.round((docGroup.maxSimilarity || 0) * 100);
+      const sectionsArray = Object.values(docGroup.sections);
+
+      sectionsArray.sort((a, b) => b.maxSimilarity - a.maxSimilarity);
+
       html += `
-        <div class="cmp-search-item">
-          <div class="cmp-match-score">${simPct}% match</div>
-          <h4>${escapeHtml(it.required_action)}</h4>
-          <p>${escapeHtml(it.clause_text)}</p>
-          <div class="cmp-obligation-tags">
-            <span class="cmp-tag cmp-tag-act">${escapeHtml(docType)}: ${escapeHtml(docName)}${sec}</span>
-            <span class="cmp-tag cmp-tag-freq">${escapeHtml(it.frequency)}</span>
-            <span class="cmp-tag cmp-tag-${escapeHtml((it.legal_weight || 'mandatory').toLowerCase())}">${escapeHtml((it.legal_weight || 'mandatory').toUpperCase())}</span>
+        <div class="cmp-search-accordion" style="margin-bottom: 16px; border: 3px solid var(--border); border-radius: 14px; background: white; box-shadow: 3px 3px 0 var(--shadow); overflow: hidden; display: block; position: relative;">
+          <div class="cmp-accordion-header" style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background 0.2s;" onclick="window.toggleComplianceAccordion(this)">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <h4 style="margin: 0; color: var(--primary); font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                📂 ${escapeHtml(docGroup.docDisplayName)}
+              </h4>
+              <div style="color: var(--text-muted); font-size: 0.8rem; display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                <span class="cmp-tag cmp-tag-act" style="padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(78, 168, 222, 0.12); color: var(--info); font-weight: 600; border: 2px solid var(--border); margin: 0;">
+                  ${escapeHtml(docGroup.docType)}
+                </span>
+                <span>•</span>
+                <span>${sectionsArray.length} matching sections</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary); background: rgba(15, 118, 110, 0.08); padding: 4px 10px; border-radius: 20px;">
+                ${docSimilarityPct}% Match
+              </span>
+              <span class="cmp-accordion-icon" style="font-size: 1rem; color: var(--text-muted); transition: transform 0.3s; display: inline-block;">▼</span>
+            </div>
           </div>
-        </div>`;
-    }
+          
+          <div class="cmp-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; background: rgba(0, 0, 0, 0.015); border-top: 0 solid var(--border); padding: 0 20px;">
+            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px 0;">
+      `;
+
+      sectionsArray.forEach((section) => {
+        const sectionItems = section.items;
+        sectionItems.sort((a, b) => (a.section_number || '').localeCompare(b.section_number || '', undefined, { numeric: true, sensitivity: 'base' }));
+
+        let commonTitle = '';
+        const firstItemText = sectionItems[0].clause_text || '';
+        if (firstItemText.includes(' — ')) {
+          commonTitle = firstItemText.split(' — ')[0];
+          commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
+        }
+
+        html += `
+          <div class="cmp-nested-accordion" style="border: 2px solid var(--border); border-radius: 8px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.6); overflow: hidden; display: block;">
+            <div class="cmp-nested-header" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: 600; color: var(--primary); transition: background 0.2s;" onclick="window.toggleComplianceNestedAccordion(this)">
+              <span style="font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                📖 ${escapeHtml(section.baseSection)}${commonTitle ? `: ${escapeHtml(commonTitle)}` : ''}
+              </span>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; background: rgba(0,0,0,0.04); padding: 2px 8px; border-radius: 12px;">
+                  ${sectionItems.length} clauses
+                </span>
+                <span class="cmp-nested-icon" style="font-size: 0.8rem; color: var(--text-muted); transition: transform 0.3s; display: inline-block;">▼</span>
+              </div>
+            </div>
+            <div class="cmp-nested-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: rgba(0, 0, 0, 0.015);">
+              <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px;">
+        `;
+
+        sectionItems.forEach((item) => {
+          let displayText = item.clause_text || '';
+          if (displayText.includes(' — ')) {
+            displayText = displayText.split(' — ').slice(1).join(' — ');
+          }
+
+          html += `
+            <div style="padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 6px; border: 1px solid rgba(0,0,0,0.05); position: relative;">
+              <div class="cmp-match-score" style="position: absolute; top: 10px; right: 10px; font-size: 0.75rem; background: rgba(15, 118, 110, 0.08); padding: 2px 8px; border-radius: 12px; font-weight: 600; color: var(--primary);">
+                ${Math.round((item.similarity || 0) * 100)}% match
+              </div>
+              <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; margin-bottom: 6px;">
+                Sub-clause ${escapeHtml(item.section_number || '')}
+              </div>
+              <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45; padding-right: 80px;">
+                ${escapeHtml(displayText)}
+              </div>
+              <div style="font-size: 0.85rem; color: var(--primary); margin-top: 8px; font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
+                <span>⚡</span>
+                <span><strong>Action:</strong> ${escapeHtml(item.required_action)}</span>
+              </div>
+              <div class="cmp-obligation-tags" style="margin-top: 8px; display: flex; gap: 6px;">
+                <span class="cmp-tag cmp-tag-freq" style="margin: 0; padding: 2px 8px; font-size: 0.75rem;">${escapeHtml(item.frequency)}</span>
+                <span class="cmp-tag cmp-tag-${escapeHtml((item.legal_weight || 'mandatory').toLowerCase())}" style="margin: 0; padding: 2px 8px; font-size: 0.75rem;">${escapeHtml((item.legal_weight || 'mandatory').toUpperCase())}</span>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
     html += `</div>`;
     html += `<div class="cmp-search-actions"><button type="button" class="cmp-primary-btn cmp-primary-btn-accent" id="cmp-ai-summary-btn">🤖 Get AI Summary</button></div>`;
     searchResults.innerHTML = html;
+
     const btn = document.getElementById('cmp-ai-summary-btn');
     if (btn) btn.addEventListener('click', () => { void runAiSummary(q); });
   }
@@ -900,6 +1045,58 @@ import AppLayout from '../../layouts/AppLayout.astro';
       showError('Failed to initialise compliance page.');
     });
   }
+
+  (window as any).toggleComplianceAccordion = function(header: HTMLElement) {
+    const item = header.parentElement;
+    if (!item) return;
+    const content = item.querySelector('.cmp-accordion-content') as HTMLElement;
+    const icon = item.querySelector('.cmp-accordion-icon') as HTMLElement;
+    if (!content || !icon) return;
+    const isOpen = item.classList.contains('active');
+
+    if (isOpen) {
+      item.classList.remove('active');
+      content.style.maxHeight = content.scrollHeight + 'px';
+      content.offsetHeight; // force reflow
+      content.style.maxHeight = '0';
+      content.style.borderTop = '0px solid transparent';
+      icon.style.transform = 'rotate(0deg)';
+      header.style.background = 'transparent';
+    } else {
+      item.classList.add('active');
+      content.style.maxHeight = content.scrollHeight + 'px';
+      content.style.borderTop = '3px solid var(--border)';
+      icon.style.transform = 'rotate(180deg)';
+      header.style.background = 'rgba(15, 118, 110, 0.02)';
+
+      setTimeout(() => {
+        if (item.classList.contains('active')) {
+          content.style.maxHeight = 'none';
+        }
+      }, 300);
+    }
+  };
+
+  (window as any).toggleComplianceNestedAccordion = function(header: HTMLElement) {
+    const item = header.parentElement;
+    if (!item) return;
+    const content = header.nextElementSibling as HTMLElement;
+    const icon = header.querySelector('.cmp-nested-icon') as HTMLElement;
+    if (!content || !icon) return;
+    const isOpen = item.classList.contains('active');
+
+    if (isOpen) {
+      item.classList.remove('active');
+      content.style.maxHeight = '0';
+      icon.style.transform = 'rotate(0deg)';
+      header.style.background = 'transparent';
+    } else {
+      item.classList.add('active');
+      content.style.maxHeight = content.scrollHeight + 'px';
+      icon.style.transform = 'rotate(180deg)';
+      header.style.background = 'rgba(15, 118, 110, 0.02)';
+    }
+  };
 </script>
 
 <style>

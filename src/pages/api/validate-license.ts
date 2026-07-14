@@ -48,97 +48,50 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  // 4. Try validating against the local database licenses table first.
+  // 4. Validate the key against the local database licenses table.
   const serviceRoleKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
   const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string | undefined;
 
-  let validatedLocal = false;
-  let localPlan: LicensePlanType = 'free';
-  let localExpiry: string | null = null;
-
-  if (serviceRoleKey && supabaseUrl) {
-     const { createClient } = await import('@supabase/supabase-js');
-     const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
-       auth: { persistSession: false }
-     });
-     const { data: licData, error: licErr } = await serviceClient
-       .from('licenses')
-       .select('*')
-       .eq('license_key', licenseKey)
-       .eq('is_active', true)
-       .maybeSingle();
-
-     if (!licErr && licData) {
-       const isExpired = licData.expires_at ? new Date(licData.expires_at) < new Date() : false;
-       if (!isExpired) {
-         validatedLocal = true;
-         localPlan = licData.plan_type === 'premium' ? 'premium' : 'free';
-         localExpiry = licData.expires_at ?? null;
-       }
-     }
+  if (!serviceRoleKey || !supabaseUrl) {
+    return new Response(
+      JSON.stringify({ valid: false, reason: 'Database configuration is incomplete.' } satisfies LicenseValidationResult),
+      { status: 500, headers: { 'content-type': 'application/json' } },
+    );
   }
 
-  let planType: LicensePlanType = 'free';
-  let expiry: string | null = null;
+  const { createClient } = await import('@supabase/supabase-js');
+  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false }
+  });
+  const { data: licData, error: licErr } = await serviceClient
+    .from('licenses')
+    .select('*')
+    .eq('license_key', licenseKey)
+    .eq('is_active', true)
+    .maybeSingle();
 
-  if (validatedLocal) {
-    planType = localPlan;
-    expiry = localExpiry;
-  } else {
-    // Fallback to the GAS Web App
-    const gasUrl = import.meta.env.LICENSE_VALIDATION_WEBAPP_URL as string | undefined;
-    if (!gasUrl || gasUrl.includes('YOUR-DEPLOYMENT-ID')) {
-      return new Response(
-        JSON.stringify({
-          valid: false,
-          reason: 'License validation is not configured or license key not found.',
-        } satisfies LicenseValidationResult),
-        { status: 400, headers: { 'content-type': 'application/json' } },
-      );
-    }
-
-    const upstream =
-      gasUrl +
-      '?action=validateLicense' +
-      '&key=' +
-      encodeURIComponent(licenseKey) +
-      '&spreadsheetId=' +
-      encodeURIComponent('solo');
-
-    let gas: GasSuccess;
-    try {
-      const resp = await fetch(upstream, { method: 'GET' });
-      if (!resp.ok) throw new Error(`GAS responded ${resp.status}`);
-      gas = (await resp.json()) as GasSuccess;
-    } catch {
-      return new Response(
-        JSON.stringify({
-          valid: false,
-          reason: 'License validation service unavailable. Please try again later.',
-        } satisfies LicenseValidationResult),
-        { status: 502, headers: { 'content-type': 'application/json' } },
-      );
-    }
-
-    if (!gas.valid) {
-      return new Response(
-        JSON.stringify({
-          valid: false,
-          reason: gas.message ?? 'License key is not valid.',
-        } satisfies LicenseValidationResult),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
-    }
-
-    planType = gas.planType === 'premium' ? 'premium' : 'free';
-    expiry = gas.expiry ?? null;
+  if (licErr || !licData) {
+    return new Response(
+      JSON.stringify({ valid: false, reason: 'License key is not valid.' } satisfies LicenseValidationResult),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
   }
+
+  const isExpired = licData.expires_at ? new Date(licData.expires_at) < new Date() : false;
+  if (isExpired) {
+    return new Response(
+      JSON.stringify({ valid: false, reason: 'License key has expired.' } satisfies LicenseValidationResult),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+  }
+
+  const planType: LicensePlanType = licData.plan_type === 'premium' ? 'premium' : 'free';
 
   return new Response(
     JSON.stringify({
       valid: true,
       planType,
-      expiry: gas.expiry ?? null,
+      expiry: licData.expires_at ?? null,
     } satisfies LicenseValidationResult),
     { status: 200, headers: { 'content-type': 'application/json' } },
   );

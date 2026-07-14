@@ -61,72 +61,36 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return jsonError('No workspace found for this account.', 403);
   }
 
-  // 4. Try validating against the local database licenses table first.
+  // 4. Validate the key against the local database licenses table.
   const serviceRoleKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
   const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string | undefined;
 
-  let validatedLocal = false;
-  let localPlan: LicensePlanType = 'free';
-  let localExpiry: string | null = null;
-
-  if (serviceRoleKey && supabaseUrl) {
-    const { createClient } = await import('@supabase/supabase-js');
-    const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false }
-    });
-    const { data: licData, error: licErr } = await serviceClient
-      .from('licenses')
-      .select('*')
-      .eq('license_key', licenseKey)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (!licErr && licData) {
-      const isExpired = licData.expires_at ? new Date(licData.expires_at) < new Date() : false;
-      if (!isExpired) {
-        validatedLocal = true;
-        localPlan = licData.plan_type === 'premium' ? 'premium' : 'free';
-        localExpiry = licData.expires_at ?? null;
-      }
-    }
+  if (!serviceRoleKey || !supabaseUrl) {
+    return jsonError('Database configuration is incomplete.', 500);
   }
 
-  let plan: LicensePlanType = 'free';
-  let expiresAt: string | null = null;
+  const { createClient } = await import('@supabase/supabase-js');
+  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false }
+  });
+  const { data: licData, error: licErr } = await serviceClient
+    .from('licenses')
+    .select('*')
+    .eq('license_key', licenseKey)
+    .eq('is_active', true)
+    .maybeSingle();
 
-  if (validatedLocal) {
-    plan = localPlan;
-    expiresAt = localExpiry;
-  } else {
-    // Fallback to the GAS Web App
-    const gasUrl = import.meta.env.LICENSE_VALIDATION_WEBAPP_URL as string | undefined;
-    if (!gasUrl || gasUrl.includes('YOUR-DEPLOYMENT-ID')) {
-      return jsonError('License validation is not configured or license key not found.', 400);
-    }
-    const upstream =
-      gasUrl +
-      '?action=validateLicense' +
-      '&key=' +
-      encodeURIComponent(licenseKey) +
-      '&spreadsheetId=' +
-      encodeURIComponent('solo');
-
-    let gas: GasSuccess;
-    try {
-      const resp = await fetch(upstream, { method: 'GET' });
-      if (!resp.ok) throw new Error(`GAS responded ${resp.status}`);
-      gas = (await resp.json()) as GasSuccess;
-    } catch {
-      return jsonError('License validation service unavailable. Please try again later.', 502);
-    }
-
-    if (!gas.valid) {
-      return jsonError(gas.message ?? 'License key is not valid.', 400);
-    }
-
-    plan = gas.planType === 'premium' ? 'premium' : 'free';
-    expiresAt = gas.expiry ?? null;
+  if (licErr || !licData) {
+    return jsonError('License key is not valid.', 400);
   }
+
+  const isExpired = licData.expires_at ? new Date(licData.expires_at) < new Date() : false;
+  if (isExpired) {
+    return jsonError('License key has expired.', 400);
+  }
+
+  const plan: LicensePlanType = licData.plan_type === 'premium' ? 'premium' : 'free';
+  const expiresAt: string | null = licData.expires_at ?? null;
 
   // 5. Persist onto the tenant row. RLS scopes the update to the
   //    caller's own workspace.

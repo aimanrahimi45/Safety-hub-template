@@ -295,20 +295,31 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
   function pos(ev: MouseEvent | TouchEvent): { x: number; y: number } {
     const rect = sigPad.getBoundingClientRect();
-    const scaleX = sigPad.width / rect.width;
-    const scaleY = sigPad.height / rect.height;
     if (ev instanceof TouchEvent) {
       const t = ev.touches[0] ?? ev.changedTouches[0];
-      return { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY };
+      return { x: t.clientX - rect.left, y: t.clientY - rect.top };
     }
-    return { x: (ev.clientX - rect.left) * scaleX, y: (ev.clientY - rect.top) * scaleY };
+    return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+  }
+  function resizeSignatureCanvas(): void {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const rect = sigPad.getBoundingClientRect();
+    const w = rect.width || sigPad.offsetWidth || 600;
+    const h = rect.height || sigPad.offsetHeight || 180;
+    sigPad.width = w * ratio;
+    sigPad.height = h * ratio;
+    const ctx = getCtx();
+    if (ctx) {
+      ctx.scale(ratio, ratio);
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#2B2D42';
+    }
   }
   function bindPad(): void {
     const ctx = getCtx();
     if (!ctx) return;
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#2B2D42';
+    resizeSignatureCanvas();
 
     sigPad.addEventListener('mousedown', (e) => { drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     sigPad.addEventListener('mousemove', (e) => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); sigDrawn = true; });

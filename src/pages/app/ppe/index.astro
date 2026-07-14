@@ -187,6 +187,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     return { page, ppeType, dept, staff, from, to };
   }
 
+  let dateModified = false;
+  fromEl.addEventListener('change', () => { dateModified = true; });
+  toEl.addEventListener('change', () => { dateModified = true; });
+
   function writeFiltersToUrl(page: number): void {
     const params = new URLSearchParams(window.location.search);
     if (page > 1) params.set('page', String(page)); else params.delete('page');
@@ -196,10 +200,23 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     if (dept) params.set('dept', dept); else params.delete('dept');
     const staff = staffFilterEl.value.trim();
     if (staff) params.set('staff', staff); else params.delete('staff');
-    const from = fromEl.value;
-    const to = toEl.value;
-    if (from) params.set('from', from); else params.delete('from');
-    if (to) params.set('to', to); else params.delete('to');
+    
+    const fromVal = fromEl.value;
+    const toVal = toEl.value;
+    const hasFromParam = params.has('from');
+    const hasToParam = params.has('to');
+    
+    if (fromVal && (dateModified || hasFromParam)) {
+      params.set('from', fromVal);
+    } else {
+      params.delete('from');
+    }
+    if (toVal && (dateModified || hasToParam)) {
+      params.set('to', toVal);
+    } else {
+      params.delete('to');
+    }
+    
     const qs = params.toString();
     const url = window.location.pathname + (qs ? '?' + qs : '');
     window.history.replaceState({}, '', url);
@@ -330,6 +347,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       staffFilterEl.value = '';
       fromEl.value = '';
       toEl.value = '';
+      dateModified = false;
       currentPage = 1;
       writeFiltersToUrl(1);
       void refresh();

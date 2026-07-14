@@ -323,32 +323,37 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       card.className = 'inv-card';
       const lowStock = row.current_stock < row.min_alert_level;
       const badgeClass = lowStock ? 'badge-alert' : 'badge-ok';
-      const warningMsg = lowStock ? `Min alert limit: ${row.min_alert_level}` : `Stock level healthy`;
+      const statusText = lowStock 
+        ? `<span class="inv-warning-text">⚠️ Below Min (${row.min_alert_level})</span>` 
+        : '<span class="inv-healthy-text">🟢 Level Healthy</span>';
 
       card.innerHTML = `
-        <div class="inv-card-main">
-          <div class="inv-info">
-            <div class="inv-card-header">
-              <span class="inv-code">${escapeHtml(row.item_code)}</span>
-              ${!row.is_active ? `<span class="inv-inactive">Inactive</span>` : ''}
-              ${row.category_group ? `<span class="inv-group-badge">Group ${row.category_group}</span>` : ''}
+        <div class="inv-card-header">
+          <span class="inv-code">${escapeHtml(row.item_code)}</span>
+          ${row.category_group ? `<span class="inv-group-badge">Group ${row.category_group}</span>` : ''}
+          ${!row.is_active ? `<span class="inv-inactive">Inactive</span>` : ''}
+          <div class="inv-menu-wrap">
+            <button type="button" class="inv-menu-trigger" aria-label="Actions">⋮</button>
+            <div class="inv-menu-dropdown">
+              <button type="button" class="inv-dropdown-item" data-action="restock" data-id="${row.id}">➕ Restock</button>
+              <button type="button" class="inv-dropdown-item" data-action="adjust" data-id="${row.id}">🔧 Adjust</button>
+              <button type="button" class="inv-dropdown-item" data-action="edit" data-id="${row.id}">✏️ Edit</button>
+              <button type="button" class="inv-dropdown-item btn-danger" data-action="delete" data-id="${row.id}">❌ Delete</button>
             </div>
+          </div>
+        </div>
+
+        <div class="inv-card-body">
+          <div class="inv-info">
             <span class="inv-name" title="${escapeHtml(row.item_name)}">${escapeHtml(row.item_name)}</span>
-            <span class="inv-meta">${warningMsg}</span>
-            ${row.required_std ? `<span class="inv-std">Required Std: ${escapeHtml(row.required_std)}</span>` : ''}
-            <span class="inv-meta">Updated: ${formatDate(row.last_updated)}</span>
+            ${statusText}
+            ${row.required_std ? `<span class="inv-std">Std: ${escapeHtml(row.required_std)}</span>` : ''}
+            <span class="inv-updated">Updated: ${formatDate(row.last_updated)}</span>
           </div>
           <div class="inv-stock-badge ${badgeClass}">
             <span class="badge-stock-val">${row.current_stock}</span>
             <span class="badge-unit">${escapeHtml(row.unit)}</span>
           </div>
-        </div>
-
-        <div class="inv-card-actions">
-          <button type="button" class="inv-action-btn btn-restock" data-action="restock" data-id="${row.id}">Restock</button>
-          <button type="button" class="inv-action-btn btn-adjust" data-action="adjust" data-id="${row.id}">Adjust</button>
-          <button type="button" class="inv-action-btn btn-edit" data-action="edit" data-id="${row.id}">Edit</button>
-          <button type="button" class="inv-action-btn btn-delete btn-danger" data-action="delete" data-id="${row.id}">Delete</button>
         </div>
       `;
       tbody.appendChild(card);
@@ -476,6 +481,25 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     searchEl.addEventListener('input', () => {
       currentPage = 1;
       renderTable();
+    });
+
+    // Handle wobbly actions dropdown toggle & click-away to close
+    document.addEventListener('click', (ev) => {
+      const target = ev.target as HTMLElement;
+      const trigger = target.closest('.inv-menu-trigger');
+      const dropdowns = document.querySelectorAll('.inv-menu-dropdown');
+      
+      dropdowns.forEach((d) => {
+        if (!trigger || d !== trigger.nextElementSibling) {
+          d.classList.remove('show');
+        }
+      });
+      
+      if (trigger) {
+        ev.stopPropagation();
+        const menu = trigger.nextElementSibling as HTMLElement;
+        menu.classList.toggle('show');
+      }
     });
 
     addBtn.addEventListener('click', () => openForm(null));
@@ -893,7 +917,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     border-color: #FF6B6B;
     border-radius: 220px 20px 240px 20px / 20px 240px 20px 220px;
   }
-  .inv-card-main {
+  .inv-card-body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -911,6 +935,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     display: flex;
     align-items: center;
     gap: 6px;
+    width: 100%;
+    position: relative;
   }
   .inv-code {
     font-size: 0.72rem;
@@ -942,21 +968,31 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     border-radius: 6px;
   }
   .inv-name {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #2B2D42;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .inv-meta {
-    font-size: 0.72rem;
-    color: #6C757D;
+  .inv-warning-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #FF6B6B;
+  }
+  .inv-healthy-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #4ECA64;
   }
   .inv-std {
     font-size: 0.72rem;
     color: #2B2D42;
     font-weight: 600;
+  }
+  .inv-updated {
+    font-size: 0.68rem;
+    color: #6C757D;
   }
   .inv-stock-badge {
     display: flex;
@@ -988,41 +1024,74 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     font-weight: 700;
     opacity: 0.9;
   }
-  .inv-card-actions {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-top: 4px;
-    border-top: 1.5px dashed #2B2D42;
-    padding-top: 10px;
+
+  /* Three-dot Dropdown Actions */
+  .inv-menu-wrap {
+    position: relative;
+    margin-left: auto;
   }
-  .inv-action-btn {
-    display: inline-flex;
+  .inv-menu-trigger {
+    background: #FFFFFF;
+    border: 2px solid #2B2D42;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 2px;
-    font-family: inherit;
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    cursor: pointer;
-    border: 1.5px solid #2B2D42;
-    border-radius: 6px;
-    box-shadow: 1.5px 1.5px 0px #2B2D42;
-    background: #FFFFFF;
+    font-size: 1rem;
+    font-weight: 800;
     color: #2B2D42;
+    cursor: pointer;
+    box-shadow: 1.5px 1.5px 0px #2B2D42;
     transition: transform 0.1s, box-shadow 0.1s;
+    outline: none;
+    padding: 0;
+    line-height: 1;
   }
-  .inv-action-btn:hover {
+  .inv-menu-trigger:hover {
     transform: translate(-1px, -1px);
     box-shadow: 2px 2px 0px #2B2D42;
     background: #FFEED2;
   }
-  .inv-action-btn:active {
+  .inv-menu-trigger:active {
     transform: translate(0.5px, 0.5px);
     box-shadow: 0.5px 0.5px 0px #2B2D42;
   }
-  .inv-action-btn.btn-danger:hover {
+  .inv-menu-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #FFFFFF;
+    border: 2px solid #2B2D42;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0px #2B2D42;
+    z-index: 50;
+    min-width: 130px;
+    overflow: hidden;
+  }
+  .inv-menu-dropdown.show {
+    display: block;
+  }
+  .inv-dropdown-item {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #2B2D42;
+    display: block;
+    transition: background 0.1s;
+  }
+  .inv-dropdown-item:hover {
+    background: #FFEED2;
+  }
+  .inv-dropdown-item.btn-danger:hover {
     background: #FF6B6B !important;
     color: #FFFFFF !important;
   }

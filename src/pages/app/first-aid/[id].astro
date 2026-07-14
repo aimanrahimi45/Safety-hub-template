@@ -148,22 +148,6 @@ export function getStaticPaths() {
           </div>
           <div id="fa-sig-no" class="fa-empty-inline" hidden>No signature was captured for this record.</div>
         </section>
-
-        <!-- SHARED: Metadata Card -->
-        <section class="fa-card">
-          <h2>
-            <button type="button" id="fa-meta-toggle" class="fa-disclosure" aria-expanded="false" aria-controls="fa-meta-body">
-              <span class="fa-disclosure-arrow" aria-hidden="true">▸</span>
-              Metadata
-            </button>
-          </h2>
-          <div id="fa-meta-body" class="fa-meta-body" hidden>
-            <div><span class="fa-label">Created at</span><span id="fa-created">…</span></div>
-            <div><span class="fa-label">Updated at</span><span id="fa-updated">…</span></div>
-            <div><span class="fa-label">Reported by</span><span id="fa-reporter">…</span></div>
-            <div class="fa-grid-full"><span class="fa-label">Tenant ID</span><code class="fa-mono" id="fa-tenant">…</code></div>
-          </div>
-        </section>
       </section>
     </div>
   </main>
@@ -228,14 +212,6 @@ export function getStaticPaths() {
   const sigImage = document.getElementById('fa-sig-image') as HTMLImageElement;
   const sigUploaded = document.getElementById('fa-sig-uploaded') as HTMLElement;
 
-  const metaToggle = document.getElementById('fa-meta-toggle') as HTMLButtonElement;
-  const metaBody = document.getElementById('fa-meta-body') as HTMLElement;
-  const metaArrow = metaToggle.querySelector('.fa-disclosure-arrow') as HTMLElement;
-  const createdEl = document.getElementById('fa-created') as HTMLElement;
-  const updatedEl = document.getElementById('fa-updated') as HTMLElement;
-  const reporterEl = document.getElementById('fa-reporter') as HTMLElement;
-  const tenantEl = document.getElementById('fa-tenant') as HTMLElement;
-
   function showError(msg: string): void {
     errorEl.hidden = false;
     errorEl.textContent = msg;
@@ -268,19 +244,6 @@ export function getStaticPaths() {
   let currentLogId: string | null = null;
   let currentUserId: string | null = null;
   let supabase: ReturnType<typeof getSupabase> | null = null;
-
-  metaToggle.addEventListener('click', () => {
-    const expanded = metaToggle.getAttribute('aria-expanded') === 'true';
-    if (expanded) {
-      metaBody.hidden = true;
-      metaToggle.setAttribute('aria-expanded', 'false');
-      metaArrow.textContent = '▸';
-    } else {
-      metaBody.hidden = false;
-      metaToggle.setAttribute('aria-expanded', 'true');
-      metaArrow.textContent = '▾';
-    }
-  });
 
   function renderLog(log: FirstAidLog, items: Detail[]): void {
     currentLogId = log.id;
@@ -420,11 +383,6 @@ export function getStaticPaths() {
       sigYes.hidden = true;
       sigNo.hidden = false;
     }
-
-    createdEl.textContent = formatDateTime(log.created_at);
-    updatedEl.textContent = formatDateTime(log.updated_at);
-    reporterEl.textContent = log.reported_by;
-    tenantEl.textContent = log.tenant_id;
 
     loadingEl.hidden = true;
     contentEl.hidden = false;

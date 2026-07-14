@@ -76,24 +76,6 @@ export function getStaticPaths() {
           </div>
         </section>
 
-        <section class="inc-card">
-          <h2>
-            <button type="button" id="inc-meta-toggle" class="inc-disclosure" aria-expanded="false" aria-controls="inc-meta-body">
-              <span class="inc-disclosure-arrow" aria-hidden="true">▸</span>
-              Audit metadata
-            </button>
-          </h2>
-          <div id="inc-meta-body" class="inc-meta-body" hidden>
-            <div><span class="inc-label">Recorded by</span><span id="inc-recorded-by">…</span></div>
-            <div><span class="inc-label">Recorded at</span><span id="inc-recorded-at">…</span></div>
-            <div><span class="inc-label">Created at</span><span id="inc-created">…</span></div>
-            <div><span class="inc-label">Updated at</span><span id="inc-updated">…</span></div>
-            <div class="inc-grid-full"><span class="inc-label">Tenant ID</span><code class="inc-mono" id="inc-tenant">…</code></div>
-            <div><span class="inc-label">UUID</span><code class="inc-mono" id="inc-uuid">…</code></div>
-            <div><span class="inc-label">Incident code</span><code class="inc-mono" id="inc-code-mono">…</code></div>
-          </div>
-        </section>
-
         <section id="inc-actions-card" class="inc-card no-print">
           <h2>Actions</h2>
           <div id="inc-action-error" class="inc-error" hidden></div>
@@ -137,16 +119,6 @@ export function getStaticPaths() {
   const jkkpEl = document.getElementById('inc-jkkp') as HTMLElement;
   const investigationEl = document.getElementById('inc-investigation') as HTMLElement;
 
-  const metaToggle = document.getElementById('inc-meta-toggle') as HTMLButtonElement;
-  const metaBody = document.getElementById('inc-meta-body') as HTMLElement;
-  const metaArrow = metaToggle.querySelector('.inc-disclosure-arrow') as HTMLElement;
-  const recordedByEl = document.getElementById('inc-recorded-by') as HTMLElement;
-  const recordedAtEl = document.getElementById('inc-recorded-at') as HTMLElement;
-  const createdEl = document.getElementById('inc-created') as HTMLElement;
-  const updatedEl = document.getElementById('inc-updated') as HTMLElement;
-  const tenantEl = document.getElementById('inc-tenant') as HTMLElement;
-  const uuidEl = document.getElementById('inc-uuid') as HTMLElement;
-
   const actionError = document.getElementById('inc-action-error') as HTMLElement;
   const editBtn = document.getElementById('inc-edit-btn') as HTMLAnchorElement;
   const printBtn = document.getElementById('inc-print-btn') as HTMLButtonElement;
@@ -178,12 +150,6 @@ export function getStaticPaths() {
     const day = String(d.getDate()).padStart(2, '0');
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
-  function formatDateTime(iso: string | null | undefined): string {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }
   function formatTime(hhmm: string | null | undefined): string {
     if (!hhmm) return '—';
     return hhmm.length >= 5 ? hhmm.substring(0, 5) : hhmm;
@@ -195,22 +161,8 @@ export function getStaticPaths() {
     return m ? m[1] : '';
   }
 
-  metaToggle.addEventListener('click', () => {
-    const expanded = metaToggle.getAttribute('aria-expanded') === 'true';
-    if (expanded) {
-      metaBody.hidden = true;
-      metaToggle.setAttribute('aria-expanded', 'false');
-      metaArrow.textContent = '▸';
-    } else {
-      metaBody.hidden = false;
-      metaToggle.setAttribute('aria-expanded', 'true');
-      metaArrow.textContent = '▾';
-    }
-  });
-
-  function render(r: Incident, userEmail: string | null): void {
+  function render(r: Incident): void {
     codeEl.textContent = r.incident_code;
-    codeMonoEl.textContent = r.incident_code;
 
     const dateStr = formatDate(r.incident_date);
     const timeStr = formatTime(r.incident_time);
@@ -240,13 +192,6 @@ export function getStaticPaths() {
     descriptionEl.textContent = r.description;
     jkkpEl.textContent = r.reported_to_jkkp ? 'Yes' : 'No';
     investigationEl.textContent = r.investigation_submitted ? 'Yes' : 'No';
-
-    recordedByEl.textContent = userEmail ?? r.reported_by;
-    recordedAtEl.textContent = formatDateTime(r.recorded_at);
-    createdEl.textContent = formatDateTime(r.created_at);
-    updatedEl.textContent = formatDateTime(r.updated_at);
-    tenantEl.textContent = r.tenant_id;
-    uuidEl.textContent = r.id;
 
     editBtn.href = `/app/incidents/new?id=${encodeURIComponent(r.id)}`;
 
@@ -278,7 +223,7 @@ export function getStaticPaths() {
         return;
       }
       currentIncident = row;
-      render(row, cachedUserEmail);
+      render(row);
     } catch (e) {
       loadingEl.hidden = true;
       showError(e instanceof Error ? e.message : 'Failed to load incident.');

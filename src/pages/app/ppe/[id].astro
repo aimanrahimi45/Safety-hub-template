@@ -69,30 +69,11 @@ export function getStaticPaths() {
           </div>
         </section>
 
-        <section class="ppe-card">
-          <h2>
-            <button type="button" id="ppe-meta-toggle" class="ppe-disclosure" aria-expanded="false" aria-controls="ppe-meta-body">
-              <span class="ppe-disclosure-arrow" aria-hidden="true">▸</span>
-              Audit metadata
-            </button>
-          </h2>
-          <div id="ppe-meta-body" class="ppe-meta-body" hidden>
-            <div><span class="ppe-label">Recorded by</span><span id="ppe-recorded-by">…</span></div>
-            <div><span class="ppe-label">Request date</span><span id="ppe-request-date">…</span></div>
-            <div><span class="ppe-label">Created at</span><span id="ppe-created">…</span></div>
-            <div><span class="ppe-label">Updated at</span><span id="ppe-updated">…</span></div>
-            <div class="ppe-grid-full"><span class="ppe-label">Tenant ID</span><code class="ppe-mono" id="ppe-tenant">…</code></div>
-            <div><span class="ppe-label">UUID</span><code class="ppe-mono" id="ppe-uuid">…</code></div>
-            <div><span class="ppe-label">Request code</span><code class="ppe-mono" id="ppe-code-mono">…</code></div>
-          </div>
-        </section>
-
         <section id="ppe-actions-card" class="ppe-card no-print">
           <h2>Actions</h2>
           <div id="ppe-action-error" class="ppe-error" hidden></div>
           <div class="ppe-action-row">
             <button type="button" id="ppe-dispatch-btn" class="ppe-primary-btn" hidden>Mark as dispatched</button>
-            <button type="button" id="ppe-revert-btn" class="ppe-secondary-btn" hidden>Revert to pending</button>
             <button type="button" id="ppe-print-btn" class="ppe-secondary-btn">Print</button>
             <button type="button" id="ppe-delete-btn" class="ppe-secondary-btn ppe-danger">Delete</button>
           </div>
@@ -112,7 +93,6 @@ export function getStaticPaths() {
   const notFoundEl = document.getElementById('ppe-not-found') as HTMLElement;
   const contentEl = document.getElementById('ppe-content') as HTMLElement;
   const codeEl = document.getElementById('ppe-code') as HTMLElement;
-  const codeMonoEl = document.getElementById('ppe-code-mono') as HTMLElement;
   const subEl = document.getElementById('ppe-sub') as HTMLElement;
   const statusBadgeEl = document.getElementById('ppe-status') as HTMLElement;
   const statusTextEl = document.getElementById('ppe-status-text') as HTMLElement;
@@ -127,19 +107,9 @@ export function getStaticPaths() {
   const actionDateEl = document.getElementById('ppe-action-date') as HTMLElement;
   const conditionEl = document.getElementById('ppe-condition') as HTMLElement;
   const authorizedEl = document.getElementById('ppe-authorized') as HTMLElement;
-  const metaToggle = document.getElementById('ppe-meta-toggle') as HTMLButtonElement;
-  const metaBody = document.getElementById('ppe-meta-body') as HTMLElement;
-  const metaArrow = metaToggle.querySelector('.ppe-disclosure-arrow') as HTMLElement;
-  const recordedByEl = document.getElementById('ppe-recorded-by') as HTMLElement;
-  const requestDateEl = document.getElementById('ppe-request-date') as HTMLElement;
-  const createdEl = document.getElementById('ppe-created') as HTMLElement;
-  const updatedEl = document.getElementById('ppe-updated') as HTMLElement;
-  const tenantEl = document.getElementById('ppe-tenant') as HTMLElement;
-  const uuidEl = document.getElementById('ppe-uuid') as HTMLElement;
 
   const actionError = document.getElementById('ppe-action-error') as HTMLElement;
   const dispatchBtn = document.getElementById('ppe-dispatch-btn') as HTMLButtonElement;
-  const revertBtn = document.getElementById('ppe-revert-btn') as HTMLButtonElement;
   const printBtn = document.getElementById('ppe-print-btn') as HTMLButtonElement;
   const deleteBtn = document.getElementById('ppe-delete-btn') as HTMLButtonElement;
 
@@ -178,27 +148,12 @@ export function getStaticPaths() {
     return m ? m[1] : '';
   }
 
-  metaToggle.addEventListener('click', () => {
-    const expanded = metaToggle.getAttribute('aria-expanded') === 'true';
-    if (expanded) {
-      metaBody.hidden = true;
-      metaToggle.setAttribute('aria-expanded', 'false');
-      metaArrow.textContent = '▸';
-    } else {
-      metaBody.hidden = false;
-      metaToggle.setAttribute('aria-expanded', 'true');
-      metaArrow.textContent = '▾';
-    }
-  });
-
   function renderActions(r: PpeRequest): void {
     dispatchBtn.hidden = r.status !== 'pending_approval';
-    revertBtn.hidden   = r.status !== 'approved_dispatched';
   }
 
   function render(r: PpeRequest, userEmail: string | null): void {
     codeEl.textContent = r.request_code;
-    codeMonoEl.textContent = r.request_code;
     subEl.textContent = `Issued on ${formatDate(r.action_date)} • Recorded ${formatDateTime(r.request_date)}`;
     statusBadgeEl.textContent = statusLabel(r.status);
     statusBadgeEl.className = `ppe-status-badge ppe-status-${r.status}`;
@@ -215,13 +170,6 @@ export function getStaticPaths() {
     conditionEl.textContent = r.condition_remarks ?? '—';
     statusTextEl.textContent = statusLabel(r.status);
     authorizedEl.textContent = r.authorized_by ?? '—';
-
-    recordedByEl.textContent = userEmail ?? r.recorded_by;
-    requestDateEl.textContent = formatDateTime(r.request_date);
-    createdEl.textContent = formatDateTime(r.created_at);
-    updatedEl.textContent = formatDateTime(r.updated_at);
-    tenantEl.textContent = r.tenant_id;
-    uuidEl.textContent = r.id;
 
     renderActions(r);
 
@@ -292,9 +240,6 @@ export function getStaticPaths() {
 
   dispatchBtn.addEventListener('click', () => {
     void setStatus('approved_dispatched', 'Mark this PPE issue as dispatched? This records today as the action date.');
-  });
-  revertBtn.addEventListener('click', () => {
-    void setStatus('pending_approval', 'Revert this issue to pending approval?');
   });
 
   printBtn.addEventListener('click', () => {

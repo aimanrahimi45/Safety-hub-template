@@ -7,6 +7,7 @@
 import AppLayout from '../../../layouts/AppLayout.astro';
 ---
 <AppLayout title="PPE Issue Log - AmerisPro">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" is:inline></script>
   <main class="ppe-list-page">
     <div class="container">
       <div id="ppe-setup-warning" class="ppe-warning" hidden>
@@ -26,9 +27,71 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <p class="ppe-sub" id="ppe-sub">…</p>
         </div>
         <div class="ppe-header-actions">
+          <button type="button" id="ppe-analytics-toggle" class="ppe-secondary-btn">📊 Show Analytics</button>
           <a href="/app/ppe/new" class="ppe-primary-btn">+ Record PPE Issue</a>
         </div>
       </header>
+
+      <!-- Visual Analytics Panel -->
+      <div id="ppe-analytics-panel" class="ppe-analytics-panel" hidden>
+        <!-- KPI Display Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-total-issued">0</div>
+            <div class="kpi-lbl">Total Issued</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-total-pending">0</div>
+            <div class="kpi-lbl">Pending Requests</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-top-dept">-</div>
+            <div class="kpi-lbl">Heavy Dept</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-top-ppe">-</div>
+            <div class="kpi-lbl">Trending PPE</div>
+          </div>
+        </div>
+
+        <!-- Charts Grid 1 -->
+        <div class="charts-grid">
+          <!-- Dept Bar Chart -->
+          <div class="chart-box">
+            <div class="chart-title">PPE Consumption by Department</div>
+            <div class="chart-container">
+              <canvas id="chart-dept"></canvas>
+            </div>
+          </div>
+          
+          <!-- PPE Type Pie Chart -->
+          <div class="chart-box">
+            <div class="chart-title">PPE Type Distribution</div>
+            <div class="chart-container">
+              <canvas id="chart-ppe"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid 2 -->
+        <div class="charts-grid" style="margin-top: 20px;">
+          <!-- Monthly Trend Line Chart -->
+          <div class="chart-box">
+            <div class="chart-title">Monthly Replacement Trend</div>
+            <div class="chart-container">
+              <canvas id="chart-trends"></canvas>
+            </div>
+          </div>
+
+          <!-- Heavy Users List -->
+          <div class="chart-box">
+            <div class="chart-title">Frequent Requesters (Top 5 Staff)</div>
+            <div class="heavy-users-list" id="heavy-users-container">
+              <div class="heavy-empty">No request data loaded.</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <section class="ppe-filters">
         <label class="ppe-filter-field">
@@ -191,6 +254,176 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   fromEl.addEventListener('change', () => { dateModified = true; });
   toEl.addEventListener('change', () => { dateModified = true; });
 
+  let showAnalytics = false;
+  let allCachedRows: Row[] = [];
+  let activeCharts: Record<string, any> = {};
+
+  function updateAnalytics(allRows: Row[]): void {
+    const approvedIssues = allRows.filter(r => r.status === 'approved_dispatched');
+    const pendingCount = allRows.filter(r => r.status === 'pending_approval').length;
+
+    const totalIssuedEl = document.getElementById('kpi-total-issued');
+    const totalPendingEl = document.getElementById('kpi-total-pending');
+    if (totalIssuedEl) totalIssuedEl.textContent = String(approvedIssues.length);
+    if (totalPendingEl) totalPendingEl.textContent = String(pendingCount);
+
+    const deptCounts: Record<string, number> = {};
+    const ppeCounts: Record<string, number> = {};
+    const monthCounts: Record<string, number> = {};
+    const staffCounts: Record<string, number> = {};
+
+    approvedIssues.forEach(r => {
+      const dept = r.department || 'Others';
+      deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+
+      const ppe = r.ppe_type || 'Other';
+      ppeCounts[ppe] = (ppeCounts[ppe] || 0) + 1;
+
+      const staffKey = `${r.staff_name} (${r.staff_id})`;
+      staffCounts[staffKey] = (staffCounts[staffKey] || 0) + 1;
+
+      if (r.request_date) {
+        const ym = r.request_date.substring(0, 7);
+        monthCounts[ym] = (monthCounts[ym] || 0) + 1;
+      }
+    });
+
+    let topDept = '—';
+    let maxDeptCount = 0;
+    Object.keys(deptCounts).forEach(d => {
+      if (deptCounts[d] > maxDeptCount) {
+        maxDeptCount = deptCounts[d];
+        topDept = d;
+      }
+    });
+    const topDeptEl = document.getElementById('kpi-top-dept');
+    if (topDeptEl) topDeptEl.textContent = topDept;
+
+    let topPpe = '—';
+    let maxPpeCount = 0;
+    Object.keys(ppeCounts).forEach(p => {
+      if (ppeCounts[p] > maxPpeCount) {
+        maxPpeCount = ppeCounts[p];
+        topPpe = p;
+      }
+    });
+    const topPpeEl = document.getElementById('kpi-top-ppe');
+    if (topPpeEl) topPpeEl.textContent = topPpe;
+
+    const ChartClass = (window as any).Chart;
+    if (!ChartClass) return;
+
+    Object.keys(activeCharts).forEach(key => {
+      if (activeCharts[key]) {
+        activeCharts[key].destroy();
+        activeCharts[key] = null;
+      }
+    });
+
+    const getCtx = (id: string) => {
+      const el = document.getElementById(id) as HTMLCanvasElement | null;
+      return el ? el.getContext('2d') : null;
+    };
+
+    const ctxDept = getCtx('chart-dept');
+    if (ctxDept && Object.keys(deptCounts).length > 0) {
+      activeCharts['dept'] = new ChartClass(ctxDept, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(deptCounts),
+          datasets: [{
+            label: 'Items Issued',
+            data: Object.values(deptCounts),
+            backgroundColor: '#0f766e',
+            borderRadius: 6,
+            borderWidth: 2,
+            borderColor: '#2B2D42'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    const ctxPpe = getCtx('chart-ppe');
+    if (ctxPpe && Object.keys(ppeCounts).length > 0) {
+      activeCharts['ppe'] = new ChartClass(ctxPpe, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(ppeCounts),
+          datasets: [{
+            data: Object.values(ppeCounts),
+            backgroundColor: ['#FF6B6B', '#FFD166', '#06D6A0', '#118AB2', '#073B4C', '#8338EC', '#3A86C8'],
+            borderWidth: 2,
+            borderColor: '#2B2D42'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } }
+        }
+      });
+    }
+
+    const ctxTrends = getCtx('chart-trends');
+    const sortedMonths = Object.keys(monthCounts).sort();
+    if (ctxTrends && sortedMonths.length > 0) {
+      activeCharts['trends'] = new ChartClass(ctxTrends, {
+        type: 'line',
+        data: {
+          labels: sortedMonths.map(m => {
+            const parts = m.split('-');
+            const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+            return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+          }),
+          datasets: [{
+            label: 'Replacements',
+            data: sortedMonths.map(m => monthCounts[m]),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    const heavyUsersContainer = document.getElementById('heavy-users-container');
+    if (heavyUsersContainer) {
+      heavyUsersContainer.innerHTML = '';
+      const sortedUsers = Object.keys(staffCounts)
+        .sort((a, b) => staffCounts[b] - staffCounts[a])
+        .slice(0, 5);
+
+      if (sortedUsers.length === 0) {
+        heavyUsersContainer.innerHTML = '<div class="heavy-empty">No request data loaded.</div>';
+      } else {
+        sortedUsers.forEach(userKey => {
+          const count = staffCounts[userKey];
+          const row = document.createElement('div');
+          row.className = 'heavy-user-row';
+          row.innerHTML = `
+            <span class="heavy-user-name">${userKey}</span>
+            <span class="heavy-user-count">${count} replacements</span>
+          `;
+          heavyUsersContainer.appendChild(row);
+        });
+      }
+    }
+  }
+
   function writeFiltersToUrl(page: number): void {
     const params = new URLSearchParams(window.location.search);
     if (page > 1) params.set('page', String(page)); else params.delete('page');
@@ -255,17 +488,35 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     if (ppeType) q = q.eq('ppe_type', ppeType);
     if (dept) q = q.eq('department', dept);
     if (staff) {
-      // Match either staff_id (ilike) or staff_name (ilike). Use OR.
       q = q.or(`staff_id.ilike.%${staff}%,staff_name.ilike.%${staff}%`);
     }
     if (from) q = q.gte('request_date', from);
     if (to) q = q.lte('request_date', to);
     q = q.range(offset, offsetEnd);
 
+    // Build matching query for visual analytics counts (no range)
+    let statsQ = supabase
+      .from('ppe_requests')
+      .select('department, ppe_type, staff_name, staff_id, request_date, status');
+    if (ppeType) statsQ = statsQ.eq('ppe_type', ppeType);
+    if (dept) statsQ = statsQ.eq('department', dept);
+    if (staff) {
+      statsQ = statsQ.or(`staff_id.ilike.%${staff}%,staff_name.ilike.%${staff}%`);
+    }
+    if (from) statsQ = statsQ.gte('request_date', from);
+    if (to) statsQ = statsQ.lte('request_date', to);
+
     try {
-      const { data, error, count } = await q;
-      if (error) throw error;
-      const rows = (data ?? []) as Row[];
+      const [listRes, statsRes] = await Promise.all([
+        q,
+        statsQ
+      ]);
+      if (listRes.error) throw listRes.error;
+      if (statsRes.error) throw statsRes.error;
+
+      const rows = (listRes.data ?? []) as Row[];
+      allCachedRows = (statsRes.data ?? []) as Row[];
+      const count = listRes.count;
       skelEl.hidden = true;
 
       // Sub-header counts: "X issues this year • Y issues to Z staff members"
@@ -314,6 +565,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
       const total = count ?? null;
       paginator.update(currentPage, total || 0);
+
+      if (showAnalytics) {
+        updateAnalytics(allCachedRows);
+      }
     } catch (e) {
       skelEl.hidden = true;
       showError(e instanceof Error ? e.message : 'Failed to load PPE issues.');
@@ -353,6 +608,23 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       void refresh();
     });
 
+    const analyticsToggle = document.getElementById('ppe-analytics-toggle') as HTMLButtonElement | null;
+    const analyticsPanel = document.getElementById('ppe-analytics-panel') as HTMLElement | null;
+
+    if (analyticsToggle && analyticsPanel) {
+      analyticsToggle.addEventListener('click', () => {
+        showAnalytics = !showAnalytics;
+        analyticsPanel.hidden = !showAnalytics;
+        analyticsToggle.textContent = showAnalytics ? '📈 Hide Analytics' : '📊 Show Analytics';
+        analyticsToggle.classList.toggle('active', showAnalytics);
+        if (showAnalytics && allCachedRows.length > 0) {
+          setTimeout(() => {
+            updateAnalytics(allCachedRows);
+          }, 50);
+        }
+      });
+    }
+
     const exportBtn = document.getElementById('ppe-export-csv') as HTMLButtonElement;
     exportBtn.addEventListener('click', () => {
       const params = new URLSearchParams();
@@ -368,7 +640,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 </script>
 
-<style>
+<style is:global>
   .ppe-list-page { padding: 32px 0 64px; }
   .ppe-warning,
   .ppe-error {
@@ -517,5 +789,112 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     color: var(--color-text-muted, #6A6A69);
     background: var(--color-bg, #fff);
     border: 1px solid var(--color-border, #E0E0E0);
+  }
+
+  /* Analytics Dashboard Styles */
+  .ppe-analytics-panel {
+    margin-bottom: 30px;
+    background: #FFEED2;
+    border: 3px solid #2B2D42;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 4px 4px 0px #2B2D42;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: #FFFFFF;
+    border: 3px solid #2B2D42;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 2px 2px 0px #2B2D42;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .kpi-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px #2B2D42;
+  }
+  .kpi-val {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #0f766e;
+    margin-bottom: 4px;
+  }
+  .kpi-lbl {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .chart-box {
+    background: #FFFFFF;
+    border: 3px solid #2B2D42;
+    border-radius: 14px;
+    padding: 20px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 2px 0px #2B2D42;
+  }
+  .chart-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #2B2D42;
+    margin-bottom: 12px;
+    border-bottom: 3px solid #2B2D42;
+    padding-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .chart-container {
+    position: relative;
+    flex-grow: 1;
+    width: 100%;
+    height: 200px;
+  }
+  .heavy-users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .heavy-user-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F8F9FA;
+    border: 2px solid #2B2D42;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .heavy-user-name {
+    color: #2B2D42;
+  }
+  .heavy-user-count {
+    background: #FF6B6B;
+    color: #FFFFFF;
+    border: 2px solid #2B2D42;
+    font-size: 0.7rem;
+    border-radius: 20px;
+    padding: 2px 10px;
+  }
+  .heavy-empty {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 </style>

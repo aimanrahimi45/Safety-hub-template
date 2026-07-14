@@ -888,6 +888,27 @@ import AppLayout from '../../layouts/AppLayout.astro';
             displayText = displayText.split(' — ').slice(1).join(' — ');
           }
 
+          if (displayText.includes(' | Screenshots:')) {
+            displayText = displayText.split(' | Screenshots:')[0];
+          } else if (displayText.includes(' | Screenshot:')) {
+            displayText = displayText.split(' | Screenshot:')[0];
+          }
+
+          let imagesHtml = '';
+          if (Array.isArray(item.parent_citations) && item.parent_citations.length > 0) {
+            imagesHtml += `<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; margin-bottom: 6px;">`;
+            item.parent_citations.forEach((url) => {
+              if (typeof url === 'string' && url.startsWith('http')) {
+                imagesHtml += `
+                  <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="cmp-diagram-link" style="display: block; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 2px 2px 0 var(--shadow); transition: transform 0.2s; background: white;">
+                    <img src="${escapeHtml(url)}" alt="OSH diagram" style="display: block; height: 70px; width: auto; object-fit: contain; padding: 4px;" />
+                  </a>
+                `;
+              }
+            });
+            imagesHtml += `</div>`;
+          }
+
           html += `
             <div style="padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 6px; border: 1px solid rgba(0,0,0,0.05); position: relative;">
               <div class="cmp-match-score" style="position: absolute; top: 10px; right: 10px; font-size: 0.75rem; background: rgba(15, 118, 110, 0.08); padding: 2px 8px; border-radius: 12px; font-weight: 600; color: var(--primary);">
@@ -899,6 +920,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
               <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45; padding-right: 80px;">
                 ${escapeHtml(displayText)}
               </div>
+              ${imagesHtml}
               <div style="font-size: 0.85rem; color: var(--primary); margin-top: 8px; font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
                 <span>⚡</span>
                 <span><strong>Action:</strong> ${escapeHtml(item.required_action)}</span>
@@ -1341,4 +1363,8 @@ import AppLayout from '../../layouts/AppLayout.astro';
   .cmp-ai-summary-text ul { margin: 8px 0; padding-left: 20px; }
   .cmp-ai-summary-text li { margin-bottom: 6px; }
   .cmp-ai-copy-row { margin-top: 12px; }
+  .cmp-diagram-link:hover {
+    transform: scale(1.05);
+    border-color: var(--color-primary, #E58E1A) !important;
+  }
 </style>

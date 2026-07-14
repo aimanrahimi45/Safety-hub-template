@@ -244,6 +244,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 
   let authUserId: string | null = null;
+  let activeTenantId: string | null = null;
   let supabase: ReturnType<typeof getSupabase> | null = null;
   let isPremium = false;
   let editId: string | null = null;
@@ -386,6 +387,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       }
       authUserId = userData.user.id;
 
+      // Query active tenant from tenants table (Solo-SHO mode)
+      const { data: tenantData, error: tenantErr } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('owner_user_id', authUserId)
+        .limit(1);
+
+      if (tenantErr || !tenantData || tenantData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        return;
+      }
+      activeTenantId = tenantData[0].id;
+
       // Premium check.
       try {
         const { data: premium } = await supabase.rpc('is_my_tenant_premium');
@@ -485,6 +499,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           return;
         }
 
+        if (!activeTenantId) {
+          throw new Error('Active session could not be resolved. Please reload the page.');
+        }
+
         // CREATE path: get next incident_code, then insert.
         const { data: codeData, error: codeErr } = await supabase.rpc('next_incident_code');
         if (codeErr) throw codeErr;
@@ -493,8 +511,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           throw new Error('Failed to generate incident code.');
         }
 
-        // NOTE: tenant_id is auto-set by RLS WITH CHECK. Do NOT pass it.
-        const insertPayload: Omit<Incident, 'id' | 'tenant_id' | 'reported_by' | 'recorded_at' | 'created_at' | 'updated_at' | 'incident_code'> = {
+        const insertPayload: Omit<Incident, 'id' | 'reported_by' | 'recorded_at' | 'created_at' | 'updated_at' | 'incident_code'> = {
+          tenant_id: activeTenantId,
           incident_date: incidentDateIso,
           incident_time: incidentTimeVal,
           victim_name: victimName,

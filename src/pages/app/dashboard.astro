@@ -30,91 +30,57 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         Failed to load workspace data. Please refresh the page.
       </section>
 
-      <section id="dash-metrics" hidden>
-        <h2 class="dash-section-title">Overview</h2>
-        <div class="metric-grid">
-          <a href="/app/first-aid" class="metric-tile" id="metric-first-aid">
-            <div class="metric-tile-icon" aria-hidden="true">⛑️</div>
-            <div class="metric-tile-value" data-role="value">—</div>
-            <div class="metric-tile-sub" data-role="sub">…</div>
-            <div class="metric-tile-label">First Aid Boxes</div>
-          </a>
-          <a href="/app/ppe" class="metric-tile" id="metric-ppe">
-            <div class="metric-tile-icon" aria-hidden="true">🦺</div>
-            <div class="metric-tile-value" data-role="value">—</div>
-            <div class="metric-tile-sub" data-role="sub">…</div>
-            <div class="metric-tile-label">PPE</div>
-          </a>
-          <a href="/app/contractors" class="metric-tile" id="metric-contractors">
-            <div class="metric-tile-icon" aria-hidden="true">👷</div>
-            <div class="metric-tile-value" data-role="value">—</div>
-            <div class="metric-tile-sub" data-role="sub">…</div>
-            <div class="metric-tile-label">Contractors</div>
-          </a>
-          <a href="/app/incidents" class="metric-tile" id="metric-incidents">
-            <div class="metric-tile-icon" aria-hidden="true">🚨</div>
-            <div class="metric-tile-value" data-role="value">—</div>
-            <div class="metric-tile-sub" data-role="sub">…</div>
-            <div class="metric-tile-label">Incidents</div>
-          </a>
-          <a href="/app/staff" class="metric-tile" id="metric-staff">
-            <div class="metric-tile-icon" aria-hidden="true">🧑‍💼</div>
-            <div class="metric-tile-value" data-role="value">—</div>
-            <div class="metric-tile-sub" data-role="sub">…</div>
-            <div class="metric-tile-label">Staff</div>
-          </a>
-          <a href="/app/inspections" class="metric-tile" id="metric-inspections">
-            <div class="metric-tile-icon" aria-hidden="true">📋</div>
-            <div class="metric-tile-value" data-role="value">—</div>
-            <div class="metric-tile-sub" data-role="sub">…</div>
-            <div class="metric-tile-label">Inspections</div>
-          </a>
-        </div>
-      </section>
+      <div class="dash-grid-layout">
+        <section id="dash-metrics" hidden>
+          <h2 class="dash-section-title">Overview</h2>
+          <div class="metric-grid">
+            <a href="/app/first-aid" class="metric-tile" id="metric-first-aid">
+              <div class="metric-tile-icon" aria-hidden="true">⛑️</div>
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+              <div class="metric-tile-label">First Aid Boxes</div>
+            </a>
+            <a href="/app/ppe" class="metric-tile" id="metric-ppe">
+              <div class="metric-tile-icon" aria-hidden="true">🦺</div>
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+              <div class="metric-tile-label">PPE</div>
+            </a>
+            <a href="/app/contractors" class="metric-tile" id="metric-contractors">
+              <div class="metric-tile-icon" aria-hidden="true">👷</div>
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+              <div class="metric-tile-label">Contractors</div>
+            </a>
+            <a href="/app/incidents" class="metric-tile" id="metric-incidents">
+              <div class="metric-tile-icon" aria-hidden="true">🚨</div>
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+              <div class="metric-tile-label">Incidents</div>
+            </a>
+            <a href="/app/staff" class="metric-tile" id="metric-staff">
+              <div class="metric-tile-icon" aria-hidden="true">🧑‍💼</div>
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+              <div class="metric-tile-label">Staff</div>
+            </a>
+            <a href="/app/inspections" class="metric-tile" id="metric-inspections">
+              <div class="metric-tile-icon" aria-hidden="true">📋</div>
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+              <div class="metric-tile-label">Inspections</div>
+            </a>
+          </div>
+        </section>
 
-      <section id="dash-activity" class="activity-feed" hidden>
-        <h2>Recent Activity</h2>
-        <div id="dash-activity-list"></div>
-        <div id="dash-activity-empty" class="activity-empty" hidden>
-          No recent activity yet. Start by logging a First Aid inspection, reporting an incident, or scheduling an inspection.
-        </div>
-      </section>
-
-      <section id="dash-modules" hidden>
-        <h2 class="dash-section-title">Modules</h2>
-        <div class="module-grid">
-          <a href="/app/first-aid" class="module-tile">
-            <div class="module-tile-icon" aria-hidden="true">⛑️</div>
-            <h3>First Aid</h3>
-            <p>Conduct box inspections, manage central stock, and deduct refills.</p>
-          </a>
-          <a href="/app/ppe" class="module-tile">
-            <div class="module-tile-icon" aria-hidden="true">🦺</div>
-            <h3>PPE</h3>
-            <p>Request, approve, and fulfil personal protective equipment.</p>
-          </a>
-          <a href="/app/contractors" class="module-tile">
-            <div class="module-tile-icon" aria-hidden="true">👷</div>
-            <h3>Contractors</h3>
-            <p>Manage contractor companies and worker inductions.</p>
-          </a>
-          <a href="/app/incidents" class="module-tile">
-            <div class="module-tile-icon" aria-hidden="true">🚨</div>
-            <h3>Incidents</h3>
-            <p>Report and investigate safety incidents with root-cause tracking.</p>
-          </a>
-          <a href="/app/staff" class="module-tile">
-            <div class="module-tile-icon" aria-hidden="true">🧑‍💼</div>
-            <h3>Staff</h3>
-            <p>Maintain the HR roster, departments, and contact details.</p>
-          </a>
-          <a href="/app/inspections" class="module-tile">
-            <div class="module-tile-icon" aria-hidden="true">📋</div>
-            <h3>Inspections</h3>
-            <p>Build templates, schedule inspections, and capture findings.</p>
-          </a>
-        </div>
-      </section>
+        <section id="dash-activity" class="activity-feed" hidden>
+          <h2>Recent Activity</h2>
+          <div id="dash-activity-list"></div>
+          <div id="dash-activity-empty" class="activity-empty" hidden>
+            No recent activity yet. Start by logging a First Aid inspection, reporting an incident, or scheduling an inspection.
+          </div>
+        </section>
+      </div>
     </div>
   </main>
 </AppLayout>
@@ -131,7 +97,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   const activityEl = document.getElementById('dash-activity') as HTMLElement;
   const activityListEl = document.getElementById('dash-activity-list') as HTMLElement;
   const activityEmptyEl = document.getElementById('dash-activity-empty') as HTMLElement;
-  const modulesEl = document.getElementById('dash-modules') as HTMLElement;
   const errorEl = document.getElementById('dash-error') as HTMLElement;
   const tenantNameEl = document.getElementById('dash-tenant-name') as HTMLElement;
   const companyNameEl = document.getElementById('dash-company-name') as HTMLElement;
@@ -512,7 +477,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
       metricsEl.hidden = false;
       activityEl.hidden = false;
-      modulesEl.hidden = false;
     })().catch(() => {
       showError();
     });
@@ -521,14 +485,14 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
 <style>
   .dashboard-page {
-    padding: 32px 0 64px;
+    padding: 16px 0 32px;
   }
   .dash-warning,
   .dash-error {
-    padding: 14px 18px;
-    margin-bottom: 24px;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    line-height: 1.4;
   }
   .dash-warning {
     background: #FFF7E6;
@@ -540,7 +504,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   .dash-warning code {
     background: rgba(0,0,0,0.06);
     padding: 1px 4px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
   .dash-error {
     background: #FDECEC;
@@ -550,17 +514,17 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     color: #8B1A1A;
   }
   .dash-hero {
-    margin-bottom: 40px;
+    margin-bottom: 24px;
   }
   .dash-hero h1 {
-    font-size: 2rem;
+    font-size: 1.7rem;
     font-weight: 900;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .dash-company {
     color: var(--color-text-muted, #6A6A69);
-    font-size: 1rem;
-    margin-bottom: 12px;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
   }
   .dash-meta {
     display: flex;
@@ -570,8 +534,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   }
   .plan-badge {
     display: inline-block;
-    padding: 4px 10px;
-    font-size: 0.72rem;
+    padding: 3px 8px;
+    font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -587,70 +551,59 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     color: var(--text-main);
   }
   .dash-expiry {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--color-text-muted, #6A6A69);
   }
   .dash-section-title {
-    font-size: 1.3rem;
+    font-size: 1.15rem;
     font-weight: 900;
-    margin-bottom: 16px;
-  }
-  .module-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 20px;
-  }
-  .module-tile {
-    display: block;
-    color: inherit;
-    text-decoration: none;
-  }
-  .module-tile-icon {
-    font-size: 1.8rem;
     margin-bottom: 12px;
   }
-  .module-tile h3 {
-    font-size: 1.05rem;
-    font-weight: 900;
-    margin-bottom: 6px;
-  }
-  .module-tile p {
-    font-size: 0.85rem;
-    color: var(--color-text-muted, #6A6A69);
-    line-height: 1.5;
-    margin-bottom: 0;
+
+  /* Split grid layout for desktop */
+  @media (min-width: 1024px) {
+    .dash-grid-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
   }
 
   /* Metric tiles */
   .metric-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
-    margin: 0 0 24px 0;
+    margin: 0;
   }
   .metric-tile {
     display: block;
     text-decoration: none;
     color: inherit;
+    padding: 12px 14px !important;
   }
   .metric-tile-icon {
-    font-size: 1.4rem;
-    margin-bottom: 8px;
+    font-size: 1.2rem;
+    margin-bottom: 6px;
   }
   .metric-tile-value {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 900;
     line-height: 1.1;
   }
   .metric-tile-sub {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--color-text-muted, #6A6A69);
-    margin-top: 4px;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .metric-tile-label {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--color-text-muted, #6A6A69);
-    margin-top: 10px;
+    margin-top: 8px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -658,25 +611,25 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
   /* Recent activity feed */
   .activity-feed {
-    padding: 16px 20px;
-    margin: 0 0 32px 0;
+    padding: 12px 16px;
+    margin: 0;
   }
   .activity-feed h2 {
-    margin: 0 0 8px 0;
-    font-size: 1.1rem;
+    margin: 0 0 12px 0;
+    font-size: 1.15rem;
     font-weight: 900;
   }
   .activity-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 8px;
+    gap: 10px;
+    padding: 8px 6px;
     text-decoration: none;
     color: inherit;
   }
   .activity-item-icon {
-    font-size: 1.2rem;
-    width: 32px;
+    font-size: 1.1rem;
+    width: 24px;
     text-align: center;
     flex-shrink: 0;
   }
@@ -685,22 +638,22 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     min-width: 0;
   }
   .activity-item-title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .activity-item-sub {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--color-text-muted, #6A6A69);
-    margin-top: 2px;
+    margin-top: 1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .activity-item-time {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--color-text-muted, #6A6A69);
     flex-shrink: 0;
     white-space: nowrap;
@@ -709,6 +662,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     text-align: center;
     color: var(--color-text-muted, #6A6A69);
     padding: 20px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 </style>

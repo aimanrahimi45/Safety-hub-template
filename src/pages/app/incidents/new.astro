@@ -511,8 +511,9 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           throw new Error('Failed to generate incident code.');
         }
 
-        const insertPayload: Omit<Incident, 'id' | 'reported_by' | 'recorded_at' | 'created_at' | 'updated_at' | 'incident_code'> = {
+        const insertPayload: Omit<Incident, 'id' | 'recorded_at' | 'created_at' | 'updated_at' | 'incident_code'> = {
           tenant_id: activeTenantId,
+          reported_by: authUserId,
           incident_date: incidentDateIso,
           incident_time: incidentTimeVal,
           victim_name: victimName,

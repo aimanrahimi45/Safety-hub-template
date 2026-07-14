@@ -228,6 +228,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 
   let authUserId: string | null = null;
+  let activeTenantId: string | null = null;
   let supabase: ReturnType<typeof getSupabase> | null = null;
 
   if (!isSupabaseConfigured()) {
@@ -244,6 +245,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         return;
       }
       authUserId = userData.user.id;
+
+      // Query active tenant from tenants table (Solo-SHO mode)
+      const { data: tenantData, error: tenantErr } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('owner_user_id', authUserId)
+        .limit(1);
+
+      if (tenantErr || !tenantData || tenantData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        return;
+      }
+      activeTenantId = tenantData[0].id;
 
       // Populate PPE Type + Department dropdowns from tenant settings.
       try {
@@ -307,6 +321,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
     (async () => {
       try {
+        if (!activeTenantId) {
+          throw new Error('Active session could not be resolved. Please reload the page.');
+        }
+
         // 1. Get the next request code.
         const { data: codeData, error: codeErr } = await supabase.rpc('next_ppe_request_code');
         if (codeErr) throw codeErr;
@@ -315,8 +333,9 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           throw new Error('Failed to generate request code.');
         }
 
-        // 2. Insert the row. tenant_id is auto-set by RLS WITH CHECK.
-        const insertPayload: Omit<PpeRequest, 'id' | 'tenant_id' | 'created_at' | 'updated_at'> = {
+        // 2. Insert the row.
+        const insertPayload: Omit<PpeRequest, 'id' | 'created_at' | 'updated_at'> = {
+          tenant_id: activeTenantId,
           request_code: requestCode,
           request_date: new Date().toISOString(),
           staff_id: staffId,

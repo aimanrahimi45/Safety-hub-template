@@ -130,14 +130,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
 
+  function today(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   function readPageFromUrl(): { page: number; from: string | null; to: string | null } {
     const params = new URLSearchParams(window.location.search);
     const pageRaw = params.get('page');
     const page = pageRaw ? Math.max(1, parseInt(pageRaw, 10) || 1) : 1;
     const from = params.get('from');
     const to = params.get('to');
-    if (from) fromEl.value = from;
-    if (to) toEl.value = to;
+    fromEl.value = from || today();
+    toEl.value = to || today();
     return { page, from, to };
   }
 

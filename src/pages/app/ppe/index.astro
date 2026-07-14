@@ -165,6 +165,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     return s === 'approved_dispatched' ? 'Approved / Dispatched' : 'Pending Approval';
   }
 
+  function today(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   function readFiltersFromUrl(): { page: number; ppeType: string; dept: string; staff: string; from: string | null; to: string | null } {
     const params = new URLSearchParams(window.location.search);
     const pageRaw = params.get('page');
@@ -177,8 +182,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     if (ppeType) typeFilterEl.value = ppeType;
     if (dept) deptFilterEl.value = dept;
     if (staff) staffFilterEl.value = staff;
-    if (from) fromEl.value = from;
-    if (to) toEl.value = to;
+    fromEl.value = from || today();
+    toEl.value = to || today();
     return { page, ppeType, dept, staff, from, to };
   }
 

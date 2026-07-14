@@ -640,8 +640,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           }
           closeForm();
           await load();
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : 'Save failed.';
+        } catch (e: any) {
+          const msg = e?.message || (typeof e === 'string' ? e : 'Save failed.');
           if (/duplicate key|unique/i.test(msg)) {
             showFormError(`Item code "${itemCode}" is already in use.`);
           } else {

@@ -897,4 +897,51 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     font-size: 0.85rem;
     font-weight: 600;
   }
+
+  /* Responsive Dashboard Analytics */
+  @media (max-width: 768px) {
+    .ppe-analytics-panel {
+      padding: 16px;
+    }
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .kpi-card {
+      padding: 12px;
+    }
+    .kpi-val {
+      font-size: 1.4rem;
+    }
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .chart-box {
+      padding: 16px;
+      min-height: 250px;
+    }
+    .chart-container {
+      height: 180px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+    .ppe-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .ppe-header-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    .ppe-header-actions button,
+    .ppe-header-actions a {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>

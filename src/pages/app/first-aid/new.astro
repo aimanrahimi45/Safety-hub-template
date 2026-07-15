@@ -299,7 +299,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <div class="fa-card-field-row">
             <div class="fa-card-field">
               <label>Requirement Quantity</label>
-              <span class="fa-badge-no" style="display:inline-block; padding: 8px 12px; background: #F1F5F9; font-weight: 700; border-radius: 4px;">${reqVal}</span>
+              <span class="fa-card-badge-qty">${reqVal}</span>
             </div>
             <div class="fa-card-field">
               <label>Quantity Available</label>
@@ -772,145 +772,166 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     font-weight: 700;
   }
   /* Collapsible Cards Container & Cards (Jodoo Style) */
-  .fa-cards-container {
+  :global(.fa-cards-container) {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 12px;
+    gap: 16px;
+    margin-top: 16px;
   }
-  .fa-checklist-card {
+  :global(.fa-checklist-card) {
     background: var(--color-bg, #fff);
-    border: 1px solid var(--color-border, #E0E0E0);
-    border-radius: 8px;
+    border: 2px solid var(--color-text, #1E1E1D);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 var(--color-text, #1E1E1D);
     overflow: hidden;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    margin-bottom: 16px;
+    transition: all 0.15s ease;
   }
-  .fa-checklist-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    border-color: var(--color-primary, #E58E1A);
+  :global(.fa-checklist-card:hover) {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--color-text, #1E1E1D);
   }
-  .fa-card-header {
-    background: #F8FAFC;
-    padding: 12px 16px;
+  :global(.fa-card-header) {
+    background: #FDFEFE;
+    padding: 14px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    border-bottom: 1px solid transparent;
+    border-bottom: 2px solid var(--color-text, #1E1E1D);
     user-select: none;
   }
-  .fa-checklist-card.fa-card-expanded .fa-card-header {
-    border-bottom-color: var(--color-border, #E0E0E0);
-    background: #F1F5F9;
+  :global(.fa-checklist-card.fa-card-expanded) {
+    border-color: var(--color-primary, #E58E1A);
+    box-shadow: 4px 4px 0 var(--color-primary, #E58E1A);
   }
-  .fa-card-header-left {
+  :global(.fa-checklist-card.fa-card-expanded .fa-card-header) {
+    background: #FFFBEB;
+    border-bottom-color: var(--color-primary, #E58E1A);
+  }
+  :global(.fa-card-header-left) {
     display: flex;
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
   }
-  .fa-card-badge {
+  :global(.fa-card-badge) {
     background: #3B82F6;
     color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    width: 22px;
-    height: 22px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
+    border: 2px solid var(--color-text, #1E1E1D);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .fa-card-item-name {
-    font-size: 0.95rem;
-    font-weight: 700;
+  :global(.fa-card-item-name) {
+    font-size: 1rem;
+    font-weight: 800;
     color: var(--color-text, #1E1E1D);
   }
-  .fa-card-short-info {
-    font-size: 0.8rem;
-    color: var(--color-text-muted, #6A6A69);
-    background: rgba(0,0,0,0.04);
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 500;
+  :global(.fa-card-short-info) {
+    font-size: 0.82rem;
+    color: var(--color-text, #1E1E1D);
+    background: #F1F5F9;
+    border: 2px solid var(--color-text, #1E1E1D);
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    display: inline-flex;
+    gap: 4px;
   }
-  .fa-card-header-right {
+  :global(.fa-card-header-right) {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .fa-card-btn-toggle {
-    background: transparent;
-    border: none;
-    color: #3B82F6;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    padding: 4px 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .fa-card-btn-toggle:hover {
-    color: #2563EB;
-  }
-  .fa-card-body {
-    display: none;
-    padding: 16px 20px;
+  :global(.fa-card-btn-toggle) {
     background: #fff;
+    border: 2px solid var(--color-text, #1E1E1D);
+    border-radius: 6px;
+    padding: 6px 14px;
+    color: var(--color-text, #1E1E1D);
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--color-text, #1E1E1D);
+    transition: all 0.1s ease;
   }
-  .fa-checklist-card.fa-card-expanded .fa-card-body {
+  :global(.fa-card-btn-toggle:hover) {
+    background: #F8FAFC;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--color-text, #1E1E1D);
+  }
+  :global(.fa-checklist-card.fa-card-expanded .fa-card-btn-toggle) {
+    background: var(--color-primary, #E58E1A);
+    color: #fff;
+    border-color: var(--color-text, #1E1E1D);
+  }
+  :global(.fa-card-body) {
+    display: none;
+    padding: 20px;
+    background: #fff;
+    border-top: none;
+  }
+  :global(.fa-checklist-card.fa-card-expanded .fa-card-body) {
     display: block;
   }
-  .fa-card-field-row {
+  :global(.fa-card-field-row) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
   @media (max-width: 600px) {
-    .fa-card-field-row {
+    :global(.fa-card-field-row) {
       grid-template-columns: 1fr;
       gap: 12px;
     }
   }
-  .fa-card-field {
+  :global(.fa-card-field) {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
-  .fa-card-field:last-child {
+  :global(.fa-card-field:last-child) {
     margin-bottom: 0;
   }
-  .fa-card-field label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--color-text-muted, #6A6A69);
+  :global(.fa-card-field label) {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--color-text, #1E1E1D);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .fa-card-field input,
-  .fa-card-field select {
-    padding: 8px 12px;
-    border: 1px solid var(--color-border, #E0E0E0);
+  :global(.fa-card-field input),
+  :global(.fa-card-field select) {
+    padding: 10px 12px;
+    border: 2px solid var(--color-text, #1E1E1D) !important;
     font-family: inherit;
     font-size: 0.9rem;
-    background: #FAFAFA;
+    background: #fff !important;
     outline: none;
-    border-radius: 4px;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 var(--color-text, #1E1E1D) !important;
+    transition: all 0.15s ease;
   }
-  .fa-card-field input:focus,
-  .fa-card-field select:focus {
-    border-color: var(--color-primary, #E58E1A);
-    background: #fff;
+  :global(.fa-card-field input:focus),
+  :global(.fa-card-field select:focus) {
+    border-color: var(--color-primary, #E58E1A) !important;
+    box-shadow: 2px 2px 0 var(--color-primary, #E58E1A) !important;
   }
   /* Read-only styled inputs for predefined name/req */
-  .fa-card-field input[readonly],
-  .fa-card-field input[disabled] {
-    background: #E2E8F0;
-    color: var(--color-text-muted, #6A6A69);
+  :global(.fa-card-field input[readonly]),
+  :global(.fa-card-field input[disabled]) {
+    background: #F1F5F9 !important;
+    color: var(--color-text-muted, #6A6A69) !important;
     cursor: not-allowed;
-    border-color: #CBD5E1;
+    border-color: #CBD5E1 !important;
+    box-shadow: none !important;
   }
   .fa-badge-no {
     display: inline-block;
@@ -918,6 +939,17 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     font-size: 0.7rem;
     background: #F4F4F4;
     color: var(--color-text-muted, #6A6A69);
+  }
+  :global(.fa-card-badge-qty) {
+    display: inline-block;
+    padding: 10px 12px;
+    border: 2px solid var(--color-text, #1E1E1D) !important;
+    background: #F1F5F9;
+    color: var(--color-text-muted, #6A6A69);
+    font-weight: 800;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 var(--color-text, #1E1E1D) !important;
+    width: fit-content;
   }
   .fa-restock-check {
     margin-top: 20px;

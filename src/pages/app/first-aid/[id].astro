@@ -68,18 +68,20 @@ export function getStaticPaths() {
 
           <section class="fa-card">
             <h2>Checklist Items Status</h2>
-            <table class="fa-items-table">
-              <thead>
-                <tr>
-                  <th scope="col">Item Description</th>
-                  <th scope="col" style="width: 100px;">Required</th>
-                  <th scope="col" class="fa-qty-col" style="width: 120px;">Available Qty</th>
-                  <th scope="col" style="width: 120px;">Expiry Date</th>
-                  <th scope="col">Remarks / Notes</th>
-                </tr>
-              </thead>
-              <tbody id="fa-ins-checklist-tbody"></tbody>
-            </table>
+            <div class="fa-table-scroll">
+              <table class="fa-items-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Item Description</th>
+                    <th scope="col" style="width: 100px;">Required</th>
+                    <th scope="col" class="fa-qty-col" style="width: 120px;">Available Qty</th>
+                    <th scope="col" style="width: 120px;">Expiry Date</th>
+                    <th scope="col">Remarks / Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-ins-checklist-tbody"></tbody>
+              </table>
+            </div>
           </section>
         </div>
 
@@ -112,16 +114,18 @@ export function getStaticPaths() {
           <section class="fa-card">
             <h2>Items used</h2>
             <div id="fa-items-empty" class="fa-empty-inline" hidden>No items recorded for this incident.</div>
-            <table id="fa-items-table" class="fa-items-table" hidden>
-              <thead>
-                <tr>
-                  <th scope="col">Item description</th>
-                  <th scope="col" class="fa-qty-col">Qty</th>
-                  <th scope="col">Notes</th>
-                </tr>
-              </thead>
-              <tbody id="fa-items-tbody"></tbody>
-            </table>
+            <div class="fa-table-scroll">
+              <table id="fa-items-table" class="fa-items-table" hidden>
+                <thead>
+                  <tr>
+                    <th scope="col">Item description</th>
+                    <th scope="col" class="fa-qty-col">Qty</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-items-tbody"></tbody>
+              </table>
+            </div>
           </section>
         </div>
 
@@ -602,6 +606,11 @@ export function getStaticPaths() {
   .fa-badge-yes { background: #E8F5E9; color: #1F7A4D; }
   .fa-badge-no { background: #FFF1F0; color: #CF1322; }
 
+  .fa-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .fa-items-table {
     width: 100%;
     border-collapse: collapse;

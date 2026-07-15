@@ -270,11 +270,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     if (lookupTimer != null) window.clearTimeout(lookupTimer);
     lookupTimer = window.setTimeout(() => {
       lookupTimer = null;
-      void runLookup();
+      void runLookup(true);
     }, 250);
   }
 
-  async function runLookup(): Promise<void> {
+  async function runLookup(autofill = false): Promise<void> {
     if (!supabase) return;
     const sid = staffIdEl.value.trim();
     if (!sid) {
@@ -302,6 +302,12 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         r.full_name + status,
         `${meta.join(' | ')}${meta.length ? ' | ' : ''}${histParts.join(' • ')}`
       );
+
+      // Autofill form inputs
+      if (autofill) {
+        if (r.full_name) victimEl.value = r.full_name;
+        if (r.department) locationEl.value = r.department;
+      }
     } catch {
       showStaffError('Staff lookup failed.');
     }
@@ -309,7 +315,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
   staffIdEl.addEventListener('blur', () => {
     if (!isPremium) return;
-    void runLookup();
+    void runLookup(true);
   });
   staffIdEl.addEventListener('input', () => {
     if (!isPremium) return;

@@ -83,29 +83,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         <!-- Section C: Checklist Items -->
         <fieldset class="fa-fieldset">
           <legend>C. Checklist Items</legend>
-          <div class="fa-autofill-bar">
+          <div class="fa-autofill-bar" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
             <span>ISO 45001 standard quantities check.</span>
-            <button type="button" id="fa-quickfill-btn" class="fa-secondary-btn">⚡ Autofill Standard Quantities</button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="fa-toggle-all-btn" class="fa-secondary-btn">Expand All</button>
+              <button type="button" id="fa-quickfill-btn" class="fa-secondary-btn">⚡ Autofill Standard Quantities</button>
+            </div>
           </div>
 
-          <table class="fa-items-table" aria-label="First aid box items checked">
-            <thead>
-              <tr>
-                <th scope="col">Item Description</th>
-                <th scope="col" style="width: 100px;">Required</th>
-                <th scope="col" class="fa-qty-col" style="width: 120px;">Available Qty</th>
-                <th scope="col" style="width: 130px;">Expiry Date</th>
-                <th scope="col">Remarks / Notes</th>
-              </tr>
-            </thead>
-            <tbody id="fa-checklist-tbody">
-              <tr>
-                <td colspan="5" style="text-align:center; padding: 20px; color: var(--color-text-muted);">
-                  Loading checklist items...
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div id="fa-checklist-container" class="fa-cards-container">
+            <div style="text-align:center; padding: 30px; color: var(--color-text-muted, #6A6A69);">
+              Loading checklist items...
+            </div>
+          </div>
         </fieldset>
 
         <!-- Section D: Sign-off -->
@@ -200,7 +190,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const restockCheckEl = document.getElementById('fa-instant-restock') as HTMLInputElement;
   const quickfillBtn = document.getElementById('fa-quickfill-btn') as HTMLButtonElement;
 
-  const checklistTbody = document.getElementById('fa-checklist-tbody') as HTMLElement;
+  const checklistContainer = document.getElementById('fa-checklist-container') as HTMLElement;
+  const toggleAllBtn = document.getElementById('fa-toggle-all-btn') as HTMLButtonElement;
   const sigClear = document.getElementById('fa-sig-clear') as HTMLButtonElement;
   const sigPad = document.getElementById('fa-sig-pad') as HTMLCanvasElement;
   const sigData = document.getElementById('fa-sig-data') as HTMLInputElement;
@@ -261,26 +252,95 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     return `${y}-${m}-${day}`;
   }
 
+  function escapeHtml(s: string | number | null | undefined): string {
+    if (s === null || s === undefined) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Keep track of toggle expansion state
+  let allExpanded = false;
+
   // --- Render Dynamic Checklist ---
   function renderChecklist(): void {
-    checklistTbody.innerHTML = '';
-    checklistItems.forEach((item) => {
-      const tr = document.createElement('tr');
-      tr.className = 'item-row';
-      tr.innerHTML = `
-        <td><strong class="item-name">${item.name}</strong></td>
-        <td><span class="fa-badge-no" style="padding: 2px 6px; font-weight: 700;">${item.req} ${item.unit}</span></td>
-        <td class="fa-qty-col">
-          <input type="number" class="fa-item-avail" data-id="${item.id}" data-req="${item.req}" min="0" value="${item.req}" required style="width: 80px; padding: 6px;" />
-        </td>
-        <td>
-          <input type="text" class="fa-item-exp" data-id="${item.id}" placeholder="MM/YY" value="${item.exp || ''}" style="width: 100px; padding: 6px;" />
-        </td>
-        <td>
-          <input type="text" class="fa-item-remarks" data-id="${item.id}" placeholder="Optional notes" style="width: 100%; padding: 6px;" />
-        </td>
+    checklistContainer.innerHTML = '';
+    checklistItems.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'fa-checklist-card item-row' + (allExpanded ? ' fa-card-expanded' : '');
+      card.setAttribute('data-id', String(item.id));
+
+      const reqVal = item.req;
+      const unitVal = item.unit || 'pcs';
+      const nameVal = item.name;
+
+      card.innerHTML = `
+        <div class="fa-card-header">
+          <div class="fa-card-header-left">
+            <span class="fa-card-badge">${idx + 1}</span>
+            <strong class="fa-card-item-name item-name">${escapeHtml(nameVal)}</strong>
+            <span class="fa-card-short-info">
+              Required: <span class="fa-card-req-display">${reqVal}</span> ${unitVal} | 
+              Available: <span class="fa-card-avail-display">${reqVal}</span>
+            </span>
+          </div>
+          <div class="fa-card-header-right">
+            <button type="button" class="fa-card-btn-toggle">${allExpanded ? 'Collapse ∧' : 'Expand ∨'}</button>
+          </div>
+        </div>
+        <div class="fa-card-body">
+          <div class="fa-card-field">
+            <label>Item Name</label>
+            <input type="text" value="${escapeHtml(nameVal)}" disabled />
+          </div>
+          <div class="fa-card-field-row">
+            <div class="fa-card-field">
+              <label>Requirement Quantity</label>
+              <span class="fa-badge-no" style="display:inline-block; padding: 8px 12px; background: #F1F5F9; font-weight: 700; border-radius: 4px;">${reqVal}</span>
+            </div>
+            <div class="fa-card-field">
+              <label>Quantity Available</label>
+              <input type="number" class="fa-item-avail" data-id="${item.id}" data-req="${reqVal}" min="0" value="${reqVal}" required />
+            </div>
+          </div>
+          <div class="fa-card-field">
+            <label>Expired Date</label>
+            <input type="date" class="fa-item-exp" data-id="${item.id}" value="${item.exp || ''}" />
+          </div>
+          <div class="fa-card-field">
+            <label>Remarks</label>
+            <input type="text" class="fa-item-remarks" data-id="${item.id}" placeholder="Please enter text contents" value="" />
+          </div>
+        </div>
       `;
-      checklistTbody.appendChild(tr);
+
+      // Header click and Toggle button click expands/collapses
+      const header = card.querySelector('.fa-card-header')!;
+      const toggleBtn = card.querySelector('.fa-card-btn-toggle')!;
+      
+      header.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+        const isExpanded = card.classList.toggle('fa-card-expanded');
+        toggleBtn.textContent = isExpanded ? 'Collapse ∧' : 'Expand ∨';
+      });
+
+      toggleBtn.addEventListener('click', () => {
+        const isExpanded = card.classList.toggle('fa-card-expanded');
+        toggleBtn.textContent = isExpanded ? 'Collapse ∧' : 'Expand ∨';
+      });
+
+      // Live update available badge in the header
+      const availInput = card.querySelector('.fa-item-avail') as HTMLInputElement;
+      const availDisplay = card.querySelector('.fa-card-avail-display') as HTMLElement;
+      
+      availInput.addEventListener('input', () => {
+        availDisplay.textContent = availInput.value || '0';
+      });
+
+      checklistContainer.appendChild(card);
     });
   }
 
@@ -388,11 +448,29 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
   // Quick fill handler
   quickfillBtn.addEventListener('click', () => {
-    const inputs = checklistTbody.querySelectorAll<HTMLInputElement>('input.fa-item-avail');
+    const inputs = checklistContainer.querySelectorAll<HTMLInputElement>('input.fa-item-avail');
     inputs.forEach((input) => {
       const req = input.dataset.req || '0';
       input.value = req;
+      input.dispatchEvent(new Event('input')); // updates availDisplay header badges in real-time!
     });
+  });
+
+  // Toggle all cards (Expand All / Collapse All)
+  toggleAllBtn.addEventListener('click', () => {
+    allExpanded = !allExpanded;
+    const cards = checklistContainer.querySelectorAll('.fa-checklist-card');
+    cards.forEach((card) => {
+      const btn = card.querySelector('.fa-card-btn-toggle')!;
+      if (allExpanded) {
+        card.classList.add('fa-card-expanded');
+        btn.textContent = 'Collapse ∧';
+      } else {
+        card.classList.remove('fa-card-expanded');
+        btn.textContent = 'Expand ∨';
+      }
+    });
+    toggleAllBtn.textContent = allExpanded ? 'Collapse All' : 'Expand All';
   });
 
   sigClear.addEventListener('click', () => clearCanvas());
@@ -500,7 +578,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         const itemsList: Array<{ name: string; req: number; avail: number; exp: string; remarks: string }> = [];
         const shortages: Array<{ item_description: string; quantity: number }> = [];
 
-        const rows = checklistTbody.querySelectorAll<HTMLTableRowElement>('tr.item-row');
+        const rows = checklistContainer.querySelectorAll('.item-row');
         rows.forEach((row) => {
           const name = row.querySelector('.item-name')?.textContent || '';
           const availInput = row.querySelector<HTMLInputElement>('input.fa-item-avail');
@@ -693,23 +771,146 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     font-size: 0.85rem;
     font-weight: 700;
   }
-  .fa-items-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 16px;
-    font-size: 0.88rem;
+  /* Collapsible Cards Container & Cards (Jodoo Style) */
+  .fa-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
   }
-  .fa-items-table th,
-  .fa-items-table td {
-    padding: 10px 12px;
+  .fa-checklist-card {
+    background: var(--color-bg, #fff);
     border: 1px solid var(--color-border, #E0E0E0);
-    text-align: left;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
-  .fa-items-table th {
-    background: var(--color-bg-grey, #F4F4F4);
-    font-size: 0.72rem;
+  .fa-checklist-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-color: var(--color-primary, #E58E1A);
+  }
+  .fa-card-header {
+    background: #F8FAFC;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    user-select: none;
+  }
+  .fa-checklist-card.fa-card-expanded .fa-card-header {
+    border-bottom-color: var(--color-border, #E0E0E0);
+    background: #F1F5F9;
+  }
+  .fa-card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .fa-card-badge {
+    background: #3B82F6;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fa-card-item-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text, #1E1E1D);
+  }
+  .fa-card-short-info {
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #6A6A69);
+    background: rgba(0,0,0,0.04);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .fa-card-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .fa-card-btn-toggle {
+    background: transparent;
+    border: none;
+    color: #3B82F6;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .fa-card-btn-toggle:hover {
+    color: #2563EB;
+  }
+  .fa-card-body {
+    display: none;
+    padding: 16px 20px;
+    background: #fff;
+  }
+  .fa-checklist-card.fa-card-expanded .fa-card-body {
+    display: block;
+  }
+  .fa-card-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) {
+    .fa-card-field-row {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+  .fa-card-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .fa-card-field:last-child {
+    margin-bottom: 0;
+  }
+  .fa-card-field label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-text-muted, #6A6A69);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+  .fa-card-field input,
+  .fa-card-field select {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: #FAFAFA;
+    outline: none;
+    border-radius: 4px;
+  }
+  .fa-card-field input:focus,
+  .fa-card-field select:focus {
+    border-color: var(--color-primary, #E58E1A);
+    background: #fff;
+  }
+  /* Read-only styled inputs for predefined name/req */
+  .fa-card-field input[readonly],
+  .fa-card-field input[disabled] {
+    background: #E2E8F0;
+    color: var(--color-text-muted, #6A6A69);
+    cursor: not-allowed;
+    border-color: #CBD5E1;
   }
   .fa-badge-no {
     display: inline-block;

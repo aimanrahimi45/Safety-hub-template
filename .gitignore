@@ -25,6 +25,9 @@ legislation/
 
 # Environment Variables
 .env
+.env.*
 
 # Reference assets (originals, not for production)
 reference/
+.vercel
+.env*

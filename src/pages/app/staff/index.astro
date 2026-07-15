@@ -214,6 +214,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   let supabase: ReturnType<typeof getSupabase> | null = null;
   /** UUID of the row being edited (null = create mode). */
   let editingId: string | null = null;
+  let activeTenantId: string | null = null;
 
   const paginator = new (window as any).PaginationHelper({
     prevBtnId: 'staff-prev',
@@ -488,8 +489,12 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           resetFormToCreate();
           switchTab('roster', { resetForm: false });
         } else {
-          // CREATE path — tenant_id auto-set by RLS WITH CHECK.
-          const insertPayload: Omit<Staff, 'id' | 'tenant_id' | 'created_at' | 'updated_at'> = {
+          // CREATE path — tenant_id explicitly provided to ensure RLS compliance.
+          if (!activeTenantId) {
+            throw new Error('Tenant workspace ID is not resolved. Please refresh the page.');
+          }
+          const insertPayload: Omit<Staff, 'id' | 'created_at' | 'updated_at'> = {
+            tenant_id: activeTenantId,
             employee_id: employeeId,
             full_name: fullName,
             department,
@@ -557,10 +562,14 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
   async function handleImport(mappedRows: Record<string, string>[]): Promise<void> {
     if (!supabase) return;
+    if (!activeTenantId) {
+      throw new Error('Tenant workspace ID is not resolved. Please refresh the page and try again.');
+    }
     // Transform wizard output (string keys) to the Supabase staff
-    // schema. tenant_id auto-set by RLS. is_active defaults to true
-    // for all imported rows (per product decision).
+    // schema. tenant_id is explicitly set to ensure RLS compliance.
+    // is_active defaults to true for all imported rows (per product decision).
     const rows = mappedRows.map((r) => ({
+      tenant_id: activeTenantId,
       employee_id: (r['Employee ID'] ?? '').trim(),
       full_name: (r['Name'] ?? '').trim(),
       department: r['Department']?.trim() || null,
@@ -627,6 +636,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         window.location.replace('/login');
         return;
       }
+      
+      // Query active tenant from tenants table (Solo-SHO mode)
+      const { data: tenantData, error: tenantErr } = await supabase
+        .from('tenants')
+        .select('id')
+        .limit(1);
+        
+      if (tenantErr || !tenantData || tenantData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        return;
+      }
+      activeTenantId = tenantData[0].id;
+
       await Promise.all([loadRoster(), loadDepartmentSuggestions()]);
     })().catch(() => {
       showError('Failed to initialise staff page.');

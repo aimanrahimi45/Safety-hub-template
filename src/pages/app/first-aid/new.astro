@@ -432,7 +432,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             id: it.id,
             name: it.item_name,
             req: parseInt(it.required_std, 10) || 1,
-            unit: it.unit || 'pcs'
+            unit: it.unit || 'pcs',
+            exp: (it as any).expiry_date || ''
           }));
         } else {
           checklistItems = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_ITEMS));

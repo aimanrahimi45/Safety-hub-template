@@ -121,6 +121,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <input type="number" name="category_group" id="inv-form-cat" min="1" placeholder="e.g. 1" />
           <span class="field-hint">Optional. Used to group items in UI.</span>
         </label>
+        <label class="field">
+          <span class="field-label">Expired Date</span>
+          <input type="date" name="expiry_date" id="inv-form-expiry" />
+        </label>
         <label class="field-check">
           <input type="checkbox" name="is_active" id="inv-form-active" checked />
           <span>Active</span>
@@ -216,6 +220,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const formMin = document.getElementById('inv-form-min') as HTMLInputElement;
   const formStd = document.getElementById('inv-form-std') as HTMLInputElement;
   const formCat = document.getElementById('inv-form-cat') as HTMLInputElement;
+  const formExpiry = document.getElementById('inv-form-expiry') as HTMLInputElement;
   const formActive = document.getElementById('inv-form-active') as HTMLInputElement;
   const formTitle = document.getElementById('inv-modal-title') as HTMLElement;
   const formError = document.getElementById('inv-form-error') as HTMLElement;
@@ -348,6 +353,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             <span class="inv-name" title="${escapeHtml(row.item_name)}">${escapeHtml(row.item_name)}</span>
             ${statusText}
             ${row.required_std ? `<span class="inv-std">Std: ${escapeHtml(row.required_std)}</span>` : ''}
+            ${(row as any).expiry_date ? `<span class="inv-expiry" style="font-size: 0.78rem; font-weight: 700; color: #E58E1A; display: block; margin-top: 2px;">📅 Expiry: ${formatDate((row as any).expiry_date)}</span>` : ''}
             <span class="inv-updated">Updated: ${formatDate(row.last_updated)}</span>
           </div>
           <div class="inv-stock-badge ${badgeClass}">
@@ -409,12 +415,14 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       formMin.value = String(row.min_alert_level);
       formStd.value = row.required_std ?? '';
       formCat.value = row.category_group != null ? String(row.category_group) : '';
+      formExpiry.value = (row as any).expiry_date ?? '';
       formActive.checked = row.is_active;
     } else {
       formTitle.textContent = 'Add item';
       formEl.reset();
       formId.value = '';
       formCode.disabled = false;
+      formExpiry.value = '';
       formActive.checked = true;
     }
     formModal.hidden = false;
@@ -594,6 +602,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       const minAlert = Number(formMin.value);
       const requiredStd = formStd.value.trim() || null;
       const categoryGroup = formCat.value ? Number(formCat.value) : null;
+      const expiryDate = formExpiry.value ? formExpiry.value : null;
       const isActive = formActive.checked;
 
       if (!itemCode || !itemName || !unit) {
@@ -630,6 +639,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
                 min_alert_level: minAlert,
                 required_std: requiredStd,
                 category_group: categoryGroup,
+                expiry_date: expiryDate,
                 is_active: isActive,
               })
               .eq('id', id);
@@ -652,6 +662,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
                 min_alert_level: minAlert,
                 required_std: requiredStd,
                 category_group: categoryGroup,
+                expiry_date: expiryDate,
                 is_active: isActive,
               });
             if (error) {
@@ -908,14 +919,12 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     gap: 12px;
     box-shadow: 4px 4px 0px #2B2D42;
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                box-shadow 0.2s ease, 
-                border-radius 0.3s ease-in-out;
+                box-shadow 0.2s ease;
   }
   .inv-card:hover {
     transform: translate(-3px, -3px);
     box-shadow: 6px 6px 0px #2B2D42;
     border-color: #FF6B6B;
-    border-radius: 220px 20px 240px 20px / 20px 240px 20px 220px;
   }
   .inv-card-body {
     display: flex;

@@ -443,6 +443,35 @@ const WIZARD_CSS = `
   animation: iw-spin 0.9s linear infinite;
 }
 @keyframes iw-spin { to { transform: rotate(360deg); } }
+
+/* Sheet selector container */
+.iw-sheet-select-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 14px;
+}
+.iw-sheet-select-container label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted, #6A6A69);
+}
+.iw-sheet-select-container select {
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border, #E0E0E0);
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #1E1E1D);
+}
+.iw-sheet-select-container select:focus {
+  outline: 2px solid var(--color-primary, #E58E1A);
+  border-color: var(--color-primary, #E58E1A);
+}
 `;
 
 /** Inject wizard styles into <head>; idempotent. */
@@ -607,16 +636,18 @@ export function openImportWizard(options: WizardOptions): void {
       </div>
       <div class="iw-body">
         <div id="iw-error" class="iw-error" hidden></div>
-
-        <!-- Step 0: Upload -->
-        <div class="iw-upload-zone" id="iw-drop-zone">
-          <input type="file" id="iw-file-input" accept=".csv,.xlsx,.xls" hidden />
-          <div class="iw-upload-text">📥 Click or drag an Excel/CSV file here</div>
-          <div class="iw-upload-hint">Supports .csv, .xlsx, .xls</div>
+ 
+        <!-- Step 0: Upload & Sheet Select -->
+        <div class="iw-preview-wrap" id="iw-step-upload">
+          <div class="iw-upload-zone" id="iw-drop-zone">
+            <input type="file" id="iw-file-input" accept=".csv,.xlsx,.xls" hidden />
+            <div class="iw-upload-text">📥 Click or drag an Excel/CSV file here</div>
+            <div class="iw-upload-hint">Supports .csv, .xlsx, .xls</div>
+          </div>
+          <div id="iw-sheet-container" class="iw-sheet-select-container" hidden></div>
         </div>
-
-        <!-- Step 1: Header row selection (Click Mode toggle for section
-             headers — only rendered when enableSectionHeaders: true). -->
+ 
+        <!-- Step 1: Header row selection -->
         <div class="iw-preview-wrap" id="iw-step-preview" hidden>
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
             <div>
@@ -637,7 +668,7 @@ export function openImportWizard(options: WizardOptions): void {
             </table>
           </div>
         </div>
-
+ 
         <!-- Step 2: Field mapping -->
         <div class="iw-preview-wrap" id="iw-step-mapping" hidden>
           <span class="iw-step-label">Step 2 — Match each column to a target field</span>
@@ -646,7 +677,9 @@ export function openImportWizard(options: WizardOptions): void {
         </div>
       </div>
       <div class="iw-footer">
-        <button type="button" class="iw-btn iw-btn-secondary" id="iw-btn-cancel">Cancel</button>
+        <button type="button" class="iw-btn iw-btn-secondary" id="iw-btn-cancel" style="margin-right: auto;">Cancel</button>
+        <button type="button" class="iw-btn iw-btn-secondary" id="iw-btn-back" hidden>Back</button>
+        <button type="button" class="iw-btn iw-btn-primary" id="iw-btn-next" hidden disabled>Next</button>
         <button type="button" class="iw-btn iw-btn-primary" id="iw-btn-confirm" hidden disabled>Confirm &amp; Import</button>
       </div>
       <div id="iw-loading" class="iw-loading" hidden>
@@ -664,8 +697,10 @@ export function openImportWizard(options: WizardOptions): void {
 
   // Refs
   const errEl = overlay.querySelector<HTMLElement>("#iw-error")!;
+  const stepUpload = overlay.querySelector<HTMLElement>("#iw-step-upload")!;
   const dropZone = overlay.querySelector<HTMLElement>("#iw-drop-zone")!;
   const fileInput = overlay.querySelector<HTMLInputElement>("#iw-file-input")!;
+  const sheetContainer = overlay.querySelector<HTMLElement>("#iw-sheet-container")!;
   const stepPreview = overlay.querySelector<HTMLElement>("#iw-step-preview")!;
   const stepMapping = overlay.querySelector<HTMLElement>("#iw-step-mapping")!;
   const thead = overlay.querySelector<HTMLElement>("#iw-thead")!;
@@ -673,6 +708,8 @@ export function openImportWizard(options: WizardOptions): void {
   const mappingGrid = overlay.querySelector<HTMLElement>("#iw-mapping-grid")!;
   const closeXBtn = overlay.querySelector<HTMLButtonElement>("#iw-close-x")!;
   const cancelBtn = overlay.querySelector<HTMLButtonElement>("#iw-btn-cancel")!;
+  const backBtn = overlay.querySelector<HTMLButtonElement>("#iw-btn-back")!;
+  const nextBtn = overlay.querySelector<HTMLButtonElement>("#iw-btn-next")!;
   const confirmBtn = overlay.querySelector<HTMLButtonElement>("#iw-btn-confirm")!;
   const loadingEl = overlay.querySelector<HTMLElement>("#iw-loading")!;
   const loadingText = overlay.querySelector<HTMLElement>("#iw-loading-text")!;
@@ -684,6 +721,39 @@ export function openImportWizard(options: WizardOptions): void {
   const modeHeaderBtn = overlay.querySelector<HTMLButtonElement>("#iw-mode-header")!;
   const modeSectionBtn = overlay.querySelector<HTMLButtonElement>("#iw-mode-section")!;
   const modeHint = overlay.querySelector<HTMLElement>("#iw-mode-hint")!;
+
+  let currentStep = 0; // 0: Upload, 1: Header Picker, 2: Field Mapping
+
+  function showStep(stepIdx: number): void {
+    currentStep = stepIdx;
+    clearError();
+
+    // Hide all step containers
+    stepUpload.hidden = true;
+    stepPreview.hidden = true;
+    stepMapping.hidden = true;
+
+    // Hide all footer action buttons by default
+    backBtn.hidden = true;
+    nextBtn.hidden = true;
+    confirmBtn.hidden = true;
+
+    if (currentStep === 0) {
+      stepUpload.hidden = false;
+      nextBtn.hidden = false;
+      nextBtn.disabled = parsedRows.length === 0;
+    } else if (currentStep === 1) {
+      stepPreview.hidden = false;
+      backBtn.hidden = false;
+      nextBtn.hidden = false;
+      nextBtn.disabled = false;
+    } else if (currentStep === 2) {
+      stepMapping.hidden = false;
+      backBtn.hidden = false;
+      confirmBtn.hidden = false;
+      refreshConfirmEnabled();
+    }
+  }
 
   function showError(msg: string): void {
     errEl.hidden = false;
@@ -704,11 +774,15 @@ export function openImportWizard(options: WizardOptions): void {
       if (msg) loadingText.textContent = msg;
       closeXBtn.disabled = true;
       cancelBtn.disabled = true;
+      backBtn.disabled = true;
+      nextBtn.disabled = true;
       confirmBtn.disabled = true;
     } else {
       loadingEl.hidden = true;
       closeXBtn.disabled = false;
       cancelBtn.disabled = false;
+      backBtn.disabled = false;
+      nextBtn.disabled = false;
       refreshConfirmEnabled();
     }
   }
@@ -738,6 +812,41 @@ export function openImportWizard(options: WizardOptions): void {
         const XLSX = await loadSheetJS();
         const buf = await file.arrayBuffer();
         const wb = XLSX.read(buf, { type: "array" });
+
+        // If workbook has multiple sheets, show the selector
+        if (wb.SheetNames.length > 1) {
+          let selectHtml = `<label for="iw-sheet-select">Select Sheet: </label>`;
+          selectHtml += `<select id="iw-sheet-select">`;
+          wb.SheetNames.forEach((name) => {
+            selectHtml += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+          });
+          selectHtml += `</select>`;
+          sheetContainer.innerHTML = selectHtml;
+          sheetContainer.hidden = false;
+
+          const sheetSelect = sheetContainer.querySelector<HTMLSelectElement>("#iw-sheet-select")!;
+          sheetSelect.addEventListener("change", () => {
+            clearError();
+            const selectedName = sheetSelect.value;
+            const sheet = wb.Sheets[selectedName];
+            if (sheet) {
+              const rows = XLSX.utils.sheet_to_json<CellValue[]>(sheet, {
+                header: 1,
+                defval: "",
+                blankrows: false,
+              });
+              parsedRows = rows.map((r: SourceRow | undefined) => r ?? []);
+              headerRowIdx = 0;
+              sectionHeaderRowIdxs.clear();
+              renderPreview();
+              renderMapping();
+            }
+          });
+        } else {
+          sheetContainer.hidden = true;
+          sheetContainer.innerHTML = "";
+        }
+
         const firstSheet = wb.SheetNames[0];
         if (!firstSheet) {
           showError("The uploaded workbook has no sheets.");
@@ -755,6 +864,8 @@ export function openImportWizard(options: WizardOptions): void {
         }
         parsedRows = rows.map((r: SourceRow | undefined) => r ?? []);
       } else {
+        sheetContainer.hidden = true;
+        sheetContainer.innerHTML = "";
         const text = await file.text();
         const rows = parseCSV(text);
         if (rows.length === 0) {
@@ -769,10 +880,10 @@ export function openImportWizard(options: WizardOptions): void {
       clickModeBox.hidden = !enableSections;
       setClickMode("HEADER");
       renderMapping();
-      stepPreview.hidden = false;
-      stepMapping.hidden = false;
-      confirmBtn.hidden = false;
-      refreshConfirmEnabled();
+      
+      // Update navigation step
+      nextBtn.disabled = false;
+      showStep(0);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to parse the file.";
       showError(msg);
@@ -1074,6 +1185,12 @@ export function openImportWizard(options: WizardOptions): void {
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
+  backBtn.addEventListener("click", () => {
+    if (currentStep > 0) showStep(currentStep - 1);
+  });
+  nextBtn.addEventListener("click", () => {
+    if (currentStep < 2) showStep(currentStep + 1);
+  });
   confirmBtn.addEventListener("click", () => {
     void onConfirm();
   });
@@ -1099,4 +1216,7 @@ export function openImportWizard(options: WizardOptions): void {
     const f = fileInput.files?.[0];
     if (f) void processFile(f);
   });
+
+  // Bootstrap steps
+  showStep(0);
 }

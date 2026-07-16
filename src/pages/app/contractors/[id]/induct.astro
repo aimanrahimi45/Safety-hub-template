@@ -9,6 +9,12 @@
 //   4. if this is the contractor's first induction, auto-flip
 //      contractors.status to 'inducted'
 //   5. redirect to /app/contractors/<id>
+//
+// Added legacy features:
+//   - Inline IC lookup (worker verification)
+//   - 3 safety declaration checkboxes
+//   - Live camera capture alongside file upload
+//   - Group induction mode with batch queue
 import AppLayout from '../../../../layouts/AppLayout.astro';
 
 export function getStaticPaths() {
@@ -37,7 +43,28 @@ export function getStaticPaths() {
         <a id="ct-back-link" href="/app/contractors" class="ct-link-btn">← Back</a>
       </header>
 
+      <!-- Group induction toggle -->
+      <div class="ct-toggle-container">
+        <span class="ct-toggle-label">Induct a Group of Contractors?</span>
+        <label class="ct-switch">
+          <input type="checkbox" id="ct-group-toggle">
+          <span class="ct-slider"></span>
+        </label>
+      </div>
+
       <form id="ct-form" novalidate>
+
+        <!-- Worker verification (IC lookup) -->
+        <fieldset class="ct-fieldset">
+          <legend>Worker verification</legend>
+          <p class="ct-hint">Check if the worker has been inducted before at this site.</p>
+          <div class="ct-search-bar">
+            <input type="text" id="ct-search-ic" placeholder="IC or Passport No.">
+            <button type="button" id="ct-lookup-btn" class="ct-secondary-btn">Check Status</button>
+          </div>
+          <div id="ct-lookup-result" hidden></div>
+        </fieldset>
+
         <!-- A. Worker info -->
         <fieldset class="ct-fieldset">
           <legend>A. Worker information</legend>
@@ -64,12 +91,46 @@ export function getStaticPaths() {
               <span class="field-hint">Optional. Used by the IC lookup to flag expired inductions.</span>
             </label>
           </div>
+
+          <!-- Safety Declaration checkboxes -->
+          <label class="field" style="margin-top: 4px;">
+            <span class="field-label">Safety Declaration <em>*</em></span>
+          </label>
+          <div class="ct-checklist-group">
+            <label class="ct-checkbox-container">
+              <input type="checkbox" class="ct-iso-check" data-topic="Emergency Evacuation Plan" required>
+              <span>I understand the site Emergency Evacuation Plan & Assembly Points.</span>
+            </label>
+            <label class="ct-checkbox-container">
+              <input type="checkbox" class="ct-iso-check" data-topic="PPE Requirements" required>
+              <span>I understand the mandatory PPE requirements for my work area.</span>
+            </label>
+            <label class="ct-checkbox-container">
+              <input type="checkbox" class="ct-iso-check" data-topic="Hazard Reporting" required>
+              <span>I agree to report all hazards, near-misses, and accidents immediately.</span>
+            </label>
+          </div>
         </fieldset>
 
-        <!-- B. Photo upload -->
+        <!-- B. Photo upload + camera capture -->
         <fieldset class="ct-fieldset">
           <legend>B. Photo (optional)</legend>
-          <p class="ct-hint">Take or choose a photo of the worker. Resized to max 800×800 before upload.</p>
+          <p class="ct-hint">Take a live photo or choose a file. Resized to max 800×800 before upload.</p>
+
+          <!-- Live camera capture -->
+          <div id="ct-camera-container" class="ct-camera-container">
+            <video id="ct-video-feed" class="ct-video-feed" autoplay playsinline></video>
+            <img id="ct-captured-photo" class="ct-captured-photo" alt="Captured identity photo">
+            <canvas id="ct-photo-canvas" style="display:none"></canvas>
+            <div class="ct-camera-btn-group">
+              <button type="button" id="ct-open-camera" class="ct-secondary-btn">Open Camera</button>
+              <button type="button" id="ct-switch-camera" class="ct-secondary-btn" style="display:none;">Switch Camera</button>
+              <button type="button" id="ct-capture" class="ct-primary-btn" style="display:none;">Take Photo</button>
+              <button type="button" id="ct-retake" class="ct-secondary-btn" style="display:none;">Retake</button>
+            </div>
+          </div>
+
+          <p class="ct-hint" style="margin-top: 14px;">Or upload a file…</p>
           <label class="field">
             <span class="field-label">Worker photo</span>
             <input type="file" id="ct-photo-input" accept="image/*" capture="environment" />
@@ -113,6 +174,14 @@ export function getStaticPaths() {
           <button type="submit" id="ct-submit" class="ct-primary-btn">Save induction</button>
         </div>
       </form>
+
+      <!-- Batch queue (group induction) -->
+      <div id="ct-batch-section" class="ct-batch-card" hidden>
+        <h2>Queued Workers (<span id="ct-queue-count">0</span>)</h2>
+        <p class="ct-hint">These workers will be submitted as a group once you click "Submit Group".</p>
+        <div id="ct-batch-queue" class="ct-batch-list"></div>
+        <button type="button" id="ct-submit-group" class="ct-primary-btn ct-btn-green" disabled>Submit Group Induction</button>
+      </div>
     </div>
   </main>
 </AppLayout>
@@ -121,7 +190,7 @@ export function getStaticPaths() {
   import { getSupabase, isSupabaseConfigured } from '../../../../lib/supabase';
   import { resizeImage, formatBytes, ResizeError } from '../../../../lib/imageResize';
   import { uploadToStorage } from '../../../../lib/storage';
-  import type { Contractor, ContractorDeclaration, InductionRecord } from '../../../../lib/types';
+  import type { Contractor, ContractorDeclaration, InductionRecord, WorkerLookupResult } from '../../../../lib/types';
 
   const setupWarning = document.getElementById('ct-setup-warning') as HTMLElement;
   const errorEl = document.getElementById('ct-error') as HTMLElement;
@@ -143,9 +212,30 @@ export function getStaticPaths() {
   const sigClear = document.getElementById('ct-sig-clear') as HTMLButtonElement;
   const sigData = document.getElementById('ct-sig-data') as HTMLInputElement;
   const sigPreviewWrap = document.getElementById('ct-sig-preview-wrap') as HTMLElement;
+  const sigPreview = document.getElementById('ct-sig-preview') as HTMLImageElement;
 
   const declarationEl = document.getElementById('ct-declaration') as HTMLElement;
   const ackEl = document.getElementById('ct-ack') as HTMLInputElement;
+
+  // Group induction refs
+  const groupToggle = document.getElementById('ct-group-toggle') as HTMLInputElement;
+  const batchSection = document.getElementById('ct-batch-section') as HTMLElement;
+  const batchQueue = document.getElementById('ct-batch-queue') as HTMLElement;
+  const queueCount = document.getElementById('ct-queue-count') as HTMLElement;
+  const submitGroupBtn = document.getElementById('ct-submit-group') as HTMLButtonElement;
+
+  // IC lookup refs
+  const searchIcEl = document.getElementById('ct-search-ic') as HTMLInputElement;
+  const lookupResult = document.getElementById('ct-lookup-result') as HTMLElement;
+
+  // Camera refs
+  const videoFeed = document.getElementById('ct-video-feed') as HTMLVideoElement;
+  const capturedPhoto = document.getElementById('ct-captured-photo') as HTMLImageElement;
+  const photoCanvas = document.getElementById('ct-photo-canvas') as HTMLCanvasElement;
+  const btnOpenCamera = document.getElementById('ct-open-camera') as HTMLButtonElement;
+  const btnSwitchCamera = document.getElementById('ct-switch-camera') as HTMLButtonElement;
+  const btnCapture = document.getElementById('ct-capture') as HTMLButtonElement;
+  const btnRetake = document.getElementById('ct-retake') as HTMLButtonElement;
 
   function showError(msg: string): void {
     errorEl.hidden = false;
@@ -157,6 +247,11 @@ export function getStaticPaths() {
   function today(): string {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
   }
 
   function getContractorId(): string {
@@ -214,7 +309,109 @@ export function getStaticPaths() {
     sigData.value = 'pending-upload';
   });
 
-  // --- Photo handling ---------------------------------------------------
+  // --- IC lookup ----------------------------------------------------------
+  const lookupBtn = document.getElementById('ct-lookup-btn') as HTMLButtonElement;
+  lookupBtn.addEventListener('click', () => {
+    if (!supabase) return;
+    const ic = searchIcEl.value.trim();
+    if (!ic) { lookupResult.hidden = false; lookupResult.innerHTML = `<div class="ct-lookup-msg ct-lookup-msg--warn">Enter IC number first.</div>`; return; }
+    lookupResult.hidden = false;
+    lookupResult.innerHTML = `<div class="ct-lookup-msg">Checking status…</div>`;
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc('lookup_worker_by_ic', { p_ic: ic }) as { data: WorkerLookupResult[] | null; error: any };
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          lookupResult.innerHTML = `<div class="ct-lookup-msg ct-lookup-msg--bad">Not found. New induction needed.</div>`;
+        } else {
+          const r = data[0];
+          if (r.is_expired) {
+            lookupResult.innerHTML = `<div class="ct-lookup-msg ct-lookup-msg--warn">EXPIRED. Re-induction required!<br><small>Inducted: ${escapeHtml(r.induction_date)} at ${escapeHtml(r.company_name)}</small></div>`;
+          } else if (r.worker_name) {
+            (document.getElementById('ct-worker-name') as HTMLInputElement).value = r.worker_name;
+            lookupResult.innerHTML = `<div class="ct-lookup-msg ct-lookup-msg--ok">VALID. Induction is current.<br><small>Inducted: ${escapeHtml(r.induction_date)} at ${escapeHtml(r.company_name)}</small></div>`;
+          }
+        }
+      } catch (e) {
+        lookupResult.innerHTML = `<div class="ct-lookup-msg ct-lookup-msg--bad">Error checking status.</div>`;
+      }
+    })();
+  });
+
+  // Auto-lookup when IC field changes (debounced via lookup button)
+  // Also sync IC field to lookup field
+  const workerIcEl = document.getElementById('ct-worker-ic') as HTMLInputElement;
+  workerIcEl.addEventListener('input', () => {
+    searchIcEl.value = workerIcEl.value;
+  });
+  searchIcEl.addEventListener('input', () => {
+    workerIcEl.value = searchIcEl.value;
+  });
+
+  // --- Camera capture -----------------------------------------------------
+  let cameraStream: MediaStream | null = null;
+  let cameraPhotoData: string | null = null;
+  let currentFacingMode: string = 'user';
+
+  async function startCamera(): Promise<void> {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+      videoFeed.srcObject = cameraStream;
+      videoFeed.style.display = 'block';
+      capturedPhoto.style.display = 'none';
+      btnOpenCamera.style.display = 'none';
+      btnSwitchCamera.style.display = 'inline-flex';
+      btnCapture.style.display = 'inline-flex';
+      btnRetake.style.display = 'none';
+    } catch (err: any) {
+      showError('Camera access denied or unavailable: ' + (err.message || ''));
+    }
+  }
+
+  btnOpenCamera.addEventListener('click', startCamera);
+
+  btnSwitchCamera.addEventListener('click', () => {
+    currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+    startCamera();
+  });
+
+  btnCapture.addEventListener('click', () => {
+    const MAX_WIDTH = 800;
+    const scale = Math.min(MAX_WIDTH / videoFeed.videoWidth, 1);
+    photoCanvas.width = videoFeed.videoWidth * scale;
+    photoCanvas.height = videoFeed.videoHeight * scale;
+    const ctx = photoCanvas.getContext('2d');
+    if (ctx) ctx.drawImage(videoFeed, 0, 0, photoCanvas.width, photoCanvas.height);
+    cameraPhotoData = photoCanvas.toDataURL('image/jpeg', 0.6);
+    capturedPhoto.src = cameraPhotoData;
+    capturedPhoto.style.display = 'block';
+    videoFeed.style.display = 'none';
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream = null;
+    }
+    btnCapture.style.display = 'none';
+    btnSwitchCamera.style.display = 'none';
+    btnRetake.style.display = 'inline-flex';
+    btnOpenCamera.style.display = 'none';
+    // Also set the hidden photo data field for submission
+    photoData.value = cameraPhotoData;
+    photoPreview.src = cameraPhotoData;
+    photoPreviewWrap.hidden = false;
+    photoInfo.textContent = 'Photo captured from camera.';
+  });
+
+  btnRetake.addEventListener('click', () => {
+    cameraPhotoData = null;
+    photoData.value = '';
+    photoPreviewWrap.hidden = true;
+    startCamera();
+  });
+
+  // --- Photo handling (file upload) ---------------------------------------
   photoInput.addEventListener('change', async () => {
     clearError();
     const file = photoInput.files?.[0];
@@ -247,13 +444,15 @@ export function getStaticPaths() {
     photoData.value = '';
     photoPreviewWrap.hidden = true;
     photoInfo.textContent = 'No file selected.';
+    cameraPhotoData = null;
+    capturedPhoto.style.display = 'none';
+    videoFeed.style.display = 'none';
   });
 
   // --- Init + submit ----------------------------------------------------
   let currentContractor: Contractor | null = null;
   let authUserId: string | null = null;
   let supabase: ReturnType<typeof getSupabase> | null = null;
-  const sigPreview = document.getElementById('ct-sig-preview') as HTMLImageElement;
   let sigLocalDataUrl: string | null = null;
 
   if (!isSupabaseConfigured()) {
@@ -275,7 +474,8 @@ export function getStaticPaths() {
     }
     const prefillIc = readQueryIc();
     if (prefillIc) {
-      (document.getElementById('ct-worker-ic') as HTMLInputElement).value = prefillIc;
+      workerIcEl.value = prefillIc;
+      searchIcEl.value = prefillIc;
     }
     try {
       const { data: userData, error: userErr } = await supabase.auth.getUser();
@@ -312,13 +512,160 @@ export function getStaticPaths() {
     }
   }
 
+  // --- Group induction logic ----------------------------------------------
+  let batchWorkers: Array<{
+    workerName: string;
+    workerIc: string;
+    inductionDate: string;
+    expiresAt: string | null;
+    topicsCovered: string[];
+    photoDataUrl: string | null;
+    signatureDataUrl: string | null;
+  }> = [];
+
+  function renderBatchQueue(): void {
+    batchQueue.innerHTML = '';
+    queueCount.textContent = String(batchWorkers.length);
+    batchWorkers.forEach((w, index) => {
+      const item = document.createElement('div');
+      item.className = 'ct-batch-item';
+      item.innerHTML = `
+        <div class="ct-batch-item-info">
+          <span class="ct-batch-item-name">${index + 1}. ${escapeHtml(w.workerName)}</span>
+          <span class="ct-batch-item-ic">IC/Passport: ${escapeHtml(w.workerIc)}</span>
+        </div>
+        <button type="button" class="ct-batch-remove" data-index="${index}">Remove</button>
+      `;
+      batchQueue.appendChild(item);
+    });
+    submitGroupBtn.disabled = batchWorkers.length === 0;
+    // Lock company-level fields when at least one worker is queued
+    const shouldLock = batchWorkers.length > 0;
+    (document.getElementById('ct-induction-date') as HTMLInputElement).disabled = shouldLock;
+    (document.getElementById('ct-expires-at') as HTMLInputElement).disabled = shouldLock;
+    document.querySelectorAll('.ct-iso-check').forEach(cb => (cb as HTMLInputElement).disabled = shouldLock);
+  }
+
+  batchQueue.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.ct-batch-remove') as HTMLButtonElement | null;
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.index ?? '', 10);
+    if (!isNaN(idx) && idx >= 0 && idx < batchWorkers.length) {
+      batchWorkers.splice(idx, 1);
+    }
+    renderBatchQueue();
+  });
+
+  groupToggle.addEventListener('change', () => {
+    if (groupToggle.checked) {
+      batchSection.hidden = false;
+      submitBtn.textContent = '➕ Add Worker to Group';
+    } else {
+      if (batchWorkers.length > 0) {
+        if (!confirm('You have workers in the queue. Turning off group mode will discard them. Discard?')) {
+          groupToggle.checked = true;
+          return;
+        }
+        batchWorkers = [];
+        renderBatchQueue();
+      }
+      batchSection.hidden = true;
+      submitBtn.textContent = 'Save induction';
+      (document.getElementById('ct-induction-date') as HTMLInputElement).disabled = false;
+      (document.getElementById('ct-expires-at') as HTMLInputElement).disabled = false;
+      document.querySelectorAll('.ct-iso-check').forEach(cb => (cb as HTMLInputElement).disabled = false);
+    }
+  });
+
+  async function submitInductionRecords(records: typeof batchWorkers): Promise<void> {
+    if (!supabase || !authUserId || !currentContractor) return;
+    submitBtn.disabled = true;
+    submitGroupBtn.disabled = true;
+    let successCount = 0;
+
+    for (let i = 0; i < records.length; i++) {
+      const w = records[i];
+      if (records.length > 1) {
+        submitBtn.textContent = `Saving ${i + 1}/${records.length}…`;
+      }
+
+      try {
+        let photoUrl: string | null = null;
+        let signatureUrl: string | null = null;
+
+        if (w.photoDataUrl) {
+          const photoBlob = await (await fetch(w.photoDataUrl)).blob();
+          const photoResult = await uploadToStorage('induction-photos', photoBlob, 'photo', 'jpg');
+          if (photoResult.error) throw new Error(`Photo upload failed: ${photoResult.error}`);
+          photoUrl = photoResult.url;
+        }
+
+        if (w.signatureDataUrl) {
+          const sigBlob = await (await fetch(w.signatureDataUrl)).blob();
+          const sigResized = await resizeImage(sigBlob, {
+            maxWidth: 200,
+            maxHeight: 100,
+            quality: 0.7,
+            outputType: 'image/png',
+          });
+          const sigResult = await uploadToStorage('signatures', sigResized.blob, 'sig', 'png');
+          if (sigResult.error) throw new Error(`Signature upload failed: ${sigResult.error}`);
+          signatureUrl = sigResult.url;
+        }
+
+        const insertPayload: Omit<InductionRecord, 'id' | 'tenant_id' | 'created_at'> = {
+          contractor_id: currentContractor.id,
+          inducted_by: authUserId!,
+          worker_name: w.workerName,
+          worker_ic: w.workerIc,
+          induction_date: w.inductionDate,
+          topics_covered: w.topicsCovered,
+          signature_url: signatureUrl,
+          photo_url: photoUrl,
+          expires_at: w.expiresAt,
+        };
+        const { error: createErr } = await supabase
+          .from('induction_records')
+          .insert(insertPayload)
+          .select('id')
+          .single();
+        if (createErr) throw createErr;
+
+        successCount++;
+      } catch (e) {
+        showError(e instanceof Error ? e.message : `Failed to save induction for worker "${w.workerName}".`);
+        submitBtn.disabled = false;
+        submitGroupBtn.disabled = batchWorkers.length > 0;
+        return;
+      }
+    }
+
+    if (currentContractor.status === 'pending_induction') {
+      await supabase
+        .from('contractors')
+        .update({ status: 'inducted' })
+        .eq('id', currentContractor.id);
+    }
+
+    if (records.length > 1) {
+      alert(`Successfully saved ${successCount} induction record(s)!`);
+    }
+    window.location.href = `/app/contractors/${currentContractor.id}`;
+  }
+
+  submitGroupBtn.addEventListener('click', () => {
+    if (batchWorkers.length === 0) return;
+    if (!confirm(`Submit safety induction logs for this group of ${batchWorkers.length} worker(s)?`)) return;
+    submitInductionRecords(batchWorkers);
+  });
+
   formEl.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (!supabase || !authUserId || !currentContractor) return;
     clearError();
 
     const workerName = (document.getElementById('ct-worker-name') as HTMLInputElement).value.trim();
-    const workerIc   = (document.getElementById('ct-worker-ic') as HTMLInputElement).value.trim();
+    const workerIc   = workerIcEl.value.trim();
     const inductionDate = (document.getElementById('ct-induction-date') as HTMLInputElement).value;
     const expiresAt = (document.getElementById('ct-expires-at') as HTMLInputElement).value || null;
 
@@ -331,69 +678,55 @@ export function getStaticPaths() {
       return;
     }
 
-    submitBtn.disabled = true;
-    const original = submitBtn.textContent;
-    submitBtn.textContent = 'Saving…';
-
-    try {
-      let photoUrl: string | null = null;
-      let signatureUrl: string | null = null;
-
-      if (photoData.value) {
-        const photoBlob = await (await fetch(photoData.value)).blob();
-        const photoResult = await uploadToStorage('induction-photos', photoBlob, 'photo', 'jpg');
-        if (photoResult.error) throw new Error(`Photo upload failed: ${photoResult.error}`);
-        photoUrl = photoResult.url;
-      } else if (photoInput.files && photoInput.files[0]) {
-        const photoBlob = photoInput.files[0];
-        const photoResult = await uploadToStorage('induction-photos', photoBlob, 'photo', 'jpg');
-        if (photoResult.error) throw new Error(`Photo upload failed: ${photoResult.error}`);
-        photoUrl = photoResult.url;
+    // Validate all 3 declaration checkboxes are checked
+    const isoChecks = document.querySelectorAll<HTMLInputElement>('.ct-iso-check');
+    const checkedTopics: string[] = [];
+    for (const cb of isoChecks) {
+      if (!cb.checked) {
+        showError('Please check all Safety Declaration items before submitting.');
+        return;
       }
+      checkedTopics.push(cb.dataset.topic ?? '');
+    }
 
-      if (sigLocalDataUrl) {
-        const sigBlob = await (await fetch(sigLocalDataUrl)).blob();
-        const sigResized = await resizeImage(sigBlob, {
-          maxWidth: 200,
-          maxHeight: 100,
-          quality: 0.7,
-          outputType: 'image/png',
-        });
-        const sigResult = await uploadToStorage('signatures', sigResized.blob, 'sig', 'png');
-        if (sigResult.error) throw new Error(`Signature upload failed: ${sigResult.error}`);
-        signatureUrl = sigResult.url;
+    const workerData = {
+      workerName,
+      workerIc,
+      inductionDate,
+      expiresAt,
+      topicsCovered: checkedTopics,
+      photoDataUrl: photoData.value || cameraPhotoData || null,
+      signatureDataUrl: sigLocalDataUrl || null,
+    };
+
+    if (groupToggle.checked) {
+      // Group mode: queue the worker
+      batchWorkers.push(workerData);
+      renderBatchQueue();
+      // Clear worker fields
+      (document.getElementById('ct-worker-name') as HTMLInputElement).value = '';
+      workerIcEl.value = '';
+      searchIcEl.value = '';
+      sigClear.click();
+      clearCanvas();
+      photoData.value = '';
+      photoPreviewWrap.hidden = true;
+      photoInput.value = '';
+      photoInfo.textContent = 'No file selected.';
+      cameraPhotoData = null;
+      capturedPhoto.style.display = 'none';
+      videoFeed.style.display = 'none';
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
       }
-
-      const insertPayload: Omit<InductionRecord, 'id' | 'tenant_id' | 'created_at'> = {
-        contractor_id: currentContractor.id,
-        inducted_by: authUserId!,
-        worker_name: workerName,
-        worker_ic: workerIc,
-        induction_date: inductionDate,
-        topics_covered: [],
-        signature_url: signatureUrl,
-        photo_url: photoUrl,
-        expires_at: expiresAt,
-      };
-      const { error: createErr } = await supabase
-        .from('induction_records')
-        .insert(insertPayload)
-        .select('id')
-        .single();
-      if (createErr) throw createErr;
-
-      if (currentContractor.status === 'pending_induction') {
-        await supabase
-          .from('contractors')
-          .update({ status: 'inducted' })
-          .eq('id', currentContractor.id);
-      }
-
-      window.location.href = `/app/contractors/${currentContractor.id}`;
-    } catch (e) {
-      showError(e instanceof Error ? e.message : 'Failed to save induction.');
-      submitBtn.disabled = false;
-      submitBtn.textContent = original;
+      btnOpenCamera.style.display = 'inline-flex';
+      btnCapture.style.display = 'none';
+      btnSwitchCamera.style.display = 'none';
+      btnRetake.style.display = 'none';
+    } else {
+      // Single mode: submit immediately
+      submitInductionRecords([workerData]);
     }
   });
 
@@ -422,7 +755,7 @@ export function getStaticPaths() {
     align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
   }
   .ct-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
@@ -441,6 +774,68 @@ export function getStaticPaths() {
     align-items: center;
   }
   .ct-link-btn:hover { color: var(--color-primary, #E58E1A); border-color: var(--color-primary, #E58E1A); }
+
+  /* Group toggle */
+  .ct-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--color-bg, #fff);
+    padding: 14px 18px;
+    border: 1px solid var(--color-border, #E0E0E0);
+    margin-bottom: 20px;
+  }
+  .ct-toggle-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--color-text, #1E1E1D);
+  }
+  .ct-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+  }
+  .ct-switch input { opacity: 0; width: 0; height: 0; }
+  .ct-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1;
+    transition: .3s;
+    border-radius: 24px;
+  }
+  .ct-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  .ct-switch input:checked + .ct-slider { background-color: var(--color-primary, #E58E1A); }
+  .ct-switch input:checked + .ct-slider:before { transform: translateX(24px); }
+
+  /* IC lookup */
+  .ct-search-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ct-search-bar input { flex: 1; min-width: 200px; }
+  .ct-search-bar button { white-space: nowrap; }
+  .ct-lookup-msg {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .ct-lookup-msg--ok { background: #dcfce7; color: #166534; }
+  .ct-lookup-msg--warn { background: #fee2e2; color: #991b1b; }
+  .ct-lookup-msg--bad { background: #fef9c3; color: #854d0e; }
 
   .ct-fieldset {
     background: var(--color-bg, #fff);
@@ -505,6 +900,59 @@ export function getStaticPaths() {
   }
   .field-check em { color: var(--color-primary, #E58E1A); font-style: normal; }
 
+  /* Safety declaration checkboxes */
+  .ct-checklist-group {
+    background: var(--color-bg-grey, #F4F4F4);
+    padding: 14px;
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    margin-top: 4px;
+  }
+  .ct-checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    cursor: pointer;
+    gap: 10px;
+  }
+  .ct-checkbox-container:last-child { margin-bottom: 0; }
+  .ct-checkbox-container input {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary, #E58E1A);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .ct-checkbox-container span {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #6A6A69);
+    line-height: 1.4;
+  }
+
+  /* Camera */
+  .ct-camera-container {
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 14px;
+    margin-bottom: 8px;
+    background: var(--color-bg-grey, #F4F4F4);
+    text-align: center;
+  }
+  .ct-video-feed, .ct-captured-photo {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 8px;
+    display: none;
+    margin: 0 auto 12px auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .ct-camera-btn-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .ct-camera-btn-group button { flex: 1; min-width: 100px; }
+
   .ct-photo-preview {
     display: block;
     max-width: 240px;
@@ -541,6 +989,62 @@ export function getStaticPaths() {
     margin-bottom: 12px;
   }
 
+  /* Batch queue (group induction) */
+  .ct-batch-card {
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 20px 24px;
+    margin-top: 8px;
+  }
+  .ct-batch-card h2 {
+    font-size: 1.05rem;
+    font-weight: 900;
+    margin: 0 0 4px;
+  }
+  .ct-batch-list {
+    margin: 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .ct-batch-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-bg-grey, #F4F4F4);
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ct-batch-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ct-batch-item-name {
+    font-weight: 700;
+    color: var(--color-text, #1E1E1D);
+  }
+  .ct-batch-item-ic {
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #6A6A69);
+  }
+  .ct-batch-remove {
+    background: transparent;
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  .ct-batch-remove:hover { background: #fee2e2; }
+
   .ct-secondary-btn {
     background: transparent;
     border: 1px solid var(--color-border, #E0E0E0);
@@ -572,11 +1076,26 @@ export function getStaticPaths() {
   }
   .ct-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
   .ct-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .ct-btn-green {
+    background: #059669;
+    box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2);
+  }
+  .ct-btn-green:hover:not(:disabled) { background: #047857; }
 
   .ct-form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
     margin-top: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .ct-search-bar { flex-direction: column; }
+    .ct-search-bar button { width: 100%; }
+    .ct-camera-btn-group { flex-direction: column; }
+    .ct-camera-btn-group button { width: 100%; min-width: unset; }
+    .ct-video-feed, .ct-captured-photo { max-width: 100%; }
+    .ct-batch-item { flex-direction: column; align-items: flex-start; }
+    .ct-batch-remove { width: 100%; text-align: center; }
   }
 </style>

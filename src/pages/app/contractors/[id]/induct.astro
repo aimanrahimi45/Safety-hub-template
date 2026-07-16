@@ -143,10 +143,11 @@ export function getStaticPaths() {
           <input type="hidden" name="photo_data_url" id="ct-photo-data" />
         </fieldset>
 
-        <!-- C. Signature -->
+        <!-- C. Signature & Declaration -->
         <fieldset class="ct-fieldset">
-          <legend>C. Signature (optional)</legend>
-          <p class="ct-hint">Worker signs below with mouse or finger. Resized to 200×100 before upload.</p>
+          <legend>C. Signature &amp; Declaration</legend>
+          <div class="ct-callout" id="ct-declaration">Loading…</div>
+          <p class="ct-hint" style="margin-top: 4px;">Worker signs below to acknowledge the declaration above.</p>
           <div class="ct-sig-controls">
             <button type="button" id="ct-sig-save" class="ct-secondary-btn">Save signature</button>
             <button type="button" id="ct-sig-clear" class="ct-secondary-btn">Clear</button>
@@ -157,16 +158,6 @@ export function getStaticPaths() {
             <p class="ct-hint">Saved signature:</p>
             <img id="ct-sig-preview" class="ct-sig-preview" alt="Signature preview" />
           </div>
-        </fieldset>
-
-        <!-- D. Declaration -->
-        <fieldset class="ct-fieldset">
-          <legend>D. Declaration</legend>
-          <div class="ct-callout" id="ct-declaration">Loading…</div>
-          <label class="field-check">
-            <input type="checkbox" name="ack" id="ct-ack" required />
-            <span>The worker acknowledges the above declaration. <em>*</em></span>
-          </label>
         </fieldset>
 
         <div class="ct-form-actions">
@@ -215,7 +206,6 @@ export function getStaticPaths() {
   const sigPreview = document.getElementById('ct-sig-preview') as HTMLImageElement;
 
   const declarationEl = document.getElementById('ct-declaration') as HTMLElement;
-  const ackEl = document.getElementById('ct-ack') as HTMLInputElement;
 
   // Group induction refs
   const groupToggle = document.getElementById('ct-group-toggle') as HTMLInputElement;
@@ -687,7 +677,6 @@ export function getStaticPaths() {
     if (!workerName) { showError('Worker name is required.'); return; }
     if (!workerIc)   { showError('IC number is required.'); return; }
     if (!inductionDate) { showError('Induction date is required.'); return; }
-    if (!ackEl.checked) { showError('The worker must acknowledge the declaration before submitting.'); return; }
     if (expiresAt && expiresAt < inductionDate) {
       showError('Expiry date cannot be earlier than the induction date.');
       return;

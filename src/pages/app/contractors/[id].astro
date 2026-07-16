@@ -72,6 +72,7 @@ export function getStaticPaths() {
             <a id="ct-induct-link" href="#" class="ct-primary-btn">+ Induct new worker</a>
           </div>
           <div id="ct-workers-empty" class="ct-empty-inline" hidden>No workers inducted yet.</div>
+          <div class="ct-workers-table-wrap">
           <table id="ct-workers-table" class="ct-workers-table" hidden>
             <thead>
               <tr>
@@ -85,6 +86,7 @@ export function getStaticPaths() {
             </thead>
             <tbody id="ct-workers-tbody"></tbody>
           </table>
+          </div>
         </section>
 
         <section class="ct-card">
@@ -509,6 +511,11 @@ export function getStaticPaths() {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.88rem;
+    min-width: 600px;
+  }
+  .ct-workers-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .ct-workers-table th, .ct-workers-table td {
     padding: 10px 12px;

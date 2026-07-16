@@ -121,6 +121,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 
   let supabase: ReturnType<typeof getSupabase> | null = null;
+  let activeTenantId: string | null = null;
 
   if (!isSupabaseConfigured()) {
     setupWarning.hidden = false;
@@ -128,12 +129,38 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   } else {
     supabase = getSupabase();
     (document.getElementById('ct-valid-from') as HTMLInputElement).value = today();
+
+    (async () => {
+      const { data: userData, error: userErr } = await supabase!.auth.getUser();
+      if (userErr || !userData.user) {
+        window.location.replace('/login');
+        return;
+      }
+      const { data: tenantData, error: tenantErr } = await supabase!
+        .from('tenants')
+        .select('id')
+        .eq('owner_user_id', userData.user.id)
+        .limit(1);
+      if (tenantErr || !tenantData || tenantData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        submitBtn.disabled = true;
+        return;
+      }
+      activeTenantId = tenantData[0].id;
+    })().catch(() => {
+      showError('Failed to initialise contractor form.');
+    });
   }
 
   formEl.addEventListener('submit', (ev) => {
     ev.preventDefault();
     if (!supabase) return;
     clearError();
+
+    if (!activeTenantId) {
+      showError('Tenant information not yet loaded. Please wait and try again.');
+      return;
+    }
 
     const companyName = (document.getElementById('ct-company') as HTMLInputElement).value.trim();
     const contactPerson = (document.getElementById('ct-contact-person') as HTMLInputElement).value.trim();
@@ -161,7 +188,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
     (async () => {
       try {
-        const insertPayload: Omit<Contractor, 'id' | 'tenant_id' | 'created_at' | 'updated_at'> = {
+        const insertPayload: Omit<Contractor, 'id' | 'created_at' | 'updated_at'> = {
+          tenant_id: activeTenantId!,
           company_name: companyName,
           contact_person: contactPerson,
           contact_email: email,

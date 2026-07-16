@@ -452,6 +452,7 @@ export function getStaticPaths() {
   // --- Init + submit ----------------------------------------------------
   let currentContractor: Contractor | null = null;
   let authUserId: string | null = null;
+  let activeTenantId: string | null = null;
   let supabase: ReturnType<typeof getSupabase> | null = null;
   let sigLocalDataUrl: string | null = null;
 
@@ -484,6 +485,19 @@ export function getStaticPaths() {
         return;
       }
       authUserId = userData.user.id;
+
+      // Query active tenant
+      const { data: tenantData, error: tenantErr } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('owner_user_id', authUserId)
+        .limit(1);
+      if (tenantErr || !tenantData || tenantData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        submitBtn.disabled = true;
+        return;
+      }
+      activeTenantId = tenantData[0].id;
 
       const { data: contractor, error: cErr } = await supabase
         .from('contractors')
@@ -613,7 +627,8 @@ export function getStaticPaths() {
           signatureUrl = sigResult.url;
         }
 
-        const insertPayload: Omit<InductionRecord, 'id' | 'tenant_id' | 'created_at'> = {
+        const insertPayload: Omit<InductionRecord, 'id' | 'created_at'> = {
+          tenant_id: activeTenantId!,
           contractor_id: currentContractor.id,
           inducted_by: authUserId!,
           worker_name: w.workerName,

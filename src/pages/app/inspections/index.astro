@@ -614,9 +614,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         const entry = answers[q];
         if (!entry) return;
         entry.responseValue = v;
-        // Visually mark only this question's buttons.
-        const siblings = checklistContainer.querySelectorAll<HTMLButtonElement>(`.ins-choice-btn[data-q="${CSS.escape(q)}"]`);
-        siblings.forEach((sib) => sib.classList.remove('ins-active'));
+        // Visually mark only this question's buttons — use direct dataset
+        // comparison instead of CSS.escape to avoid attribute-selector bugs.
+        checklistContainer.querySelectorAll<HTMLButtonElement>('.ins-choice-btn').forEach((sib) => {
+          if (sib.dataset.q === q) sib.classList.remove('ins-active');
+        });
         b.classList.add('ins-active');
       });
     });

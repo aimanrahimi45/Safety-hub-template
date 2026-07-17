@@ -178,20 +178,6 @@ export interface WorkerLookupResult {
 // single named type rather than re-declaring string in two places.
 export type ContractorDeclaration = string;
 
-export interface InductionRecord {
-  id: string;
-  tenant_id: string;
-  contractor_id: string;
-  inducted_by: string;
-  worker_name: string;
-  worker_ic: string | null;
-  induction_date: string;
-  topics_covered: string[];
-  signature_url: string | null;
-  expires_at: string | null;
-  created_at: string;
-}
-
 // Incidents log (legacy 12-column AmerisPro shape; see
 // supabase/migrations/20260712_phase2_incidents_rebuild.sql). No
 // investigation workflow fields (root_cause, corrective_action, status,

@@ -896,11 +896,16 @@ export function openImportWizard(options: WizardOptions): void {
   function renderPreview(): void {
     thead.innerHTML = "";
     tbody.innerHTML = "";
-    // Re-apply click-mode button state after table rebuild so the
-    // active button never visually loses its highlight.
+    // Re-apply click-mode button active state after table rebuild so the
+    // highlighted button never visually deselects.
     if (enableSections) {
-      modeHeaderBtn.classList.toggle("iw-active", clickMode === "HEADER");
-      modeSectionBtn.classList.toggle("iw-active", clickMode === "SECTION");
+      if (clickMode === "HEADER") {
+        modeHeaderBtn.classList.add("iw-active");
+        modeSectionBtn.classList.remove("iw-active");
+      } else {
+        modeHeaderBtn.classList.remove("iw-active");
+        modeSectionBtn.classList.add("iw-active");
+      }
     }
     if (parsedRows.length === 0) return;
 
@@ -937,6 +942,17 @@ export function openImportWizard(options: WizardOptions): void {
             sectionHeaderRowIdxs.add(i);
           }
           renderPreview();
+        }
+        // Defensive: re-assert click-mode button active state after every
+        // row click so the highlighted button never deselects.
+        if (enableSections) {
+          if (clickMode === "HEADER") {
+            modeHeaderBtn.classList.add("iw-active");
+            modeSectionBtn.classList.remove("iw-active");
+          } else {
+            modeHeaderBtn.classList.remove("iw-active");
+            modeSectionBtn.classList.add("iw-active");
+          }
         }
       });
       let html = `<td class="iw-row-num">${i + 1}</td>`;

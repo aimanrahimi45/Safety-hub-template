@@ -896,6 +896,12 @@ export function openImportWizard(options: WizardOptions): void {
   function renderPreview(): void {
     thead.innerHTML = "";
     tbody.innerHTML = "";
+    // Re-apply click-mode button state after table rebuild so the
+    // active button never visually loses its highlight.
+    if (enableSections) {
+      modeHeaderBtn.classList.toggle("iw-active", clickMode === "HEADER");
+      modeSectionBtn.classList.toggle("iw-active", clickMode === "SECTION");
+    }
     if (parsedRows.length === 0) return;
 
     const maxCols = Math.max(

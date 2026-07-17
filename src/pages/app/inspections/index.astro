@@ -302,6 +302,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   let supabase: ReturnType<typeof getSupabase> | null = null;
   let authUserId: string | null = null;
   let authUserEmail: string | null = null;
+  let activeTenantId: string | null = null;
   // Map<templateId, InspectionTemplateItem[]>
   let allTemplateItems: InspectionTemplateItem[] = [];
   let allTemplates: InspectionTemplate[] = [];
@@ -703,7 +704,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       }
 
       // 3) Insert the inspections row.
-      const insInsert: Omit<Inspection, 'id' | 'tenant_id' | 'created_at' | 'updated_at' | 'status'> & { status: string } = {
+      const insInsert: Omit<Inspection, 'id' | 'created_at' | 'updated_at' | 'status'> & { status: string } = {
+        tenant_id: activeTenantId!,
         template_id: templateId,
         inspection_type: 'safety_audit',
         scheduled_date: inspectDate,
@@ -941,6 +943,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     const { data: newTpl, error: tplErr } = await supabase
       .from('inspection_templates')
       .insert({
+        tenant_id: activeTenantId!,
         checklist_id: checklistId,
         template_name: templateName,
         description: null,
@@ -956,6 +959,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
     // Bulk insert items.
     const itemsToInsert = finalQuestions.map((q, idx) => ({
+      tenant_id: activeTenantId!,
       template_id: templateId,
       question_id: q.question_id,
       display_order: idx + 1,
@@ -1116,6 +1120,17 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       }
       authUserId = userData.user.id;
       authUserEmail = userData.user.email ?? null;
+      // Query active tenant
+      const { data: tenantData, error: tenantErr } = await supabase!
+        .from('tenants')
+        .select('id')
+        .eq('owner_user_id', authUserId)
+        .limit(1);
+      if (tenantErr || !tenantData || tenantData.length === 0) {
+        showError('You do not belong to an active tenant workspace.');
+        return;
+      }
+      activeTenantId = tenantData[0].id;
       if (authUserEmail && !auditorEl.value) auditorEl.value = authUserEmail;
       // Preload the conduct tab's template dropdown.
       await loadTemplatesDropdown();

@@ -16,6 +16,7 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
 
   const from = url.searchParams.get('from');
   const to = url.searchParams.get('to');
+  const qParam = url.searchParams.get('q');
 
   let q = supabase
     .from('inspections')
@@ -23,6 +24,11 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
     .order('scheduled_date', { ascending: false });
   if (from) q = q.gte('scheduled_date', from);
   if (to) q = q.lte('scheduled_date', to);
+  if (qParam) {
+    q = q.or(
+      `audit_code.ilike.%${qParam}%,auditor_name.ilike.%${qParam}%,location.ilike.%${qParam}%,overall_notes.ilike.%${qParam}%`,
+    );
+  }
 
   const { data, error } = await q;
   if (error) return new Response(`Query error: ${error.message}`, { status: 500 });

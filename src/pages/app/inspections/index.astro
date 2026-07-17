@@ -303,7 +303,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   let authUserId: string | null = null;
   let authUserEmail: string | null = null;
   let activeTenantId: string | null = null;
-  // Map<templateId, InspectionTemplateItem[]>
   let allTemplateItems: InspectionTemplateItem[] = [];
   let allTemplates: InspectionTemplate[] = [];
   let tmplPage = 1;
@@ -648,7 +647,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   // -----------------------------------------------------------------
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    if (!supabase || !authUserId) return;
+    if (!supabase || !authUserId || !activeTenantId) {
+      if (!activeTenantId) showError('Tenant information not yet loaded. Please wait and try again.');
+      return;
+    }
     clearError();
 
     const inspectDate = dateEl.value;
@@ -794,6 +796,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       supabase
         .from('inspection_templates')
         .select('id, checklist_id, template_name, version, is_active')
+        .eq('is_active', true)
         .order('checklist_id', { ascending: true })
         .order('version', { ascending: false }),
       supabase
@@ -889,7 +892,9 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   ];
 
   async function handleTemplateImport(mappedRows: WizardMappedRow[]): Promise<void> {
-    if (!supabase) return;
+    if (!supabase || !activeTenantId) {
+      throw new Error('Tenant information not yet loaded. Please wait and try again.');
+    }
     // Walk the mapped rows. Section headers (r.isSectionHeader === true)
     // update currentCategory. Question rows are pushed as items.
     let currentCategory = 'General Safety';
@@ -1088,6 +1093,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const logExportBtn = document.getElementById('ins-log-export-csv') as HTMLButtonElement;
   logExportBtn.addEventListener('click', () => {
     const params = new URLSearchParams();
+    const q = logQ.value.trim();
+    if (q) params.set('q', q);
     if (logDate.value) {
       params.set('from', logDate.value);
       params.set('to', logDate.value);

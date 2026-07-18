@@ -57,3 +57,35 @@
   font-size: 0.85rem;
   color: var(--color-text-muted, #6A6A69);
 }
+
+@media (max-width: 480px) {
+  .ins-chklist-pager {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas: 
+      "info info"
+      "prev next" !important;
+    gap: 12px !important;
+    justify-items: center !important;
+  }
+  
+  .ins-chklist-pager .ins-page-info {
+    grid-area: info !important;
+    margin-bottom: 2px !important;
+    text-align: center !important;
+  }
+  
+  .ins-chklist-pager button:first-of-type {
+    grid-area: prev !important;
+    width: 100% !important;
+    max-width: 140px !important;
+    box-sizing: border-box !important;
+  }
+  
+  .ins-chklist-pager button:last-of-type {
+    grid-area: next !important;
+    width: 100% !important;
+    max-width: 140px !important;
+    box-sizing: border-box !important;
+  }
+}

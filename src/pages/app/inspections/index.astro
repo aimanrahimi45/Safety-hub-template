@@ -85,6 +85,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             <legend>B. Checklist</legend>
             <p class="ins-hint" id="ins-checklist-title">Safety Inspection Checklist</p>
             <div id="ins-checklist-container"></div>
+            <nav id="ins-chklist-pager" class="ins-chklist-pager" hidden>
+              <button type="button" id="ins-chklist-prev" class="ins-secondary-btn" disabled>← Previous</button>
+              <span class="ins-page-info" id="ins-chklist-page-info">Page 1</span>
+              <button type="button" id="ins-chklist-next" class="ins-secondary-btn" disabled>Next →</button>
+            </nav>
           </fieldset>
 
           <!-- C. Overall review & sign-off -->
@@ -295,6 +300,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const PAGE_SIZE = 15;
   const SIGNATURE_PAD_LOCAL_KEY = 'inspection_saved_sig';
   const TEMPLATE_PAGE_SIZE = 15;
+  const CHKLIST_PAGE_SIZE = 8;
+  let chklistPage = 1;
 
   // -----------------------------------------------------------------
   // State
@@ -329,6 +336,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       void loadHistoryPage(newPage);
     }
   });
+  const chklistPager = document.getElementById('ins-chklist-pager') as HTMLElement;
+  const chklistPrev = document.getElementById('ins-chklist-prev') as HTMLButtonElement;
+  const chklistNext = document.getElementById('ins-chklist-next') as HTMLButtonElement;
+  const chklistPageInfo = document.getElementById('ins-chklist-page-info') as HTMLElement;
   // Map<questionId, { questionId, questionText, responseType, options, section, responseValue, remarks }>
   let answers: Record<string, AnswerEntry> = {};
   let signaturePad: { isEmpty(): boolean; clear(): void; toDataURL(t: string): string; fromDataURL(s: string): void; off?(): void; on?(): void; } | null = null;
@@ -529,6 +540,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   function renderChecklist(): void {
     checklistContainer.innerHTML = '';
     answers = {};
+    chklistPage = 1;
 
     if (allTemplateItems.length === 0) {
       checklistCard.hidden = true;
@@ -647,8 +659,36 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     checklistTitle.textContent = `Safety Inspection Checklist — ${checklistEl.options[checklistEl.selectedIndex]?.text ?? ''}`;
     checklistCard.hidden = false;
     signoffCard.hidden = false;
+    applyChecklistPagination();
     setTimeout(resizeSignatureCanvas, 50);
   }
+
+  function applyChecklistPagination(): void {
+    const questions = checklistContainer.querySelectorAll<HTMLElement>('.ins-question-item');
+    const total = questions.length;
+    if (total <= CHKLIST_PAGE_SIZE) {
+      chklistPager.hidden = true;
+      chklistPage = 1;
+      return;
+    }
+    const totalPages = Math.ceil(total / CHKLIST_PAGE_SIZE);
+    if (chklistPage > totalPages) chklistPage = totalPages;
+    const start = (chklistPage - 1) * CHKLIST_PAGE_SIZE;
+    const end = start + CHKLIST_PAGE_SIZE;
+    questions.forEach((q, i) => { q.style.display = i >= start && i < end ? '' : 'none'; });
+    chklistPager.hidden = false;
+    chklistPrev.disabled = chklistPage <= 1;
+    chklistNext.disabled = chklistPage >= totalPages;
+    chklistPageInfo.textContent = `Page ${chklistPage} of ${totalPages}`;
+  }
+
+  chklistPrev.addEventListener('click', () => {
+    if (chklistPage > 1) { chklistPage--; applyChecklistPagination(); }
+  });
+  chklistNext.addEventListener('click', () => {
+    const total = checklistContainer.querySelectorAll('.ins-question-item').length;
+    if (chklistPage < Math.ceil(total / CHKLIST_PAGE_SIZE)) { chklistPage++; applyChecklistPagination(); }
+  });
 
   checklistEl.addEventListener('change', () => {
     const tplId = checklistEl.value;
@@ -1450,6 +1490,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; margin-top: 16px; flex-wrap: wrap;
   }
+  .ins-chklist-pager {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin-top: 16px; flex-wrap: wrap;
+  }
+  .ins-chklist-pager[hidden] { display: none; }
   .ins-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
   .ins-empty { padding: 40px 20px; text-align: center; color: var(--color-text-muted, #6A6A69); }
 </style>

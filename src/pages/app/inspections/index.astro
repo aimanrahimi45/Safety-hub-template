@@ -302,7 +302,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const PAGE_SIZE = 15;
   const SIGNATURE_PAD_LOCAL_KEY = 'inspection_saved_sig';
   const TEMPLATE_PAGE_SIZE = 15;
-  const CHKLIST_PAGE_SIZE = 8;
+  const CHKLIST_SECTIONS_PER_PAGE = 4;
   let chklistPage = 1;
 
   // -----------------------------------------------------------------
@@ -666,30 +666,32 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 
   function applyChecklistPagination(): void {
-    const questions = checklistContainer.querySelectorAll<HTMLElement>('.ins-question-item');
-    const total = questions.length;
-    if (total <= CHKLIST_PAGE_SIZE) {
+    const sections = checklistContainer.querySelectorAll<HTMLElement>('.ins-category-section');
+    const total = sections.length;
+    if (total <= CHKLIST_SECTIONS_PER_PAGE) {
       chklistPager.hidden = true;
       chklistPage = 1;
+      // Ensure all sections are visible when no pagination needed.
+      sections.forEach((s) => { s.style.display = ''; });
       return;
     }
-    const totalPages = Math.ceil(total / CHKLIST_PAGE_SIZE);
+    const totalPages = Math.ceil(total / CHKLIST_SECTIONS_PER_PAGE);
     if (chklistPage > totalPages) chklistPage = totalPages;
-    const start = (chklistPage - 1) * CHKLIST_PAGE_SIZE;
-    const end = start + CHKLIST_PAGE_SIZE;
-    questions.forEach((q, i) => { q.style.display = i >= start && i < end ? '' : 'none'; });
+    const start = (chklistPage - 1) * CHKLIST_SECTIONS_PER_PAGE;
+    const end = start + CHKLIST_SECTIONS_PER_PAGE;
+    sections.forEach((s, i) => { s.style.display = i >= start && i < end ? '' : 'none'; });
     chklistPager.hidden = false;
     chklistPrev.disabled = chklistPage <= 1;
     chklistNext.disabled = chklistPage >= totalPages;
-    chklistPageInfo.textContent = `Page ${chklistPage} of ${totalPages}`;
+    chklistPageInfo.textContent = `Page ${chklistPage} of ${totalPages} (sections)`;
   }
 
   chklistPrev.addEventListener('click', () => {
     if (chklistPage > 1) { chklistPage--; applyChecklistPagination(); }
   });
   chklistNext.addEventListener('click', () => {
-    const total = checklistContainer.querySelectorAll('.ins-question-item').length;
-    if (chklistPage < Math.ceil(total / CHKLIST_PAGE_SIZE)) { chklistPage++; applyChecklistPagination(); }
+    const total = checklistContainer.querySelectorAll('.ins-category-section').length;
+    if (chklistPage < Math.ceil(total / CHKLIST_SECTIONS_PER_PAGE)) { chklistPage++; applyChecklistPagination(); }
   });
 
   checklistEl.addEventListener('change', () => {

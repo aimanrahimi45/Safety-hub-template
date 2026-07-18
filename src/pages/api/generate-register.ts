@@ -163,7 +163,7 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const baseUrl = import.meta.env.SUPABASE_PUBLIC_URL ?? '';
     const key = import.meta.env.SUPABASE_PUBLIC_ANON_KEY ?? '';
-    const url = `/rest/v1/clauses?select=id,clause_text,section_number,parent_citations,document_id,documents(name,type)&id=in.(${clauseIds.map((id) => `"${id}"`).join(',')})`;
+    const url = `/rest/v1/clauses?select=id,clause_text,section_number,parent_citations,doc_id,documents(name,type)&id=in.(${clauseIds.map((id) => `"${id}"`).join(',')})`;
     const resp = await fetch(`${baseUrl}${url}`, {
       method: 'GET',
       headers: {

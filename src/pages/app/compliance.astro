@@ -36,6 +36,12 @@ import AppLayout from '../../layouts/AppLayout.astro';
           🔍 <span class="tab-text-full">AI Legal Search</span><span class="tab-text-short">AI Search</span>
         </button>
       </nav>
+      <script is:inline>
+        if (localStorage.getItem('is_premium') === 'true') {
+          const searchTab = document.getElementById('cmp-tab-search');
+          if (searchTab) searchTab.hidden = false;
+        }
+      </script>
 
       <!-- ====================== TAB: SETUP PROFILER ====================== -->
       <section id="cmp-panel-profiler" class="cmp-panel active" role="tabpanel" aria-labelledby="cmp-tab-profiler">
@@ -217,7 +223,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
 </AppLayout>
 
 <script>
-  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+  import { getSupabase, isSupabaseConfigured, checkPremiumStatus, getCachedPremiumStatus } from '../../lib/supabase';
   import { buildCsv } from '../../lib/csvExport';
   import type { CsvColumn } from '../../lib/csvExport';
   import type { TenantProfile, ComplianceRegisterItem, AiSummaryResponse, LegalSearchResult } from '../../lib/types';
@@ -275,7 +281,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
   const REGISTER_STORAGE_KEY = 'amerispro_compliance_register_v1';
   let supabase: ReturnType<typeof getSupabase> | null = null;
   let tenantId: string | null = null;
-  let isPremium = false;
+  let isPremium = getCachedPremiumStatus();
   let lastSearchResults: LegalSearchResult[] = [];
 
   // -------------------------------------------------------------------
@@ -1053,9 +1059,11 @@ import AppLayout from '../../layouts/AppLayout.astro';
         tenant.subscription_plan === 'premium' &&
         (tenant.subscription_expires_at === null ||
           new Date(tenant.subscription_expires_at) > new Date());
+      localStorage.setItem('is_premium', isPremium ? 'true' : 'false');
       if (isPremium) {
-        // Premium gating: show the AI Search tab only for Premium SHOs.
         searchTabBtn.hidden = false;
+      } else {
+        searchTabBtn.hidden = true;
       }
 
       // Pre-fill the profiler form from the tenant row.

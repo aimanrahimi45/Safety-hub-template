@@ -47,3 +47,48 @@ export function isSupabaseConfigured(): boolean {
     anon.length > 0
   );
 }
+
+/**
+ * Checks if the tenant has a premium subscription, caches it in localStorage,
+ * and returns the boolean value.
+ */
+export async function checkPremiumStatus(supabase: SupabaseClient): Promise<boolean> {
+  try {
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData?.user) {
+      localStorage.setItem('is_premium', 'false');
+      return false;
+    }
+    const { data: tenant, error: tenantErr } = await supabase
+      .from('tenants')
+      .select('subscription_plan, subscription_expires_at')
+      .eq('owner_user_id', userData.user.id)
+      .maybeSingle();
+
+    if (tenantErr || !tenant) {
+      localStorage.setItem('is_premium', 'false');
+      return false;
+    }
+
+    const isPremium =
+      tenant.subscription_plan === 'premium' &&
+      (tenant.subscription_expires_at === null ||
+        new Date(tenant.subscription_expires_at) > new Date());
+
+    localStorage.setItem('is_premium', isPremium ? 'true' : 'false');
+    return isPremium;
+  } catch (e) {
+    console.error('Failed to check premium status:', e);
+    // Fallback to cache if database check throws
+    return localStorage.getItem('is_premium') === 'true';
+  }
+}
+
+/**
+ * Synchronously reads the cached premium status from localStorage.
+ * Useful for instant checks on page load to prevent visual layout shifts.
+ */
+export function getCachedPremiumStatus(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('is_premium') === 'true';
+}

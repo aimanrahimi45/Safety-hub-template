@@ -173,7 +173,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 </AppLayout>
 
 <script>
-  import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
+  import { getSupabase, isSupabaseConfigured, checkPremiumStatus, getCachedPremiumStatus } from '../../../lib/supabase';
   import type { Incident, IncidentSeverityType, StaffLookupResult } from '../../../lib/types';
 
   const setupWarning = document.getElementById('inc-setup-warning') as HTMLElement;
@@ -246,7 +246,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   let authUserId: string | null = null;
   let activeTenantId: string | null = null;
   let supabase: ReturnType<typeof getSupabase> | null = null;
-  let isPremium = false;
+  let isPremium = getCachedPremiumStatus();
   let editId: string | null = null;
 
   severityEl.addEventListener('change', () => {
@@ -407,12 +407,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       activeTenantId = tenantData[0].id;
 
       // Premium check.
-      try {
-        const { data: premium } = await supabase.rpc('is_my_tenant_premium');
-        isPremium = premium === true;
-      } catch {
-        isPremium = false;
-      }
+      isPremium = await checkPremiumStatus(supabase);
 
       if (isPremium) {
         staffPillEl.hidden = false;

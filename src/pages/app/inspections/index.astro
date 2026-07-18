@@ -141,43 +141,50 @@ import '../../../styles/collapsible-section.css';
         </section>
 
         <section class="ins-card">
-          <h2 class="ins-card-title">Active Checklist Questions</h2>
-          <div class="ins-filters">
-            <label class="ins-filter-field ins-filter-grow">
-              <span>Search</span>
-              <input type="search" id="ins-tmpl-q" placeholder="Question text, ID, or category" />
-            </label>
-            <label class="ins-filter-field">
-              <span>Template</span>
-              <select id="ins-tmpl-filter">
-                <option value="">All templates</option>
-              </select>
-            </label>
-            <div class="ins-filter-buttons">
-              <button type="button" id="ins-tmpl-apply" class="ins-secondary-btn">Apply</button>
-              <button type="button" id="ins-tmpl-clear" class="ins-secondary-btn">Clear</button>
-              <button type="button" id="ins-tmpl-delete" class="ins-secondary-btn ins-danger-btn" disabled>Delete template</button>
-            </div>
+          <h2 class="ins-card-title">Active Checklist</h2>
+
+          <!-- Step 1: template list -->
+          <div id="ins-tmpl-list-view">
+            <div id="ins-tmpl-list" class="ins-tmpl-list"></div>
+            <p class="ins-empty-cell" id="ins-tmpl-list-empty" hidden>No active checklist templates. Import one above.</p>
           </div>
-          <div class="ins-table-scroll">
-            <table class="ins-table" aria-label="Active checklist questions">
-              <thead>
+
+          <!-- Step 2: selected template's questions -->
+          <div id="ins-tmpl-detail-view" hidden>
+            <div class="ins-tmpl-detail-head">
+              <button type="button" id="ins-tmpl-back" class="ins-secondary-btn">← Back to templates</button>
+              <button type="button" id="ins-tmpl-delete" class="ins-secondary-btn ins-danger-btn">Delete this template</button>
+              <h3 id="ins-tmpl-detail-title">Template questions</h3>
+            </div>
+            <div class="ins-filters">
+              <label class="ins-filter-field ins-filter-grow">
+                <span>Search</span>
+                <input type="search" id="ins-tmpl-q" placeholder="Question text, ID, or category" />
+              </label>
+              <div class="ins-filter-buttons">
+                <button type="button" id="ins-tmpl-apply" class="ins-secondary-btn">Apply</button>
+                <button type="button" id="ins-tmpl-clear" class="ins-secondary-btn">Clear</button>
+              </div>
+            </div>
+            <div class="ins-table-scroll">
+              <table class="ins-table" aria-label="Checklist questions">
+                <thead>
                   <tr>
-                    <th>Template</th>
                     <th>Question ID</th>
                     <th>Safety Question</th>
                     <th>Category</th>
                     <th>Type</th>
                   </tr>
-              </thead>
-              <tbody id="ins-tmpl-tbody"></tbody>
-            </table>
+                </thead>
+                <tbody id="ins-tmpl-tbody"></tbody>
+              </table>
+            </div>
+            <nav class="ins-pager" aria-label="Template pagination">
+              <button type="button" id="ins-tmpl-prev" class="ins-secondary-btn" disabled>← Previous</button>
+              <span class="ins-page-info" id="ins-tmpl-page-info">Page 1</span>
+              <button type="button" id="ins-tmpl-next" class="ins-secondary-btn" disabled>Next →</button>
+            </nav>
           </div>
-          <nav class="ins-pager" aria-label="Template pagination">
-            <button type="button" id="ins-tmpl-prev" class="ins-secondary-btn" disabled>← Previous</button>
-            <span class="ins-page-info" id="ins-tmpl-page-info">Page 1</span>
-            <button type="button" id="ins-tmpl-next" class="ins-secondary-btn" disabled>Next →</button>
-          </nav>
         </section>
       </section>
 
@@ -277,8 +284,13 @@ import '../../../styles/collapsible-section.css';
 
   // Manage refs
   const wizUploadZone = document.getElementById('ins-wiz-upload-zone') as HTMLElement;
+  const tmplListView = document.getElementById('ins-tmpl-list-view') as HTMLElement;
+  const tmplDetailView = document.getElementById('ins-tmpl-detail-view') as HTMLElement;
+  const tmplList = document.getElementById('ins-tmpl-list') as HTMLElement;
+  const tmplListEmpty = document.getElementById('ins-tmpl-list-empty') as HTMLElement;
+  const tmplBack = document.getElementById('ins-tmpl-back') as HTMLButtonElement;
+  const tmplDetailTitle = document.getElementById('ins-tmpl-detail-title') as HTMLElement;
   const tmplQ = document.getElementById('ins-tmpl-q') as HTMLInputElement;
-  const tmplFilter = document.getElementById('ins-tmpl-filter') as HTMLSelectElement;
   const tmplApply = document.getElementById('ins-tmpl-apply') as HTMLButtonElement;
   const tmplClear = document.getElementById('ins-tmpl-clear') as HTMLButtonElement;
   const tmplTbody = document.getElementById('ins-tmpl-tbody') as HTMLElement;
@@ -286,6 +298,7 @@ import '../../../styles/collapsible-section.css';
   const tmplNext = document.getElementById('ins-tmpl-next') as HTMLButtonElement;
   const tmplPageInfo = document.getElementById('ins-tmpl-page-info') as HTMLElement;
   const tmplDelete = document.getElementById('ins-tmpl-delete') as HTMLButtonElement;
+  let selectedTemplateId: string | null = null;
 
   // History refs
   const logQ = document.getElementById('ins-log-q') as HTMLInputElement;
@@ -882,7 +895,6 @@ import '../../../styles/collapsible-section.css';
   // -----------------------------------------------------------------
   async function loadTemplatesTab(): Promise<void> {
     if (!supabase) return;
-    // Fetch templates (for the filter dropdown) + items (for the table).
     const [{ data: tpls, error: tErr }, { data: items, error: iErr }] = await Promise.all([
       supabase
         .from('inspection_templates')
@@ -902,34 +914,62 @@ import '../../../styles/collapsible-section.css';
     allTemplates = (tpls ?? []) as InspectionTemplate[];
     allTemplateItems = (items ?? []) as InspectionTemplateItem[];
 
-    // Populate the filter dropdown (all distinct template ids).
-    tmplFilter.innerHTML = '<option value="">All templates</option>';
-    for (const t of allTemplates) {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = `${t.checklist_id} (v${t.version})`;
-      tmplFilter.appendChild(opt);
-    }
-    tmplDelete.disabled = true;
+    renderTemplateList();
+  }
 
+  function renderTemplateList(): void {
+    tmplList.innerHTML = '';
+    selectedTemplateId = null;
+    tmplDetailView.hidden = true;
+    tmplListView.hidden = false;
+
+    if (allTemplates.length === 0) {
+      tmplListEmpty.hidden = false;
+      return;
+    }
+    tmplListEmpty.hidden = true;
+
+    for (const tpl of allTemplates) {
+      const count = allTemplateItems.filter((it) => it.template_id === tpl.id).length;
+      const card = document.createElement('div');
+      card.className = 'ins-tmpl-card';
+      card.innerHTML = `
+        <div class="ins-tmpl-card-info">
+          <strong class="ins-tmpl-card-id">${escapeHtml(tpl.checklist_id)}</strong>
+          <span class="ins-tmpl-card-ver">v${tpl.version}</span>
+          <span class="ins-tmpl-card-name">${escapeHtml(tpl.template_name || `${tpl.checklist_id} Inspection`)}</span>
+        </div>
+        <span class="ins-tmpl-card-count">${count} questions</span>
+        <span class="ins-tmpl-card-arrow">→</span>
+      `;
+      card.addEventListener('click', () => showTemplateDetail(tpl.id, tpl.checklist_id, tpl.version, tpl.template_name));
+      tmplList.appendChild(card);
+    }
+  }
+
+  function showTemplateDetail(tplId: string, checklistId: string, version: number, name: string | null): void {
+    selectedTemplateId = tplId;
+    tmplDetailTitle.textContent = `${checklistId} (v${version}) — ${escapeHtml(name || `${checklistId} Inspection`)}`;
+    tmplListView.hidden = true;
+    tmplDetailView.hidden = false;
+    tmplQ.value = '';
+    tmplPage = 1;
     void renderTemplatesTable();
   }
 
-  // Enable delete button only when a specific template is selected.
-  tmplFilter.addEventListener('change', () => {
-    tmplDelete.disabled = !tmplFilter.value;
-  });
+  // Back button — return to template list.
+  tmplBack.addEventListener('click', () => renderTemplateList());
 
+  // Delete the selected template.
   tmplDelete.addEventListener('click', async () => {
-    const tplId = tmplFilter.value;
-    if (!tplId || !supabase) return;
-    const tpl = allTemplates.find((t) => t.id === tplId);
+    if (!selectedTemplateId || !supabase) return;
+    const tpl = allTemplates.find((t) => t.id === selectedTemplateId);
     if (!tpl) return;
     if (!confirm(`Deactivate template "${tpl.checklist_id} (v${tpl.version})"? This hides it from all dropdowns. Existing inspections using this template are unaffected.`)) return;
     const { error } = await supabase
       .from('inspection_templates')
       .update({ is_active: false })
-      .eq('id', tplId);
+      .eq('id', selectedTemplateId);
     if (error) { showError(error.message); return; }
     await loadTemplatesTab();
     await loadTemplatesDropdown();
@@ -937,11 +977,10 @@ import '../../../styles/collapsible-section.css';
 
   function filteredTemplates(): Array<{ item: InspectionTemplateItem; tpl: InspectionTemplate | null }> {
     const q = tmplQ.value.trim().toLowerCase();
-    const tplId = tmplFilter.value;
     const tplById = new Map(allTemplates.map((t) => [t.id, t]));
     return allTemplateItems
-      .filter((it) => tplById.has(it.template_id)) // exclude items from deactivated templates
-      .filter((it) => (tplId ? it.template_id === tplId : true))
+      .filter((it) => tplById.has(it.template_id))
+      .filter((it) => it.template_id === selectedTemplateId)
       .filter((it) => {
         if (!q) return true;
         const tpl = tplById.get(it.template_id);
@@ -987,7 +1026,6 @@ import '../../../styles/collapsible-section.css';
   tmplApply.addEventListener('click', () => { tmplPage = 1; renderTemplatesTable(); });
   tmplClear.addEventListener('click', () => {
     tmplQ.value = '';
-    tmplFilter.value = '';
     tmplPage = 1;
     renderTemplatesTable();
   });
@@ -1469,6 +1507,35 @@ import '../../../styles/collapsible-section.css';
     min-width: 160px;
   }
   .ins-filter-buttons { display: flex; gap: 6px; }
+
+  /* Template list cards */
+  .ins-tmpl-list { display: flex; flex-direction: column; gap: 8px; }
+  .ins-tmpl-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #E0E0E0);
+    cursor: pointer;
+    transition: border-color 0.15s;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .ins-tmpl-card:hover { border-color: #8B5CF6; }
+  .ins-tmpl-card-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ins-tmpl-card-id { font-size: 1rem; font-weight: 900; color: var(--color-text, #1E1E1D); }
+  .ins-tmpl-card-ver {
+    font-size: 0.75rem; font-weight: 700;
+    background: #8B5CF6; color: #fff;
+    padding: 1px 8px; border-radius: 4px;
+  }
+  .ins-tmpl-card-name { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
+  .ins-tmpl-card-count { font-size: 0.8rem; color: var(--color-text-muted, #6A6A69); white-space: nowrap; }
+  .ins-tmpl-card-arrow { font-size: 1.2rem; color: var(--color-text-muted, #6A6A69); }
+  .ins-tmpl-detail-head {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 14px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+  }
+  .ins-tmpl-detail-head h3 { font-size: 0.95rem; font-weight: 900; margin-left: auto; }
 
   .ins-table-scroll { overflow-x: auto; }
   .ins-table {

@@ -621,6 +621,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         // directly because Astro-scoped CSS doesn't reach dynamically
         // created elements (innerHTML in JS). Use DOM styling so the
         // highlight always renders regardless of scoping attributes.
+        // appearance: 'none' is required to override the browser's native
+        // button rendering which otherwise blocks custom background-color.
         checklistContainer.querySelectorAll<HTMLButtonElement>('.ins-choice-btn').forEach((sib) => {
           if (sib.dataset.q === q) {
             console.log(`[DEBUG] Removing ins-active from: q="${sib.dataset.q}", val="${sib.dataset.val}"`);
@@ -628,9 +630,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             sib.style.background = '';
             sib.style.color = '';
             sib.style.borderColor = '';
+            sib.style.appearance = '';
           }
         });
         b.classList.add('ins-active');
+        b.style.appearance = 'none';
         b.style.background = '#8B5CF6';
         b.style.color = '#fff';
         b.style.borderColor = '#8B5CF6';
@@ -1292,6 +1296,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   .ins-question-actions { margin-bottom: 8px; }
 
   .ins-choice-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  :global {
   .ins-choice-btn {
     flex: 1 1 0;
     min-width: 80px;
@@ -1304,6 +1309,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     cursor: pointer;
     text-align: center;
     font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
   }
   .ins-choice-btn:hover { border-color: #8B5CF6; }
   .ins-choice-btn.ins-active {
@@ -1311,8 +1318,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     color: #fff;
     border-color: #8B5CF6;
   }
+  }
+  :global {
   .ins-q-input { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border, #E0E0E0); border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: var(--color-bg, #fff); }
   .ins-q-remarks { margin-top: 4px; }
+  }
 
   .ins-risk-badge {
     padding: 2px 8px;

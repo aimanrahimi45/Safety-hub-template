@@ -638,7 +638,20 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         b.style.background = '#8B5CF6';
         b.style.color = '#fff';
         b.style.borderColor = '#8B5CF6';
+        // Debug: dump the button's actual rendered styles
+        const cs = getComputedStyle(b);
         console.log(`[DEBUG] Added ins-active to: q="${q}", val="${v}"`);
+        console.log(`[DEBUG] Computed after apply:`, {
+          backgroundColor: cs.backgroundColor,
+          color: cs.color,
+          borderColor: cs.borderTopColor,
+          appearance: cs.appearance,
+          display: cs.display,
+          width: b.offsetWidth,
+          height: b.offsetHeight,
+          inlineStyle: b.getAttribute('style'),
+          classList: b.className,
+        });
       });
     });
     checklistContainer.querySelectorAll<HTMLInputElement | HTMLSelectElement>('.ins-q-input').forEach((inp) => {
@@ -655,6 +668,26 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     checklistTitle.textContent = `Safety Inspection Checklist — ${checklistEl.options[checklistEl.selectedIndex]?.text ?? ''}`;
     checklistCard.hidden = false;
     signoffCard.hidden = false;
+    // Debug: verify the first choice button gets global CSS styles
+    const firstBtn = checklistContainer.querySelector<HTMLButtonElement>('.ins-choice-btn');
+    if (firstBtn) {
+      const fcs = getComputedStyle(firstBtn);
+      console.log('[DEBUG] First button base computed:', {
+        display: fcs.display,
+        flex: fcs.flex,
+        appearance: fcs.appearance,
+        background: fcs.backgroundColor,
+        font: fcs.font,
+        border: fcs.border,
+        padding: fcs.padding,
+        minWidth: fcs.minWidth,
+        classList: firstBtn.className,
+        dataset: firstBtn.dataset,
+        inlineStyle: firstBtn.getAttribute('style'),
+      });
+    } else {
+      console.log('[DEBUG] No .ins-choice-btn found after renderChecklist');
+    }
     setTimeout(resizeSignatureCanvas, 50);
   }
 

@@ -773,7 +773,12 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     // Validate every question has an answer.
     const unanswered = Object.values(answers).filter((a) => !a.responseValue || a.responseValue.trim() === '');
     if (unanswered.length > 0) {
-      showError(`Please answer all checklist questions (${unanswered.length} remaining).`);
+      if (unanswered.length <= 10) {
+        const ids = unanswered.map((a) => a.questionId).join(', ');
+        showError(`Please answer all checklist questions. Missing: ${ids}`);
+      } else {
+        showError(`Please answer all checklist questions (${unanswered.length} remaining).`);
+      }
       return;
     }
 

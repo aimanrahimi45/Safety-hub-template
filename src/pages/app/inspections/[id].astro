@@ -73,19 +73,13 @@ export function getStaticPaths() {
 
         <section class="ins-detail-card ins-print-block">
           <h2>Question responses</h2>
-          <div class="ins-table-scroll">
-            <table class="ins-table" aria-label="Question responses">
-              <thead>
-                <tr>
-                  <th class="ins-col-id">ID</th>
-                  <th>Question</th>
-                  <th class="ins-col-ans">Answer</th>
-                  <th>Remarks</th>
-                </tr>
-              </thead>
-              <tbody id="ins-items-tbody"></tbody>
-            </table>
-          </div>
+          <button type="button" id="ins-detail-expand-all" class="ins-secondary-btn" style="margin-bottom:12px">Expand All</button>
+          <div id="ins-items-container"></div>
+          <nav id="ins-detail-pager" class="ins-chklist-pager" hidden>
+            <button type="button" id="ins-detail-prev" class="ins-secondary-btn" disabled>← Previous</button>
+            <span class="ins-page-info" id="ins-detail-page-info">Page 1</span>
+            <button type="button" id="ins-detail-next" class="ins-secondary-btn" disabled>Next →</button>
+          </nav>
         </section>
 
         <section class="ins-detail-card no-print">
@@ -101,7 +95,7 @@ export function getStaticPaths() {
 
 <script>
   import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
-  import type { Inspection, InspectionItem } from '../../../lib/types';
+  import type { Inspection, InspectionItem, InspectionTemplateItem } from '../../../lib/types';
 
   const setupWarning = document.getElementById('ins-setup-warning') as HTMLElement;
   const errorEl = document.getElementById('ins-error') as HTMLElement;
@@ -120,8 +114,17 @@ export function getStaticPaths() {
   const sigCardEl = document.getElementById('ins-sig-card') as HTMLElement;
   const sigImgEl = document.getElementById('ins-sig-img') as HTMLImageElement;
   const findingsEl = document.getElementById('ins-findings') as HTMLElement;
-  const itemsTbody = document.getElementById('ins-items-tbody') as HTMLElement;
+  const itemsContainer = document.getElementById('ins-items-container') as HTMLElement;
   const printBtn = document.getElementById('ins-print-btn') as HTMLButtonElement;
+
+  const SECTIONS_PER_PAGE = 4;
+  let detailPage = 1;
+  let detailAllExpanded = false;
+  const detailPager = document.getElementById('ins-detail-pager') as HTMLElement;
+  const detailPrev = document.getElementById('ins-detail-prev') as HTMLButtonElement;
+  const detailNext = document.getElementById('ins-detail-next') as HTMLButtonElement;
+  const detailPageInfo = document.getElementById('ins-detail-page-info') as HTMLElement;
+  const detailExpandAllBtn = document.getElementById('ins-detail-expand-all') as HTMLButtonElement;
 
   function showError(msg: string): void {
     errorEl.hidden = false;
@@ -161,7 +164,7 @@ export function getStaticPaths() {
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
 
-  function render(ins: InspectionWithItems): void {
+  function render(ins: InspectionWithItems, tplItems: InspectionTemplateItem[]): void {
     const code = ins.audit_code ?? '—';
     auditCodeEl.textContent = code;
     metaCodeEl.textContent = code;
@@ -182,36 +185,120 @@ export function getStaticPaths() {
       sigCardEl.hidden = true;
     }
 
-    itemsTbody.innerHTML = '';
+    // Build section → question_id map from template items.
+    const qidSection = new Map<string, string>();
+    for (const ti of tplItems) {
+      qidSection.set(ti.question_id, ti.section || 'General Safety');
+    }
+
+    renderItems(ins, qidSection);
+
+    loadingEl.hidden = true;
+    contentEl.hidden = false;
+  }
+
+  function renderItems(ins: InspectionWithItems, qidSection: Map<string, string>): void {
+    itemsContainer.innerHTML = '';
     const items = (ins.inspection_items ?? []).slice().sort((a, b) => {
       const qa = (a.question_id ?? '').toString();
       const qb = (b.question_id ?? '').toString();
       return qa.localeCompare(qb, undefined, { numeric: true });
     });
+
     if (items.length === 0) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="4" class="ins-empty-cell">No question responses recorded.</td>`;
-      itemsTbody.appendChild(tr);
-    } else {
-      for (const it of items) {
-        const tr = document.createElement('tr');
+      itemsContainer.innerHTML = '<p class="ins-muted" style="text-align:center;padding:20px">No question responses recorded.</p>';
+      detailPager.hidden = true;
+      return;
+    }
+
+    // Group by section.
+    const grouped = new Map<string, InspectionItem[]>();
+    for (const it of items) {
+      const sec = qidSection.get(it.question_id ?? '') || 'General Safety';
+      if (!grouped.has(sec)) grouped.set(sec, []);
+      grouped.get(sec)!.push(it);
+    }
+
+    for (const [section, secItems] of grouped) {
+      const secEl = document.createElement('div');
+      secEl.className = 'ins-category-section ins-section-collapsed';
+      secEl.innerHTML = `<div class="ins-category-title" role="button" tabindex="0"><span class="ins-section-arrow">▶</span> 📂 ${escapeHtml(section)} <span class="ins-section-count">(${secItems.length} responses)</span></div>`;
+
+      const titleEl = secEl.querySelector<HTMLElement>('.ins-category-title');
+      if (titleEl) {
+        titleEl.addEventListener('click', () => {
+          const collapsed = secEl.classList.toggle('ins-section-collapsed');
+          titleEl.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = collapsed ? '▶' : '▼';
+        });
+      }
+
+      for (const it of secItems) {
         const qId = it.question_id ?? '—';
         const answer = it.response_value ?? it.status ?? '—';
         const remarks = it.notes ?? '—';
         const ansClass = answerBadgeClass(answer);
-        tr.innerHTML = `
-          <td class="ins-mono">${escapeHtml(qId)}</td>
-          <td>${escapeHtml(it.item_description)}</td>
-          <td class="ins-center"><span class="ins-ans-badge ${ansClass}">${escapeHtml(answer)}</span></td>
-          <td class="ins-muted">${escapeHtml(remarks)}</td>
+
+        const itemEl = document.createElement('div');
+        itemEl.className = 'ins-question-item';
+        itemEl.innerHTML = `
+          <div class="ins-question-header">
+            <span class="ins-question-text"><strong>${escapeHtml(qId)}:</strong> ${escapeHtml(it.item_description)}</span>
+            <span class="ins-ans-badge ${ansClass}">${escapeHtml(answer)}</span>
+          </div>
+          ${remarks !== '—' ? `<div class="ins-muted" style="font-size:0.85rem;margin-top:4px">Remarks: ${escapeHtml(remarks)}</div>` : ''}
         `;
-        itemsTbody.appendChild(tr);
+        secEl.appendChild(itemEl);
       }
+      itemsContainer.appendChild(secEl);
     }
 
-    loadingEl.hidden = true;
-    contentEl.hidden = false;
+    applyDetailPagination();
   }
+
+  function applyDetailPagination(): void {
+    const sections = itemsContainer.querySelectorAll<HTMLElement>('.ins-category-section');
+    const total = sections.length;
+    if (total <= SECTIONS_PER_PAGE) {
+      detailPager.hidden = true;
+      detailPage = 1;
+      sections.forEach((s) => { s.style.display = ''; });
+      return;
+    }
+    const totalPages = Math.ceil(total / SECTIONS_PER_PAGE);
+    if (detailPage > totalPages) detailPage = totalPages;
+    const start = (detailPage - 1) * SECTIONS_PER_PAGE;
+    const end = start + SECTIONS_PER_PAGE;
+    sections.forEach((s, i) => { s.style.display = i >= start && i < end ? '' : 'none'; });
+    detailPager.hidden = false;
+    detailPrev.disabled = detailPage <= 1;
+    detailNext.disabled = detailPage >= totalPages;
+    detailPageInfo.textContent = `Page ${detailPage} of ${totalPages} (sections)`;
+  }
+
+  detailPrev.addEventListener('click', () => {
+    if (detailPage > 1) { detailPage--; applyDetailPagination(); }
+  });
+  detailNext.addEventListener('click', () => {
+    const total = itemsContainer.querySelectorAll('.ins-category-section').length;
+    if (detailPage < Math.ceil(total / SECTIONS_PER_PAGE)) { detailPage++; applyDetailPagination(); }
+  });
+
+  detailExpandAllBtn.addEventListener('click', () => {
+    detailAllExpanded = !detailAllExpanded;
+    const sections = itemsContainer.querySelectorAll<HTMLElement>('.ins-category-section');
+    sections.forEach((sec) => {
+      const title = sec.querySelector<HTMLElement>('.ins-category-title');
+      if (!title) return;
+      if (detailAllExpanded) {
+        sec.classList.remove('ins-section-collapsed');
+        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▼';
+      } else {
+        sec.classList.add('ins-section-collapsed');
+        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▶';
+      }
+    });
+    detailExpandAllBtn.textContent = detailAllExpanded ? 'Collapse All' : 'Expand All';
+  });
 
   function answerBadgeClass(v: string): string {
     const s = v.trim().toLowerCase();
@@ -242,7 +329,13 @@ export function getStaticPaths() {
         notFoundEl.hidden = false;
         return;
       }
-      render(data);
+      // Fetch template items to get section names for grouping responses.
+      const { data: tplItems } = await supabase
+        .from('inspection_template_items')
+        .select('question_id, section')
+        .eq('template_id', data.template_id)
+        .order('display_order');
+      render(data, (tplItems ?? []) as InspectionTemplateItem[]);
     } catch (e) {
       showError(e instanceof Error ? e.message : 'Failed to load inspection.');
     }
@@ -339,34 +432,6 @@ export function getStaticPaths() {
   }
   .ins-sig-display img { max-width: 100%; max-height: 120px; object-fit: contain; }
 
-  .ins-table-scroll { overflow-x: auto; }
-  .ins-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--color-bg, #fff);
-    border: 1px solid var(--color-border, #E0E0E0);
-    font-size: 0.85rem;
-  }
-  .ins-table th, .ins-table td {
-    padding: 10px 12px;
-    text-align: left;
-    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
-    vertical-align: top;
-  }
-  .ins-table th {
-    background: #F4F4F4;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-text-muted, #6A6A69);
-  }
-  .ins-col-id { width: 80px; }
-  .ins-col-ans { width: 120px; text-align: center; }
-  .ins-center { text-align: center; }
-  .ins-mono { font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
-  .ins-muted { color: var(--color-text-muted, #6A6A69); }
-  .ins-empty-cell { text-align: center; color: var(--color-text-muted, #6A6A69); padding: 20px; }
-
   .ins-ans-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -379,6 +444,44 @@ export function getStaticPaths() {
   .ins-ans-no { background: #FEE2E2; color: #991B1B; }
   .ins-ans-na { background: #E2E8F0; color: var(--color-text-muted, #6A6A69); }
   .ins-ans-other { background: #DBEAFE; color: #1E40AF; }
+
+  /* Collapsible category sections */
+  .ins-category-section { margin-top: 18px; }
+  .ins-category-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+    border-bottom: 2px dashed var(--color-border, #E0E0E0);
+    cursor: pointer;
+    user-select: none;
+  }
+  .ins-category-title:hover { color: var(--color-primary, #E58E1A); }
+  .ins-section-arrow { display: inline-block; width: 16px; font-size: 0.75rem; transition: transform 0.15s ease; }
+  .ins-section-count { font-size: 0.8rem; color: var(--color-text-muted, #6A6A69); font-weight: 400; }
+  .ins-section-collapsed .ins-question-item { display: none; }
+  .ins-section-collapsed .ins-category-title { margin-bottom: 6px; }
+  .ins-question-item {
+    background: #FAFAFA;
+    border: 1px solid var(--color-border-light, #F0F0F0);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .ins-question-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .ins-question-text { font-weight: 600; font-size: 0.9rem; }
+
+  .ins-chklist-pager {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin-top: 16px; flex-wrap: wrap;
+  }
+  .ins-chklist-pager[hidden] { display: none; }
+  .ins-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
 
   .ins-secondary-btn {
     background: transparent;

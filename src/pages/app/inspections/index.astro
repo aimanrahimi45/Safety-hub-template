@@ -1009,13 +1009,15 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       throw new Error('No safety questions detected. Ensure you map the Safety Question column and that at least one row has content.');
     }
 
-    // Create a new inspection_templates row (checklist_id = "CL-01",
-    // version = max(version) + 1 for that checklist — defaults to 1).
+    // Detect next version — only count active templates.
+    // Deactivated (deleted) templates are ignored so re-importing
+    // after deletion starts fresh at v1.
     const checklistId = 'CL-01';
     const { data: maxRow } = await supabase
       .from('inspection_templates')
       .select('version')
       .eq('checklist_id', checklistId)
+      .eq('is_active', true)
       .order('version', { ascending: false })
       .limit(1)
       .maybeSingle<{ version: number }>();

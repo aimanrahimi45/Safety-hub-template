@@ -1381,16 +1381,16 @@ import '../../../styles/collapsible-section.css';
     }
 
     /* Hide Auditor, Area, and Findings columns on mobile to fit table format without scrolling */
-    #ins-panel-history .ins-table th:nth-child(3),
-    #ins-panel-history .ins-table td:nth-child(3),
-    #ins-panel-history .ins-table th:nth-child(4),
-    #ins-panel-history .ins-table td:nth-child(4),
-    #ins-panel-history .ins-table th:nth-child(5),
-    #ins-panel-history .ins-table td:nth-child(5) {
+    :global(#ins-panel-history .ins-table th:nth-child(3)),
+    :global(#ins-panel-history .ins-table td:nth-child(3)),
+    :global(#ins-panel-history .ins-table th:nth-child(4)),
+    :global(#ins-panel-history .ins-table td:nth-child(4)),
+    :global(#ins-panel-history .ins-table th:nth-child(5)),
+    :global(#ins-panel-history .ins-table td:nth-child(5)) {
       display: none !important;
     }
-    #ins-panel-history .ins-table th,
-    #ins-panel-history .ins-table td {
+    :global(#ins-panel-history .ins-table th),
+    :global(#ins-panel-history .ins-table td) {
       padding: 8px 6px !important;
       font-size: 0.78rem !important;
     }

@@ -42,9 +42,15 @@ import '../../../styles/collapsible-section.css';
       </header>
 
       <nav class="ins-tabs" role="tablist" aria-label="Inspections tabs">
-        <button type="button" class="ins-tab-btn active" data-tab="conduct" role="tab" aria-selected="true" id="ins-tab-conduct">📝 Conduct Inspection</button>
-        <button type="button" class="ins-tab-btn" data-tab="manage" role="tab" aria-selected="false" id="ins-tab-manage">📋 Manage Checklists</button>
-        <button type="button" class="ins-tab-btn" data-tab="history" role="tab" aria-selected="false" id="ins-tab-history">🗂️ History Logs</button>
+        <button type="button" class="ins-tab-btn active" data-tab="conduct" role="tab" aria-selected="true" id="ins-tab-conduct">
+          📝 <span class="tab-text-full">Conduct Inspection</span><span class="tab-text-short">Conduct</span>
+        </button>
+        <button type="button" class="ins-tab-btn" data-tab="manage" role="tab" aria-selected="false" id="ins-tab-manage">
+          📋 <span class="tab-text-full">Manage Checklists</span><span class="tab-text-short">Templates</span>
+        </button>
+        <button type="button" class="ins-tab-btn" data-tab="history" role="tab" aria-selected="false" id="ins-tab-history">
+          🗂️ <span class="tab-text-full">History Logs</span><span class="tab-text-short">History</span>
+        </button>
       </nav>
 
       <!-- ====================== TAB: CONDUCT ====================== -->
@@ -1307,30 +1313,74 @@ import '../../../styles/collapsible-section.css';
   .ins-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
   .ins-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; }
 
-  /* Tabs */
+  /* Tabs container */
   .ins-tabs {
     display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--color-border, #E0E0E0);
-    flex-wrap: wrap;
+    gap: 0px;
+    margin-bottom: 24px;
+    border: 3px solid #2B2D42;
+    border-radius: 12px;
+    background: #FFFFFF;
+    box-shadow: 4px 4px 0px #2B2D42;
+    overflow: hidden;
+    padding: 0;
   }
+  
+  /* Tab buttons as segments */
   .ins-tab-btn {
-    background: transparent;
-    border: none;
-    border-bottom: 3px solid transparent;
-    padding: 10px 18px;
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    border-right: 3px solid #2B2D42 !important;
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 12px 8px !important;
     font-family: inherit;
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--color-text-muted, #6A6A69);
+    color: #2B2D42 !important;
     cursor: pointer;
-    margin-bottom: -2px;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.15s ease !important;
+    transform: none !important;
   }
-  .ins-tab-btn:hover { color: #8B5CF6; }
-  .ins-tab-btn.active { color: #8B5CF6; border-bottom-color: #8B5CF6; }
+
+  .ins-tab-btn:last-child {
+    border-right: none !important;
+  }
+
+  .ins-tab-btn:hover {
+    background: #FFF2D1 !important;
+    color: #2B2D42 !important;
+  }
+
+  .ins-tab-btn.active {
+    background: #FFD166 !important;
+    color: #2B2D42 !important;
+  }
+
+  .tab-text-short {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .tab-text-full {
+      display: none;
+    }
+    .tab-text-short {
+      display: inline;
+    }
+    .ins-tab-btn {
+      font-size: 0.72rem !important;
+      padding: 10px 4px !important;
+    }
+  }
+
   .ins-panel { padding: 8px 0 0; }
   .ins-panel[hidden] { display: none; }
 

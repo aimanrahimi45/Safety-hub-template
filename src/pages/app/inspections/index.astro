@@ -1001,14 +1001,12 @@ import '../../../styles/collapsible-section.css';
     tmplTbody.innerHTML = '';
     if (pageRows.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" class="ins-empty-cell">No matching questions found.</td>`;
+      tr.innerHTML = `<td colspan="4" class="ins-empty-cell">No matching questions found.</td>`;
       tmplTbody.appendChild(tr);
     } else {
       for (const { item, tpl } of pageRows) {
         const tr = document.createElement('tr');
-        const tplLabel = tpl ? `${escapeHtml(tpl.checklist_id)} v${tpl.version}` : '—';
         tr.innerHTML = `
-          <td class="ins-mono">${tplLabel}</td>
           <td class="ins-mono">${escapeHtml(item.question_id)}</td>
           <td>${escapeHtml(item.question_text)}</td>
           <td class="ins-muted">${escapeHtml(item.section ?? '—')}</td>

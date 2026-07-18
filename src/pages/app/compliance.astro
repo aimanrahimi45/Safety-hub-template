@@ -636,11 +636,18 @@ import AppLayout from '../../layouts/AppLayout.astro';
         const sectionItems = section.items;
         sectionItems.sort((a, b) => (a.section_number || '').localeCompare(b.section_number || '', undefined, { numeric: true, sensitivity: 'base' }));
 
+        let commonTitle = '';
+        const firstItemText = sectionItems[0].clause_text || '';
+        if (firstItemText.includes(' — ')) {
+          commonTitle = firstItemText.split(' — ')[0];
+          commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
+        }
+
         html += `
           <div class="cmp-nested-accordion" style="border: 2px solid var(--border); border-radius: 8px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.6); overflow: hidden; display: block;">
             <div class="cmp-nested-header" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: 600; color: var(--primary); transition: background 0.2s;" onclick="window.toggleComplianceNestedAccordion(this)">
               <span style="font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
-                📖 ${escapeHtml(section.baseSection)}
+                📖 ${escapeHtml(section.baseSection)}${commonTitle ? `: ${escapeHtml(commonTitle)}` : ''}
               </span>
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; background: rgba(0,0,0,0.04); padding: 2px 8px; border-radius: 12px;">
@@ -655,24 +662,21 @@ import AppLayout from '../../layouts/AppLayout.astro';
 
         sectionItems.forEach((item) => {
           let displayText = item.clause_text || '';
-          const sn = item.section_number || '';
           if (displayText.includes(' — ')) {
-            displayText = displayText.split(' — ').slice(1).join(' — ').trim();
-          } else {
-            const snIdx = displayText.indexOf(sn);
-            if (sn && snIdx === 0) {
-              displayText = displayText.substring(sn.length).replace(/^[\s—\-]+/, '').trim();
-            }
+            displayText = displayText.split(' — ').slice(1).join(' — ');
           }
 
           html += `
             <div style="padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 6px; border: 1px solid rgba(0,0,0,0.05); position: relative;">
               <div class="cmp-match-score" style="position: absolute; top: 10px; right: 10px; font-size: 0.75rem; background: rgba(15, 118, 110, 0.08); padding: 2px 8px; border-radius: 12px; font-weight: 600; color: var(--primary);">
                 ${Math.round((item.similarity || 0) * 100)}% match
-              </div>${displayText ? `
+              </div>
+              <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; margin-bottom: 6px;">
+                ${escapeHtml(item.section_number || '')}
+              </div>
               <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45; padding-right: 80px; margin-bottom: 8px;">
                 ${escapeHtml(displayText)}
-              </div>` : ''}
+              </div>
               <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
                 <span>⚡</span>
                 <span><strong>Action:</strong> ${escapeHtml(item.required_action)}</span>
@@ -969,11 +973,18 @@ import AppLayout from '../../layouts/AppLayout.astro';
         const sectionItems = section.items;
         sectionItems.sort((a, b) => (a.section_number || '').localeCompare(b.section_number || '', undefined, { numeric: true, sensitivity: 'base' }));
 
+        let commonTitle = '';
+        const firstItemText = sectionItems[0].clause_text || '';
+        if (firstItemText.includes(' — ')) {
+          commonTitle = firstItemText.split(' — ')[0];
+          commonTitle = commonTitle.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)]+(?=[A-Z][a-z])/, '');
+        }
+
         html += `
           <div class="cmp-nested-accordion" style="border: 2px solid var(--border); border-radius: 8px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.6); overflow: hidden; display: block;">
             <div class="cmp-nested-header" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: 600; color: var(--primary); transition: background 0.2s;" onclick="window.toggleComplianceNestedAccordion(this)">
               <span style="font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
-                📖 ${escapeHtml(section.baseSection)}
+                📖 ${escapeHtml(section.baseSection)}${commonTitle ? `: ${escapeHtml(commonTitle)}` : ''}
               </span>
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; background: rgba(0,0,0,0.04); padding: 2px 8px; border-radius: 12px;">
@@ -988,11 +999,8 @@ import AppLayout from '../../layouts/AppLayout.astro';
 
         sectionItems.forEach((item) => {
           let displayText = item.clause_text || '';
-          const sn = item.section_number || '';
           if (displayText.includes(' — ')) {
-            displayText = displayText.split(' — ').slice(1).join(' — ').trim();
-          } else if (sn && displayText.indexOf(sn) === 0) {
-            displayText = displayText.substring(sn.length).replace(/^[\s—\-]+/, '').trim();
+            displayText = displayText.split(' — ').slice(1).join(' — ');
           }
 
           if (displayText.includes(' | Screenshots:')) {
@@ -1020,10 +1028,13 @@ import AppLayout from '../../layouts/AppLayout.astro';
             <div style="padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 6px; border: 1px solid rgba(0,0,0,0.05); position: relative;">
               <div class="cmp-match-score" style="position: absolute; top: 10px; right: 10px; font-size: 0.75rem; background: rgba(15, 118, 110, 0.08); padding: 2px 8px; border-radius: 12px; font-weight: 600; color: var(--primary);">
                 ${Math.round((item.similarity || 0) * 100)}% match
-              </div>${displayText ? `
+              </div>
+              <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; margin-bottom: 6px;">
+                Sub-clause ${escapeHtml(item.section_number || '')}
+              </div>
               <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45; padding-right: 80px;">
                 ${escapeHtml(displayText)}
-              </div>` : ''}
+              </div>
               ${imagesHtml}
               <div style="font-size: 0.85rem; color: var(--primary); margin-top: 8px; font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
                 <span>⚡</span>

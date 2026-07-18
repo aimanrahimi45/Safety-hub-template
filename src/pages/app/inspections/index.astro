@@ -1379,6 +1379,104 @@ import '../../../styles/collapsible-section.css';
       font-size: 0.72rem !important;
       padding: 10px 4px !important;
     }
+
+    /* Convert history table to cards layout on mobile */
+    #ins-panel-history .ins-table thead {
+      display: none;
+    }
+    #ins-panel-history .ins-table,
+    #ins-panel-history .ins-table tbody,
+    #ins-panel-history .ins-table tr,
+    #ins-panel-history .ins-table td {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #ins-panel-history .ins-table tr {
+      background: #FFFFFF;
+      border: 3px solid #2B2D42;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      padding: 14px;
+      box-shadow: 4px 4px 0px #2B2D42;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+    }
+    #ins-panel-history .ins-table td {
+      border: none !important;
+      padding: 2px 0 !important;
+      font-size: 0.85rem;
+      background: transparent !important;
+    }
+    /* Cell 1: Audit ID */
+    #ins-panel-history .ins-table td:nth-child(1) {
+      grid-column: 1;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #8B5CF6;
+    }
+    /* Cell 2: Date */
+    #ins-panel-history .ins-table td:nth-child(2) {
+      grid-column: 2;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--color-text-muted, #6A6A69);
+      text-align: right;
+    }
+    /* Cell 3: Auditor */
+    #ins-panel-history .ins-table td:nth-child(3) {
+      grid-column: 1 / span 2;
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+    #ins-panel-history .ins-table td:nth-child(3)::before {
+      content: "Auditor: ";
+      color: var(--color-text-muted, #6A6A69);
+      font-weight: normal;
+    }
+    /* Cell 4: Area / Dept */
+    #ins-panel-history .ins-table td:nth-child(4) {
+      grid-column: 1 / span 2;
+    }
+    #ins-panel-history .ins-table td:nth-child(4)::before {
+      content: "Area: ";
+      color: var(--color-text-muted, #6A6A69);
+      font-weight: normal;
+    }
+    /* Cell 5: Overall Findings */
+    #ins-panel-history .ins-table td:nth-child(5) {
+      grid-column: 1 / span 2;
+      font-style: italic;
+      color: var(--color-text-muted, #6A6A69);
+      margin-top: 4px;
+      padding-top: 8px !important;
+      border-top: 1px dashed var(--color-border-light, #E0E0E0) !important;
+    }
+    #ins-panel-history .ins-table td:nth-child(5)::before {
+      content: "Findings: ";
+      font-style: normal;
+      color: var(--color-text-muted, #6A6A69);
+      font-weight: normal;
+    }
+    /* Cell 6: Action Link */
+    #ins-panel-history .ins-table td:nth-child(6) {
+      grid-column: 1 / span 2;
+      margin-top: 8px;
+    }
+    #ins-panel-history .ins-table td:nth-child(6) a {
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      display: inline-flex;
+      justify-content: center;
+    }
+    /* Cell: Empty state / Loading */
+    #ins-panel-history .ins-table td.ins-empty-cell {
+      grid-column: 1 / span 2;
+      text-align: center !important;
+      padding: 16px 0 !important;
+    }
   }
 
   .ins-panel { padding: 8px 0 0; }

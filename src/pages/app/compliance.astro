@@ -291,6 +291,15 @@ import AppLayout from '../../layouts/AppLayout.astro';
     if (!action) return '';
     let clean = action.trim();
     
+    // Split by long dash (em-dash / en-dash / spaced hyphen) to strip any redundant prefixes
+    if (clean.includes(' — ')) {
+      clean = clean.split(' — ').slice(1).join(' — ').trim();
+    } else if (clean.includes(' - ')) {
+      clean = clean.split(' - ').slice(1).join(' - ').trim();
+    } else if (clean.includes(' – ')) {
+      clean = clean.split(' – ').slice(1).join(' – ').trim();
+    }
+
     // 1. Remove leading uppercase "BAHAGIAN [ROMAN] [UPPERCASE TITLE]" block
     clean = clean.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)\-\&\/\+]+/g, '').trim();
 

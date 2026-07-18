@@ -564,7 +564,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     for (const [section, items] of grouped) {
       const secEl = document.createElement('div');
       secEl.className = 'ins-category-section ins-section-collapsed';
-      secEl.innerHTML = `<div class="ins-category-title" role="button" tabindex="0"><span class="ins-section-arrow">▶</span> ${escapeHtml(section)} <span class="ins-section-count">(${items.length} questions)</span></div>`;
+      secEl.innerHTML = `<div class="ins-category-title" role="button" tabindex="0"><span class="ins-section-arrow">▶</span> 📂 ${escapeHtml(section)} <span class="ins-section-count">(${items.length} questions)</span></div>`;
       for (const item of items) {
         const optsList = parseDropdownOptions(item.options);
         const entry: AnswerEntry = {
@@ -1378,8 +1378,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   .ins-category-title:hover { color: var(--color-primary, #E58E1A); }
   .ins-section-arrow { display: inline-block; width: 16px; font-size: 0.75rem; transition: transform 0.15s ease; }
   .ins-section-count { font-size: 0.8rem; color: var(--color-text-muted, #6A6A69); font-weight: 400; }
-  .ins-section-collapsed .ins-question-item { display: none; }
-  .ins-section-collapsed .ins-category-title { margin-bottom: 6px; }
+  :global(.ins-section-collapsed .ins-question-item) { display: none; }
+  :global(.ins-section-collapsed .ins-category-title) { margin-bottom: 6px; }
   .ins-question-item {
     background: #FAFAFA;
     border: 1px solid var(--color-border-light, #F0F0F0);

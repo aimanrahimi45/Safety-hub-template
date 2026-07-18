@@ -287,6 +287,24 @@ import AppLayout from '../../layouts/AppLayout.astro';
   // -------------------------------------------------------------------
   // Helpers
   // -------------------------------------------------------------------
+  function cleanRequiredAction(action: string, sectionTitle: string): string {
+    if (!action) return '';
+    let clean = action.trim();
+    
+    // 1. Remove leading uppercase "BAHAGIAN [ROMAN] [UPPERCASE TITLE]" block
+    clean = clean.replace(/^BAHAGIAN\s+[IVXLCDM]+\s+[A-Z\s,\d\(\)\-\&\/\+]+/g, '').trim();
+
+    // 2. Remove the section title case-insensitively if it repeats at the beginning
+    if (sectionTitle) {
+      const cleanTitle = sectionTitle.trim();
+      const escapedTitle = cleanTitle.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`^${escapedTitle}\\s*`, 'i');
+      clean = clean.replace(regex, '').trim();
+    }
+    
+    return clean || action;
+  }
+
   function showError(msg: string): void {
     errorEl.hidden = false;
     errorEl.textContent = msg;
@@ -679,7 +697,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
               </div>
               <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
                 <span>⚡</span>
-                <span><strong>Action:</strong> ${escapeHtml(item.required_action)}</span>
+                <span><strong>Action:</strong> ${escapeHtml(cleanRequiredAction(item.required_action || '', commonTitle))}</span>
               </div>
               <div class="cmp-obligation-tags" style="margin-top: 8px; display: flex; gap: 6px;">
                 <span class="cmp-tag cmp-tag-freq" style="margin: 0; padding: 2px 8px; font-size: 0.75rem;">${escapeHtml(item.frequency || 'other')}</span>
@@ -1038,7 +1056,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
               ${imagesHtml}
               <div style="font-size: 0.85rem; color: var(--primary); margin-top: 8px; font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
                 <span>⚡</span>
-                <span><strong>Action:</strong> ${escapeHtml(item.required_action)}</span>
+                <span><strong>Action:</strong> ${escapeHtml(cleanRequiredAction(item.required_action || '', commonTitle))}</span>
               </div>
               <div class="cmp-obligation-tags" style="margin-top: 8px; display: flex; gap: 6px;">
                 <span class="cmp-tag cmp-tag-freq" style="margin: 0; padding: 2px 8px; font-size: 0.75rem;">${escapeHtml(item.frequency)}</span>

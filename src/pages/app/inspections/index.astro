@@ -1380,110 +1380,19 @@ import '../../../styles/collapsible-section.css';
       padding: 10px 4px !important;
     }
 
-    /* Convert history table to cards layout on mobile */
-    #ins-panel-history .ins-table {
-      border: none !important;
-      box-shadow: none !important;
-      background: transparent !important;
-      border-radius: 0 !important;
-      overflow: visible !important;
-    }
-    #ins-panel-history .ins-table thead {
+    /* Hide Auditor, Area, and Findings columns on mobile to fit table format without scrolling */
+    #ins-panel-history .ins-table th:nth-child(3),
+    #ins-panel-history .ins-table td:nth-child(3),
+    #ins-panel-history .ins-table th:nth-child(4),
+    #ins-panel-history .ins-table td:nth-child(4),
+    #ins-panel-history .ins-table th:nth-child(5),
+    #ins-panel-history .ins-table td:nth-child(5) {
       display: none !important;
     }
-    #ins-panel-history .ins-table,
-    #ins-panel-history .ins-table tbody,
-    #ins-panel-history .ins-table tr,
+    #ins-panel-history .ins-table th,
     #ins-panel-history .ins-table td {
-      display: block !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-    }
-    #ins-panel-history .ins-table tr {
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      margin-bottom: 16px !important;
-      padding: 14px !important;
-      box-shadow: 4px 4px 0px #2B2D42 !important;
-      display: grid !important;
-      grid-template-columns: 1fr auto !important;
-      gap: 6px !important;
-    }
-    #ins-panel-history .ins-table td {
-      border: none !important;
-      padding: 2px 0 !important;
-      font-size: 0.85rem !important;
-      background: transparent !important;
-      color: #2B2D42 !important;
-    }
-    /* Cell 1: Audit ID */
-    #ins-panel-history .ins-table td:nth-child(1) {
-      grid-column: 1 !important;
-      font-size: 0.95rem !important;
-      font-weight: 900 !important;
-      color: #8B5CF6 !important;
-    }
-    /* Cell 2: Date */
-    #ins-panel-history .ins-table td:nth-child(2) {
-      grid-column: 2 !important;
-      font-size: 0.82rem !important;
-      font-weight: 700 !important;
-      color: var(--color-text-muted, #6A6A69) !important;
-      text-align: right !important;
-    }
-    /* Cell 3: Auditor */
-    #ins-panel-history .ins-table td:nth-child(3) {
-      grid-column: 1 / span 2 !important;
-      font-weight: 600 !important;
-      font-size: 0.88rem !important;
-    }
-    #ins-panel-history .ins-table td:nth-child(3)::before {
-      content: "Auditor: ";
-      color: var(--color-text-muted, #6A6A69) !important;
-      font-weight: normal !important;
-    }
-    /* Cell 4: Area / Dept */
-    #ins-panel-history .ins-table td:nth-child(4) {
-      grid-column: 1 / span 2 !important;
-    }
-    #ins-panel-history .ins-table td:nth-child(4)::before {
-      content: "Area: ";
-      color: var(--color-text-muted, #6A6A69) !important;
-      font-weight: normal !important;
-    }
-    /* Cell 5: Overall Findings */
-    #ins-panel-history .ins-table td:nth-child(5) {
-      grid-column: 1 / span 2 !important;
-      font-style: italic !important;
-      color: var(--color-text-muted, #6A6A69) !important;
-      margin-top: 4px !important;
-      padding-top: 8px !important;
-      border-top: 1px dashed var(--color-border-light, #E0E0E0) !important;
-    }
-    #ins-panel-history .ins-table td:nth-child(5)::before {
-      content: "Findings: ";
-      font-style: normal !important;
-      color: var(--color-text-muted, #6A6A69) !important;
-      font-weight: normal !important;
-    }
-    /* Cell 6: Action Link */
-    #ins-panel-history .ins-table td:nth-child(6) {
-      grid-column: 1 / span 2 !important;
-      margin-top: 8px !important;
-    }
-    #ins-panel-history .ins-table td:nth-child(6) a {
-      width: 100% !important;
-      box-sizing: border-box !important;
-      text-align: center !important;
-      display: inline-flex !important;
-      justify-content: center !important;
-    }
-    /* Cell: Empty state / Loading */
-    #ins-panel-history .ins-table td.ins-empty-cell {
-      grid-column: 1 / span 2 !important;
-      text-align: center !important;
-      padding: 16px 0 !important;
+      padding: 8px 6px !important;
+      font-size: 0.78rem !important;
     }
   }
 

@@ -704,12 +704,8 @@ import AppLayout from '../../layouts/AppLayout.astro';
               <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; margin-bottom: 6px;">
                 ${escapeHtml(item.section_number || '')}
               </div>
-              <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45; padding-right: 80px; margin-bottom: 8px;">
+              <div style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.45; padding-right: 80px;">
                 ${escapeHtml(displayText)}
-              </div>
-              <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
-                <span>⚡</span>
-                <span><strong>Action:</strong> ${escapeHtml(cleanRequiredAction(item.required_action || '', commonTitle))}</span>
               </div>
               <div class="cmp-obligation-tags" style="margin-top: 8px; display: flex; gap: 6px;">
                 <span class="cmp-tag cmp-tag-freq" style="margin: 0; padding: 2px 8px; font-size: 0.75rem;">${escapeHtml(item.frequency || 'other')}</span>
@@ -1066,10 +1062,6 @@ import AppLayout from '../../layouts/AppLayout.astro';
                 ${escapeHtml(displayText)}
               </div>
               ${imagesHtml}
-              <div style="font-size: 0.85rem; color: var(--primary); margin-top: 8px; font-weight: 500; display: flex; align-items: flex-start; gap: 4px;">
-                <span>⚡</span>
-                <span><strong>Action:</strong> ${escapeHtml(cleanRequiredAction(item.required_action || '', commonTitle))}</span>
-              </div>
               <div class="cmp-obligation-tags" style="margin-top: 8px; display: flex; gap: 6px;">
                 <span class="cmp-tag cmp-tag-freq" style="margin: 0; padding: 2px 8px; font-size: 0.75rem;">${escapeHtml(item.frequency)}</span>
                 <span class="cmp-tag cmp-tag-${escapeHtml((item.legal_weight || 'mandatory').toLowerCase())}" style="margin: 0; padding: 2px 8px; font-size: 0.75rem;">${escapeHtml((item.legal_weight || 'mandatory').toUpperCase())}</span>

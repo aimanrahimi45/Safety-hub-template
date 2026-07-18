@@ -491,10 +491,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     }
   });
 
-  // -------------------------------------------------------------------
-  // Generate register
-  // -------------------------------------------------------------------
-  generateBtn.addEventListener('click', async () => {
+  async function runGenerateRegister(autoSwitch = true): Promise<void> {
     if (!supabase || !tenantId) return;
     clearError();
 
@@ -511,7 +508,9 @@ import AppLayout from '../../layouts/AppLayout.astro';
     const originalText = generateBtn.textContent ?? 'Generate';
     generateBtn.textContent = '🔄 Generating…';
     registerContent.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔄</div><h3>Matching your site against Malaysian OSH law…</h3></div>';
-    switchTab('register');
+    if (autoSwitch) {
+      switchTab('register');
+    }
 
     try {
       const resp = await fetch('/api/generate-register', {
@@ -533,6 +532,10 @@ import AppLayout from '../../layouts/AppLayout.astro';
       generateBtn.disabled = false;
       generateBtn.textContent = originalText;
     }
+  }
+
+  generateBtn.addEventListener('click', () => {
+    void runGenerateRegister(true);
   });
 
   // -------------------------------------------------------------------
@@ -1197,6 +1200,13 @@ import AppLayout from '../../layouts/AppLayout.astro';
         savedHint.hidden = false;
         savedHint.textContent = `Last saved profile loaded. Adjust and re-save, or click Generate to refresh.`;
         generateBtn.hidden = false;
+
+        const existing = readRegister();
+        if (!existing || existing.length === 0) {
+          void runGenerateRegister(false);
+        } else {
+          renderRegister(existing);
+        }
       }
     })().catch(() => {
       showError('Failed to initialise compliance page.');

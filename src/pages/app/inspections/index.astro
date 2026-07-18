@@ -904,6 +904,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     const tplId = tmplFilter.value;
     const tplById = new Map(allTemplates.map((t) => [t.id, t]));
     return allTemplateItems
+      .filter((it) => tplById.has(it.template_id)) // exclude items from deactivated templates
       .filter((it) => (tplId ? it.template_id === tplId : true))
       .filter((it) => {
         if (!q) return true;

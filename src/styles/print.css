@@ -161,6 +161,113 @@
   a[href^="/"]::after {
     content: "";
   }
+
+  /* ===================================================================
+   * Inspection detail page (print)
+   * =================================================================== */
+
+  /* Hide the interactive collapsible view, show the clean print table. */
+  #ins-items-container,
+  #ins-detail-pager,
+  #ins-detail-expand-all {
+    display: none !important;
+  }
+
+  .ins-print-only {
+    display: block !important;
+  }
+
+  .ins-print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    border: 0.5pt solid #999 !important;
+  }
+  .ins-print-table th,
+  .ins-print-table td {
+    border: 0.5pt solid #999 !important;
+    padding: 4pt 6pt !important;
+    color: #000 !important;
+    text-align: left;
+    vertical-align: top;
+  }
+  .ins-print-table th {
+    background: #eee !important;
+    font-size: 8pt;
+    text-transform: uppercase;
+  }
+  .ins-col-id { width: 60pt; }
+  .ins-col-ans { width: 70pt; text-align: center; }
+  .ins-center { text-align: center; }
+  .ins-mono { font-family: 'Courier New', monospace; font-weight: 700; font-size: 8pt; }
+
+  .ins-print-section-row td {
+    background: #ddd !important;
+    font-weight: 700;
+    font-size: 9pt;
+    padding: 4pt 6pt !important;
+  }
+
+  .ins-ans-badge {
+    display: inline-block;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    font-size: 8pt;
+    font-weight: 700;
+    border: 0.5pt solid #999 !important;
+  }
+  .ins-ans-yes { background: #e0f2e0 !important; }
+  .ins-ans-no { background: #f2e0e0 !important; }
+  .ins-ans-na { background: #e8e8e8 !important; }
+  .ins-ans-other { background: #e0e8f2 !important; }
+
+  .ins-detail-card {
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 0 12pt !important;
+  }
+  .ins-detail-card h2 {
+    font-size: 11pt;
+    margin: 0 0 6pt;
+    border-bottom: 1pt solid #000;
+    padding-bottom: 4pt;
+  }
+
+  .ins-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4pt 12pt;
+  }
+  .ins-label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    color: #555 !important;
+  }
+
+  .ins-detail-header {
+    border-bottom: 1pt solid #000;
+    padding-bottom: 6pt;
+    margin-bottom: 12pt;
+  }
+  .ins-detail-header h1 { font-size: 16pt; margin: 0 0 4pt; }
+
+  .ins-sig-display img { max-width: 60%; max-height: 80pt; }
+  .ins-block { background: transparent !important; border: 0.5pt solid #ccc !important; padding: 4pt 6pt !important; }
+
+  /* Avoid page breaks inside cards / rows. */
+  .ins-detail-card,
+  .ins-print-table tr,
+  .ins-print-table thead {
+    page-break-inside: avoid;
+  }
+}
+
+/* Outside print media, the .ins-print-only label is hidden so the
+ * screen layout is unaffected. */
+.ins-print-only {
+  display: none;
 }
 
 /* Outside print media, the .ppe-print-only label is hidden so the

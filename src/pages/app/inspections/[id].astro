@@ -74,13 +74,27 @@ export function getStaticPaths() {
 
         <section class="ins-detail-card ins-print-block">
           <h2>Question responses</h2>
-          <button type="button" id="ins-detail-expand-all" class="ins-secondary-btn" style="margin-bottom:12px">Expand All</button>
+          <button type="button" id="ins-detail-expand-all" class="ins-secondary-btn no-print" style="margin-bottom:12px">Expand All</button>
           <div id="ins-items-container"></div>
-          <nav id="ins-detail-pager" class="ins-chklist-pager" hidden>
+          <nav id="ins-detail-pager" class="ins-chklist-pager no-print" hidden>
             <button type="button" id="ins-detail-prev" class="ins-secondary-btn" disabled>← Previous</button>
             <span class="ins-page-info" id="ins-detail-page-info">Page 1</span>
             <button type="button" id="ins-detail-next" class="ins-secondary-btn" disabled>Next →</button>
           </nav>
+          <!-- Print-only table: clean paper layout with section headers -->
+          <div class="ins-print-only">
+            <table class="ins-print-table" aria-label="Question responses (print)">
+              <thead>
+                <tr>
+                  <th class="ins-col-id">ID</th>
+                  <th>Question</th>
+                  <th class="ins-col-ans">Answer</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="ins-print-tbody"></tbody>
+            </table>
+          </div>
         </section>
 
         <section class="ins-detail-card no-print">
@@ -127,6 +141,7 @@ export function getStaticPaths() {
   const detailNext = document.getElementById('ins-detail-next') as HTMLButtonElement;
   const detailPageInfo = document.getElementById('ins-detail-page-info') as HTMLElement;
   const detailExpandAllBtn = document.getElementById('ins-detail-expand-all') as HTMLButtonElement;
+  const printTbody = document.getElementById('ins-print-tbody') as HTMLElement;
 
   function showError(msg: string): void {
     errorEl.hidden = false;
@@ -254,6 +269,7 @@ export function getStaticPaths() {
     }
 
     applyDetailPagination();
+    renderPrintTable(items, qidSection);
   }
 
   function applyDetailPagination(): void {
@@ -283,6 +299,32 @@ export function getStaticPaths() {
     const total = itemsContainer.querySelectorAll('.ins-category-section').length;
     if (detailPage < Math.ceil(total / SECTIONS_PER_PAGE)) { detailPage++; applyDetailPagination(); }
   });
+
+  function renderPrintTable(items: InspectionItem[], qidSection: Map<string, string>): void {
+    printTbody.innerHTML = '';
+    let lastSection = '';
+    for (const it of items) {
+      const sec = qidSection.get(it.question_id ?? '') || 'General Safety';
+      if (sec !== lastSection) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="4" class="ins-print-section-row">${escapeHtml(sec)}</td>`;
+        printTbody.appendChild(tr);
+        lastSection = sec;
+      }
+      const qId = it.question_id ?? '—';
+      const answer = it.response_value ?? it.status ?? '—';
+      const remarks = it.notes ?? '—';
+      const ansClass = answerBadgeClass(answer);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="ins-mono">${escapeHtml(qId)}</td>
+        <td>${escapeHtml(it.item_description)}</td>
+        <td class="ins-center"><span class="ins-ans-badge ${ansClass}">${escapeHtml(answer)}</span></td>
+        <td class="ins-muted">${escapeHtml(remarks)}</td>
+      `;
+      printTbody.appendChild(tr);
+    }
+  }
 
   detailExpandAllBtn.addEventListener('click', () => {
     detailAllExpanded = !detailAllExpanded;
@@ -449,6 +491,10 @@ export function getStaticPaths() {
     margin-bottom: 8px;
   }
   .ins-question-text { font-weight: 600; font-size: 0.9rem; }
+
+  .ins-mono { font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+  .ins-muted { color: var(--color-text-muted, #6A6A69); }
+  .ins-center { text-align: center; }
 
   .ins-secondary-btn {
     background: transparent;

@@ -84,6 +84,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <fieldset class="ins-fieldset" id="ins-checklist-card" hidden>
             <legend>B. Checklist</legend>
             <p class="ins-hint" id="ins-checklist-title">Safety Inspection Checklist</p>
+            <button type="button" id="ins-expand-all" class="ins-secondary-btn" style="margin-bottom:12px">Expand All</button>
             <div id="ins-checklist-container"></div>
             <nav id="ins-chklist-pager" class="ins-chklist-pager" hidden>
               <button type="button" id="ins-chklist-prev" class="ins-secondary-btn" disabled>← Previous</button>
@@ -543,6 +544,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     checklistContainer.innerHTML = '';
     answers = {};
     chklistPage = 1;
+    checklistAllExpanded = false;
+    if (expandAllBtn) expandAllBtn.textContent = 'Expand All';
 
     if (allTemplateItems.length === 0) {
       checklistCard.hidden = true;
@@ -560,8 +563,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
     for (const [section, items] of grouped) {
       const secEl = document.createElement('div');
-      secEl.className = 'ins-category-section';
-      secEl.innerHTML = `<div class="ins-category-title">📂 ${escapeHtml(section)}</div>`;
+      secEl.className = 'ins-category-section ins-section-collapsed';
+      secEl.innerHTML = `<div class="ins-category-title" role="button" tabindex="0"><span class="ins-section-arrow">▶</span> ${escapeHtml(section)} <span class="ins-section-count">(${items.length} questions)</span></div>`;
       for (const item of items) {
         const optsList = parseDropdownOptions(item.options);
         const entry: AnswerEntry = {
@@ -618,6 +621,13 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         secEl.appendChild(itemEl);
       }
       checklistContainer.appendChild(secEl);
+      // Toggle section collapse on header click.
+      const titleEl = secEl.querySelector<HTMLElement>('.ins-category-title');
+      if (titleEl) {
+        titleEl.addEventListener('click', () => {
+          toggleSection(secEl, titleEl);
+        });
+      }
     }
 
     // Wire up choice buttons + input listeners via event delegation.
@@ -664,6 +674,31 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     applyChecklistPagination();
     setTimeout(resizeSignatureCanvas, 50);
   }
+
+  function toggleSection(secEl: HTMLElement, titleEl: HTMLElement): void {
+    const collapsed = secEl.classList.toggle('ins-section-collapsed');
+    titleEl.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = collapsed ? '▶' : '▼';
+  }
+
+  const expandAllBtn = document.getElementById('ins-expand-all') as HTMLButtonElement;
+  let checklistAllExpanded = false;
+
+  expandAllBtn.addEventListener('click', () => {
+    checklistAllExpanded = !checklistAllExpanded;
+    const sections = checklistContainer.querySelectorAll<HTMLElement>('.ins-category-section');
+    sections.forEach((sec) => {
+      const title = sec.querySelector<HTMLElement>('.ins-category-title');
+      if (!title) return;
+      if (checklistAllExpanded) {
+        sec.classList.remove('ins-section-collapsed');
+        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▼';
+      } else {
+        sec.classList.add('ins-section-collapsed');
+        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▶';
+      }
+    });
+    expandAllBtn.textContent = checklistAllExpanded ? 'Collapse All' : 'Expand All';
+  });
 
   function applyChecklistPagination(): void {
     const sections = checklistContainer.querySelectorAll<HTMLElement>('.ins-category-section');
@@ -1337,7 +1372,14 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     padding-bottom: 6px;
     margin-bottom: 12px;
     border-bottom: 2px dashed var(--color-border, #E0E0E0);
+    cursor: pointer;
+    user-select: none;
   }
+  .ins-category-title:hover { color: var(--color-primary, #E58E1A); }
+  .ins-section-arrow { display: inline-block; width: 16px; font-size: 0.75rem; transition: transform 0.15s ease; }
+  .ins-section-count { font-size: 0.8rem; color: var(--color-text-muted, #6A6A69); font-weight: 400; }
+  .ins-section-collapsed .ins-question-item { display: none; }
+  .ins-section-collapsed .ins-category-title { margin-bottom: 6px; }
   .ins-question-item {
     background: #FAFAFA;
     border: 1px solid var(--color-border-light, #F0F0F0);

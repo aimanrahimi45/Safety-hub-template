@@ -134,7 +134,7 @@ import '../../../styles/collapsible-section.css';
             <div class="ins-upload-icon" aria-hidden="true">📥</div>
             <h3 class="ins-upload-title">Upload Excel Checklist Template</h3>
             <p class="ins-upload-desc">
-              Required Excel headers: <strong>Checklist ID, Question ID, Safety Question, Category, Risk Level</strong>.
+              Required Excel headers: <strong>Checklist ID, Question ID, Safety Question, Category</strong>.
               Then mark Section Header rows in the wizard.
             </p>
           </div>
@@ -162,14 +162,13 @@ import '../../../styles/collapsible-section.css';
           <div class="ins-table-scroll">
             <table class="ins-table" aria-label="Active checklist questions">
               <thead>
-                <tr>
-                  <th>Template</th>
-                  <th>Question ID</th>
-                  <th>Safety Question</th>
-                  <th>Category</th>
-                  <th>Type</th>
-                  <th class="ins-center">Risk</th>
-                </tr>
+                  <tr>
+                    <th>Template</th>
+                    <th>Question ID</th>
+                    <th>Safety Question</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                  </tr>
               </thead>
               <tbody id="ins-tmpl-tbody"></tbody>
             </table>
@@ -592,8 +591,6 @@ import '../../../styles/collapsible-section.css';
         };
         answers[item.question_id] = entry;
 
-        const risk = (item.risk_level || 'Medium').toString();
-        const riskClass = risk.toLowerCase();
         let actionHtml = '';
         if (item.response_type === 'dropdown' && optsList.length > 0) {
           const optsHtml = ['<option value="">— Choose option —</option>']
@@ -627,7 +624,6 @@ import '../../../styles/collapsible-section.css';
         itemEl.innerHTML = `
           <div class="ins-question-header">
             <span class="ins-question-text"><strong>${escapeHtml(item.question_id)}:</strong> ${escapeHtml(item.question_text)}</span>
-            <span class="ins-risk-badge ins-risk-${escapeHtml(riskClass)}">${escapeHtml(risk)}</span>
           </div>
           <div class="ins-question-actions">${actionHtml}</div>
           <input type="text" class="ins-q-input ins-q-remarks" data-q="${escapeHtml(item.question_id)}" data-kind="remarks" placeholder="Remarks / Corrective Action (optional)" />
@@ -966,7 +962,7 @@ import '../../../styles/collapsible-section.css';
     tmplTbody.innerHTML = '';
     if (pageRows.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="6" class="ins-empty-cell">No matching questions found.</td>`;
+      tr.innerHTML = `<td colspan="5" class="ins-empty-cell">No matching questions found.</td>`;
       tmplTbody.appendChild(tr);
     } else {
       for (const { item, tpl } of pageRows) {
@@ -980,9 +976,6 @@ import '../../../styles/collapsible-section.css';
           <td>
             <strong>${escapeHtml(responseTypeLabel(item.response_type))}</strong>
             ${item.response_type === 'dropdown' && item.options ? `<div class="ins-muted ins-small">${escapeHtml(item.options)}</div>` : ''}
-          </td>
-          <td class="ins-center">
-            <span class="ins-risk-badge ins-risk-${escapeHtml((item.risk_level || 'Medium').toLowerCase())}">${escapeHtml(item.risk_level || 'Medium')}</span>
           </td>
         `;
         tmplTbody.appendChild(tr);
@@ -1021,7 +1014,6 @@ import '../../../styles/collapsible-section.css';
       section: string;
       response_type: 'yes_no' | 'text' | 'number' | 'pass_fail' | 'dropdown';
       options: string | null;
-      risk_level: 'High' | 'Medium' | 'Low';
     }> = [];
     let questionCounter = 1;
     for (const r of mappedRows) {
@@ -1041,7 +1033,6 @@ import '../../../styles/collapsible-section.css';
         section: currentCategory,
         response_type: responseType,
         options: options,
-        risk_level: 'Medium',
       });
     }
 
@@ -1091,8 +1082,6 @@ import '../../../styles/collapsible-section.css';
       question_text: q.question_text,
       response_type: q.response_type,
       options: q.options,
-      risk_level: q.risk_level,
-      is_required: true,
     }));
     // Batch in groups of 500 (Supabase's hard cap is 1000/request).
     const BATCH = 500;
@@ -1383,43 +1372,6 @@ import '../../../styles/collapsible-section.css';
   }
   .ins-question-text { font-weight: 600; font-size: 0.9rem; }
   .ins-question-actions { margin-bottom: 8px; }
-
-  .ins-choice-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  :global {
-  .ins-choice-btn {
-    flex: 1 1 0;
-    min-width: 80px;
-    background: var(--color-bg, #fff);
-    border: 2px solid var(--color-border, #E0E0E0);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-weight: 700;
-    font-size: 0.85rem;
-    cursor: pointer;
-    text-align: center;
-    font-family: inherit;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  .ins-choice-btn:hover { border-color: #8B5CF6; }
-  }
-  :global {
-  .ins-q-input { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border, #E0E0E0); border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: var(--color-bg, #fff); }
-  .ins-q-remarks { margin-top: 4px; }
-  }
-
-  .ins-risk-badge {
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    border: 1px solid var(--color-border, #E0E0E0);
-    white-space: nowrap;
-  }
-  .ins-risk-high { background: #FCE7F3; color: #9D174D; }
-  .ins-risk-medium { background: #FEF3C7; color: #92400E; }
-  .ins-risk-low { background: #DBEAFE; color: #1E40AF; }
 
   /* Signature */
   .ins-sig-container {

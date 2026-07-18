@@ -154,6 +154,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             <div class="ins-filter-buttons">
               <button type="button" id="ins-tmpl-apply" class="ins-secondary-btn">Apply</button>
               <button type="button" id="ins-tmpl-clear" class="ins-secondary-btn">Clear</button>
+              <button type="button" id="ins-tmpl-delete" class="ins-secondary-btn ins-danger-btn" disabled>Delete template</button>
             </div>
           </div>
           <div class="ins-table-scroll">
@@ -282,6 +283,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const tmplPrev = document.getElementById('ins-tmpl-prev') as HTMLButtonElement;
   const tmplNext = document.getElementById('ins-tmpl-next') as HTMLButtonElement;
   const tmplPageInfo = document.getElementById('ins-tmpl-page-info') as HTMLElement;
+  const tmplDelete = document.getElementById('ins-tmpl-delete') as HTMLButtonElement;
 
   // History refs
   const logQ = document.getElementById('ins-log-q') as HTMLInputElement;
@@ -872,9 +874,30 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       opt.textContent = `${t.checklist_id} (v${t.version})`;
       tmplFilter.appendChild(opt);
     }
+    tmplDelete.disabled = true;
 
     void renderTemplatesTable();
   }
+
+  // Enable delete button only when a specific template is selected.
+  tmplFilter.addEventListener('change', () => {
+    tmplDelete.disabled = !tmplFilter.value;
+  });
+
+  tmplDelete.addEventListener('click', async () => {
+    const tplId = tmplFilter.value;
+    if (!tplId || !supabase) return;
+    const tpl = allTemplates.find((t) => t.id === tplId);
+    if (!tpl) return;
+    if (!confirm(`Deactivate template "${tpl.checklist_id} (v${tpl.version})"? This hides it from all dropdowns. Existing inspections using this template are unaffected.`)) return;
+    const { error } = await supabase
+      .from('inspection_templates')
+      .update({ is_active: false })
+      .eq('id', tplId);
+    if (error) { showError(error.message); return; }
+    await loadTemplatesTab();
+    await loadTemplatesDropdown();
+  });
 
   function filteredTemplates(): Array<{ item: InspectionTemplateItem; tpl: InspectionTemplate | null }> {
     const q = tmplQ.value.trim().toLowerCase();
@@ -1420,6 +1443,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
   .ins-secondary-btn:hover:not(:disabled) { color: #8B5CF6; border-color: #8B5CF6; }
   .ins-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ins-danger-btn { color: #8B1A1A; border-color: #C0392B; }
+  .ins-danger-btn:hover:not(:disabled) { background: #FDECEC; color: #8B1A1A; border-color: #C0392B; }
   .ins-btn-link { padding: 4px 10px; font-size: 0.72rem; }
   .ins-form-actions { margin-top: 8px; }
 

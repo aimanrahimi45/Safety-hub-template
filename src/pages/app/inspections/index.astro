@@ -527,8 +527,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 
   function renderChecklist(): void {
-    console.log('[DEBUG] renderChecklist called — all buttons will be recreated, state lost');
-    console.trace('[DEBUG] renderChecklist stack trace');
     checklistContainer.innerHTML = '';
     answers = {};
 
@@ -613,22 +611,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       b.addEventListener('click', () => {
         const q = b.dataset.q ?? '';
         const v = b.dataset.val ?? '';
-        console.log(`[DEBUG] Button clicked: q="${q}", val="${v}"`);
         const entry = answers[q];
-        if (!entry) { console.log(`[DEBUG] No answer entry for q="${q}"`); return; }
+        if (!entry) return;
         entry.responseValue = v;
-        // Visually mark only this question's buttons — use setProperty
-        // with 'important' priority because the AppLayout has a global
-        // `button { background: #FFF !important }` rule that otherwise
-        // overrides inline styles in the CSS cascade.
+        // Use setProperty with 'important' priority because the AppLayout
+        // has a global `button { background: #FFF !important }` rule
+        // that overrides plain inline styles in the CSS cascade.
         checklistContainer.querySelectorAll<HTMLButtonElement>('.ins-choice-btn').forEach((sib) => {
           if (sib.dataset.q === q) {
-            console.log(`[DEBUG] Removing ins-active from: q="${sib.dataset.q}", val="${sib.dataset.val}"`);
             sib.classList.remove('ins-active');
+            sib.style.setProperty('appearance', 'none', 'important');
             sib.style.setProperty('background', '#FFFFFF', 'important');
             sib.style.setProperty('color', '#2B2D42', 'important');
             sib.style.setProperty('border-color', '#2B2D42', 'important');
-            sib.style.setProperty('appearance', 'none', 'important');
           }
         });
         b.classList.add('ins-active');
@@ -636,20 +631,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         b.style.setProperty('background', '#8B5CF6', 'important');
         b.style.setProperty('color', '#FFFFFF', 'important');
         b.style.setProperty('border-color', '#8B5CF6', 'important');
-        // Debug: dump the button's actual rendered styles
-        const cs = getComputedStyle(b);
-        console.log(`[DEBUG] Added ins-active to: q="${q}", val="${v}"`);
-        console.log(`[DEBUG] Computed after apply:`, {
-          backgroundColor: cs.backgroundColor,
-          color: cs.color,
-          borderColor: cs.borderTopColor,
-          appearance: cs.appearance,
-          display: cs.display,
-          width: b.offsetWidth,
-          height: b.offsetHeight,
-          inlineStyle: b.getAttribute('style'),
-          classList: b.className,
-        });
       });
     });
     checklistContainer.querySelectorAll<HTMLInputElement | HTMLSelectElement>('.ins-q-input').forEach((inp) => {
@@ -666,31 +647,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     checklistTitle.textContent = `Safety Inspection Checklist — ${checklistEl.options[checklistEl.selectedIndex]?.text ?? ''}`;
     checklistCard.hidden = false;
     signoffCard.hidden = false;
-    // Debug: verify the first choice button gets global CSS styles
-    const firstBtn = checklistContainer.querySelector<HTMLButtonElement>('.ins-choice-btn');
-    if (firstBtn) {
-      const fcs = getComputedStyle(firstBtn);
-      console.log('[DEBUG] First button base computed:', {
-        display: fcs.display,
-        flex: fcs.flex,
-        appearance: fcs.appearance,
-        background: fcs.backgroundColor,
-        font: fcs.font,
-        border: fcs.border,
-        padding: fcs.padding,
-        minWidth: fcs.minWidth,
-        classList: firstBtn.className,
-        dataset: firstBtn.dataset,
-        inlineStyle: firstBtn.getAttribute('style'),
-      });
-    } else {
-      console.log('[DEBUG] No .ins-choice-btn found after renderChecklist');
-    }
     setTimeout(resizeSignatureCanvas, 50);
   }
 
   checklistEl.addEventListener('change', () => {
-    console.log('[DEBUG] checklistEl.change fired — template dropdown changed');
     const tplId = checklistEl.value;
     if (tplId) void loadTemplateItems(tplId);
   });
@@ -1344,11 +1304,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     -webkit-appearance: none;
   }
   .ins-choice-btn:hover { border-color: #8B5CF6; }
-  .ins-choice-btn.ins-active {
-    background: #8B5CF6;
-    color: #fff;
-    border-color: #8B5CF6;
-  }
   }
   :global {
   .ins-q-input { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border, #E0E0E0); border-radius: 8px; font-family: inherit; font-size: 0.85rem; background: var(--color-bg, #fff); }

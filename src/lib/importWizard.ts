@@ -919,7 +919,7 @@ export function openImportWizard(options: WizardOptions): void {
     }
     thead.innerHTML = `<tr>${headHtml}</tr>`;
 
-    const previewLimit = Math.min(parsedRows.length, 30);
+    const previewLimit = parsedRows.length;
     for (let i = 0; i < previewLimit; i++) {
       const row = parsedRows[i] ?? [];
       const tr = document.createElement("tr");

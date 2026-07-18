@@ -229,7 +229,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   </main>
 </AppLayout>
 
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script is:inline src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
 <script>
   import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
@@ -447,10 +447,22 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   function initSignature(): void {
     const Ctor = (window as unknown as { SignaturePad?: new (canvas: HTMLCanvasElement, opts?: object) => typeof signaturePad }).SignaturePad;
     if (!Ctor) {
-      // CDN failed to load. Disable the submit button; user can still
-      // try other tabs.
-      submitBtn.disabled = true;
-      showError('Signature library failed to load. Reload the page to try again.');
+      // CDN not loaded yet. Retry once after a short delay.
+      setTimeout(() => {
+        const retryCtor = (window as unknown as { SignaturePad?: new (canvas: HTMLCanvasElement, opts?: object) => typeof signaturePad }).SignaturePad;
+        if (!retryCtor) {
+          submitBtn.disabled = true;
+          showError('Signature library failed to load. Reload the page to try again.');
+          return;
+        }
+        signaturePad = new retryCtor(sigPadEl, {
+          backgroundColor: 'rgb(248, 250, 252)',
+          penColor: 'rgb(15, 23, 42)',
+        } as object);
+        resizeSignatureCanvas();
+        window.addEventListener('resize', resizeSignatureCanvas);
+        sigPadEl.addEventListener('pointerdown', resizeSignatureCanvas);
+      }, 1000);
       return;
     }
     signaturePad = new Ctor(sigPadEl, {

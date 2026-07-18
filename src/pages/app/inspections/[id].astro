@@ -7,6 +7,7 @@
 // expose edit). Print uses the shared print stylesheet.
 import AppLayout from '../../../layouts/AppLayout.astro';
 import '../../../styles/print.css';
+import '../../../styles/collapsible-section.css';
 
 export function getStaticPaths() {
   return [{ params: { id: '_' } }];
@@ -96,6 +97,7 @@ export function getStaticPaths() {
 <script>
   import { getSupabase, isSupabaseConfigured } from '../../../lib/supabase';
   import type { Inspection, InspectionItem, InspectionTemplateItem } from '../../../lib/types';
+  import { toggleCollapsibleSection, setAllSections } from '../../../lib/collapsibleSection';
 
   const setupWarning = document.getElementById('ins-setup-warning') as HTMLElement;
   const errorEl = document.getElementById('ins-error') as HTMLElement;
@@ -227,8 +229,7 @@ export function getStaticPaths() {
       const titleEl = secEl.querySelector<HTMLElement>('.ins-category-title');
       if (titleEl) {
         titleEl.addEventListener('click', () => {
-          const collapsed = secEl.classList.toggle('ins-section-collapsed');
-          titleEl.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = collapsed ? '▶' : '▼';
+          toggleCollapsibleSection(secEl);
         });
       }
 
@@ -285,18 +286,7 @@ export function getStaticPaths() {
 
   detailExpandAllBtn.addEventListener('click', () => {
     detailAllExpanded = !detailAllExpanded;
-    const sections = itemsContainer.querySelectorAll<HTMLElement>('.ins-category-section');
-    sections.forEach((sec) => {
-      const title = sec.querySelector<HTMLElement>('.ins-category-title');
-      if (!title) return;
-      if (detailAllExpanded) {
-        sec.classList.remove('ins-section-collapsed');
-        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▼';
-      } else {
-        sec.classList.add('ins-section-collapsed');
-        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▶';
-      }
-    });
+    setAllSections(itemsContainer, detailAllExpanded);
     detailExpandAllBtn.textContent = detailAllExpanded ? 'Collapse All' : 'Expand All';
   });
 
@@ -445,22 +435,6 @@ export function getStaticPaths() {
   .ins-ans-na { background: #E2E8F0; color: var(--color-text-muted, #6A6A69); }
   .ins-ans-other { background: #DBEAFE; color: #1E40AF; }
 
-  /* Collapsible category sections */
-  .ins-category-section { margin-top: 18px; }
-  .ins-category-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    padding-bottom: 6px;
-    margin-bottom: 12px;
-    border-bottom: 2px dashed var(--color-border, #E0E0E0);
-    cursor: pointer;
-    user-select: none;
-  }
-  .ins-category-title:hover { color: var(--color-primary, #E58E1A); }
-  .ins-section-arrow { display: inline-block; width: 16px; font-size: 0.75rem; transition: transform 0.15s ease; }
-  .ins-section-count { font-size: 0.8rem; color: var(--color-text-muted, #6A6A69); font-weight: 400; }
-  .ins-section-collapsed .ins-question-item { display: none; }
-  .ins-section-collapsed .ins-category-title { margin-bottom: 6px; }
   .ins-question-item {
     background: #FAFAFA;
     border: 1px solid var(--color-border-light, #F0F0F0);
@@ -475,13 +449,6 @@ export function getStaticPaths() {
     margin-bottom: 8px;
   }
   .ins-question-text { font-weight: 600; font-size: 0.9rem; }
-
-  .ins-chklist-pager {
-    display: flex; align-items: center; justify-content: center;
-    gap: 12px; margin-top: 16px; flex-wrap: wrap;
-  }
-  .ins-chklist-pager[hidden] { display: none; }
-  .ins-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
 
   .ins-secondary-btn {
     background: transparent;

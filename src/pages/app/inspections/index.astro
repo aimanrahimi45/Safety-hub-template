@@ -18,6 +18,7 @@
 // 20260712_phase1a_solo_sho.sql + 20260712_phase2_inspections_rebuild.sql);
 // no PIN gates, no manual tenant filtering.
 import AppLayout from '../../../layouts/AppLayout.astro';
+import '../../../styles/collapsible-section.css';
 ---
 <AppLayout title="Workplace Inspections - AmerisPro">
   <main class="ins-page">
@@ -236,6 +237,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   import { openImportWizard } from '../../../lib/importWizard';
   import { resizeImage } from '../../../lib/imageResize';
   import { uploadToStorage } from '../../../lib/storage';
+  import { toggleCollapsibleSection, setAllSections } from '../../../lib/collapsibleSection';
   import type {
     Inspection,
     InspectionTemplate,
@@ -637,7 +639,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       const titleEl = secEl.querySelector<HTMLElement>('.ins-category-title');
       if (titleEl) {
         titleEl.addEventListener('click', () => {
-          toggleSection(secEl, titleEl);
+          toggleCollapsibleSection(secEl);
         });
       }
     }
@@ -687,28 +689,12 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     setTimeout(resizeSignatureCanvas, 50);
   }
 
-  function toggleSection(secEl: HTMLElement, titleEl: HTMLElement): void {
-    const collapsed = secEl.classList.toggle('ins-section-collapsed');
-    titleEl.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = collapsed ? '▶' : '▼';
-  }
-
   const expandAllBtn = document.getElementById('ins-expand-all') as HTMLButtonElement;
   let checklistAllExpanded = false;
 
   expandAllBtn.addEventListener('click', () => {
     checklistAllExpanded = !checklistAllExpanded;
-    const sections = checklistContainer.querySelectorAll<HTMLElement>('.ins-category-section');
-    sections.forEach((sec) => {
-      const title = sec.querySelector<HTMLElement>('.ins-category-title');
-      if (!title) return;
-      if (checklistAllExpanded) {
-        sec.classList.remove('ins-section-collapsed');
-        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▼';
-      } else {
-        sec.classList.add('ins-section-collapsed');
-        title.querySelector<HTMLElement>('.ins-section-arrow')!.textContent = '▶';
-      }
-    });
+    setAllSections(checklistContainer, checklistAllExpanded);
     expandAllBtn.textContent = checklistAllExpanded ? 'Collapse All' : 'Expand All';
   });
 
@@ -1382,21 +1368,6 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   }
 
   /* Category / question cards */
-  .ins-category-section { margin-top: 18px; }
-  .ins-category-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    padding-bottom: 6px;
-    margin-bottom: 12px;
-    border-bottom: 2px dashed var(--color-border, #E0E0E0);
-    cursor: pointer;
-    user-select: none;
-  }
-  .ins-category-title:hover { color: var(--color-primary, #E58E1A); }
-  .ins-section-arrow { display: inline-block; width: 16px; font-size: 0.75rem; transition: transform 0.15s ease; }
-  .ins-section-count { font-size: 0.8rem; color: var(--color-text-muted, #6A6A69); font-weight: 400; }
-  :global(.ins-section-collapsed .ins-question-item) { display: none; }
-  :global(.ins-section-collapsed .ins-category-title) { margin-bottom: 6px; }
   .ins-question-item {
     background: #FAFAFA;
     border: 1px solid var(--color-border-light, #F0F0F0);
@@ -1579,11 +1550,5 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; margin-top: 16px; flex-wrap: wrap;
   }
-  .ins-chklist-pager {
-    display: flex; align-items: center; justify-content: center;
-    gap: 12px; margin-top: 16px; flex-wrap: wrap;
-  }
-  .ins-chklist-pager[hidden] { display: none; }
-  .ins-page-info { font-size: 0.85rem; color: var(--color-text-muted, #6A6A69); }
   .ins-empty { padding: 40px 20px; text-align: center; color: var(--color-text-muted, #6A6A69); }
 </style>

@@ -617,15 +617,23 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         const entry = answers[q];
         if (!entry) { console.log(`[DEBUG] No answer entry for q="${q}"`); return; }
         entry.responseValue = v;
-        // Visually mark only this question's buttons — use direct dataset
-        // comparison instead of CSS.escape to avoid attribute-selector bugs.
+        // Visually mark only this question's buttons — apply styles
+        // directly because Astro-scoped CSS doesn't reach dynamically
+        // created elements (innerHTML in JS). Use DOM styling so the
+        // highlight always renders regardless of scoping attributes.
         checklistContainer.querySelectorAll<HTMLButtonElement>('.ins-choice-btn').forEach((sib) => {
           if (sib.dataset.q === q) {
             console.log(`[DEBUG] Removing ins-active from: q="${sib.dataset.q}", val="${sib.dataset.val}"`);
             sib.classList.remove('ins-active');
+            sib.style.background = '';
+            sib.style.color = '';
+            sib.style.borderColor = '';
           }
         });
         b.classList.add('ins-active');
+        b.style.background = '#8B5CF6';
+        b.style.color = '#fff';
+        b.style.borderColor = '#8B5CF6';
         console.log(`[DEBUG] Added ins-active to: q="${q}", val="${v}"`);
       });
     });

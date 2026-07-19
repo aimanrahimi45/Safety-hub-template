@@ -663,4 +663,116 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     padding: 20px;
     font-size: 0.85rem;
   }
+
+  /* Mobile Responsive Dashboard Layout */
+  @media (max-width: 768px) {
+    .dashboard-page {
+      padding: 16px 0 40px;
+    }
+
+    .dash-hero {
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: #FFFFFF;
+      border: 3px solid #2B2D42;
+      border-radius: 12px;
+      box-shadow: 3px 3px 0px #2B2D42;
+    }
+
+    .dash-hero h1 {
+      font-size: 1.35rem;
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
+
+    .dash-company {
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .dash-meta {
+      gap: 8px;
+    }
+
+    .dash-grid-layout {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+
+    .metric-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+    }
+
+    .metric-tile {
+      padding: 10px 12px !important;
+      border-radius: 10px !important;
+      border-width: 2.5px !important;
+      box-shadow: 2.5px 2.5px 0px #2B2D42 !important;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .metric-tile:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
+    }
+
+    .metric-tile-icon {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .metric-tile-value {
+      font-size: 1.35rem;
+      line-height: 1.1;
+    }
+
+    .metric-tile-sub {
+      font-size: 0.68rem;
+      margin-top: 1px;
+    }
+
+    .metric-tile-label {
+      font-size: 0.65rem;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .activity-feed {
+      padding: 14px 16px;
+      background: #FFFFFF;
+      border: 3px solid #2B2D42;
+      border-radius: 12px;
+      box-shadow: 3px 3px 0px #2B2D42;
+    }
+
+    .activity-feed h2 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #2B2D42;
+    }
+
+    .activity-item {
+      padding: 8px 4px;
+      border-bottom: 1px dashed #E0E0E0;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-item-title {
+      font-size: 0.8rem;
+    }
+
+    .activity-item-sub {
+      font-size: 0.72rem;
+    }
+
+    .activity-item-time {
+      font-size: 0.68rem;
+    }
+  }
 </style>

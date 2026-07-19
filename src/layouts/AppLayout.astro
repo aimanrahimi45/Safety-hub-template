@@ -176,10 +176,11 @@ const isLinkActive = (path: string) => {
     }
   }
 
-  /* Global Unified Shimmer Skeleton Loader Across All Pages */
+  /* Global Unified Smart Liquid Wave Skeleton Loader Across All Pages */
   .cmp-skeleton-shimmer,
   .skel-shimmer,
   .skel-row,
+  .skel-card,
   .inc-skeleton div,
   .fa-skeleton div,
   .ppe-skeleton div,
@@ -187,16 +188,32 @@ const isLinkActive = (path: string) => {
   .staff-skeleton div,
   .inv-skeleton div,
   .settings-skeleton div {
-    background: linear-gradient(90deg, #f0f2f5 25%, #e6e8ec 37%, #f0f2f5 63%) !important;
-    background-size: 400% 100% !important;
-    animation: globalSkeletonShimmer 1.4s ease infinite !important;
+    background: linear-gradient(
+      90deg,
+      #EAE7DF 0%,
+      #FFFFFF 50%,
+      #EAE7DF 100%
+    ) !important;
+    background-size: 200% 100% !important;
+    animation: smartLiquidShimmer 1.6s infinite linear !important;
     border-radius: 6px !important;
   }
 
-  @keyframes globalSkeletonShimmer {
-    0% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  @keyframes smartLiquidShimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
+
+  /* Cascading Liquid Wave Staggering */
+  .skel-row:nth-child(1), .inc-skeleton div:nth-child(1), .fa-skeleton div:nth-child(1), .ppe-skeleton div:nth-child(1), .ct-skeleton div:nth-child(1), .staff-skeleton div:nth-child(1), .inv-skeleton div:nth-child(1) { animation-delay: 0s !important; }
+  .skel-row:nth-child(2), .inc-skeleton div:nth-child(2), .fa-skeleton div:nth-child(2), .ppe-skeleton div:nth-child(2), .ct-skeleton div:nth-child(2), .staff-skeleton div:nth-child(2), .inv-skeleton div:nth-child(2) { animation-delay: 0.12s !important; }
+  .skel-row:nth-child(3), .inc-skeleton div:nth-child(3), .fa-skeleton div:nth-child(3), .ppe-skeleton div:nth-child(3), .ct-skeleton div:nth-child(3), .staff-skeleton div:nth-child(3), .inv-skeleton div:nth-child(3) { animation-delay: 0.24s !important; }
+  .skel-row:nth-child(4), .inc-skeleton div:nth-child(4), .fa-skeleton div:nth-child(4), .ppe-skeleton div:nth-child(4), .ct-skeleton div:nth-child(4), .staff-skeleton div:nth-child(4), .inv-skeleton div:nth-child(4) { animation-delay: 0.36s !important; }
+  .skel-row:nth-child(5), .inc-skeleton div:nth-child(5), .fa-skeleton div:nth-child(5), .ppe-skeleton div:nth-child(5), .ct-skeleton div:nth-child(5), .staff-skeleton div:nth-child(5), .inv-skeleton div:nth-child(5) { animation-delay: 0.48s !important; }
 
   /* Global Unified Segmented Pill Tab Bar */
   .app-tabs,

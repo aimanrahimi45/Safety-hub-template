@@ -1,6 +1,4 @@
 ---
-import { ClientRouter } from 'astro:transitions';
-
 export interface Props {
   title: string;
 }
@@ -14,7 +12,6 @@ const { title } = Astro.props;
     <title>{title}</title>
     <link rel="icon" type="image/png" href="/amerispro_128x128.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <ClientRouter />
 </head>
 <body>
     <slot />

@@ -22,20 +22,23 @@ import AppLayout from '../../layouts/AppLayout.astro';
         </div>
       </header>
 
-      <nav class="cmp-tabs" role="tablist" aria-label="Compliance tabs">
-        <button type="button" class="cmp-tab-btn active" data-tab="profiler" role="tab" aria-selected="true" id="cmp-tab-profiler">
-          📋 <span class="tab-text-full">Setup Profiler</span><span class="tab-text-short">Setup</span>
-        </button>
-        <button type="button" class="cmp-tab-btn" data-tab="register" role="tab" aria-selected="false" id="cmp-tab-register">
-          ⚡ <span class="tab-text-full">Active Checklist</span><span class="tab-text-short">Checklist</span>
-        </button>
-        <button type="button" class="cmp-tab-btn" data-tab="policy" role="tab" aria-selected="false" id="cmp-tab-policy">
-          ⚖️ <span class="tab-text-full">Policy Standards</span><span class="tab-text-short">Policies</span>
-        </button>
-        <button type="button" class="cmp-tab-btn cmp-tab-premium" data-tab="search" role="tab" aria-selected="false" id="cmp-tab-search" hidden>
-          🔍 <span class="tab-text-full">AI Legal Search</span><span class="tab-text-short">AI Search</span>
-        </button>
-      </nav>
+      <div class="cmp-tabs-wrapper" id="cmp-tabs-wrapper">
+        <nav class="cmp-tabs" id="cmp-tabs" role="tablist" aria-label="Compliance tabs">
+          <button type="button" class="cmp-tab-btn active" data-tab="profiler" role="tab" aria-selected="true" id="cmp-tab-profiler">
+            📋 <span class="tab-text-full">Setup Profiler</span><span class="tab-text-short">Setup</span>
+          </button>
+          <button type="button" class="cmp-tab-btn" data-tab="register" role="tab" aria-selected="false" id="cmp-tab-register">
+            ⚡ <span class="tab-text-full">Active Checklist</span><span class="tab-text-short">Checklist</span>
+          </button>
+          <button type="button" class="cmp-tab-btn" data-tab="policy" role="tab" aria-selected="false" id="cmp-tab-policy">
+            ⚖️ <span class="tab-text-full">Policy Standards</span><span class="tab-text-short">Policies</span>
+          </button>
+          <button type="button" class="cmp-tab-btn cmp-tab-premium" data-tab="search" role="tab" aria-selected="false" id="cmp-tab-search" hidden>
+            🔍 <span class="tab-text-full">AI Legal Search</span><span class="tab-text-short">AI Search</span>
+          </button>
+        </nav>
+        <div class="cmp-scroll-hint" id="cmp-scroll-hint"><span>Swipe →</span></div>
+      </div>
       <script is:inline>
         if (localStorage.getItem('is_premium') === 'true') {
           const searchTab = document.getElementById('cmp-tab-search');
@@ -453,6 +456,19 @@ import AppLayout from '../../layouts/AppLayout.astro';
       const t = btn.dataset.jump as 'profiler' | 'register' | 'policy';
       switchTab(t);
     });
+  }
+
+  // Mobile Tab Bar Scroll Indicator Logic
+  const tabsNavEl = document.getElementById('cmp-tabs') as HTMLElement | null;
+  const tabsWrapEl = document.getElementById('cmp-tabs-wrapper') as HTMLElement | null;
+  if (tabsNavEl && tabsWrapEl) {
+    const updateScrollHint = () => {
+      const isEnd = tabsNavEl.scrollLeft + tabsNavEl.clientWidth >= tabsNavEl.scrollWidth - 12;
+      tabsWrapEl.classList.toggle('scrolled-end', isEnd);
+    };
+    tabsNavEl.addEventListener('scroll', updateScrollHint, { passive: true });
+    window.addEventListener('resize', updateScrollHint, { passive: true });
+    setTimeout(updateScrollHint, 100);
   }
 
   // -------------------------------------------------------------------
@@ -1306,7 +1322,43 @@ import AppLayout from '../../layouts/AppLayout.astro';
     margin: 0;
   }
 
-  /* Segmented Neo-Brutalist Tab Bar */
+  /* Segmented Neo-Brutalist Tab Bar Container */
+  .cmp-tabs-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+
+  /* Right Edge Swipe Hint Badge for Mobile */
+  .cmp-scroll-hint {
+    display: none;
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: #2B2D42;
+    color: #FFD166;
+    padding: 4px 10px;
+    border: 2px solid #2B2D42;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    pointer-events: none;
+    box-shadow: 2px 2px 0px #FFD166;
+    z-index: 10;
+    animation: cmpHintPulse 1.8s infinite ease-in-out;
+    transition: opacity 0.2s ease-out;
+  }
+
+  @keyframes cmpHintPulse {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(-50%) translateX(4px); }
+  }
+
+  .cmp-tabs-wrapper.scrolled-end .cmp-scroll-hint {
+    opacity: 0 !important;
+  }
+
   .cmp-tabs {
     display: flex;
     background: #FFFFFF !important;
@@ -1314,7 +1366,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     border-radius: 12px !important;
     box-shadow: 4px 4px 0px #2B2D42 !important;
     overflow-x: auto;
-    margin-bottom: 24px !important;
+    margin-bottom: 0 !important;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
@@ -1778,6 +1830,11 @@ import AppLayout from '../../layouts/AppLayout.astro';
       flex-wrap: nowrap !important;
       overflow-x: auto !important;
       -webkit-overflow-scrolling: touch !important;
+    }
+
+    .cmp-scroll-hint {
+      display: flex !important;
+      align-items: center !important;
     }
 
     .cmp-tab-btn {

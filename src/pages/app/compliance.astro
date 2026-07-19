@@ -1329,17 +1329,17 @@ import AppLayout from '../../layouts/AppLayout.astro';
     margin-bottom: 24px;
   }
 
-  /* Right Edge Frosted Glass Blur & Gradient Overlay for Mobile Reveal Hint */
+  /* Right Edge Smooth Gradient Fade Overlay for Mobile Reveal Hint */
   .cmp-tabs-wrapper::after {
     content: '';
     position: absolute;
     top: 3px;
     right: 3px;
     bottom: 3px;
-    width: 52px;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 40%, rgba(255, 255, 255, 0.98) 100%);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    width: 64px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 45%, rgba(255, 255, 255, 0.98) 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.4) 30%, black 100%);
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.4) 30%, black 100%);
     pointer-events: none;
     border-top-right-radius: 9px;
     border-bottom-right-radius: 9px;

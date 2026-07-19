@@ -27,14 +27,20 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <h1>Contractors</h1>
           <p class="ct-sub" id="ct-sub">…</p>
         </div>
-        <div class="ct-header-actions">
+        <div class="app-header-actions">
           <a href="/app/induction-lookup" class="ct-secondary-btn">IC lookup</a>
           <a href="/app/contractors/new" class="ct-primary-btn">+ Register contractor</a>
         </div>
       </header>
 
-      <section class="ct-filters">
-        <label class="ct-filter-field">
+      <!-- Mobile Filter Accordion Toggle -->
+      <button type="button" id="ct-mobile-filter-btn" class="app-mobile-filter-btn">
+        <span>🔍 Filter &amp; Search Options</span>
+        <span id="ct-filter-chevron">▼</span>
+      </button>
+
+      <section class="app-filters" id="ct-filters">
+        <label class="app-filter-field">
           <span>Status</span>
           <select id="ct-filter-status">
             <option value="">All</option>
@@ -44,13 +50,15 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             <option value="blacklisted">Blacklisted</option>
           </select>
         </label>
-        <label class="ct-filter-field ct-filter-grow">
+        <label class="app-filter-field">
           <span>Search</span>
           <input type="search" id="ct-filter-q" placeholder="Company name" />
         </label>
-        <button type="button" id="ct-filter-apply" class="ct-secondary-btn">Apply</button>
-        <button type="button" id="ct-filter-clear" class="ct-secondary-btn">Clear</button>
-        <button type="button" id="ct-export-csv" class="ct-secondary-btn">📥 Export CSV</button>
+        <div class="app-filter-actions-group">
+          <button type="button" id="ct-filter-apply" class="ct-secondary-btn btn-apply">Apply</button>
+          <button type="button" id="ct-filter-clear" class="ct-secondary-btn btn-clear">Clear</button>
+        </div>
+        <button type="button" id="ct-export-csv" class="ct-secondary-btn app-export-csv-btn">📥 Export CSV</button>
       </section>
 
       <section id="ct-skeleton" class="ct-skeleton">
@@ -61,7 +69,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       </section>
 
       <section id="ct-table-wrap" hidden>
-        <div class="ct-table-scroll">
+        <div class="app-table-scroll">
           <table class="ct-table" aria-label="Contractors">
             <thead>
               <tr>
@@ -79,6 +87,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             <tbody id="ct-tbody"></tbody>
           </table>
         </div>
+        <div id="ct-mobile-cards" class="app-mobile-cards"></div>
         <nav class="ct-pager" aria-label="Pagination">
           <button type="button" id="ct-prev" class="ct-secondary-btn" disabled>← Previous</button>
           <span class="ct-page-info" id="ct-page-info">Page 1</span>
@@ -107,6 +116,18 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const skelEl = document.getElementById('ct-skeleton') as HTMLElement;
   const tableWrap = document.getElementById('ct-table-wrap') as HTMLElement;
   const tbody = document.getElementById('ct-tbody') as HTMLElement;
+  const mobileCardsEl = document.getElementById('ct-mobile-cards') as HTMLElement;
+  const mobileFilterBtn = document.getElementById('ct-mobile-filter-btn') as HTMLButtonElement;
+  const filtersSection = document.getElementById('ct-filters') as HTMLElement;
+  const filterChevron = document.getElementById('ct-filter-chevron') as HTMLElement;
+
+  if (mobileFilterBtn && filtersSection && filterChevron) {
+    mobileFilterBtn.addEventListener('click', () => {
+      const isOpen = filtersSection.classList.toggle('open');
+      filterChevron.textContent = isOpen ? '▲' : '▼';
+    });
+  }
+
   const emptyEl = document.getElementById('ct-empty') as HTMLElement;
   const statusFilterEl = document.getElementById('ct-filter-status') as HTMLSelectElement;
   const qFilterEl = document.getElementById('ct-filter-q') as HTMLInputElement;
@@ -228,6 +249,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       tableWrap.hidden = false;
 
       tbody.innerHTML = '';
+      if (mobileCardsEl) mobileCardsEl.innerHTML = '';
+
       for (const r of rows) {
         const workerCount = (r.induction_records ?? []).length;
         const tr = document.createElement('tr');
@@ -246,6 +269,28 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           </td>
         `;
         tbody.appendChild(tr);
+
+        if (mobileCardsEl) {
+          const card = document.createElement('div');
+          card.className = 'app-mobile-card';
+          card.innerHTML = `
+            <div class="app-mc-header">
+              <div class="app-mc-title">🏢 <strong>${escapeHtml(r.company_name)}</strong></div>
+              <span class="app-badge ct-status-badge ct-status-${r.status}">${statusLabel(r.status)}</span>
+            </div>
+            <div class="app-mc-body">
+              <div>📍 <strong>Contact:</strong> ${escapeHtml(r.contact_person)} • 📞 ${escapeHtml(r.contact_phone)}</div>
+              <div>✉️ ${escapeHtml(r.contact_email)}</div>
+              ${r.work_scope ? `<div class="app-mc-sub">🛠️ Scope: ${escapeHtml(r.work_scope)}</div>` : ''}
+              <div class="app-mc-sub">👷 Workers: <strong>${workerCount}</strong> • Valid until: 📅 ${formatDate(r.valid_until)}</div>
+            </div>
+            <div class="app-mc-footer">
+              <a href="/app/contractors/${r.id}" class="ct-view-link">View Details →</a>
+              <a href="/app/contractors/${r.id}/induct" class="ct-view-link" style="margin-left: 12px;">+ Induct Worker</a>
+            </div>
+          `;
+          mobileCardsEl.appendChild(card);
+        }
       }
 
       const total = count ?? null;

@@ -176,18 +176,66 @@ const isLinkActive = (path: string) => {
     }
   }
 
-  /* Global Shimmering Skeleton Loader Animation */
-  .cmp-skeleton-shimmer,
-  .skel-shimmer,
-  .ins-skel-shimmer {
-    background: linear-gradient(90deg, #f0f2f5 25%, #e6e8ec 37%, #f0f2f5 63%) !important;
-    background-size: 400% 100% !important;
-    animation: globalSkeletonShimmer 1.4s ease infinite !important;
+  /* Global Unified Segmented Pill Tab Bar */
+  .app-tabs,
+  .cmp-tabs,
+  .settings-tabs {
+    display: flex !important;
+    gap: 0px !important;
+    margin-bottom: 24px !important;
+    border: 3px solid #2B2D42 !important;
+    border-radius: 12px !important;
+    background: #FFFFFF !important;
+    box-shadow: 4px 4px 0px #2B2D42 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
   }
 
-  @keyframes globalSkeletonShimmer {
-    0% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  .app-tab-btn,
+  .cmp-tab-btn,
+  .settings-tab-btn {
+    flex: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    border-right: 3px solid #2B2D42 !important;
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 12px 10px !important;
+    font-family: inherit !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    color: #2B2D42 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    transition: background 0.15s ease !important;
+    transform: none !important;
+    outline: none !important;
+  }
+
+  .app-tab-btn:last-child,
+  .cmp-tab-btn:last-child,
+  .settings-tab-btn:last-child {
+    border-right: none !important;
+  }
+
+  .app-tab-btn:hover,
+  .cmp-tab-btn:hover,
+  .settings-tab-btn:hover {
+    background: #FFF2D1 !important;
+    color: #2B2D42 !important;
+  }
+
+  .app-tab-btn.active,
+  .cmp-tab-btn.active,
+  .settings-tab-btn.active {
+    background: #FFD166 !important;
+    color: #2B2D42 !important;
   }
 
   /* Playful Neo-brutalist variables scoped to overwrite all child app pages */

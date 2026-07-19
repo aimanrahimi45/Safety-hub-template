@@ -500,57 +500,11 @@ import AppLayout from '../../layouts/AppLayout.astro';
   .settings-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
   .settings-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; max-width: 640px; }
 
-  /* Segmented Navigation Tabs */
-  .settings-tabs {
-    display: flex;
-    gap: 0px;
-    margin-bottom: 28px;
-    border: 3px solid #2B2D42;
-    border-radius: 12px;
-    background: #FFFFFF;
-    box-shadow: 4px 4px 0px #2B2D42;
-    overflow: hidden;
-    padding: 0;
-  }
-
-  .settings-tab-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    border-right: 3px solid #2B2D42;
-    padding: 12px 14px;
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #2B2D42;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: background 0.15s ease;
-  }
-
-  .settings-tab-btn:last-child {
-    border-right: none;
-  }
-
-  .settings-tab-btn:hover {
-    background: #FFF2D1;
-    color: #2B2D42;
-  }
-
-  .settings-tab-btn.active {
-    background: #FFD166;
-    color: #2B2D42;
-  }
-
+  /* Segmented Navigation Tabs inherited from global AppLayout */
   @media (max-width: 600px) {
     .settings-tab-btn {
-      font-size: 0.72rem;
-      padding: 10px 6px;
+      font-size: 0.72rem !important;
+      padding: 10px 4px !important;
     }
   }
 

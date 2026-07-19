@@ -34,21 +34,31 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
       <!-- Visual Analytics Panel -->
       <div id="ppe-analytics-panel" class="ppe-analytics-panel" hidden>
+        <!-- Mobile Drawer Header -->
+        <div class="ppe-analytics-modal-header">
+          <div class="ppe-modal-title">📊 PPE Intelligence Analytics</div>
+          <button type="button" id="ppe-analytics-close" class="ppe-modal-close-btn" aria-label="Close Analytics">✕ Close</button>
+        </div>
+
         <!-- KPI Display Grid -->
         <div class="kpi-grid">
           <div class="kpi-card">
+            <div class="kpi-icon">🦺</div>
             <div class="kpi-val" id="kpi-total-issued">0</div>
             <div class="kpi-lbl">Total Issued</div>
           </div>
           <div class="kpi-card">
+            <div class="kpi-icon">⏳</div>
             <div class="kpi-val" id="kpi-total-pending">0</div>
             <div class="kpi-lbl">Pending Requests</div>
           </div>
           <div class="kpi-card">
+            <div class="kpi-icon">🏭</div>
             <div class="kpi-val" id="kpi-top-dept">-</div>
             <div class="kpi-lbl">Heavy Dept</div>
           </div>
           <div class="kpi-card">
+            <div class="kpi-icon">📈</div>
             <div class="kpi-val" id="kpi-top-ppe">-</div>
             <div class="kpi-lbl">Trending PPE</div>
           </div>
@@ -610,6 +620,16 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
     const analyticsToggle = document.getElementById('ppe-analytics-toggle') as HTMLButtonElement | null;
     const analyticsPanel = document.getElementById('ppe-analytics-panel') as HTMLElement | null;
+    const analyticsCloseBtn = document.getElementById('ppe-analytics-close') as HTMLButtonElement | null;
+
+    if (analyticsCloseBtn && analyticsPanel && analyticsToggle) {
+      analyticsCloseBtn.addEventListener('click', () => {
+        showAnalytics = false;
+        analyticsPanel.hidden = true;
+        analyticsToggle.textContent = '📊 Show Analytics';
+        analyticsToggle.classList.remove('active');
+      });
+    }
 
     if (analyticsToggle && analyticsPanel) {
       analyticsToggle.addEventListener('click', () => {
@@ -898,46 +918,151 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     font-weight: 600;
   }
 
-  /* Responsive Dashboard Analytics */
-  @media (max-width: 768px) {
-    .ppe-analytics-panel {
-      padding: 16px;
-    }
-    .kpi-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .kpi-card {
-      padding: 12px;
-    }
-    .kpi-val {
-      font-size: 1.4rem;
-    }
-    .charts-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-    .chart-box {
-      padding: 16px;
-      min-height: 250px;
-    }
-    .chart-container {
-      height: 180px;
-    }
+  /* Hide Mobile Header by default on Desktop */
+  .ppe-analytics-modal-header {
+    display: none;
   }
 
-  @media (max-width: 480px) {
-    .kpi-grid {
-      grid-template-columns: 1fr;
+  /* Mobile Sheet Modal & Compact Responsive Analytics */
+  @media (max-width: 768px) {
+    .ppe-analytics-panel:not([hidden]) {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      z-index: 9999 !important;
+      background: #FFF9EC !important;
+      overflow-y: auto !important;
+      padding: 16px 16px 40px !important;
+      margin: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      animation: ppeMobileModalSlideUp 0.25s ease-out !important;
     }
+
+    @keyframes ppeMobileModalSlideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .ppe-analytics-modal-header {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      padding-bottom: 12px !important;
+      margin-bottom: 16px !important;
+      border-bottom: 3px solid #2B2D42 !important;
+      position: sticky !important;
+      top: 0 !important;
+      background: #FFF9EC !important;
+      z-index: 10 !important;
+    }
+
+    .ppe-modal-title {
+      font-size: 0.95rem !important;
+      font-weight: 800 !important;
+      color: #2B2D42 !important;
+      text-transform: uppercase !important;
+    }
+
+    .ppe-modal-close-btn {
+      background: #FF6B6B !important;
+      color: white !important;
+      border: 2px solid #2B2D42 !important;
+      border-radius: 8px !important;
+      padding: 4px 10px !important;
+      font-weight: 800 !important;
+      font-size: 0.85rem !important;
+      cursor: pointer !important;
+      box-shadow: 2px 2px 0px #2B2D42 !important;
+    }
+
+    /* Compact 2-Column KPI Grid on Mobile */
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      margin-bottom: 16px !important;
+    }
+
+    .kpi-card {
+      padding: 10px 12px !important;
+      border-radius: 10px !important;
+      border-width: 2px !important;
+      box-shadow: 2px 2px 0px #2B2D42 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+    }
+
+    .kpi-icon {
+      font-size: 1.1rem !important;
+      margin-bottom: 2px !important;
+    }
+
+    .kpi-val {
+      font-size: 1.3rem !important;
+      line-height: 1.1 !important;
+      margin-bottom: 2px !important;
+    }
+
+    .kpi-lbl {
+      font-size: 0.65rem !important;
+      letter-spacing: 0em !important;
+    }
+
+    /* Compact Charts Grid on Mobile */
+    .charts-grid {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+    }
+
+    .chart-box {
+      padding: 12px 14px !important;
+      min-height: auto !important;
+      border-radius: 12px !important;
+      border-width: 2px !important;
+      box-shadow: 2px 2px 0px #2B2D42 !important;
+    }
+
+    .chart-title {
+      font-size: 0.78rem !important;
+      margin-bottom: 8px !important;
+      padding-bottom: 4px !important;
+      border-bottom-width: 2px !important;
+    }
+
+    .chart-container {
+      height: 140px !important;
+      position: relative !important;
+    }
+
+    #chart-ppe {
+      max-width: 150px !important;
+      max-height: 140px !important;
+      margin: 0 auto !important;
+    }
+
+    .heavy-users-list {
+      gap: 6px !important;
+    }
+
+    .heavy-user-row {
+      padding: 6px 10px !important;
+      font-size: 0.75rem !important;
+    }
+
     .ppe-header {
       flex-direction: column;
       align-items: stretch;
     }
+
     .ppe-header-actions {
       flex-direction: column;
       width: 100%;
     }
+
     .ppe-header-actions button,
     .ppe-header-actions a {
       width: 100%;

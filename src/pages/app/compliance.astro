@@ -224,6 +224,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
 
 <script>
   import { getSupabase, isSupabaseConfigured, checkPremiumStatus, getCachedPremiumStatus } from '../../lib/supabase';
+  import { renderSkeletonCards } from '../../lib/ui';
   import { buildCsv } from '../../lib/csvExport';
   import type { CsvColumn } from '../../lib/csvExport';
   import type { TenantProfile, ComplianceRegisterItem, AiSummaryResponse, LegalSearchResult } from '../../lib/types';
@@ -516,7 +517,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     generateBtn.disabled = true;
     const originalText = generateBtn.textContent ?? 'Generate';
     generateBtn.textContent = '🔄 Generating…';
-    registerContent.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔄</div><h3>Matching your site against Malaysian OSH law…</h3></div>';
+    registerContent.innerHTML = renderSkeletonCards(3);
     if (autoSwitch) {
       switchTab('register');
     }
@@ -781,7 +782,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
   async function runSearch(): Promise<void> {
     const q = searchQuery.value.trim();
     if (!q) return;
-    searchResults.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔄</div><h3>Scanning legal database…</h3></div>';
+    searchResults.innerHTML = renderSkeletonCards(3);
 
     try {
       // 1. Embed via /api/ai-embed
@@ -1362,6 +1363,33 @@ import AppLayout from '../../layouts/AppLayout.astro';
 
   .cmp-panel { padding: 8px 0; }
   .cmp-panel[hidden] { display: none; }
+  .cmp-panel:not([hidden]) {
+    display: block;
+    animation: cmpFadeInUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes cmpFadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Skeleton Shimmer Animation */
+  .cmp-skeleton-shimmer {
+    background: linear-gradient(90deg, #f0f2f5 25%, #e6e8ec 37%, #f0f2f5 63%);
+    background-size: 400% 100%;
+    animation: cmpSkeletonShimmer 1.4s ease infinite;
+  }
+
+  @keyframes cmpSkeletonShimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 
   .cmp-section-intro { max-width: 720px; margin-bottom: 24px; }
   .cmp-section-intro h2 { font-size: 1.4rem; font-weight: 900; margin-bottom: 6px; }

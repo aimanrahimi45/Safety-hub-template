@@ -42,12 +42,18 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
       <!-- ====================== TAB: ROSTER ====================== -->
       <section id="staff-panel-roster" class="staff-panel active" role="tabpanel" aria-labelledby="staff-tab-roster">
-        <section class="staff-filters">
-          <label class="staff-filter-field staff-filter-grow">
+        <!-- Mobile Filter Accordion Toggle -->
+        <button type="button" id="staff-mobile-filter-btn" class="app-mobile-filter-btn">
+          <span>🔍 Filter &amp; Search Options</span>
+          <span id="staff-filter-chevron">▼</span>
+        </button>
+
+        <section class="app-filters" id="staff-filters">
+          <label class="app-filter-field">
             <span>Search</span>
-            <input type="search" id="staff-filter-q" placeholder="Employee ID, name, department, or position" />
+            <input type="search" id="staff-filter-q" placeholder="ID, name, dept, position" />
           </label>
-          <label class="staff-filter-field">
+          <label class="app-filter-field">
             <span>Status</span>
             <select id="staff-filter-status">
               <option value="">All</option>
@@ -55,11 +61,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
               <option value="inactive">Inactive</option>
             </select>
           </label>
-          <div class="staff-filter-buttons">
-            <button type="button" id="staff-filter-apply" class="staff-secondary-btn">Apply</button>
-            <button type="button" id="staff-filter-clear" class="staff-secondary-btn">Clear</button>
-            <button type="button" id="staff-export-csv" class="staff-secondary-btn">📥 Export CSV</button>
+          <div class="app-filter-actions-group">
+            <button type="button" id="staff-filter-apply" class="staff-secondary-btn btn-apply">Apply</button>
+            <button type="button" id="staff-filter-clear" class="staff-secondary-btn btn-clear">Clear</button>
           </div>
+          <button type="button" id="staff-export-csv" class="staff-secondary-btn app-export-csv-btn">📥 Export CSV</button>
         </section>
 
         <section id="staff-skeleton" class="staff-skeleton">
@@ -70,7 +76,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         </section>
 
         <section id="staff-table-wrap" hidden>
-          <div class="staff-table-scroll">
+          <div class="app-table-scroll">
             <table class="staff-table" aria-label="Staff roster">
               <thead>
                 <tr>
@@ -86,6 +92,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
               <tbody id="staff-tbody"></tbody>
             </table>
           </div>
+          <div id="staff-mobile-cards" class="app-mobile-cards"></div>
           <nav class="staff-pager" aria-label="Pagination">
             <button type="button" id="staff-prev" class="staff-secondary-btn" disabled>← Previous</button>
             <span class="staff-page-info" id="staff-page-info">Page 1</span>
@@ -197,6 +204,18 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const skelEl = document.getElementById('staff-skeleton') as HTMLElement;
   const tableWrap = document.getElementById('staff-table-wrap') as HTMLElement;
   const tbody = document.getElementById('staff-tbody') as HTMLElement;
+  const mobileCardsEl = document.getElementById('staff-mobile-cards') as HTMLElement;
+  const mobileFilterBtn = document.getElementById('staff-mobile-filter-btn') as HTMLButtonElement;
+  const filtersSection = document.getElementById('staff-filters') as HTMLElement;
+  const filterChevron = document.getElementById('staff-filter-chevron') as HTMLElement;
+
+  if (mobileFilterBtn && filtersSection && filterChevron) {
+    mobileFilterBtn.addEventListener('click', () => {
+      const isOpen = filtersSection.classList.toggle('open');
+      filterChevron.textContent = isOpen ? '▲' : '▼';
+    });
+  }
+
   const emptyEl = document.getElementById('staff-empty') as HTMLElement;
   const filterQ = document.getElementById('staff-filter-q') as HTMLInputElement;
   const filterStatus = document.getElementById('staff-filter-status') as HTMLSelectElement;
@@ -342,6 +361,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       tableWrap.hidden = false;
 
       tbody.innerHTML = '';
+      if (mobileCardsEl) mobileCardsEl.innerHTML = '';
+
       for (const r of rows) {
         const tr = document.createElement('tr');
         const statusClass = r.is_active ? 'staff-status-active' : 'staff-status-inactive';
@@ -358,10 +379,30 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           </td>
         `;
         tbody.appendChild(tr);
+
+        if (mobileCardsEl) {
+          const card = document.createElement('div');
+          card.className = 'app-mobile-card';
+          card.innerHTML = `
+            <div class="app-mc-header">
+              <div class="app-mc-title">🧑‍💼 <strong>${escapeHtml(r.full_name)}</strong></div>
+              <span class="app-badge staff-status-badge ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="app-mc-body">
+              <div>🆔 <strong>${escapeHtml(r.employee_id)}</strong> • 📍 ${escapeHtml(r.department)}</div>
+              <div>💼 Position: ${escapeHtml(r.position ?? '—')}</div>
+              ${r.email ? `<div class="app-mc-sub">✉️ Email: ${escapeHtml(r.email)}</div>` : ''}
+            </div>
+            <div class="app-mc-footer">
+              <button type="button" class="staff-edit-btn staff-card-edit-btn" data-id="${r.id}" data-eid="${escapeHtml(r.employee_id)}">✏️ Edit Member</button>
+            </div>
+          `;
+          mobileCardsEl.appendChild(card);
+        }
       }
 
-      // Wire edit buttons.
-      tbody.querySelectorAll<HTMLButtonElement>('.staff-edit-btn').forEach((b) => {
+      // Wire edit buttons for both table and mobile cards.
+      document.querySelectorAll<HTMLButtonElement>('.staff-edit-btn').forEach((b) => {
         b.addEventListener('click', () => {
           const id = b.dataset.id;
           if (id) void editStaffMember(id);
@@ -927,5 +968,32 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     background: var(--color-bg-grey, #F4F4F4);
     padding: 1px 4px;
     font-size: 0.85em;
+  }
+
+  @media (max-width: 600px) {
+    .staff-tabs {
+      overflow-x: auto;
+      white-space: nowrap;
+      gap: 4px;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+    }
+    .staff-tab-btn {
+      padding: 8px 12px;
+      font-size: 0.76rem;
+      flex: 1;
+      text-align: center;
+    }
+  }
+
+  .staff-card-edit-btn {
+    border: 2px solid #2B2D42 !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    font-weight: 800 !important;
+    box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
+    background: #FFFFFF !important;
+    color: #2B2D42 !important;
+    cursor: pointer !important;
   }
 </style>

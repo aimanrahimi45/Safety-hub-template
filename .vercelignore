@@ -1,0 +1,24 @@
+# Ignore local legislation corpus
+legislation/
+
+# Ignore local references and scripts
+reference/
+scripts/
+ingest*.js
+parse_akta.js
+run_due_diligence_cleanup.js
+crop_logo.py
+Safety_Hub_Backend.js
+
+# Ignore documentation, screenshots and assets not used in production bundle
+/*.png
+/*.jpg
+README.md
+
+# Ignore clasp files
+.clasp*
+appsscript.json
+
+# Ignore local Astro/dist build outputs
+.astro/
+dist/

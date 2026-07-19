@@ -152,12 +152,44 @@ const isLinkActive = (path: string) => {
     <!-- RIGHT SIDE CONTENT WORKSPACE -->
     <div class="app-workspace">
       <AppTopBar />
-      <slot />
+      <main class="app-main-content">
+        <slot />
+      </main>
     </div>
   </div>
 </Layout>
 
 <style is:global>
+  /* Global Page Entrance Animation */
+  .app-main-content {
+    animation: appPageFadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes appPageFadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Global Shimmering Skeleton Loader Animation */
+  .cmp-skeleton-shimmer,
+  .skel-shimmer,
+  .ins-skel-shimmer {
+    background: linear-gradient(90deg, #f0f2f5 25%, #e6e8ec 37%, #f0f2f5 63%) !important;
+    background-size: 400% 100% !important;
+    animation: globalSkeletonShimmer 1.4s ease infinite !important;
+  }
+
+  @keyframes globalSkeletonShimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   /* Playful Neo-brutalist variables scoped to overwrite all child app pages */
   :root {
     --color-primary: #FF6B6B !important;

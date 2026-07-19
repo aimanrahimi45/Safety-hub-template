@@ -1,15 +1,11 @@
 ---
 // Workspace settings.
 //
-// The SHO can edit two comma-separated lists that drive the dropdown
-// options in the PPE module (and will be reused by other modules in
-// the future): PPE Types and Departments. Values are stored on the
-// tenants row as comma-separated strings; the client converts
-// textareas to/from that representation.
-//
-// Phase 3.1 added two more sections: the workspace name (tenants.name)
-// and the license key (validate against the GAS Web App + persist onto
-// the tenant row).
+// Structured with Option 1: Inner Segmented Tabs for a premium, minimalist layout.
+// Category 1: 💎 Plan & License (Subscription, Plan status, Key validation)
+// Category 2: 🏢 Workspace Profile (Company title & settings)
+// Category 3: ⚙️ Module Dropdowns (PPE Types, Departments, Contractor Declaration)
+
 import AppLayout from '../../layouts/AppLayout.astro';
 ---
 <AppLayout title="Workspace Settings - AmerisPro">
@@ -29,144 +25,151 @@ import AppLayout from '../../layouts/AppLayout.astro';
       <header class="settings-header">
         <h1>Workspace Settings</h1>
         <p class="settings-sub">
-          Configure the dropdown options used by the PPE module. Each
-          item goes on its own line; they are stored as a single
-          comma-separated list.
+          Manage your subscription plan, workspace profile, and facility dropdown options.
         </p>
       </header>
 
+      <!-- Segmented Navigation Tabs -->
+      <nav class="settings-tabs" role="tablist" aria-label="Settings Categories">
+        <button type="button" class="settings-tab-btn active" id="set-tab-plan" data-tab="plan">
+          💎 Plan &amp; License
+        </button>
+        <button type="button" class="settings-tab-btn" id="set-tab-workspace" data-tab="workspace">
+          🏢 Workspace Profile
+        </button>
+        <button type="button" class="settings-tab-btn" id="set-tab-modules" data-tab="modules">
+          ⚙️ Module Dropdowns
+        </button>
+      </nav>
+
       <section id="settings-skeleton" class="settings-skeleton" hidden>
-        <div class="skel-row"></div>
-        <div class="skel-row"></div>
-        <div class="skel-row"></div>
+        <div class="skel-row cmp-skeleton-shimmer"></div>
+        <div class="skel-row cmp-skeleton-shimmer"></div>
+        <div class="skel-row cmp-skeleton-shimmer"></div>
       </section>
 
-      <!-- PPE Types -->
-      <section class="settings-card" id="settings-ppe-card" hidden>
-        <h2>PPE Types</h2>
-        <p class="settings-hint">
-          The list shown in the <strong>PPE Type</strong> dropdown on
-          the Record PPE Issue form. Add or remove items to match what
-          your facility actually issues.
-        </p>
-        <label class="field">
-          <span class="field-label">PPE Types (one per line)</span>
-          <textarea id="settings-ppe-types" rows="8" placeholder="Safety Shoe&#10;Safety Helmet&#10;Respirator"></textarea>
-        </label>
-        <div class="settings-actions">
-          <span id="settings-ppe-toast" class="settings-toast" hidden>Saved</span>
-          <button type="button" id="settings-ppe-save" class="settings-primary-btn">Save PPE types</button>
-        </div>
-      </section>
+      <!-- TAB 1: Plan & License -->
+      <div id="settings-panel-plan" class="settings-panel">
+        <section class="settings-card" id="settings-lic-card" hidden>
+          <h2>License &amp; Subscription</h2>
+          <p class="settings-hint">
+            Enter your license key to unlock Premium features (AI Legal Search, Staff Lookup at incidents, longer data retention).
+          </p>
 
-      <!-- Departments -->
-      <section class="settings-card" id="settings-dept-card" hidden>
-        <h2>Departments</h2>
-        <p class="settings-hint">
-          The list shown in the <strong>Department</strong> dropdown on
-          the Record PPE Issue form. Add or remove items to match the
-          departments in your facility.
-        </p>
-        <label class="field">
-          <span class="field-label">Departments (one per line)</span>
-          <textarea id="settings-departments" rows="10" placeholder="Production&#10;Maintenance&#10;QA/QC"></textarea>
-        </label>
-        <div class="settings-actions">
-          <span id="settings-dept-toast" class="settings-toast" hidden>Saved</span>
-          <button type="button" id="settings-dept-save" class="settings-primary-btn">Save departments</button>
-        </div>
-      </section>
+          <dl class="settings-meta">
+            <div class="settings-meta-row">
+              <dt>Current Plan</dt>
+              <dd>
+                <span id="settings-lic-plan" class="settings-plan-badge settings-plan-free">Free</span>
+              </dd>
+            </div>
+            <div class="settings-meta-row">
+              <dt>Expires</dt>
+              <dd id="settings-lic-expires">No expiry set</dd>
+            </div>
+            <div class="settings-meta-row">
+              <dt>Activated</dt>
+              <dd id="settings-lic-activated">Never</dd>
+            </div>
+          </dl>
 
-      <!-- Contractor declaration -->
-      <section class="settings-card" id="settings-decl-card" hidden>
-        <h2>Contractor Declaration</h2>
-        <p class="settings-hint">
-          Text shown to workers during induction. The worker
-          acknowledges they have read and agreed to it before
-          signing. Edit this to match your facility's actual
-          induction topics.
-        </p>
-        <label class="field">
-          <span class="field-label">Declaration text</span>
-          <textarea
-            id="settings-decl-text"
-            rows="4"
-            placeholder="Agreed: Emergency Evac, PPE Rules, Incident Reporting"
-          ></textarea>
-        </label>
-        <div class="settings-actions">
-          <span id="settings-decl-toast" class="settings-toast" hidden>Saved</span>
-          <button type="button" id="settings-decl-save" class="settings-primary-btn">Save declaration</button>
-        </div>
-      </section>
-
-      <!-- Workspace name (Phase 3.1) -->
-      <section class="settings-card" id="settings-ws-card" hidden>
-        <h2>Workspace Name</h2>
-        <p class="settings-hint">
-          The name shown in the dashboard greeting and on all your
-          reports. Set during onboarding; editable here.
-        </p>
-        <label class="field">
-          <span class="field-label">Workspace name</span>
-          <input
-            type="text"
-            id="settings-ws-name"
-            maxlength="100"
-            autocomplete="organization"
-            placeholder="e.g. Acme Safety Dept"
-          />
-        </label>
-        <div class="settings-actions">
-          <span id="settings-ws-toast" class="settings-toast" hidden>Workspace name updated</span>
-          <button type="button" id="settings-ws-save" class="settings-primary-btn">Save workspace name</button>
-        </div>
-      </section>
-
-      <!-- License key (Phase 3.1) -->
-      <section class="settings-card" id="settings-lic-card" hidden>
-        <h2>License Key</h2>
-        <p class="settings-hint">
-          Enter your license key to unlock Premium features
-          (AI Legal Search, Staff Lookup at incidents, longer
-          retention). Validate against our license server; on success,
-          your subscription plan and expiry date are updated
-          automatically.
-        </p>
-
-        <dl class="settings-meta">
-          <div class="settings-meta-row">
-            <dt>Current Plan</dt>
-            <dd>
-              <span id="settings-lic-plan" class="settings-plan-badge settings-plan-free">Free</span>
-            </dd>
+          <label class="field">
+            <span class="field-label">Activate License Key</span>
+            <input
+              type="text"
+              id="settings-lic-key"
+              class="settings-mono-input"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="AMER-XXXX-XXXX-XXXX"
+            />
+          </label>
+          <div class="settings-actions">
+            <span id="settings-lic-toast" class="settings-toast" hidden>Premium activated!</span>
+            <button type="button" id="settings-lic-save" class="settings-primary-btn">Validate &amp; Activate</button>
           </div>
-          <div class="settings-meta-row">
-            <dt>Expires</dt>
-            <dd id="settings-lic-expires">No expiry set</dd>
-          </div>
-          <div class="settings-meta-row">
-            <dt>Activated</dt>
-            <dd id="settings-lic-activated">Never</dd>
-          </div>
-        </dl>
+        </section>
+      </div>
 
-        <label class="field">
-          <span class="field-label">License key</span>
-          <input
-            type="text"
-            id="settings-lic-key"
-            class="settings-mono-input"
-            autocomplete="off"
-            spellcheck="false"
-            placeholder="AMER-XXXX-XXXX-XXXX"
-          />
-        </label>
-        <div class="settings-actions">
-          <span id="settings-lic-toast" class="settings-toast" hidden>Premium activated!</span>
-          <button type="button" id="settings-lic-save" class="settings-primary-btn">Validate &amp; Activate</button>
-        </div>
-      </section>
+      <!-- TAB 2: Workspace Profile -->
+      <div id="settings-panel-workspace" class="settings-panel" hidden>
+        <section class="settings-card" id="settings-ws-card" hidden>
+          <h2>Workspace Name</h2>
+          <p class="settings-hint">
+            The name shown in the dashboard greeting and on all exported compliance reports. Set during onboarding; editable here.
+          </p>
+          <label class="field">
+            <span class="field-label">Workspace Name</span>
+            <input
+              type="text"
+              id="settings-ws-name"
+              maxlength="100"
+              autocomplete="organization"
+              placeholder="e.g. Acme Safety Dept"
+            />
+          </label>
+          <div class="settings-actions">
+            <span id="settings-ws-toast" class="settings-toast" hidden>Workspace name updated</span>
+            <button type="button" id="settings-ws-save" class="settings-primary-btn">Save Workspace Name</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- TAB 3: Module Dropdowns -->
+      <div id="settings-panel-modules" class="settings-panel" hidden>
+        <!-- PPE Types -->
+        <section class="settings-card" id="settings-ppe-card" hidden>
+          <h2>PPE Types</h2>
+          <p class="settings-hint">
+            The list shown in the <strong>PPE Type</strong> dropdown on the Record PPE Issue form. Add or remove items to match what your facility actually issues.
+          </p>
+          <label class="field">
+            <span class="field-label">PPE Types (one per line)</span>
+            <textarea id="settings-ppe-types" rows="7" placeholder="Safety Shoe&#10;Safety Helmet&#10;Respirator"></textarea>
+          </label>
+          <div class="settings-actions">
+            <span id="settings-ppe-toast" class="settings-toast" hidden>Saved</span>
+            <button type="button" id="settings-ppe-save" class="settings-primary-btn">Save PPE Types</button>
+          </div>
+        </section>
+
+        <!-- Departments -->
+        <section class="settings-card" id="settings-dept-card" hidden>
+          <h2>Departments</h2>
+          <p class="settings-hint">
+            The list shown in the <strong>Department</strong> dropdown on the Record PPE Issue form. Add or remove items to match the departments in your facility.
+          </p>
+          <label class="field">
+            <span class="field-label">Departments (one per line)</span>
+            <textarea id="settings-departments" rows="7" placeholder="Production&#10;Maintenance&#10;QA/QC"></textarea>
+          </label>
+          <div class="settings-actions">
+            <span id="settings-dept-toast" class="settings-toast" hidden>Saved</span>
+            <button type="button" id="settings-dept-save" class="settings-primary-btn">Save Departments</button>
+          </div>
+        </section>
+
+        <!-- Contractor Declaration -->
+        <section class="settings-card" id="settings-decl-card" hidden>
+          <h2>Contractor Declaration</h2>
+          <p class="settings-hint">
+            Text shown to workers during induction. The worker acknowledges they have read and agreed to it before signing.
+          </p>
+          <label class="field">
+            <span class="field-label">Declaration Text</span>
+            <textarea
+              id="settings-decl-text"
+              rows="4"
+              placeholder="Agreed: Emergency Evac, PPE Rules, Incident Reporting"
+            ></textarea>
+          </label>
+          <div class="settings-actions">
+            <span id="settings-decl-toast" class="settings-toast" hidden>Saved</span>
+            <button type="button" id="settings-decl-save" class="settings-primary-btn">Save Declaration</button>
+          </div>
+        </section>
+      </div>
+
     </div>
   </main>
 </AppLayout>
@@ -178,6 +181,34 @@ import AppLayout from '../../layouts/AppLayout.astro';
   const setupWarning = document.getElementById('settings-setup-warning') as HTMLElement;
   const errorEl = document.getElementById('settings-error') as HTMLElement;
   const skelEl = document.getElementById('settings-skeleton') as HTMLElement;
+
+  // Segmented Tabs Elements
+  const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.settings-tab-btn'));
+  const tabPanels: Record<'plan' | 'workspace' | 'modules', HTMLElement> = {
+    plan: document.getElementById('settings-panel-plan') as HTMLElement,
+    workspace: document.getElementById('settings-panel-workspace') as HTMLElement,
+    modules: document.getElementById('settings-panel-modules') as HTMLElement,
+  };
+
+  function switchSettingsTab(tabKey: 'plan' | 'workspace' | 'modules'): void {
+    for (const btn of tabButtons) {
+      const isActive = btn.dataset.tab === tabKey;
+      btn.classList.toggle('active', isActive);
+    }
+    for (const [key, panel] of Object.entries(tabPanels)) {
+      if (panel) {
+        panel.hidden = key !== tabKey;
+      }
+    }
+  }
+
+  for (const btn of tabButtons) {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.tab as 'plan' | 'workspace' | 'modules';
+      if (key) switchSettingsTab(key);
+    });
+  }
+
   const ppeCard = document.getElementById('settings-ppe-card') as HTMLElement;
   const deptCard = document.getElementById('settings-dept-card') as HTMLElement;
   const declCard = document.getElementById('settings-decl-card') as HTMLElement;
@@ -459,84 +490,170 @@ import AppLayout from '../../layouts/AppLayout.astro';
     margin-bottom: 24px;
     font-size: 0.9rem;
     line-height: 1.5;
+    border-radius: 10px;
   }
-  .settings-warning { background: #FFF7E6; border: 1px solid #E58E1A; color: #6A4A0F; }
+  .settings-warning { background: #FFF7E6; border: 2px solid #E58E1A; color: #6A4A0F; }
   .settings-warning code { background: rgba(0,0,0,0.06); padding: 1px 4px; font-size: 0.85rem; }
-  .settings-error { background: #FDECEC; border: 1px solid #C0392B; color: #8B1A1A; }
+  .settings-error { background: #FDECEC; border: 2px solid #C0392B; color: #8B1A1A; }
 
   .settings-header { margin-bottom: 24px; }
   .settings-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; }
   .settings-sub { color: var(--color-text-muted, #6A6A69); font-size: 0.9rem; max-width: 640px; }
 
-  .settings-skeleton { display: grid; gap: 12px; }
-  .skel-row {
-    height: 44px;
-    background: linear-gradient(90deg, #F4F4F4 0%, #ECECEC 50%, #F4F4F4 100%);
-    background-size: 200% 100%;
-    animation: skel-shimmer 1.4s infinite;
+  /* Segmented Navigation Tabs */
+  .settings-tabs {
+    display: flex;
+    gap: 0px;
+    margin-bottom: 28px;
+    border: 3px solid #2B2D42;
+    border-radius: 12px;
+    background: #FFFFFF;
+    box-shadow: 4px 4px 0px #2B2D42;
+    overflow: hidden;
+    padding: 0;
   }
-  @keyframes skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
+  .settings-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-right: 3px solid #2B2D42;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #2B2D42;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s ease;
+  }
+
+  .settings-tab-btn:last-child {
+    border-right: none;
+  }
+
+  .settings-tab-btn:hover {
+    background: #FFF2D1;
+    color: #2B2D42;
+  }
+
+  .settings-tab-btn.active {
+    background: #FFD166;
+    color: #2B2D42;
+  }
+
+  @media (max-width: 600px) {
+    .settings-tab-btn {
+      font-size: 0.72rem;
+      padding: 10px 6px;
+    }
+  }
+
+  /* Panels & Micro-Animations */
+  .settings-panel { padding: 4px 0; }
+  .settings-panel[hidden] { display: none; }
+  .settings-panel:not([hidden]) {
+    display: block;
+    animation: setFadeInUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes setFadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .settings-skeleton { display: grid; gap: 14px; }
+  .skel-row {
+    height: 52px;
+    border-radius: 10px;
+    border: 2px solid #2B2D42;
+  }
+
+  /* Settings Card Neo-Brutalist Styling */
   .settings-card {
-    background: var(--color-bg, #fff);
-    border: 1px solid var(--color-border, #E0E0E0);
-    padding: 20px 24px;
-    margin-bottom: 20px;
+    background: #FFFFFF;
+    border: 3px solid #2B2D42;
+    border-radius: 14px;
+    box-shadow: 4px 4px 0px #2B2D42;
+    padding: 24px;
+    margin-bottom: 24px;
   }
   .settings-card h2 {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 900;
     margin: 0 0 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--color-text-muted, #6A6A69);
+    color: #2B2D42;
   }
   .settings-hint {
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     color: var(--color-text-muted, #6A6A69);
-    margin: 0 0 16px;
+    margin: 0 0 20px;
+    line-height: 1.5;
   }
 
-  .field { display: block; margin-bottom: 16px; }
+  .field { display: block; margin-bottom: 20px; }
   .field-label {
     display: block;
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    color: #2B2D42;
   }
   .field textarea,
   .field input {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border, #E0E0E0);
-    font-size: 0.9rem;
-    background: var(--color-bg, #fff);
-    color: var(--color-text, #1E1E1D);
+    padding: 12px 14px;
+    border: 2px solid #2B2D42;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    background: #FFF9EC;
+    color: #2B2D42;
+    font-weight: 500;
+    box-shadow: 2px 2px 0px #2B2D42;
   }
   .field textarea {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     resize: vertical;
+    line-height: 1.5;
   }
   .field textarea:focus,
   .field input:focus {
-    outline: 2px solid var(--color-primary, #E58E1A);
-    outline-offset: 1px;
-    border-color: var(--color-primary, #E58E1A);
+    outline: none;
+    border-color: #FF6B6B;
+    background: #FFFFFF;
+    box-shadow: 3px 3px 0px #FF6B6B;
   }
   .field input.settings-mono-input {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    font-weight: 700;
   }
 
+  /* Plan Meta Box */
   .settings-meta {
-    margin: 0 0 20px;
-    padding: 12px 14px;
-    background: #F8F8F7;
-    border: 1px solid var(--color-border, #E0E0E0);
+    margin: 0 0 24px;
+    padding: 16px 20px;
+    background: #FFEED2;
+    border: 3px solid #2B2D42;
+    border-radius: 12px;
+    box-shadow: 3px 3px 0px #2B2D42;
     display: grid;
-    gap: 8px;
+    gap: 12px;
   }
   .settings-meta-row {
     display: grid;
@@ -546,35 +663,36 @@ import AppLayout from '../../layouts/AppLayout.astro';
   }
   .settings-meta dt {
     margin: 0;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.78rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--color-text-muted, #6A6A69);
+    color: #2B2D42;
   }
   .settings-meta dd {
     margin: 0;
-    font-size: 0.9rem;
-    color: var(--color-text, #1E1E1D);
+    font-size: 0.95rem;
+    color: #2B2D42;
+    font-weight: 600;
   }
   .settings-plan-badge {
     display: inline-block;
-    padding: 3px 10px;
-    font-size: 0.72rem;
-    font-weight: 700;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border: 1px solid transparent;
+    border-radius: 20px;
+    border: 2px solid #2B2D42;
+    box-shadow: 2px 2px 0px #2B2D42;
   }
   .settings-plan-free {
-    background: #ECECEC;
-    color: #4A4A48;
-    border-color: #D4D4D2;
+    background: #E0E0E0;
+    color: #2B2D42;
   }
   .settings-plan-premium {
-    background: #FFF1D6;
-    color: #7A4F0B;
-    border-color: #E58E1A;
+    background: #FFD166;
+    color: #2B2D42;
   }
 
   .settings-actions {
@@ -582,28 +700,43 @@ import AppLayout from '../../layouts/AppLayout.astro';
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
+    margin-top: 8px;
   }
   .settings-toast {
-    background: #E8F5E9;
-    color: #1F7A4D;
-    padding: 6px 12px;
-    font-size: 0.78rem;
-    font-weight: 700;
+    background: #D4EDDA;
+    color: #155724;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border: 2px solid #2B2D42;
+    border-radius: 8px;
+    box-shadow: 2px 2px 0px #2B2D42;
   }
   .settings-primary-btn {
-    background: var(--color-primary, #E58E1A);
-    color: #fff;
-    border: none;
-    padding: 10px 18px;
+    background: #FF6B6B;
+    color: #FFFFFF;
+    border: 3px solid #2B2D42;
+    border-radius: 10px;
+    box-shadow: 3px 3px 0px #2B2D42;
+    padding: 10px 20px;
     font-family: inherit;
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
   }
-  .settings-primary-btn:hover:not(:disabled) { background: var(--color-primary-hover, #D07D12); }
+  .settings-primary-btn:hover:not(:disabled) {
+    background: #FF8585;
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px #2B2D42;
+  }
+  .settings-primary-btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px #2B2D42;
+  }
   .settings-primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

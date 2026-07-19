@@ -121,7 +121,7 @@
 /* Neo-Brutalist Desktop Table Container */
 .app-table-scroll {
   width: 100%;
-  overflow-x: auto;
+  overflow: hidden !important;
   border: 3px solid #2B2D42 !important;
   border-radius: 12px !important;
   box-shadow: 4px 4px 0px #2B2D42 !important;
@@ -139,6 +139,8 @@ table.staff-table {
   border-collapse: collapse !important;
   font-size: 0.88rem;
   background: #FFFFFF;
+  border: none !important;
+  margin: 0 !important;
 }
 
 .app-table-scroll thead tr,
@@ -164,6 +166,9 @@ table.staff-table th {
   letter-spacing: 0.5px !important;
   color: #2B2D42 !important;
   border-bottom: 2.5px solid #2B2D42 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
   white-space: nowrap;
 }
 
@@ -175,6 +180,9 @@ table.ct-table td,
 table.staff-table td {
   padding: 12px 14px !important;
   border-bottom: 1.5px solid #E0E0E0 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
   color: #2B2D42;
   vertical-align: middle;
 }

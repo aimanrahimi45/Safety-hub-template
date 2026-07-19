@@ -37,6 +37,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
             🔍 <span class="tab-text-full">AI Legal Search</span><span class="tab-text-short">AI Search</span>
           </button>
         </nav>
+        <span class="cmp-tab-arrow" aria-hidden="true">›</span>
       </div>
       <script is:inline>
         if (localStorage.getItem('is_premium') === 'true') {
@@ -1328,15 +1329,17 @@ import AppLayout from '../../layouts/AppLayout.astro';
     margin-bottom: 24px;
   }
 
-  /* Right Edge Gradient Fade Overlay for Mobile Reveal Hint */
+  /* Right Edge Frosted Glass Blur & Gradient Overlay for Mobile Reveal Hint */
   .cmp-tabs-wrapper::after {
     content: '';
     position: absolute;
     top: 3px;
     right: 3px;
     bottom: 3px;
-    width: 44px;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 100%);
+    width: 52px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 40%, rgba(255, 255, 255, 0.98) 100%);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     pointer-events: none;
     border-top-right-radius: 9px;
     border-bottom-right-radius: 9px;
@@ -1345,11 +1348,37 @@ import AppLayout from '../../layouts/AppLayout.astro';
     opacity: 0;
   }
 
+  /* Subtle Pulsing Chevron Arrow inside the Blur Zone */
+  .cmp-tab-arrow {
+    display: none;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #2B2D42;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 6;
+    animation: cmpChevronBounce 1.6s infinite ease-in-out;
+    transition: opacity 0.25s ease-out;
+  }
+
+  @keyframes cmpChevronBounce {
+    0%, 100% { transform: translateY(-50%) translateX(0); opacity: 0.4; }
+    50% { transform: translateY(-50%) translateX(3px); opacity: 0.85; }
+  }
+
   @media (max-width: 768px) {
     .cmp-tabs-wrapper::after {
       opacity: 1;
     }
-    .cmp-tabs-wrapper.scrolled-end::after {
+    .cmp-tab-arrow {
+      display: block;
+    }
+    .cmp-tabs-wrapper.scrolled-end::after,
+    .cmp-tabs-wrapper.scrolled-end .cmp-tab-arrow {
       opacity: 0 !important;
     }
   }

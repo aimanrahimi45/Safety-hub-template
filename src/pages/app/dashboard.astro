@@ -404,31 +404,31 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           .gte('completed_date', quarterStartIso)),
         safe(supabase.from('inspections').select('*', { count: 'exact', head: true })
           .eq('status', 'overdue')),
-        // -- Activity rows (6) — top 3 from each module --------------------
+        // -- Activity rows (6) — top 5 from each module --------------------
         safe(supabase.from('first_aid_logs')
           .select('id, created_at, injured_person_name, injury_type')
           .order('created_at', { ascending: false })
-          .limit(3)),
+          .limit(5)),
         safe(supabase.from('ppe_requests')
           .select('id, created_at, request_code, ppe_type, staff_name')
           .order('created_at', { ascending: false })
-          .limit(3)),
+          .limit(5)),
         safe(supabase.from('contractors')
           .select('id, created_at, company_name')
           .order('created_at', { ascending: false })
-          .limit(3)),
+          .limit(5)),
         safe(supabase.from('incidents')
           .select('id, created_at, incident_code, victim_name, severity_type')
           .order('created_at', { ascending: false })
-          .limit(3)),
+          .limit(5)),
         safe(supabase.from('staff')
           .select('id, created_at, full_name, employee_id')
           .order('created_at', { ascending: false })
-          .limit(3)),
+          .limit(5)),
         safe(supabase.from('inspections')
           .select('id, created_at, audit_code, location')
           .order('created_at', { ascending: false })
-          .limit(3)),
+          .limit(5)),
       ]);
 
       // -- Render metric tiles -------------------------------------------
@@ -486,8 +486,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           id: r.id,
           kind: 'first_aid',
           icon: '⛑️',
-          title: r.injury_type ? `Box Inspection: ${r.injury_type}` : 'First aid box inspection',
-          sub: r.injured_person_name ? `By ${r.injured_person_name}` : 'First aid box inspection',
+          title: r.injury_type ? `First Aid: ${r.injury_type}` : 'First Aid Box Inspection',
+          sub: r.injured_person_name ? `Reported by ${r.injured_person_name}` : 'Log recorded',
           createdAt: r.created_at,
           href: `/app/first-aid/${encodeURIComponent(r.id)}`,
         });
@@ -498,7 +498,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           kind: 'ppe',
           icon: '🦺',
           title: `${r.request_code} — ${r.ppe_type}`,
-          sub: r.staff_name ? `PPE for ${r.staff_name}` : 'PPE issue recorded',
+          sub: r.staff_name ? `Requested by ${r.staff_name}` : 'PPE Issue recorded',
           createdAt: r.created_at,
           href: `/app/ppe/${encodeURIComponent(r.id)}`,
         });
@@ -519,8 +519,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           id: r.id,
           kind: 'incident',
           icon: '🚨',
-          title: `${r.incident_code} — ${r.victim_name || 'Unknown victim'}`,
-          sub: `Severity: ${r.severity_type}`,
+          title: `${r.incident_code} — ${r.victim_name || 'Incident reported'}`,
+          sub: `Severity: ${r.severity_type || 'Standard'}`,
           createdAt: r.created_at,
           href: `/app/incidents/new?id=${encodeURIComponent(r.id)}`,
         });
@@ -531,7 +531,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           kind: 'staff',
           icon: '🧑‍💼',
           title: r.full_name || 'New staff member',
-          sub: `Added staff: ${r.full_name || ''} (${r.employee_id || '—'})`.trim(),
+          sub: r.employee_id ? `Employee ID: ${r.employee_id}` : 'Staff added to directory',
           createdAt: r.created_at,
           href: `/app/staff?id=${encodeURIComponent(r.id)}`,
         });
@@ -541,8 +541,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           id: r.id,
           kind: 'inspection',
           icon: '📋',
-          title: r.audit_code || 'Inspection',
-          sub: r.location ? `Audit at ${r.location}` : 'Audit recorded',
+          title: r.audit_code || 'Safety Inspection',
+          sub: r.location ? `Location: ${r.location}` : 'Inspection recorded',
           createdAt: r.created_at,
           href: `/app/inspections/${encodeURIComponent(r.id)}`,
         });
@@ -554,7 +554,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         return tb - ta;
       });
 
-      renderActivity(items.slice(0, 5));
+      renderActivity(items.slice(0, 10));
 
       heroEl.hidden = false;
       metricsEl.hidden = false;
@@ -949,6 +949,9 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       border-radius: 12px;
       box-shadow: 3px 3px 0px #2B2D42;
       margin-top: 4px;
+      max-height: 440px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .activity-feed h2 {
@@ -962,51 +965,85 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     }
 
     .activity-item {
-      padding: 8px 4px;
-      border-bottom: 1px dashed #E0E0E0;
-      gap: 10px;
-      border-radius: 6px;
-      transition: background 0.1s ease;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 10px 4px !important;
+      border: none !important;
+      border-bottom: 1px dashed #E2E8F0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      gap: 10px !important;
+      text-decoration: none !important;
+      color: inherit !important;
+      transition: background 0.1s ease !important;
     }
 
     .activity-item:active {
-      background: #FFF9EC;
+      background: #FFF9EC !important;
     }
 
     .activity-item:last-child {
-      border-bottom: none;
+      border-bottom: none !important;
     }
 
     .activity-item-icon {
-      font-size: 1rem;
-      width: 28px;
-      height: 28px;
-      border: 2px solid #2B2D42;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-size: 1rem !important;
+      width: 30px !important;
+      height: 30px !important;
+      border: 2px solid #2B2D42 !important;
+      border-radius: 8px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+    }
+
+    .activity-item-body {
+      flex: 1 !important;
+      min-width: 0 !important;
     }
 
     .activity-item-title {
-      font-size: 0.82rem;
-      font-weight: 800;
-      color: #2B2D42;
+      font-size: 0.82rem !important;
+      font-weight: 800 !important;
+      color: #2B2D42 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
 
     .activity-item-sub {
-      font-size: 0.72rem;
-      color: #64748b;
+      font-size: 0.72rem !important;
+      color: #64748b !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .activity-item-right {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      flex-shrink: 0 !important;
     }
 
     .activity-item-time {
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: #64748b;
-      background: #F4F4F0;
-      padding: 2px 6px;
-      border-radius: 4px;
-      border: 1px solid #2B2D42;
+      font-size: 0.68rem !important;
+      font-weight: 700 !important;
+      color: #475569 !important;
+      background: #F1F5F9 !important;
+      padding: 2px 7px !important;
+      border-radius: 6px !important;
+      border: 1.5px solid #2B2D42 !important;
+      white-space: nowrap !important;
+    }
+
+    .activity-item-arrow {
+      font-size: 0.85rem !important;
+      font-weight: 800 !important;
+      color: #2B2D42 !important;
     }
   }
 </style>

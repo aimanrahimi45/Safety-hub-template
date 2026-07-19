@@ -30,6 +30,11 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         Failed to load workspace data. Please refresh the page.
       </section>
 
+      <div id="dash-mobile-tabs" class="dash-mobile-tabs">
+        <button type="button" id="dash-tab-overview" class="dash-tab-btn active">📊 Overview</button>
+        <button type="button" id="dash-tab-activity" class="dash-tab-btn">⚡ Activity Feed</button>
+      </div>
+
       <div class="dash-grid-layout">
         <section id="dash-metrics" hidden>
           <h2 class="dash-section-title">Overview</h2>
@@ -201,6 +206,21 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     href: string;
   };
 
+  function getDateGroupHeader(iso: string | null | undefined): string {
+    if (!iso) return 'EARLIER';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return 'EARLIER';
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) return 'TODAY';
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) return 'YESTERDAY';
+
+    return 'EARLIER THIS WEEK';
+  }
+
   function renderActivity(items: ActivityItem[]): void {
     activityListEl.innerHTML = '';
     if (items.length === 0) {
@@ -208,20 +228,55 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       return;
     }
     activityEmptyEl.hidden = true;
+
+    let currentGroup = '';
+
     for (const a of items) {
+      const group = getDateGroupHeader(a.createdAt);
+      if (group !== currentGroup) {
+        currentGroup = group;
+        const groupEl = document.createElement('div');
+        groupEl.className = 'activity-group-label';
+        groupEl.textContent = currentGroup;
+        activityListEl.appendChild(groupEl);
+      }
+
       const row = document.createElement('a');
-      row.className = 'activity-item';
+      row.className = `activity-item activity-kind-${a.kind}`;
       row.href = a.href;
       row.innerHTML = `
-        <div class="activity-item-icon" aria-hidden="true">${escapeHtml(a.icon)}</div>
+        <div class="activity-item-icon act-icon-${a.kind}" aria-hidden="true">${escapeHtml(a.icon)}</div>
         <div class="activity-item-body">
           <div class="activity-item-title">${escapeHtml(a.title)}</div>
           <div class="activity-item-sub">${escapeHtml(a.sub)}</div>
         </div>
-        <div class="activity-item-time">${escapeHtml(relativeTime(a.createdAt))}</div>
+        <div class="activity-item-right">
+          <span class="activity-item-time">${escapeHtml(relativeTime(a.createdAt))}</span>
+          <span class="activity-item-arrow" aria-hidden="true">→</span>
+        </div>
       `;
       activityListEl.appendChild(row);
     }
+  }
+
+  // Mobile Tab Switcher Handler
+  const tabOverview = document.getElementById('dash-tab-overview') as HTMLButtonElement | null;
+  const tabActivity = document.getElementById('dash-tab-activity') as HTMLButtonElement | null;
+
+  if (tabOverview && tabActivity && metricsEl && activityEl) {
+    tabOverview.addEventListener('click', () => {
+      tabOverview.classList.add('active');
+      tabActivity.classList.remove('active');
+      metricsEl.style.display = 'block';
+      activityEl.style.display = 'none';
+    });
+
+    tabActivity.addEventListener('click', () => {
+      tabActivity.classList.add('active');
+      tabOverview.classList.remove('active');
+      metricsEl.style.display = 'none';
+      activityEl.style.display = 'block';
+    });
   }
 
   // -------------------------------------------------------------------
@@ -687,8 +742,79 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     font-size: 0.85rem;
   }
 
+  /* Mobile Tab Switcher Buttons (Hidden on Desktop) */
+  .dash-mobile-tabs {
+    display: none;
+  }
+
+  /* Activity Group Header Labels */
+  .activity-group-label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    margin: 12px 0 6px 4px;
+    text-transform: uppercase;
+  }
+  .activity-group-label:first-child {
+    margin-top: 4px;
+  }
+
+  /* Color-Coded Icon Pills */
+  .act-icon-first_aid { background: #FFF3D6 !important; }
+  .act-icon-ppe { background: #E6F7F5 !important; }
+  .act-icon-contractor { background: #EBF3FF !important; }
+  .act-icon-incident { background: #FFE8E8 !important; }
+  .act-icon-staff { background: #F3E8FF !important; }
+  .act-icon-inspection { background: #EAEFF5 !important; }
+
+  .activity-item-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .activity-item-arrow {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #2B2D42;
+    transition: transform 0.1s ease;
+  }
+  .activity-item:hover .activity-item-arrow {
+    transform: translateX(2px);
+  }
+
   /* Mobile Responsive Dashboard Layout */
   @media (max-width: 768px) {
+    .dash-mobile-tabs {
+      display: flex !important;
+      gap: 8px !important;
+      margin-bottom: 12px !important;
+    }
+
+    .dash-tab-btn {
+      flex: 1 !important;
+      background: #FFFFFF !important;
+      border: 2.5px solid #2B2D42 !important;
+      border-radius: 10px !important;
+      padding: 8px 10px !important;
+      font-family: inherit !important;
+      font-size: 0.78rem !important;
+      font-weight: 800 !important;
+      color: #64748b !important;
+      box-shadow: 2.5px 2.5px 0px #2B2D42 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+
+    .dash-tab-btn.active {
+      background: #FFEED2 !important;
+      color: #2B2D42 !important;
+      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
+      transform: translate(1px, 1px) !important;
+    }
+
     .dashboard-page {
       padding: 12px 0 32px;
     }
@@ -838,7 +964,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       font-size: 1rem;
       width: 28px;
       height: 28px;
-      background: #F4F4F0;
       border: 2px solid #2B2D42;
       border-radius: 6px;
       display: flex;

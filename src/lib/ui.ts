@@ -26,3 +26,23 @@ export function renderSkeletonCards(count = 3): string {
   html += '</div>';
   return html;
 }
+
+/**
+ * Generates HTML for shimmering table row skeletons.
+ */
+export function renderSkeletonTableRows(rows = 4, cols = 7): string {
+  let html = '';
+  for (let r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++) {
+      const width = 60 + Math.floor(Math.random() * 35);
+      html += `
+        <td style="padding: 14px 12px;">
+          <div class="cmp-skeleton-shimmer" style="height: 16px; width: ${width}%; border-radius: 4px;"></div>
+        </td>
+      `;
+    }
+    html += '</tr>';
+  }
+  return html;
+}

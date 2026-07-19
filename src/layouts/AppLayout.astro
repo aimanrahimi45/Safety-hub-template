@@ -176,6 +176,28 @@ const isLinkActive = (path: string) => {
     }
   }
 
+  /* Global Unified Shimmer Skeleton Loader Across All Pages */
+  .cmp-skeleton-shimmer,
+  .skel-shimmer,
+  .skel-row,
+  .inc-skeleton div,
+  .fa-skeleton div,
+  .ppe-skeleton div,
+  .ct-skeleton div,
+  .staff-skeleton div,
+  .inv-skeleton div,
+  .settings-skeleton div {
+    background: linear-gradient(90deg, #f0f2f5 25%, #e6e8ec 37%, #f0f2f5 63%) !important;
+    background-size: 400% 100% !important;
+    animation: globalSkeletonShimmer 1.4s ease infinite !important;
+    border-radius: 6px !important;
+  }
+
+  @keyframes globalSkeletonShimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   /* Global Unified Segmented Pill Tab Bar */
   .app-tabs,
   .cmp-tabs,

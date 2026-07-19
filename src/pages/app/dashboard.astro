@@ -257,8 +257,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         expiryEl.textContent = 'No expiry set';
       }
 
-      heroEl.hidden = false;
-
       // ---- Fire all 16 queries in parallel -----------------------------
       // RLS auto-scopes every .from(...) to the caller's tenant, so we
       // don't need to pass tenant_id explicitly.
@@ -475,6 +473,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
       renderActivity(items.slice(0, 5));
 
+      heroEl.hidden = false;
       metricsEl.hidden = false;
       activityEl.hidden = false;
     })().catch(() => {

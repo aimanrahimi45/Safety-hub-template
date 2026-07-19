@@ -26,18 +26,18 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <h1>Incident Reports</h1>
           <p class="inc-sub" id="inc-sub">…</p>
         </div>
-        <div class="inc-header-actions">
+        <div class="app-header-actions">
           <a href="/app/incidents/new" class="inc-primary-btn">+ Report incident</a>
         </div>
       </header>
 
-      <button type="button" id="inc-mobile-filter-btn" class="inc-mobile-filter-btn">
+      <button type="button" id="inc-mobile-filter-btn" class="app-mobile-filter-btn">
         <span>🔍 Filter & Export Options</span>
         <span id="inc-filter-chevron">▼</span>
       </button>
 
-      <section id="inc-filters" class="inc-filters">
-        <label class="inc-filter-field">
+      <section id="inc-filters" class="app-filters">
+        <label class="app-filter-field">
           <span>Year</span>
           <select id="inc-filter-year">
             <option value="">All years</option>
@@ -53,7 +53,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <label class="inc-check"><input type="checkbox" name="severity" value="Other" checked /> Other</label>
         </fieldset>
 
-        <label class="inc-filter-field">
+        <label class="app-filter-field">
           <span>JKKP reported</span>
           <select id="inc-filter-jkkp">
             <option value="">All</option>
@@ -62,7 +62,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           </select>
         </label>
 
-        <label class="inc-filter-field">
+        <label class="app-filter-field">
           <span>Investigation</span>
           <select id="inc-filter-investigation">
             <option value="">All</option>
@@ -71,11 +71,11 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           </select>
         </label>
 
-        <div class="inc-filter-actions-group">
-          <button type="button" id="inc-filter-apply" class="inc-secondary-btn">Apply</button>
-          <button type="button" id="inc-filter-clear" class="inc-secondary-btn">Clear</button>
+        <div class="app-filter-actions-group">
+          <button type="button" id="inc-filter-apply" class="inc-secondary-btn btn-apply">Apply</button>
+          <button type="button" id="inc-filter-clear" class="inc-secondary-btn btn-clear">Clear</button>
         </div>
-        <button type="button" id="inc-export-csv" class="inc-secondary-btn">📥 Export CSV</button>
+        <button type="button" id="inc-export-csv" class="inc-secondary-btn app-export-csv-btn">📥 Export CSV</button>
       </section>
 
       <section id="inc-skeleton" class="inc-skeleton">
@@ -86,7 +86,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       </section>
 
       <section id="inc-table-wrap" hidden>
-        <div class="inc-table-scroll">
+        <div class="app-table-scroll">
           <table class="inc-table" aria-label="Incidents">
             <thead>
               <tr>
@@ -105,7 +105,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
             <tbody id="inc-tbody"></tbody>
           </table>
         </div>
-        <div id="inc-mobile-cards" class="inc-mobile-cards"></div>
+        <div id="inc-mobile-cards" class="app-mobile-cards"></div>
         <nav class="inc-pager" aria-label="Pagination">
           <button type="button" id="inc-prev" class="inc-secondary-btn" disabled>← Previous</button>
           <span class="inc-page-info" id="inc-page-info">Page 1</span>
@@ -400,21 +400,21 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         // Mobile Card Item
         if (mobileCardsEl) {
           const card = document.createElement('div');
-          card.className = 'inc-mobile-card';
+          card.className = 'app-mobile-card';
           card.innerHTML = `
-            <div class="inc-mc-header">
-              <div class="inc-mc-code">🚨 <strong>${escapeHtml(r.incident_code)}</strong></div>
-              <span class="inc-mc-date">📅 ${escapeHtml(formatDateTime(r.incident_date, r.incident_time))}</span>
+            <div class="app-mc-header">
+              <div class="app-mc-title">🚨 <strong>${escapeHtml(r.incident_code)}</strong></div>
+              <span class="app-mc-date">📅 ${escapeHtml(formatDateTime(r.incident_date, r.incident_time))}</span>
             </div>
-            <div class="inc-mc-body">
+            <div class="app-mc-body">
               <div>📍 <strong>${escapeHtml(r.location_dept)}</strong> • Victim: ${escapeHtml(r.victim_name)} ${r.staff_id ? `(${escapeHtml(r.staff_id)})` : ''}</div>
-              ${r.body_part_injured ? `<div class="inc-mc-sub">🩹 Injury: ${escapeHtml(r.body_part_injured)} • Man-days lost: ${r.man_days_lost} days</div>` : `<div class="inc-mc-sub">Man-days lost: ${r.man_days_lost} days</div>`}
+              ${r.body_part_injured ? `<div class="app-mc-sub">🩹 Injury: ${escapeHtml(r.body_part_injured)} • Man-days lost: ${r.man_days_lost} days</div>` : `<div class="app-mc-sub">Man-days lost: ${r.man_days_lost} days</div>`}
             </div>
-            <div class="inc-mc-badges">
-              <span class="inc-sev-badge ${sevClass}">${escapeHtml(sevLabel)}</span>
-              <span class="inc-flag-badge ${r.reported_to_jkkp ? 'inc-flag-yes' : 'inc-flag-no'}">JKKP: ${r.reported_to_jkkp ? 'Yes ✓' : 'No'}</span>
+            <div class="app-mc-badges">
+              <span class="app-badge inc-sev-badge ${sevClass}">${escapeHtml(sevLabel)}</span>
+              <span class="app-badge inc-flag-badge ${r.reported_to_jkkp ? 'inc-flag-yes' : 'inc-flag-no'}">JKKP: ${r.reported_to_jkkp ? 'Yes ✓' : 'No'}</span>
             </div>
-            <div class="inc-mc-footer">
+            <div class="app-mc-footer">
               <a href="/app/incidents/${r.id}" class="inc-view-link">View Incident Report →</a>
             </div>
           `;
@@ -647,263 +647,4 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   .inc-flag-no  { background: var(--color-bg-grey, #F4F4F4); color: var(--color-text-muted, #6A6A69); }
 
   .inc-filter-actions-group { display: flex; gap: 8px; }
-
-  /* Desktop / Default Mobile Cards Hidden */
-  .inc-mobile-cards,
-  .inc-mobile-filter-btn {
-    display: none;
-  }
-
-  @media (max-width: 768px) {
-    .inc-list-page {
-      padding: 16px 0 32px;
-    }
-
-    .inc-header {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .inc-header h1 {
-      font-size: 1.4rem;
-    }
-
-    .inc-header-actions {
-      display: flex;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .inc-header-actions a {
-      flex: 1;
-      justify-content: center;
-      text-align: center;
-    }
-
-    /* Hide Table View on Mobile */
-    .inc-table-scroll {
-      display: none !important;
-    }
-
-    /* Mobile Filter Accordion Toggle */
-    .inc-mobile-filter-btn {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      width: 100% !important;
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      padding: 10px 14px !important;
-      font-size: 0.88rem !important;
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-      box-shadow: 3px 3px 0px #2B2D42 !important;
-      cursor: pointer !important;
-      margin-bottom: 12px !important;
-    }
-
-    .inc-filters {
-      display: none !important;
-    }
-
-    .inc-filters.open {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 12px !important;
-      margin-bottom: 16px !important;
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      padding: 14px 16px !important;
-      box-shadow: 3px 3px 0px #2B2D42 !important;
-      align-items: stretch !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-      animation: incFilterExpand 0.2s ease-out !important;
-    }
-
-    .inc-filters.open .inc-filter-field {
-      width: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 4px !important;
-    }
-
-    .inc-filters.open .inc-filter-field span {
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-      font-size: 0.78rem !important;
-    }
-
-    .inc-filters.open .inc-filter-field select {
-      width: 100% !important;
-      box-sizing: border-box !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      padding: 10px 12px !important;
-      font-size: 0.88rem !important;
-      font-weight: 700 !important;
-      color: #2B2D42 !important;
-      background: #FAFAFA !important;
-    }
-
-    .inc-filters.open .inc-severity-group {
-      width: 100% !important;
-      box-sizing: border-box !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      padding: 10px 12px !important;
-      background: #FAFAFA !important;
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 8px !important;
-    }
-
-    .inc-filters.open .inc-severity-group legend {
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-      font-size: 0.78rem !important;
-      padding: 0 4px !important;
-    }
-
-    .inc-filters.open .inc-severity-group .inc-check {
-      font-size: 0.8rem !important;
-      font-weight: 700 !important;
-      color: #2B2D42 !important;
-    }
-
-    .inc-filters.open .inc-filter-actions-group {
-      display: flex !important;
-      gap: 8px !important;
-      width: 100% !important;
-    }
-
-    .inc-filters.open .inc-filter-actions-group button {
-      flex: 1 !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      padding: 10px 12px !important;
-      font-size: 0.82rem !important;
-      font-weight: 800 !important;
-      text-align: center !important;
-      justify-content: center !important;
-      cursor: pointer !important;
-      box-shadow: 2px 2px 0px #2B2D42 !important;
-    }
-
-    .inc-filters.open #inc-filter-apply {
-      background: #2B2D42 !important;
-      color: #FFFFFF !important;
-    }
-
-    .inc-filters.open #inc-filter-clear {
-      background: #FFFFFF !important;
-      color: #2B2D42 !important;
-    }
-
-    .inc-filters.open #inc-export-csv {
-      width: 100% !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      padding: 10px 12px !important;
-      font-size: 0.82rem !important;
-      font-weight: 800 !important;
-      text-align: center !important;
-      justify-content: center !important;
-      background: #FFF9EC !important;
-      color: #2B2D42 !important;
-      box-shadow: 2px 2px 0px #2B2D42 !important;
-    }
-
-    @keyframes incFilterExpand {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Mobile Inspection Cards Stream */
-    :global(.inc-mobile-cards) {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 12px !important;
-      margin-bottom: 20px !important;
-    }
-
-    :global(.inc-mobile-card) {
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      padding: 14px 16px !important;
-      box-shadow: 3px 3px 0px #2B2D42 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 8px !important;
-      animation: incCardFadeIn 0.2s ease-out !important;
-    }
-
-    @keyframes incCardFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    :global(.inc-mc-header) {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-    }
-
-    :global(.inc-mc-code) {
-      font-size: 0.95rem !important;
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-    }
-
-    :global(.inc-mc-date) {
-      font-size: 0.78rem !important;
-      color: #64748b !important;
-      font-weight: 600 !important;
-    }
-
-    :global(.inc-mc-body) {
-      font-size: 0.85rem !important;
-      color: #2B2D42 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 4px !important;
-    }
-
-    :global(.inc-mc-sub) {
-      font-size: 0.78rem !important;
-      color: #64748b !important;
-    }
-
-    :global(.inc-mc-badges) {
-      display: flex !important;
-      gap: 8px !important;
-      margin-top: 4px !important;
-      flex-wrap: wrap !important;
-    }
-
-    :global(.inc-mc-badges .inc-sev-badge),
-    :global(.inc-mc-badges .inc-flag-badge) {
-      padding: 3px 10px !important;
-      font-size: 0.72rem !important;
-      font-weight: 800 !important;
-      border: 1.5px solid #2B2D42 !important;
-      border-radius: 6px !important;
-      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
-    }
-
-    :global(.inc-mc-footer) {
-      display: flex !important;
-      justify-content: flex-end !important;
-      align-items: center !important;
-      margin-top: 4px !important;
-      padding-top: 8px !important;
-      border-top: 1px dashed #E0E0E0 !important;
-    }
-  }
 </style>

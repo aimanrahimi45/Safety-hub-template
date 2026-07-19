@@ -46,15 +46,33 @@
     if (!isSupabaseConfigured()) {
       emailEl.textContent = 'Supabase not configured';
     } else {
+      // 1. Instant 0ms render from sessionStorage
+      const cachedEmail = sessionStorage.getItem('amerispro_user_email');
+      const cachedWsName = sessionStorage.getItem('amerispro_ws_name');
+
+      if (cachedEmail) {
+        emailEl.textContent = cachedEmail;
+      }
+      if (cachedWsName) {
+        showWorkspace(cachedWsName);
+      }
+
+      // 2. Parallel background verification
       const supabase = getSupabase();
-      supabase.auth.getUser().then(async ({ data }) => {
-        emailEl.textContent = data.user?.email ?? 'unknown user';
-        if (!data.user) return;
-        const { data: tenant } = await supabase
-          .from('tenants')
-          .select('name')
-          .maybeSingle<{ name: string }>();
-        showWorkspace(tenant?.name);
+      Promise.all([
+        supabase.auth.getUser(),
+        supabase.from('tenants').select('name').maybeSingle<{ name: string }>()
+      ]).then(([userRes, tenantRes]) => {
+        const email = userRes.data.user?.email ?? 'unknown user';
+        emailEl.textContent = email;
+        sessionStorage.setItem('amerispro_user_email', email);
+
+        if (tenantRes.data?.name) {
+          showWorkspace(tenantRes.data.name);
+          sessionStorage.setItem('amerispro_ws_name', tenantRes.data.name);
+        }
+      }).catch(() => {
+        // Fallback gracefully on network error
       });
     }
   }
@@ -63,6 +81,7 @@
     signOutBtn.addEventListener('click', async () => {
       signOutBtn.disabled = true;
       try {
+        sessionStorage.clear();
         if (isSupabaseConfigured()) {
           const supabase = getSupabase();
           await supabase.auth.signOut();

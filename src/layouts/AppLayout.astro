@@ -751,4 +751,19 @@ const isLinkActive = (path: string) => {
       }
     }
   };
+
+  // Instant Sidebar Navigation Link Prefetching on Hover
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.app-nav-link').forEach(link => {
+      link.addEventListener('mouseenter', () => {
+        const href = link.getAttribute('href');
+        if (href && !document.querySelector(`link[rel="prefetch"][href="${href}"]`)) {
+          const prefetch = document.createElement('link');
+          prefetch.rel = 'prefetch';
+          prefetch.href = href;
+          document.head.appendChild(prefetch);
+        }
+      }, { once: true });
+    });
+  });
 </script>

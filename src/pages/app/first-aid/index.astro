@@ -20,32 +20,34 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <h1>First Aid Records</h1>
           <p class="fa-sub" id="fa-sub">…</p>
         </div>
-        <div class="fa-header-actions">
+        <div class="app-header-actions">
           <a href="/app/inventory" class="fa-link-btn">Inventory</a>
           <a href="/app/first-aid/new" class="fa-primary-btn">+ New inspection</a>
         </div>
       </header>
 
-      <button type="button" id="fa-mobile-filter-btn" class="fa-mobile-filter-btn">
-        <span>🔍 Filter & Export Options</span>
+      <!-- Mobile Filter Accordion Toggle -->
+      <button type="button" id="fa-mobile-filter-btn" class="app-mobile-filter-btn">
+        <span>🔍 Filter &amp; Export Options</span>
         <span id="fa-filter-chevron">▼</span>
       </button>
 
-      <section id="fa-filters" class="fa-filters">
-        <label class="fa-filter-field">
+      <section id="fa-filters" class="app-filters">
+        <label class="app-filter-field">
           <span>From</span>
           <input type="date" id="fa-from" />
         </label>
-        <label class="fa-filter-field">
+        <label class="app-filter-field">
           <span>To</span>
           <input type="date" id="fa-to" />
         </label>
-        <div class="fa-filter-actions-group">
-          <button type="button" id="fa-filter-apply" class="fa-secondary-btn">Apply</button>
-          <button type="button" id="fa-filter-clear" class="fa-secondary-btn">Clear</button>
+        <div class="app-filter-actions-group">
+          <button type="button" id="fa-filter-apply" class="fa-secondary-btn btn-apply">Apply</button>
+          <button type="button" id="fa-filter-clear" class="fa-secondary-btn btn-clear">Clear</button>
         </div>
-        <button type="button" id="fa-export-csv" class="fa-secondary-btn">📥 Export CSV</button>
+        <button type="button" id="fa-export-csv" class="fa-secondary-btn app-export-csv-btn">📥 Export CSV</button>
       </section>
+
       <section id="fa-skeleton" class="fa-skeleton">
         <div class="skel-row"></div>
         <div class="skel-row"></div>
@@ -54,7 +56,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       </section>
 
       <section id="fa-table-wrap" hidden>
-        <div class="fa-table-scroll">
+        <div class="app-table-scroll">
           <table class="fa-table" aria-label="First aid box inspections">
             <thead>
               <tr>
@@ -258,20 +260,20 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         // Mobile Card Item
         if (mobileCardsEl) {
           const card = document.createElement('div');
-          card.className = 'fa-mobile-card';
+          card.className = 'app-mobile-card';
           card.innerHTML = `
-            <div class="fa-mc-header">
-              <div class="fa-mc-box">⛑️ <strong>${escapeHtml(r.injury_type || 'First Aid Box')}</strong></div>
-              <span class="fa-mc-date">📅 ${formatDate(r.incident_date)}</span>
+            <div class="app-mc-header">
+              <div class="app-mc-title">⛑️ <strong>${escapeHtml(r.injury_type || 'First Aid Box')}</strong></div>
+              <span class="app-mc-date">📅 ${formatDate(r.incident_date)}</span>
             </div>
-            <div class="fa-mc-body">
+            <div class="app-mc-body">
               <div>📍 <strong>${escapeHtml(r.location)}</strong> • Inspector: ${escapeHtml(r.injured_person_name)}</div>
             </div>
-            <div class="fa-mc-badges">
-              <span class="fa-badge ${cleanliness.toLowerCase() === 'good' ? 'fa-badge-yes' : 'fa-badge-no'}">Clean: ${escapeHtml(cleanliness)}</span>
-              ${r.referred_to_hospital ? '<span class="fa-badge fa-badge-yes">Restocked 📦</span>' : '<span class="fa-badge fa-badge-no">Not Restocked</span>'}
+            <div class="app-mc-badges">
+              <span class="app-badge ${cleanliness.toLowerCase() === 'good' ? 'fa-badge-yes' : 'fa-badge-no'}">Clean: ${escapeHtml(cleanliness)}</span>
+              ${r.referred_to_hospital ? '<span class="app-badge fa-badge-yes">Restocked 📦</span>' : '<span class="app-badge fa-badge-no">Not Restocked</span>'}
             </div>
-            <div class="fa-mc-footer">
+            <div class="app-mc-footer">
               <a href="/app/first-aid/${r.id}" class="fa-view-link">View Details →</a>
             </div>
           `;
@@ -495,228 +497,4 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     border: 1px solid var(--color-border, #E0E0E0);
   }
 
-  /* Desktop / Default Mobile Cards Hidden */
-  .fa-mobile-cards,
-  .fa-mobile-filter-btn {
-    display: none;
-  }
-
-  @media (max-width: 768px) {
-    .fa-list-page {
-      padding: 16px 0 32px;
-    }
-
-    .fa-header {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .fa-header h1 {
-      font-size: 1.4rem;
-    }
-
-    .fa-header-actions {
-      display: flex;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .fa-header-actions a {
-      flex: 1;
-      justify-content: center;
-      text-align: center;
-    }
-
-    /* Hide Table View on Mobile */
-    .fa-table-scroll {
-      display: none !important;
-    }
-
-    /* Mobile Filter Accordion Toggle */
-    .fa-mobile-filter-btn {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      width: 100% !important;
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      padding: 10px 14px !important;
-      font-size: 0.88rem !important;
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-      box-shadow: 3px 3px 0px #2B2D42 !important;
-      cursor: pointer !important;
-      margin-bottom: 12px !important;
-    }
-
-    .fa-filters {
-      display: none !important;
-    }
-
-    .fa-filters.open {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 12px !important;
-      margin-bottom: 16px !important;
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      padding: 14px 16px !important;
-      box-shadow: 3px 3px 0px #2B2D42 !important;
-      align-items: stretch !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-      animation: faFilterExpand 0.2s ease-out !important;
-    }
-
-    .fa-filters.open .fa-filter-field {
-      width: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 4px !important;
-    }
-
-    .fa-filters.open .fa-filter-field span {
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-      font-size: 0.78rem !important;
-    }
-
-    .fa-filters.open .fa-filter-field input {
-      width: 100% !important;
-      box-sizing: border-box !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      padding: 10px 12px !important;
-      font-size: 0.88rem !important;
-      font-weight: 700 !important;
-      color: #2B2D42 !important;
-      background: #FAFAFA !important;
-    }
-
-    .fa-filters.open .fa-filter-actions-group {
-      display: flex !important;
-      gap: 8px !important;
-      width: 100% !important;
-    }
-
-    .fa-filters.open .fa-filter-actions-group button {
-      flex: 1 !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      padding: 10px 12px !important;
-      font-size: 0.82rem !important;
-      font-weight: 800 !important;
-      text-align: center !important;
-      justify-content: center !important;
-      cursor: pointer !important;
-      box-shadow: 2px 2px 0px #2B2D42 !important;
-    }
-
-    .fa-filters.open #fa-filter-apply {
-      background: #2B2D42 !important;
-      color: #FFFFFF !important;
-    }
-
-    .fa-filters.open #fa-filter-clear {
-      background: #FFFFFF !important;
-      color: #2B2D42 !important;
-    }
-
-    .fa-filters.open #fa-export-csv {
-      width: 100% !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      padding: 10px 12px !important;
-      font-size: 0.82rem !important;
-      font-weight: 800 !important;
-      text-align: center !important;
-      justify-content: center !important;
-      background: #FFF9EC !important;
-      color: #2B2D42 !important;
-      box-shadow: 2px 2px 0px #2B2D42 !important;
-    }
-
-    @keyframes faFilterExpand {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Mobile Inspection Cards Stream */
-    :global(.fa-mobile-cards) {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 12px !important;
-      margin-bottom: 20px !important;
-    }
-
-    :global(.fa-mobile-card) {
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      padding: 14px 16px !important;
-      box-shadow: 3px 3px 0px #2B2D42 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 8px !important;
-      animation: faCardFadeIn 0.2s ease-out !important;
-    }
-
-    @keyframes faCardFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    :global(.fa-mc-header) {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-    }
-
-    :global(.fa-mc-box) {
-      font-size: 0.95rem !important;
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-    }
-
-    :global(.fa-mc-date) {
-      font-size: 0.78rem !important;
-      color: #64748b !important;
-      font-weight: 600 !important;
-    }
-
-    :global(.fa-mc-body) {
-      font-size: 0.85rem !important;
-      color: #2B2D42 !important;
-    }
-
-    :global(.fa-mc-badges) {
-      display: flex !important;
-      gap: 8px !important;
-      margin-top: 4px !important;
-      flex-wrap: wrap !important;
-    }
-
-    :global(.fa-mc-badges .fa-badge) {
-      padding: 3px 10px !important;
-      font-size: 0.72rem !important;
-      font-weight: 800 !important;
-      border: 1.5px solid #2B2D42 !important;
-      border-radius: 6px !important;
-      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
-    }
-
-    :global(.fa-mc-footer) {
-      display: flex !important;
-      justify-content: flex-end !important;
-      align-items: center !important;
-      margin-top: 4px !important;
-      padding-top: 8px !important;
-      border-top: 1px dashed #E0E0E0 !important;
-    }
-  }
 </style>

@@ -1,14 +1,198 @@
-/* Unified Mobile List & Filter Utilities */
+/* ==========================================================================
+   UNIFIED NEO-BRUTALIST DESIGN SYSTEM (DESKTOP & MOBILE)
+   AmerisPro Safety Hub List Pages
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   DESKTOP DEFAULT STYLES (> 768px)
+   -------------------------------------------------------------------------- */
+
+/* Hide Mobile Accordion Toggle & Mobile Cards Stream by default on Desktop */
 .app-mobile-filter-btn {
-  display: none;
+  display: none !important;
 }
 
 .app-mobile-cards {
-  display: none;
+  display: none !important;
 }
 
+/* Header Action Buttons Container */
+.app-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Desktop Horizontal Filter Bar */
+.app-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.app-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-filter-field span,
+.app-filter-field label {
+  font-weight: 800;
+  color: #2B2D42;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.app-filter-field input,
+.app-filter-field select {
+  border: 2.5px solid #2B2D42 !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #2B2D42 !important;
+  background: #FAFAFA !important;
+  box-shadow: 2px 2px 0px #2B2D42 !important;
+  transition: all 0.15s ease-in-out;
+}
+
+.app-filter-field input:focus,
+.app-filter-field select:focus {
+  outline: none !important;
+  background: #FFFFFF !important;
+  box-shadow: 3px 3px 0px #2B2D42 !important;
+  transform: translateY(-1px);
+}
+
+.app-filter-actions-group {
+  display: flex;
+  gap: 8px;
+}
+
+.app-filter-actions-group button,
+.app-export-csv-btn {
+  border: 2.5px solid #2B2D42 !important;
+  border-radius: 8px !important;
+  padding: 9px 14px !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  cursor: pointer !important;
+  box-shadow: 2px 2px 0px #2B2D42 !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+
+.app-filter-actions-group button:hover:not(:disabled),
+.app-export-csv-btn:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 3px 3px 0px #2B2D42 !important;
+}
+
+.app-filter-actions-group .btn-apply {
+  background: #2B2D42 !important;
+  color: #FFFFFF !important;
+}
+
+.app-filter-actions-group .btn-clear {
+  background: #FFFFFF !important;
+  color: #2B2D42 !important;
+}
+
+.app-export-csv-btn {
+  background: #FFF9EC !important;
+  color: #2B2D42 !important;
+}
+
+/* Neo-Brutalist Desktop Table Container */
+.app-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 3px solid #2B2D42 !important;
+  border-radius: 12px !important;
+  box-shadow: 4px 4px 0px #2B2D42 !important;
+  background: #FFFFFF !important;
+  margin-bottom: 24px !important;
+}
+
+.app-table-scroll table,
+table.fa-table,
+table.inc-table,
+table.ppe-table,
+table.ct-table,
+table.staff-table {
+  width: 100%;
+  border-collapse: collapse !important;
+  font-size: 0.88rem;
+  background: #FFFFFF;
+}
+
+.app-table-scroll thead tr,
+table.fa-table thead tr,
+table.inc-table thead tr,
+table.ppe-table thead tr,
+table.ct-table thead tr,
+table.staff-table thead tr {
+  background: #FFF9EC !important;
+}
+
+.app-table-scroll th,
+table.fa-table th,
+table.inc-table th,
+table.ppe-table th,
+table.ct-table th,
+table.staff-table th {
+  padding: 12px 14px !important;
+  text-align: left;
+  font-size: 0.76rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: #2B2D42 !important;
+  border-bottom: 2.5px solid #2B2D42 !important;
+  white-space: nowrap;
+}
+
+.app-table-scroll td,
+table.fa-table td,
+table.inc-table td,
+table.ppe-table td,
+table.ct-table td,
+table.staff-table td {
+  padding: 12px 14px !important;
+  border-bottom: 1.5px solid #E0E0E0 !important;
+  color: #2B2D42;
+  vertical-align: middle;
+}
+
+.app-table-scroll tbody tr:hover,
+table.fa-table tbody tr:hover,
+table.inc-table tbody tr:hover,
+table.ppe-table tbody tr:hover,
+table.ct-table tbody tr:hover,
+table.staff-table tbody tr:hover {
+  background: #FAF7F0 !important;
+}
+
+.app-table-scroll tbody tr:last-child td,
+table.fa-table tbody tr:last-child td,
+table.inc-table tbody tr:last-child td,
+table.ppe-table tbody tr:last-child td,
+table.ct-table tbody tr:last-child td,
+table.staff-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   MOBILE VIEWPORT STYLES (<= 768px)
+   -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
-  /* Header Action Buttons */
+  /* Stack Header Actions Full-Width on Mobile */
   .app-header-actions {
     display: flex !important;
     gap: 8px !important;
@@ -36,16 +220,22 @@
     background: #FFFFFF !important;
     border: 3px solid #2B2D42 !important;
     border-radius: 12px !important;
-    padding: 10px 14px !important;
-    font-size: 0.88rem !important;
+    padding: 12px 16px !important;
+    font-size: 0.9rem !important;
     font-weight: 800 !important;
     color: #2B2D42 !important;
     box-shadow: 3px 3px 0px #2B2D42 !important;
     cursor: pointer !important;
-    margin-bottom: 12px !important;
+    margin-bottom: 14px !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
   }
 
-  /* Mobile Expanded Filter Panel Card */
+  .app-mobile-filter-btn:active {
+    transform: translateY(1px) !important;
+    box-shadow: 2px 2px 0px #2B2D42 !important;
+  }
+
+  /* Mobile Expanded Filter Panel Card with Smooth Expand Animation */
   .app-filters {
     display: none !important;
   }
@@ -54,16 +244,16 @@
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 18px !important;
     background: #FFFFFF !important;
     border: 3px solid #2B2D42 !important;
     border-radius: 12px !important;
-    padding: 14px 16px !important;
+    padding: 16px !important;
     box-shadow: 3px 3px 0px #2B2D42 !important;
     align-items: stretch !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    animation: appFilterExpand 0.2s ease-out !important;
+    animation: appFilterExpand 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 
   .app-filters.open .app-filter-field {
@@ -113,16 +303,6 @@
     box-shadow: 2px 2px 0px #2B2D42 !important;
   }
 
-  .app-filter-actions-group .btn-apply {
-    background: #2B2D42 !important;
-    color: #FFFFFF !important;
-  }
-
-  .app-filter-actions-group .btn-clear {
-    background: #FFFFFF !important;
-    color: #2B2D42 !important;
-  }
-
   .app-export-csv-btn {
     width: 100% !important;
     border: 2.5px solid #2B2D42 !important;
@@ -138,8 +318,14 @@
   }
 
   @keyframes appFilterExpand {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   /* Mobile Data Cards Stream */
@@ -159,7 +345,7 @@
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
-    animation: appCardFadeIn 0.2s ease-out !important;
+    animation: appCardFadeIn 0.25s ease-out !important;
   }
 
   @keyframes appCardFadeIn {

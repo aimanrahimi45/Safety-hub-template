@@ -1,18 +1,28 @@
 /* ==========================================================================
    UNIFIED NEO-BRUTALIST DESIGN SYSTEM (DESKTOP & MOBILE)
-   AmerisPro Safety Hub List Pages
+   AmerisPro Safety Hub List Pages (First Aid, Incidents, PPE, Contractors, Staff)
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    DESKTOP DEFAULT STYLES (> 768px)
    -------------------------------------------------------------------------- */
 
-/* Hide Mobile Accordion Toggle & Mobile Cards Stream by default on Desktop */
-.app-mobile-filter-btn {
+/* Hide Mobile Accordion Toggles & Mobile Cards Stream by default on Desktop */
+.app-mobile-filter-btn,
+.fa-mobile-filter-btn,
+.inc-mobile-filter-btn,
+.ppe-mobile-filter-btn,
+.ct-mobile-filter-btn,
+.staff-mobile-filter-btn {
   display: none !important;
 }
 
-.app-mobile-cards {
+.app-mobile-cards,
+.fa-mobile-cards,
+.inc-mobile-cards,
+.ppe-mobile-cards,
+.ct-mobile-cards,
+.staff-mobile-cards {
   display: none !important;
 }
 
@@ -212,7 +222,12 @@ table.staff-table tbody tr:last-child td {
   }
 
   /* Mobile Filter Accordion Toggle Button */
-  .app-mobile-filter-btn {
+  .app-mobile-filter-btn,
+  .fa-mobile-filter-btn,
+  .inc-mobile-filter-btn,
+  .ppe-mobile-filter-btn,
+  .ct-mobile-filter-btn,
+  .staff-mobile-filter-btn {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -230,7 +245,12 @@ table.staff-table tbody tr:last-child td {
     transition: transform 0.15s ease, box-shadow 0.15s ease !important;
   }
 
-  .app-mobile-filter-btn:active {
+  .app-mobile-filter-btn:active,
+  .fa-mobile-filter-btn:active,
+  .inc-mobile-filter-btn:active,
+  .ppe-mobile-filter-btn:active,
+  .ct-mobile-filter-btn:active,
+  .staff-mobile-filter-btn:active {
     transform: translateY(1px) !important;
     box-shadow: 2px 2px 0px #2B2D42 !important;
   }
@@ -329,7 +349,12 @@ table.staff-table tbody tr:last-child td {
   }
 
   /* Mobile Data Cards Stream */
-  .app-mobile-cards {
+  .app-mobile-cards,
+  .fa-mobile-cards,
+  .inc-mobile-cards,
+  .ppe-mobile-cards,
+  .ct-mobile-cards,
+  .staff-mobile-cards {
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;

@@ -263,20 +263,36 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   const tabOverview = document.getElementById('dash-tab-overview') as HTMLButtonElement | null;
   const tabActivity = document.getElementById('dash-tab-activity') as HTMLButtonElement | null;
 
+  function applyMobileTabState(): void {
+    if (window.innerWidth <= 768) {
+      const isActivityActive = tabActivity?.classList.contains('active');
+      if (isActivityActive) {
+        if (metricsEl) metricsEl.style.display = 'none';
+        if (activityEl) activityEl.style.display = 'block';
+      } else {
+        if (metricsEl) metricsEl.style.display = 'block';
+        if (activityEl) activityEl.style.display = 'none';
+      }
+    } else {
+      if (metricsEl) metricsEl.style.display = '';
+      if (activityEl) activityEl.style.display = '';
+    }
+  }
+
   if (tabOverview && tabActivity && metricsEl && activityEl) {
     tabOverview.addEventListener('click', () => {
       tabOverview.classList.add('active');
       tabActivity.classList.remove('active');
-      metricsEl.style.display = 'block';
-      activityEl.style.display = 'none';
+      applyMobileTabState();
     });
 
     tabActivity.addEventListener('click', () => {
       tabActivity.classList.add('active');
       tabOverview.classList.remove('active');
-      metricsEl.style.display = 'none';
-      activityEl.style.display = 'block';
+      applyMobileTabState();
     });
+
+    window.addEventListener('resize', applyMobileTabState);
   }
 
   // -------------------------------------------------------------------
@@ -543,6 +559,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       heroEl.hidden = false;
       metricsEl.hidden = false;
       activityEl.hidden = false;
+      applyMobileTabState();
     })().catch(() => {
       showError();
     });

@@ -805,35 +805,66 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       border: 3px solid #2B2D42;
       border-radius: 12px;
       box-shadow: 3px 3px 0px #2B2D42;
+      margin-top: 4px;
     }
 
     .activity-feed h2 {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      font-weight: 800;
       margin-bottom: 10px;
       padding-bottom: 6px;
-      border-bottom: 2px solid #2B2D42;
+      border-bottom: 2.5px solid #2B2D42;
       text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .activity-item {
       padding: 8px 4px;
       border-bottom: 1px dashed #E0E0E0;
+      gap: 10px;
+      border-radius: 6px;
+      transition: background 0.1s ease;
+    }
+
+    .activity-item:active {
+      background: #FFF9EC;
     }
 
     .activity-item:last-child {
       border-bottom: none;
     }
 
+    .activity-item-icon {
+      font-size: 1rem;
+      width: 28px;
+      height: 28px;
+      background: #F4F4F0;
+      border: 2px solid #2B2D42;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .activity-item-title {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #2B2D42;
     }
 
     .activity-item-sub {
       font-size: 0.72rem;
+      color: #64748b;
     }
 
     .activity-item-time {
       font-size: 0.68rem;
+      font-weight: 700;
+      color: #64748b;
+      background: #F4F4F0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #2B2D42;
     }
   }
 </style>

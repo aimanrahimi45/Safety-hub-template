@@ -203,18 +203,23 @@
 
   @media (max-width: 768px) {
     .app-top-bar {
-      padding: 5px 0;
+      padding: 6px 0;
     }
     .app-top-bar-row {
       flex-direction: row !important;
       justify-content: space-between !important;
       align-items: center !important;
-      gap: 6px !important;
+      gap: 8px !important;
       padding: 0 12px !important;
     }
     .app-top-bar-left {
       gap: 6px !important;
       min-width: 0 !important;
+      flex: 1 !important;
+    }
+    /* Hide email badge on mobile to prevent overlap */
+    .app-top-bar-user {
+      display: none !important;
     }
     .badge {
       padding: 3px 8px !important;
@@ -222,8 +227,17 @@
       border-width: 2px !important;
       box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
     }
-    #app-top-bar-email {
-      max-width: 120px !important;
+    #app-top-bar-workspace-name {
+      max-width: 130px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      display: inline-block !important;
+      vertical-align: bottom !important;
+    }
+    .app-top-bar-right {
+      gap: 6px !important;
+      flex-shrink: 0 !important;
     }
     .app-top-bar-btn {
       padding: 4px 8px !important;

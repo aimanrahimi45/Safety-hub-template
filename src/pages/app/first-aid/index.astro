@@ -40,8 +40,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <span>To</span>
           <input type="date" id="fa-to" />
         </label>
-        <button type="button" id="fa-filter-apply" class="fa-secondary-btn">Apply</button>
-        <button type="button" id="fa-filter-clear" class="fa-secondary-btn">Clear</button>
+        <div class="fa-filter-actions-group">
+          <button type="button" id="fa-filter-apply" class="fa-secondary-btn">Apply</button>
+          <button type="button" id="fa-filter-clear" class="fa-secondary-btn">Clear</button>
+        </div>
         <button type="button" id="fa-export-csv" class="fa-secondary-btn">📥 Export CSV</button>
       </section>
       <section id="fa-skeleton" class="fa-skeleton">
@@ -410,6 +412,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     flex-wrap: wrap;
     margin-bottom: 20px;
   }
+  .fa-filter-actions-group { display: flex; gap: 8px; }
   .fa-filter-field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; }
   .fa-filter-field input {
     padding: 8px 10px;
@@ -556,9 +559,86 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     .fa-filters.open {
       display: flex !important;
       flex-direction: column !important;
-      gap: 10px !important;
+      gap: 12px !important;
       margin-bottom: 16px !important;
+      background: #FFFFFF !important;
+      border: 3px solid #2B2D42 !important;
+      border-radius: 12px !important;
+      padding: 14px 16px !important;
+      box-shadow: 3px 3px 0px #2B2D42 !important;
+      align-items: stretch !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
       animation: faFilterExpand 0.2s ease-out !important;
+    }
+
+    .fa-filters.open .fa-filter-field {
+      width: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 4px !important;
+    }
+
+    .fa-filters.open .fa-filter-field span {
+      font-weight: 800 !important;
+      color: #2B2D42 !important;
+      font-size: 0.78rem !important;
+    }
+
+    .fa-filters.open .fa-filter-field input {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      border: 2.5px solid #2B2D42 !important;
+      border-radius: 8px !important;
+      padding: 10px 12px !important;
+      font-size: 0.88rem !important;
+      font-weight: 700 !important;
+      color: #2B2D42 !important;
+      background: #FAFAFA !important;
+    }
+
+    .fa-filters.open .fa-filter-actions-group {
+      display: flex !important;
+      gap: 8px !important;
+      width: 100% !important;
+    }
+
+    .fa-filters.open .fa-filter-actions-group button {
+      flex: 1 !important;
+      border: 2.5px solid #2B2D42 !important;
+      border-radius: 8px !important;
+      padding: 10px 12px !important;
+      font-size: 0.82rem !important;
+      font-weight: 800 !important;
+      text-align: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      box-shadow: 2px 2px 0px #2B2D42 !important;
+    }
+
+    .fa-filters.open #fa-filter-apply {
+      background: #2B2D42 !important;
+      color: #FFFFFF !important;
+    }
+
+    .fa-filters.open #fa-filter-clear {
+      background: #FFFFFF !important;
+      color: #2B2D42 !important;
+    }
+
+    .fa-filters.open #fa-export-csv {
+      width: 100% !important;
+      border: 2.5px solid #2B2D42 !important;
+      border-radius: 8px !important;
+      padding: 10px 12px !important;
+      font-size: 0.82rem !important;
+      font-weight: 800 !important;
+      text-align: center !important;
+      justify-content: center !important;
+      background: #FFF9EC !important;
+      color: #2B2D42 !important;
+      box-shadow: 2px 2px 0px #2B2D42 !important;
     }
 
     @keyframes faFilterExpand {

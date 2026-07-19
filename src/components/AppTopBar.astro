@@ -203,19 +203,33 @@
 
   @media (max-width: 768px) {
     .app-top-bar {
-      padding: 6px 0;
+      padding: 5px 0;
     }
     .app-top-bar-row {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 10px;
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 0 12px !important;
     }
     .app-top-bar-left {
-      justify-content: center;
-      flex-wrap: wrap;
+      gap: 6px !important;
+      min-width: 0 !important;
     }
-    .app-top-bar-right {
-      justify-content: center;
+    .badge {
+      padding: 3px 8px !important;
+      font-size: 0.72rem !important;
+      border-width: 2px !important;
+      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
+    }
+    #app-top-bar-email {
+      max-width: 120px !important;
+    }
+    .app-top-bar-btn {
+      padding: 4px 8px !important;
+      font-size: 0.65rem !important;
+      border-width: 2px !important;
+      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
     }
   }
 </style>

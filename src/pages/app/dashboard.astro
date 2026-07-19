@@ -35,40 +35,52 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           <h2 class="dash-section-title">Overview</h2>
           <div class="metric-grid">
             <a href="/app/first-aid" class="metric-tile" id="metric-first-aid">
-              <div class="metric-tile-icon" aria-hidden="true">⛑️</div>
+              <div class="metric-tile-head">
+                <span class="metric-tile-icon" aria-hidden="true">⛑️</span>
+                <span class="metric-tile-label">First Aid Boxes</span>
+              </div>
               <div class="metric-tile-value" data-role="value">—</div>
               <div class="metric-tile-sub" data-role="sub">…</div>
-              <div class="metric-tile-label">First Aid Boxes</div>
             </a>
             <a href="/app/ppe" class="metric-tile" id="metric-ppe">
-              <div class="metric-tile-icon" aria-hidden="true">🦺</div>
+              <div class="metric-tile-head">
+                <span class="metric-tile-icon" aria-hidden="true">🦺</span>
+                <span class="metric-tile-label">PPE Issues</span>
+              </div>
               <div class="metric-tile-value" data-role="value">—</div>
               <div class="metric-tile-sub" data-role="sub">…</div>
-              <div class="metric-tile-label">PPE</div>
             </a>
             <a href="/app/contractors" class="metric-tile" id="metric-contractors">
-              <div class="metric-tile-icon" aria-hidden="true">👷</div>
+              <div class="metric-tile-head">
+                <span class="metric-tile-icon" aria-hidden="true">👷</span>
+                <span class="metric-tile-label">Contractors</span>
+              </div>
               <div class="metric-tile-value" data-role="value">—</div>
               <div class="metric-tile-sub" data-role="sub">…</div>
-              <div class="metric-tile-label">Contractors</div>
             </a>
             <a href="/app/incidents" class="metric-tile" id="metric-incidents">
-              <div class="metric-tile-icon" aria-hidden="true">🚨</div>
+              <div class="metric-tile-head">
+                <span class="metric-tile-icon" aria-hidden="true">🚨</span>
+                <span class="metric-tile-label">Incidents</span>
+              </div>
               <div class="metric-tile-value" data-role="value">—</div>
               <div class="metric-tile-sub" data-role="sub">…</div>
-              <div class="metric-tile-label">Incidents</div>
             </a>
             <a href="/app/staff" class="metric-tile" id="metric-staff">
-              <div class="metric-tile-icon" aria-hidden="true">🧑‍💼</div>
+              <div class="metric-tile-head">
+                <span class="metric-tile-icon" aria-hidden="true">🧑‍💼</span>
+                <span class="metric-tile-label">Staff Active</span>
+              </div>
               <div class="metric-tile-value" data-role="value">—</div>
               <div class="metric-tile-sub" data-role="sub">…</div>
-              <div class="metric-tile-label">Staff</div>
             </a>
             <a href="/app/inspections" class="metric-tile" id="metric-inspections">
-              <div class="metric-tile-icon" aria-hidden="true">📋</div>
+              <div class="metric-tile-head">
+                <span class="metric-tile-icon" aria-hidden="true">📋</span>
+                <span class="metric-tile-label">Inspections</span>
+              </div>
               <div class="metric-tile-value" data-role="value">—</div>
               <div class="metric-tile-sub" data-role="sub">…</div>
-              <div class="metric-tile-label">Inspections</div>
             </a>
           </div>
         </section>
@@ -582,9 +594,28 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     color: inherit;
     padding: 12px 14px !important;
   }
+  /* Metric Tile Header Layout */
+  .metric-tile-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
   .metric-tile-icon {
     font-size: 1.2rem;
-    margin-bottom: 6px;
+    line-height: 1;
+    margin-bottom: 0;
+  }
+  .metric-tile-label {
+    font-size: 0.72rem;
+    color: var(--color-text-muted, #6A6A69);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .metric-tile-value {
     font-size: 1.5rem;
@@ -598,14 +629,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-  .metric-tile-label {
-    font-size: 0.72rem;
-    color: var(--color-text-muted, #6A6A69);
-    margin-top: 8px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
   /* Recent activity feed */
@@ -667,12 +690,21 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   /* Mobile Responsive Dashboard Layout */
   @media (max-width: 768px) {
     .dashboard-page {
-      padding: 16px 0 40px;
+      padding: 12px 0 32px;
+    }
+
+    /* Remove outer double-card background/border wrapper on mobile */
+    #dash-metrics {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
     }
 
     .dash-hero {
-      margin-bottom: 16px;
-      padding: 14px 16px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
       background: #FFFFFF;
       border: 3px solid #2B2D42;
       border-radius: 12px;
@@ -680,63 +712,91 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     }
 
     .dash-hero h1 {
-      font-size: 1.35rem;
+      font-size: 1.25rem;
       line-height: 1.2;
       margin-bottom: 2px;
     }
 
     .dash-company {
-      font-size: 0.85rem;
-      margin-bottom: 8px;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
     }
 
     .dash-meta {
-      gap: 8px;
+      gap: 6px;
     }
 
     .dash-grid-layout {
       display: flex !important;
       flex-direction: column !important;
-      gap: 16px !important;
+      gap: 14px !important;
     }
 
+    /* Locked 2-Column Metric Grid sitting natively on warm background */
     .metric-grid {
       grid-template-columns: 1fr 1fr !important;
       gap: 10px !important;
     }
 
     .metric-tile {
-      padding: 10px 12px !important;
-      border-radius: 10px !important;
-      border-width: 2.5px !important;
-      box-shadow: 2.5px 2.5px 0px #2B2D42 !important;
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      background: #FFFFFF !important;
+      border: 3px solid #2B2D42 !important;
+      border-radius: 12px !important;
+      padding: 12px 14px !important;
+      box-shadow: 3px 3px 0px #2B2D42 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      min-height: 96px !important;
+      animation: dashCardFadeIn 0.2s ease-out !important;
+    }
+
+    @keyframes dashCardFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .metric-tile:active {
-      transform: translate(1px, 1px);
+      transform: translate(1.5px, 1.5px) !important;
       box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
     }
 
+    .metric-tile-head {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      margin-bottom: 4px !important;
+    }
+
     .metric-tile-icon {
-      font-size: 1.1rem;
-      margin-bottom: 4px;
-    }
-
-    .metric-tile-value {
-      font-size: 1.35rem;
-      line-height: 1.1;
-    }
-
-    .metric-tile-sub {
-      font-size: 0.68rem;
-      margin-top: 1px;
+      font-size: 1.05rem !important;
+      margin-bottom: 0 !important;
     }
 
     .metric-tile-label {
-      font-size: 0.65rem;
-      margin-top: 6px;
-      letter-spacing: 0.3px;
+      font-size: 0.65rem !important;
+      font-weight: 800 !important;
+      color: #2B2D42 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.02em !important;
+      margin-top: 0 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .metric-tile-value {
+      font-size: 1.55rem !important;
+      font-weight: 900 !important;
+      line-height: 1 !important;
+      color: #2B2D42 !important;
+      margin: 4px 0 !important;
+    }
+
+    .metric-tile-sub {
+      font-size: 0.68rem !important;
+      color: #64748b !important;
+      margin-top: 0 !important;
     }
 
     .activity-feed {
@@ -748,10 +808,11 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     }
 
     .activity-feed h2 {
-      font-size: 1rem;
+      font-size: 0.95rem;
       margin-bottom: 10px;
       padding-bottom: 6px;
       border-bottom: 2px solid #2B2D42;
+      text-transform: uppercase;
     }
 
     .activity-item {

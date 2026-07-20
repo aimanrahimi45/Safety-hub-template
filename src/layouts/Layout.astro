@@ -866,7 +866,11 @@ img { max-width: 100%; height: auto; }
 @media (max-width: 1200px) {
     .module-cards { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 968px) {
+@media (max-width: 768px) {
+    .nav-container { padding: 0 16px !important; }
+    .nav-pill-link { display: none !important; }
+    .header-logo span { font-size: 1rem !important; white-space: nowrap !important; }
+    .nav-cta-btn { padding: 7px 14px !important; font-size: 0.78rem !important; }
     .nav-main { display: none; }
     .hero-content h1 { font-size: 2.5rem; }
     .module-layout { grid-template-columns: 1fr; gap: 24px; }
@@ -898,10 +902,6 @@ img { max-width: 100%; height: auto; }
     body { padding-bottom: 80px; }
 }
 @media (max-width: 600px) {
-    .nav-container { padding: 0 16px !important; }
-    .header-logo span { font-size: 0.95rem; }
-    .nav-pill-link { padding: 6px 10px; font-size: 0.74rem; gap: 4px; }
-    .nav-cta-btn { padding: 6px 12px; font-size: 0.76rem; gap: 4px; }
     .module-list-icon { width: 22px; height: 22px; }
     .module-list-label { font-size: 0.72rem; }
     .module-card-img { height: 200px; }

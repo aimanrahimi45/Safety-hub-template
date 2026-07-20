@@ -1,38 +1,82 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 ---
 <Layout title="Sign in - AmerisPro">
-  <Header />
+  <!-- Minimal Brand Header -->
+  <header class="auth-header">
+    <div class="container auth-nav-container">
+      <a href="/" class="auth-brand-logo">
+        <img src="/amerispro.png" alt="AmerisPro">
+        <span>AMERISPRO</span>
+      </a>
+      <a href="/" class="auth-back-link">← Home</a>
+    </div>
+  </header>
 
   <main class="auth-page">
-    <div class="container">
+    <div class="container auth-container">
       <div class="auth-card">
-        <h1>Sign in to AmerisPro</h1>
-        <p class="auth-subtitle">
-          Use your Google account to access your safety compliance workspace.
+        
+        <!-- Auth Mode Tabs -->
+        <div class="auth-tabs" role="tablist">
+          <button type="button" class="auth-tab-btn active" id="tab-login" data-mode="login" role="tab" aria-selected="true">
+            🔑 Sign In
+          </button>
+          <button type="button" class="auth-tab-btn" id="tab-signup" data-mode="signup" role="tab" aria-selected="false">
+            📝 Create Account
+          </button>
+        </div>
+
+        <h1 id="auth-title">Welcome Back</h1>
+        <p id="auth-subtitle" class="auth-subtitle">
+          Access your safety compliance workspace
         </p>
 
         <div id="auth-setup-warning" class="auth-warning" hidden>
           <strong>Setup required.</strong>
           <span>
-            Supabase environment variables are not configured. Copy
-            <code>.env.example</code> to <code>.env</code> and fill in
-            your <code>PUBLIC_SUPABASE_URL</code> and
-            <code>PUBLIC_SUPABASE_ANON_KEY</code>, then restart the dev server.
+            Supabase credentials missing. Copy <code>.env.example</code> to <code>.env</code> and fill in credentials.
           </span>
         </div>
 
         <div id="auth-error" class="auth-error" hidden></div>
+        <div id="auth-notice" class="auth-notice" hidden></div>
 
+        <!-- Google OAuth Button -->
         <button type="button" id="google-signin-btn" class="google-btn">
           <span class="google-btn-icon" aria-hidden="true">G</span>
           <span>Sign in with Google</span>
         </button>
 
+        <div class="auth-divider">
+          <span>OR WITH EMAIL</span>
+        </div>
+
+        <!-- Email / Password Form -->
+        <form id="email-auth-form" class="email-form">
+          <div class="form-group">
+            <label for="auth-email">EMAIL ADDRESS</label>
+            <input type="email" id="auth-email" required placeholder="name@company.com" autocomplete="email" />
+          </div>
+
+          <div class="form-group">
+            <label for="auth-password">PASSWORD</label>
+            <input type="password" id="auth-password" required placeholder="Min. 6 characters" minlength="6" autocomplete="current-password" />
+          </div>
+
+          <div class="form-group" id="confirm-password-group" hidden>
+            <label for="auth-confirm-password">CONFIRM PASSWORD</label>
+            <input type="password" id="auth-confirm-password" placeholder="Re-enter password" minlength="6" autocomplete="new-password" />
+          </div>
+
+          <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
+            Sign In to Workspace
+          </button>
+        </form>
+
         <p class="auth-foot">
-          By signing in, you agree to our
+          By continuing, you agree to our
           <a href="/terms">Terms of Service</a> and
           <a href="/privacy">Privacy Policy</a>.
         </p>
@@ -48,11 +92,60 @@ import Footer from '../components/Footer.astro';
 
   const setupWarning = document.getElementById('auth-setup-warning') as HTMLElement;
   const errorEl = document.getElementById('auth-error') as HTMLElement;
-  const btn = document.getElementById('google-signin-btn') as HTMLButtonElement;
+  const noticeEl = document.getElementById('auth-notice') as HTMLElement;
+  const googleBtn = document.getElementById('google-signin-btn') as HTMLButtonElement;
+  const emailForm = document.getElementById('email-auth-form') as HTMLFormElement;
+  const emailInput = document.getElementById('auth-email') as HTMLInputElement;
+  const passwordInput = document.getElementById('auth-password') as HTMLInputElement;
+  const confirmPasswordInput = document.getElementById('auth-confirm-password') as HTMLInputElement;
+  const confirmGroup = document.getElementById('confirm-password-group') as HTMLElement;
+  const submitBtn = document.getElementById('auth-submit-btn') as HTMLButtonElement;
+  const titleEl = document.getElementById('auth-title') as HTMLElement;
+  const subtitleEl = document.getElementById('auth-subtitle') as HTMLElement;
+  const tabLogin = document.getElementById('tab-login') as HTMLButtonElement;
+  const tabSignup = document.getElementById('tab-signup') as HTMLButtonElement;
 
   const params = new URLSearchParams(window.location.search);
   const nextPath = params.get('next') || '/app/dashboard';
   const errParam = params.get('error');
+  const initialMode = params.get('mode') === 'signup' ? 'signup' : 'login';
+
+  let currentMode: 'login' | 'signup' = initialMode;
+
+  function setMode(mode: 'login' | 'signup') {
+    currentMode = mode;
+    errorEl.hidden = true;
+    noticeEl.hidden = true;
+
+    if (mode === 'signup') {
+      tabSignup.classList.add('active');
+      tabSignup.setAttribute('aria-selected', 'true');
+      tabLogin.classList.remove('active');
+      tabLogin.setAttribute('aria-selected', 'false');
+      titleEl.textContent = 'Create Account';
+      subtitleEl.textContent = 'Join AmerisPro and manage site safety';
+      confirmGroup.hidden = false;
+      confirmPasswordInput.required = true;
+      passwordInput.autocomplete = 'new-password';
+      submitBtn.textContent = 'Create Account';
+    } else {
+      tabLogin.classList.add('active');
+      tabLogin.setAttribute('aria-selected', 'true');
+      tabSignup.classList.remove('active');
+      tabSignup.setAttribute('aria-selected', 'false');
+      titleEl.textContent = 'Welcome Back';
+      subtitleEl.textContent = 'Access your safety compliance workspace';
+      confirmGroup.hidden = true;
+      confirmPasswordInput.required = false;
+      passwordInput.autocomplete = 'current-password';
+      submitBtn.textContent = 'Sign In to Workspace';
+    }
+  }
+
+  tabLogin.addEventListener('click', () => setMode('login'));
+  tabSignup.addEventListener('click', () => setMode('signup'));
+
+  setMode(initialMode);
 
   if (errParam) {
     errorEl.hidden = false;
@@ -61,8 +154,8 @@ import Footer from '../components/Footer.astro';
 
   if (!isSupabaseConfigured()) {
     setupWarning.hidden = false;
-    btn.disabled = true;
-    btn.textContent = 'Sign in unavailable — setup required';
+    googleBtn.disabled = true;
+    submitBtn.disabled = true;
   } else {
     const supabase = getSupabase();
 
@@ -72,9 +165,10 @@ import Footer from '../components/Footer.astro';
       }
     });
 
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      btn.textContent = 'Redirecting to Google…';
+    // Google Sign-in Handler
+    googleBtn.addEventListener('click', async () => {
+      googleBtn.disabled = true;
+      googleBtn.textContent = 'Redirecting to Google…';
       try {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -87,91 +181,262 @@ import Footer from '../components/Footer.astro';
         const message = e instanceof Error ? e.message : 'Unknown sign-in error';
         errorEl.hidden = false;
         errorEl.textContent = message;
-        btn.disabled = false;
-        btn.innerHTML = '<span class="google-btn-icon" aria-hidden="true">G</span><span>Sign in with Google</span>';
+        googleBtn.disabled = false;
+        googleBtn.innerHTML = '<span class="google-btn-icon" aria-hidden="true">G</span><span>Sign in with Google</span>';
+      }
+    });
+
+    // Email Form Handler (Sign In / Sign Up)
+    emailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.hidden = true;
+      noticeEl.hidden = true;
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (currentMode === 'signup') {
+        const confirmPassword = confirmPasswordInput.value;
+        if (password !== confirmPassword) {
+          errorEl.hidden = false;
+          errorEl.textContent = 'Passwords do not match. Please check and try again.';
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Account…';
+
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+
+          if (error) throw error;
+
+          if (data.user) {
+            if (data.session) {
+              window.location.replace(nextPath);
+            } else {
+              noticeEl.hidden = false;
+              noticeEl.textContent = '🚀 Account created! Check your email for a confirmation link, or sign in.';
+              setMode('login');
+            }
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Registration failed';
+          errorEl.hidden = false;
+          errorEl.textContent = message;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Account';
+        }
+      } else {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Signing In…';
+
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (error) throw error;
+
+          if (data.session) {
+            window.location.replace(nextPath);
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Sign in failed';
+          errorEl.hidden = false;
+          errorEl.textContent = message;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign In to Workspace';
+        }
       }
     });
   }
 </script>
 
 <style>
+  /* Minimal Brand Header for Auth Pages */
+  .auth-header {
+    background: #FFFFFF;
+    border-bottom: 2.5px solid #2B2D42;
+    height: 60px;
+    display: flex;
+    align-items: center;
+  }
+
+  .auth-nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .auth-brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: #2B2D42;
+    text-decoration: none;
+  }
+
+  .auth-brand-logo img {
+    height: 30px;
+  }
+
+  .auth-back-link {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #2B2D42;
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 2px solid #2B2D42;
+    border-radius: 16px;
+    background: #FFF9EC;
+    box-shadow: 2px 2px 0px #2B2D42;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .auth-back-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 3px 3px 0px #2B2D42;
+  }
+
   .auth-page {
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - 120px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 120px 32px 64px;
-    background: var(--color-bg-grey, #F4F4F4);
+    padding: 40px 16px 64px;
+    background: #FDFBF7;
   }
+
+  .auth-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Neo-Brutalist Auth Card */
   .auth-card {
-    background: var(--color-bg, #FFFFFF);
-    border: 1px solid var(--color-border, #E0E0E0);
-    padding: 48px 40px;
+    background: #FFFFFF;
+    border: 3px solid #2B2D42 !important;
+    border-radius: 16px !important;
+    box-shadow: 4px 4px 0px #2B2D42 !important;
+    padding: 36px 32px;
     max-width: 440px;
     width: 100%;
     text-align: center;
   }
-  .auth-card h1 {
-    font-size: 1.6rem;
+
+  /* Segmented Auth Tabs */
+  .auth-tabs {
+    display: flex;
+    background: #F4F4F4;
+    border: 2px solid #2B2D42;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .auth-tab-btn {
+    flex: 1;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-right: 2px solid #2B2D42;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #2B2D42;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .auth-tab-btn:last-child {
+    border-right: none;
+  }
+
+  .auth-tab-btn.active {
+    background: #FFD166;
     font-weight: 900;
-    margin-bottom: 8px;
   }
+
+  .auth-card h1 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #2B2D42;
+    margin-bottom: 6px;
+  }
+
   .auth-subtitle {
-    color: var(--color-text-muted, #6A6A69);
-    margin-bottom: 32px;
-    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
   }
+
   .auth-warning,
-  .auth-error {
+  .auth-error,
+  .auth-notice {
     text-align: left;
     padding: 12px 14px;
+    border-radius: 8px;
     margin-bottom: 20px;
     font-size: 0.85rem;
+    font-weight: 600;
     line-height: 1.5;
+    border: 2px solid #2B2D42;
+    box-shadow: 2px 2px 0px #2B2D42;
   }
+
   .auth-warning {
     background: #FFF7E6;
-    border: 1px solid #E58E1A;
     color: #6A4A0F;
   }
-  .auth-warning code {
-    background: rgba(0,0,0,0.06);
-    padding: 1px 4px;
-    font-size: 0.8rem;
-  }
+
   .auth-error {
-    background: #FDECEC;
-    border: 1px solid #C0392B;
-    color: #8B1A1A;
+    background: #FFEBEB;
+    color: #9B1C1C;
   }
+
+  .auth-notice {
+    background: #E8F5E9;
+    color: #1B5E20;
+  }
+
   .google-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
-    padding: 14px 24px;
-    background: var(--color-bg, #FFFFFF);
-    color: var(--color-text, #1E1E1D);
-    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 12px 20px;
+    background: #FFFFFF;
+    color: #2B2D42;
+    border: 2.5px solid #2B2D42 !important;
+    border-radius: 10px !important;
+    box-shadow: 3px 3px 0px #2B2D42 !important;
     font-family: inherit;
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 800;
     cursor: pointer;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s !important;
   }
+
   .google-btn:hover:not(:disabled) {
-    border-color: var(--color-primary, #E58E1A);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+    box-shadow: 4px 4px 0px #2B2D42 !important;
+    background: #FFF9EC;
   }
-  .google-btn:focus-visible {
-    outline: 2px solid var(--color-primary, #E58E1A);
-    outline-offset: 2px;
-  }
-  .google-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+
   .google-btn-icon {
     display: inline-flex;
     align-items: center;
@@ -179,18 +444,113 @@ import Footer from '../components/Footer.astro';
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--color-primary, #E58E1A);
-    color: #fff;
+    background: #FF6B6B;
+    color: #FFFFFF;
     font-weight: 900;
     font-size: 0.85rem;
   }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: #94A3B8;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1.5px solid #CBD5E1;
+  }
+
+  .auth-divider span {
+    padding: 0 10px;
+  }
+
+  .email-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #2B2D42;
+    letter-spacing: 0.4px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2.5px solid #2B2D42 !important;
+    border-radius: 8px !important;
+    background: #FFFFFF;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2B2D42;
+    box-shadow: 2px 2px 0px #2B2D42 !important;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus {
+    border-color: #FF6B6B !important;
+    background: #FFF9EC;
+  }
+
+  .auth-submit-btn {
+    width: 100%;
+    padding: 12px 20px;
+    margin-top: 6px;
+    background: #FFD166;
+    color: #2B2D42;
+    border: 2.5px solid #2B2D42 !important;
+    border-radius: 10px !important;
+    box-shadow: 3px 3px 0px #2B2D42 !important;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s !important;
+  }
+
+  .auth-submit-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 4px 4px 0px #2B2D42 !important;
+    background: #FFC038;
+  }
+
   .auth-foot {
     margin-top: 24px;
     font-size: 0.78rem;
-    color: var(--color-text-muted, #6A6A69);
+    color: #64748b;
   }
+
   .auth-foot a {
-    color: var(--color-primary, #E58E1A);
+    color: #2B2D42;
+    font-weight: 800;
     text-decoration: underline;
+  }
+
+  @media (max-width: 600px) {
+    .auth-card {
+      padding: 28px 20px;
+    }
   }
 </style>

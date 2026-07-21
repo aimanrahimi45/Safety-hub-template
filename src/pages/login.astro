@@ -212,6 +212,14 @@ import Layout from '../layouts/Layout.astro';
           if (error) throw error;
 
           if (data.user) {
+            // Supabase returns user with identities: [] when user already exists
+            if (data.user.identities && data.user.identities.length === 0) {
+              errorEl.hidden = false;
+              errorEl.textContent = 'An account with this email address already exists. Please sign in with your password or use Google Sign-In.';
+              setMode('login');
+              return;
+            }
+
             if (data.session) {
               window.location.replace(nextPath);
             } else {

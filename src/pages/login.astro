@@ -16,20 +16,9 @@ import Layout from '../layouts/Layout.astro';
   <main class="auth-page">
     <div class="container auth-container">
       <div class="auth-card">
-        
-        <!-- Auth Mode Tabs -->
-        <div class="auth-tabs" role="tablist">
-          <button type="button" class="auth-tab-btn active" id="tab-login" data-mode="login" role="tab" aria-selected="true">
-            🔑 Sign In
-          </button>
-          <button type="button" class="auth-tab-btn" id="tab-signup" data-mode="signup" role="tab" aria-selected="false">
-            📝 Create Account
-          </button>
-        </div>
-
-        <h1 id="auth-title">Welcome Back</h1>
-        <p id="auth-subtitle" class="auth-subtitle">
-          Access your safety compliance workspace
+        <h1>Sign in to AmerisPro</h1>
+        <p class="auth-subtitle">
+          Access your site safety workspace with your account
         </p>
 
         <div id="auth-setup-warning" class="auth-warning" hidden>
@@ -40,39 +29,19 @@ import Layout from '../layouts/Layout.astro';
         </div>
 
         <div id="auth-error" class="auth-error" hidden></div>
-        <div id="auth-notice" class="auth-notice" hidden></div>
 
-        <!-- Google OAuth Button -->
-        <button type="button" id="google-signin-btn" class="google-btn">
-          <span class="google-btn-icon" aria-hidden="true">G</span>
-          <span>Sign in with Google</span>
-        </button>
-
-        <div class="auth-divider">
-          <span>OR WITH EMAIL</span>
-        </div>
-
-        <!-- Email / Password Form -->
-        <form id="email-auth-form" class="email-form">
-          <div class="form-group">
-            <label for="auth-email">EMAIL ADDRESS</label>
-            <input type="email" id="auth-email" required placeholder="name@company.com" autocomplete="email" />
-          </div>
-
-          <div class="form-group">
-            <label for="auth-password">PASSWORD</label>
-            <input type="password" id="auth-password" required placeholder="Min. 6 characters" minlength="6" autocomplete="current-password" />
-          </div>
-
-          <div class="form-group" id="confirm-password-group" hidden>
-            <label for="auth-confirm-password">CONFIRM PASSWORD</label>
-            <input type="password" id="auth-confirm-password" placeholder="Re-enter password" minlength="6" autocomplete="new-password" />
-          </div>
-
-          <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
-            Sign In to Workspace
+        <!-- OAuth Sign-In Buttons -->
+        <div class="oauth-stack">
+          <button type="button" id="google-signin-btn" class="oauth-btn google-btn">
+            <span class="oauth-btn-icon google-btn-icon" aria-hidden="true">G</span>
+            <span>Sign in with Google</span>
           </button>
-        </form>
+
+          <button type="button" id="linkedin-signin-btn" class="oauth-btn linkedin-btn">
+            <span class="oauth-btn-icon linkedin-btn-icon" aria-hidden="true">in</span>
+            <span>Sign in with LinkedIn</span>
+          </button>
+        </div>
 
         <p class="auth-foot">
           By continuing, you agree to our
@@ -89,62 +58,12 @@ import Layout from '../layouts/Layout.astro';
 
   const setupWarning = document.getElementById('auth-setup-warning') as HTMLElement;
   const errorEl = document.getElementById('auth-error') as HTMLElement;
-  const noticeEl = document.getElementById('auth-notice') as HTMLElement;
   const googleBtn = document.getElementById('google-signin-btn') as HTMLButtonElement;
-  const emailForm = document.getElementById('email-auth-form') as HTMLFormElement;
-  const emailInput = document.getElementById('auth-email') as HTMLInputElement;
-  const passwordInput = document.getElementById('auth-password') as HTMLInputElement;
-  const confirmPasswordInput = document.getElementById('auth-confirm-password') as HTMLInputElement;
-  const confirmGroup = document.getElementById('confirm-password-group') as HTMLElement;
-  const submitBtn = document.getElementById('auth-submit-btn') as HTMLButtonElement;
-  const titleEl = document.getElementById('auth-title') as HTMLElement;
-  const subtitleEl = document.getElementById('auth-subtitle') as HTMLElement;
-  const tabLogin = document.getElementById('tab-login') as HTMLButtonElement;
-  const tabSignup = document.getElementById('tab-signup') as HTMLButtonElement;
+  const linkedinBtn = document.getElementById('linkedin-signin-btn') as HTMLButtonElement;
 
   const params = new URLSearchParams(window.location.search);
   const nextPath = params.get('next') || '/app/dashboard';
   const errParam = params.get('error');
-  const initialMode = params.get('mode') === 'signup' ? 'signup' : 'login';
-
-  let currentMode: 'login' | 'signup' = initialMode;
-
-  function setMode(mode: 'login' | 'signup', clearMessages = true) {
-    currentMode = mode;
-    if (clearMessages) {
-      errorEl.hidden = true;
-      noticeEl.hidden = true;
-    }
-
-    if (mode === 'signup') {
-      tabSignup.classList.add('active');
-      tabSignup.setAttribute('aria-selected', 'true');
-      tabLogin.classList.remove('active');
-      tabLogin.setAttribute('aria-selected', 'false');
-      titleEl.textContent = 'Create Account';
-      subtitleEl.textContent = 'Join AmerisPro and manage site safety';
-      confirmGroup.hidden = false;
-      confirmPasswordInput.required = true;
-      passwordInput.autocomplete = 'new-password';
-      submitBtn.textContent = 'Create Account';
-    } else {
-      tabLogin.classList.add('active');
-      tabLogin.setAttribute('aria-selected', 'true');
-      tabSignup.classList.remove('active');
-      tabSignup.setAttribute('aria-selected', 'false');
-      titleEl.textContent = 'Welcome Back';
-      subtitleEl.textContent = 'Access your safety compliance workspace';
-      confirmGroup.hidden = true;
-      confirmPasswordInput.required = false;
-      passwordInput.autocomplete = 'current-password';
-      submitBtn.textContent = 'Sign In to Workspace';
-    }
-  }
-
-  tabLogin.addEventListener('click', () => setMode('login'));
-  tabSignup.addEventListener('click', () => setMode('signup'));
-
-  setMode(initialMode);
 
   if (errParam) {
     errorEl.hidden = false;
@@ -154,7 +73,7 @@ import Layout from '../layouts/Layout.astro';
   if (!isSupabaseConfigured()) {
     setupWarning.hidden = false;
     googleBtn.disabled = true;
-    submitBtn.disabled = true;
+    linkedinBtn.disabled = true;
   } else {
     const supabase = getSupabase();
 
@@ -177,90 +96,32 @@ import Layout from '../layouts/Layout.astro';
         });
         if (error) throw error;
       } catch (e) {
-        const message = e instanceof Error ? e.message : 'Unknown sign-in error';
+        const message = e instanceof Error ? e.message : 'Google sign-in failed';
         errorEl.hidden = false;
         errorEl.textContent = message;
         googleBtn.disabled = false;
-        googleBtn.innerHTML = '<span class="google-btn-icon" aria-hidden="true">G</span><span>Sign in with Google</span>';
+        googleBtn.innerHTML = '<span class="oauth-btn-icon google-btn-icon" aria-hidden="true">G</span><span>Sign in with Google</span>';
       }
     });
 
-    // Email Form Handler (Sign In / Sign Up)
-    emailForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorEl.hidden = true;
-      noticeEl.hidden = true;
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      if (currentMode === 'signup') {
-        const confirmPassword = confirmPasswordInput.value;
-        if (password !== confirmPassword) {
-          errorEl.hidden = false;
-          errorEl.textContent = 'Passwords do not match. Please check and try again.';
-          return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Creating Account…';
-
-        try {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-          });
-
-          if (error) throw error;
-
-          if (data.user) {
-            // Supabase returns user with identities: [] when email is already registered
-            if (data.user.identities && data.user.identities.length === 0) {
-              setMode('login', false);
-              errorEl.hidden = false;
-              errorEl.innerHTML = `⚠️ <strong>Account Already Exists:</strong> An account with <strong>${email}</strong> is already registered. Please sign in below or click <strong>Sign in with Google</strong>.`;
-              return;
-            }
-
-            if (data.session) {
-              window.location.replace(nextPath);
-            } else {
-              setMode('login', false);
-              noticeEl.hidden = false;
-              noticeEl.innerHTML = `📩 <strong>Account Created!</strong> A confirmation link has been sent to <strong>${email}</strong>. Please check your inbox and verify your email to sign in.`;
-            }
-          }
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Registration failed';
-          errorEl.hidden = false;
-          errorEl.textContent = message;
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Create Account';
-        }
-      } else {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Signing In…';
-
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (error) throw error;
-
-          if (data.session) {
-            window.location.replace(nextPath);
-          }
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Sign in failed';
-          errorEl.hidden = false;
-          errorEl.textContent = message;
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Sign In to Workspace';
-        }
+    // LinkedIn Sign-in Handler
+    linkedinBtn.addEventListener('click', async () => {
+      linkedinBtn.disabled = true;
+      linkedinBtn.textContent = 'Redirecting to LinkedIn…';
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'linkedin_oidc',
+          options: {
+            redirectTo: window.location.origin + '/auth/callback',
+          },
+        });
+        if (error) throw error;
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'LinkedIn sign-in failed';
+        errorEl.hidden = false;
+        errorEl.textContent = message;
+        linkedinBtn.disabled = false;
+        linkedinBtn.innerHTML = '<span class="oauth-btn-icon linkedin-btn-icon" aria-hidden="true">in</span><span>Sign in with LinkedIn</span>';
       }
     });
   }
@@ -344,64 +205,29 @@ import Layout from '../layouts/Layout.astro';
     border: 3px solid #2B2D42 !important;
     border-radius: 16px !important;
     box-shadow: 4px 4px 0px #2B2D42 !important;
-    padding: 36px 32px;
-    max-width: 440px;
+    padding: 40px 32px;
+    max-width: 420px;
     width: 100%;
     text-align: center;
   }
 
-  /* Segmented Auth Tabs */
-  .auth-tabs {
-    display: flex;
-    background: #F4F4F4;
-    border: 2px solid #2B2D42;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-
-  .auth-tab-btn {
-    flex: 1;
-    padding: 10px 12px;
-    background: transparent;
-    border: none;
-    border-right: 2px solid #2B2D42;
-    font-family: inherit;
-    font-size: 0.82rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #2B2D42;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-
-  .auth-tab-btn:last-child {
-    border-right: none;
-  }
-
-  .auth-tab-btn.active {
-    background: #FFD166;
-    font-weight: 900;
-  }
-
   .auth-card h1 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 900;
     color: #2B2D42;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   .auth-subtitle {
     color: #64748b;
-    margin-bottom: 24px;
-    font-size: 0.9rem;
+    margin-bottom: 32px;
+    font-size: 0.92rem;
     font-weight: 500;
+    line-height: 1.4;
   }
 
   .auth-warning,
-  .auth-error,
-  .auth-notice {
+  .auth-error {
     text-align: left;
     padding: 12px 14px;
     border-radius: 8px;
@@ -423,137 +249,70 @@ import Layout from '../layouts/Layout.astro';
     color: #9B1C1C;
   }
 
-  .auth-notice {
-    background: #E8F5E9;
-    color: #1B5E20;
+  .oauth-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 24px;
   }
 
-  .google-btn {
+  .oauth-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
-    padding: 12px 20px;
+    padding: 14px 20px;
     background: #FFFFFF;
     color: #2B2D42;
     border: 2.5px solid #2B2D42 !important;
-    border-radius: 10px !important;
-    box-shadow: 3px 3px 0px #2B2D42 !important;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s !important;
-  }
-
-  .google-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 4px 4px 0px #2B2D42 !important;
-    background: #FFF9EC;
-  }
-
-  .google-btn-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #FF6B6B;
-    color: #FFFFFF;
-    font-weight: 900;
-    font-size: 0.85rem;
-  }
-
-  .auth-divider {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    margin: 20px 0;
-    color: #94A3B8;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-  }
-
-  .auth-divider::before,
-  .auth-divider::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1.5px solid #CBD5E1;
-  }
-
-  .auth-divider span {
-    padding: 0 10px;
-  }
-
-  .email-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    text-align: left;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .form-group label {
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: #2B2D42;
-    letter-spacing: 0.4px;
-  }
-
-  .form-group input {
-    width: 100%;
-    padding: 10px 14px;
-    border: 2.5px solid #2B2D42 !important;
-    border-radius: 8px !important;
-    background: #FFFFFF;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #2B2D42;
-    box-shadow: 2px 2px 0px #2B2D42 !important;
-    outline: none;
-    box-sizing: border-box;
-  }
-
-  .form-group input:focus {
-    border-color: #FF6B6B !important;
-    background: #FFF9EC;
-  }
-
-  .auth-submit-btn {
-    width: 100%;
-    padding: 12px 20px;
-    margin-top: 6px;
-    background: #FFD166;
-    color: #2B2D42;
-    border: 2.5px solid #2B2D42 !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     box-shadow: 3px 3px 0px #2B2D42 !important;
     font-family: inherit;
     font-size: 0.92rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    font-weight: 800;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s, background 0.15s !important;
   }
 
-  .auth-submit-btn:hover:not(:disabled) {
+  .oauth-btn:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 4px 4px 0px #2B2D42 !important;
-    background: #FFC038;
+  }
+
+  .google-btn:hover:not(:disabled) {
+    background: #FFF9EC;
+  }
+
+  .linkedin-btn:hover:not(:disabled) {
+    background: #EBF3FF;
+  }
+
+  .oauth-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-weight: 900;
+    font-size: 0.85rem;
+  }
+
+  .google-btn-icon {
+    background: #FF6B6B;
+    color: #FFFFFF;
+  }
+
+  .linkedin-btn-icon {
+    background: #0A66C2;
+    color: #FFFFFF;
+    font-family: sans-serif;
+    font-style: italic;
+    font-weight: 900;
   }
 
   .auth-foot {
-    margin-top: 24px;
     font-size: 0.78rem;
     color: #64748b;
   }
@@ -566,7 +325,7 @@ import Layout from '../layouts/Layout.astro';
 
   @media (max-width: 600px) {
     .auth-card {
-      padding: 28px 20px;
+      padding: 32px 20px;
     }
   }
 </style>

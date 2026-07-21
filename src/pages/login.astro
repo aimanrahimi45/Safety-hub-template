@@ -146,9 +146,16 @@ import Layout from '../layouts/Layout.astro';
 
   setMode(initialMode);
 
+  const confirmedParam = params.get('confirmed');
+
   if (errParam) {
     errorEl.hidden = false;
     errorEl.textContent = decodeURIComponent(errParam);
+  }
+
+  if (confirmedParam) {
+    noticeEl.hidden = false;
+    noticeEl.innerHTML = '🎉 <strong>Email Confirmed!</strong> Your AmerisPro account is active. Please sign in below to launch your workspace.';
   }
 
   if (!isSupabaseConfigured()) {

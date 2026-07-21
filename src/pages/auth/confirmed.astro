@@ -1,0 +1,233 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+<Layout title="Account Confirmed - AmerisPro">
+  <!-- Minimal Brand Header -->
+  <header class="auth-header">
+    <div class="container auth-nav-container">
+      <a href="/" class="auth-brand-logo">
+        <img src="/amerispro.png" alt="AmerisPro">
+        <span>AMERISPRO</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="confirmed-page">
+    <div class="container confirmed-container">
+      <div class="confirmed-card">
+        <div class="confirmed-badge">🎉</div>
+        <h1>Account Confirmed!</h1>
+        <p class="confirmed-subtitle">
+          Welcome to AmerisPro Safety! Your workspace is activated and ready.
+        </p>
+
+        <div class="timer-box">
+          <p id="timer-text">Launching workspace in <strong id="countdown">3</strong> seconds…</p>
+          <div class="progress-bar-track">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+        </div>
+
+        <a href="/app/onboarding" id="launch-now-btn" class="launch-btn">
+          🚀 Launch Workspace Now
+        </a>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+
+  const countdownEl = document.getElementById('countdown') as HTMLElement;
+  const timerTextEl = document.getElementById('timer-text') as HTMLElement;
+  const launchBtn = document.getElementById('launch-now-btn') as HTMLAnchorElement;
+  const fillEl = document.getElementById('progress-bar-fill') as HTMLElement;
+
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+
+  let secondsLeft = 3;
+  let targetRedirect = '/app/onboarding';
+
+  // Animate progress bar fill over 3 seconds
+  requestAnimationFrame(() => {
+    fillEl.style.width = '100%';
+  });
+
+  if (code && isSupabaseConfigured()) {
+    const supabase = getSupabase();
+    supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+      if (error) {
+        console.warn('Session code exchange notice:', error.message);
+      }
+    });
+  }
+
+  const interval = setInterval(() => {
+    secondsLeft--;
+    if (countdownEl) countdownEl.textContent = String(secondsLeft);
+
+    if (secondsLeft <= 0) {
+      clearInterval(interval);
+      window.location.replace(targetRedirect);
+    }
+  }, 1000);
+</script>
+
+<style>
+  /* Minimal Brand Header */
+  .auth-header {
+    background: #FFFFFF;
+    border-bottom: 2.5px solid #2B2D42;
+    height: 60px;
+    display: flex;
+    align-items: center;
+  }
+
+  .auth-nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .auth-brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: #2B2D42;
+    text-decoration: none;
+  }
+
+  .auth-brand-logo img {
+    height: 30px;
+  }
+
+  /* Hide mobile quick dock */
+  :global(.quick-links) {
+    display: none !important;
+  }
+  :global(body) {
+    padding-bottom: 0 !important;
+  }
+
+  .confirmed-page {
+    min-height: calc(100vh - 60px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    background: #FDFBF7;
+    box-sizing: border-box;
+  }
+
+  .confirmed-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .confirmed-card {
+    background: #FFFFFF;
+    border: 3px solid #2B2D42 !important;
+    border-radius: 16px !important;
+    box-shadow: 4px 4px 0px #2B2D42 !important;
+    padding: 44px 36px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .confirmed-badge {
+    font-size: 3.5rem;
+    margin-bottom: 12px;
+    line-height: 1;
+    animation: bounce 0.6s ease;
+  }
+
+  @keyframes bounce {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .confirmed-card h1 {
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: #2B2D42;
+    margin-bottom: 8px;
+  }
+
+  .confirmed-subtitle {
+    color: #64748b;
+    margin-bottom: 28px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  .timer-box {
+    background: #FFF9EC;
+    border: 2px solid #2B2D42;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    box-shadow: 2px 2px 0px #2B2D42;
+  }
+
+  .timer-box p {
+    margin: 0 0 10px 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #2B2D42;
+  }
+
+  .progress-bar-track {
+    width: 100%;
+    height: 10px;
+    background: #E2E8F0;
+    border: 1.5px solid #2B2D42;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: #FFD166;
+    transition: width 3s linear;
+  }
+
+  .launch-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #FFD166;
+    color: #2B2D42;
+    border: 2.5px solid #2B2D42 !important;
+    border-radius: 10px !important;
+    box-shadow: 3px 3px 0px #2B2D42 !important;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s !important;
+  }
+
+  .launch-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 4px 4px 0px #2B2D42 !important;
+    background: #FFC038;
+  }
+
+  @media (max-width: 600px) {
+    .confirmed-card {
+      padding: 32px 20px;
+    }
+  }
+</style>

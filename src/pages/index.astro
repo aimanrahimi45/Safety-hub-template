@@ -452,4 +452,22 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
     };
   </script>
 
+  <script>
+    import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+
+    if (code && isSupabaseConfigured()) {
+      const supabase = getSupabase();
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (!error) {
+          window.location.replace('/app/dashboard');
+        } else {
+          window.location.replace('/login?confirmed=true');
+        }
+      });
+    }
+  </script>
+
 </Layout>

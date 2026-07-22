@@ -11,7 +11,12 @@ export const prerender = false;
 // Server-only. The browser never talks to OpenRouter directly.
 // =====================================================================
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  // Auth gate — prevent unauthenticated credit burn.
+  if (!locals.user) {
+    return jsonError(401, 'You must be signed in.');
+  }
+
   let body: { query?: unknown };
   try {
     body = (await request.json()) as { query?: unknown };

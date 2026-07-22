@@ -55,13 +55,32 @@ import Layout from '../../layouts/Layout.astro';
     fillEl.style.width = '100%';
   });
 
-  if (code && isSupabaseConfigured()) {
+  if (isSupabaseConfigured()) {
     const supabase = getSupabase();
-    supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
-      if (error) {
-        console.warn('Session code exchange notice:', error.message);
-      }
-    });
+    
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+        if (error) {
+          console.warn('Session code exchange notice:', error.message);
+          // If code exchange failed (e.g. opened on different browser/device), check if session exists
+          supabase.auth.getSession().then(({ data: sessionData }) => {
+            if (!sessionData.session) {
+              targetRedirect = '/login?confirmed=true';
+              if (launchBtn) launchBtn.href = targetRedirect;
+            }
+          });
+        } else if (data?.session) {
+          targetRedirect = '/app/onboarding';
+        }
+      });
+    } else {
+      supabase.auth.getSession().then(({ data }) => {
+        if (!data.session) {
+          targetRedirect = '/login?confirmed=true';
+          if (launchBtn) launchBtn.href = targetRedirect;
+        }
+      });
+    }
   }
 
   const interval = setInterval(() => {

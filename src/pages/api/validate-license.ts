@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { createSupabaseServerClient } from '../../lib/supabaseServer';
 import type { LicensePlanType, LicenseValidationResult } from '../../lib/types';
 
 export const prerender = false;
@@ -23,12 +24,22 @@ interface GasSuccess {
   message?: string;
 }
 
-export const POST: APIRoute = async ({ request }) => {
-  // Require an authenticated session. The onboarding form should only
-  // call this after sign-in.
-  const user = (globalThis as { Astro?: { locals?: { user?: { id: string } | null } } })
-    .Astro?.locals?.user;
-  void user;
+export const POST: APIRoute = async ({ request, cookies }) => {
+  // Auth gate — verify user session before reading licenses table.
+  const supabaseClient = createSupabaseServerClient({ cookies } as Parameters<typeof createSupabaseServerClient>[0]);
+  if (!supabaseClient) {
+    return new Response(
+      JSON.stringify({ valid: false, reason: 'Supabase is not configured.' } satisfies LicenseValidationResult),
+      { status: 500, headers: { 'content-type': 'application/json' } },
+    );
+  }
+  const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+  if (userError || !userData.user) {
+    return new Response(
+      JSON.stringify({ valid: false, reason: 'Unauthorized.' } satisfies LicenseValidationResult),
+      { status: 401, headers: { 'content-type': 'application/json' } },
+    );
+  }
 
   let body: { licenseKey?: unknown };
   try {

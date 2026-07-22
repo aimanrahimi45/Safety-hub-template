@@ -72,6 +72,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } satisfies AiSummaryResponse);
   }
 
+  // 1b. Credit check — 500 summaries/month per tenant-user.
+  const { data: creditOk, error: creditErr } = await serverClient.rpc('consume_ai_credit', { p_endpoint: 'summary', p_max: 500 });
+  if (creditErr || !creditOk) {
+    return json(429, {
+      status: 'ERROR',
+      message: 'Monthly AI summary credit limit reached (500/month). Your credits reset on the 1st.',
+    } satisfies AiSummaryResponse);
+  }
+
   // 2. Parse body.
   let body: { query?: unknown; clause_ids?: unknown };
   try {

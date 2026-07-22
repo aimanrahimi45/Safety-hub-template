@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { createSupabaseServerClient } from '../../lib/supabaseServer';
 import { getEmbedding } from '../../lib/embeddings';
 
 export const prerender = false;
@@ -11,10 +12,19 @@ export const prerender = false;
 // Server-only. The browser never talks to OpenRouter directly.
 // =====================================================================
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   // Auth gate — prevent unauthenticated credit burn.
   if (!locals.user) {
     return jsonError(401, 'You must be signed in.');
+  }
+
+  // Credit check — 5,000 embeddings/month per tenant-user.
+  const supabaseClient = createSupabaseServerClient({ cookies } as Parameters<typeof createSupabaseServerClient>[0]);
+  if (supabaseClient) {
+    const { data: creditOk, error: creditErr } = await supabaseClient.rpc('consume_ai_credit', { p_endpoint: 'embed', p_max: 5000 });
+    if (creditErr || !creditOk) {
+      return jsonError(429, 'Monthly embedding credit limit reached (5,000/month). Your credits reset on the 1st.');
+    }
   }
 
   let body: { query?: unknown };

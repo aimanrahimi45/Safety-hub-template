@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { createSupabaseServerClient } from '../../lib/supabaseServer';
 import { getEmbedding } from '../../lib/embeddings';
 import { getSupabasePublic } from '../../lib/supabasePublic';
 import type {
@@ -67,10 +68,19 @@ const FREQUENCY_ORDER: Record<string, number> = {
   other: 7,
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   // Auth gate — prevent unauthenticated credit burn.
   if (!locals.user) {
     return jsonError(401, 'You must be signed in.');
+  }
+
+  // Credit check — 50 register generations/month per tenant-user.
+  const supabaseClient = createSupabaseServerClient({ cookies } as Parameters<typeof createSupabaseServerClient>[0]);
+  if (supabaseClient) {
+    const { data: creditOk, error: creditErr } = await supabaseClient.rpc('consume_ai_credit', { p_endpoint: 'register', p_max: 50 });
+    if (creditErr || !creditOk) {
+      return jsonError(429, 'Monthly register generation credit limit reached (50/month). Your credits reset on the 1st.');
+    }
   }
 
   let body: { profile?: unknown };

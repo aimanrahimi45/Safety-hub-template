@@ -1312,21 +1312,48 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 
   @media (max-width: 600px) {
     .inv-modal {
-      padding: 12px;
-      align-items: flex-end;
+      padding: 0 !important;
+      align-items: stretch !important;
+      justify-content: stretch !important;
+      background: #FFFDF9 !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
     .inv-modal-card {
-      max-height: 90vh;
-      max-height: 90dvh;
-      border-radius: 16px 16px 16px 16px !important;
+      max-width: 100% !important;
+      max-height: 100vh !important;
+      max-height: 100dvh !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    .inv-modal-head {
+      padding: 14px 16px;
+      border-bottom: 2.5px solid #2B2D42;
+      background: #FFFFFF;
+      position: sticky;
+      top: 0;
+      z-index: 20;
     }
     #inv-form, #inv-restock-form, #inv-adjust-form {
       padding: 16px;
-      gap: 12px;
+      gap: 14px;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .field-row {
       grid-template-columns: 1fr;
-      gap: 10px;
+      gap: 12px;
+    }
+    .inv-modal-actions {
+      padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      background: #FFFDF9;
+      border-top: 2.5px solid #2B2D42;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     }
   }
 </style>

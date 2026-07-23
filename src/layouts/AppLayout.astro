@@ -792,8 +792,13 @@ const isLinkActive = (path: string) => {
     }
   };
 
-  // Instant Sidebar Navigation Link Prefetching on Hover
+  // Auto-scroll active mobile navigation link into view on page load
   document.addEventListener('DOMContentLoaded', () => {
+    const activeLink = document.querySelector('.app-nav-link.active');
+    if (activeLink) {
+      activeLink.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' });
+    }
+
     document.querySelectorAll('.app-nav-link').forEach(link => {
       link.addEventListener('mouseenter', () => {
         const href = link.getAttribute('href');

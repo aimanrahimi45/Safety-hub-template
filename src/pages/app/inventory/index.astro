@@ -83,24 +83,26 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       <form id="inv-form" novalidate>
         <input type="hidden" name="id" id="inv-form-id" />
         <div id="inv-form-error" class="inv-error" hidden></div>
-        <label class="field">
-          <span class="field-label">Item code <em>*</em></span>
-          <input type="text" name="item_code" id="inv-form-code" required placeholder="e.g. FA-24" />
-        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Item code <em>*</em></span>
+            <input type="text" name="item_code" id="inv-form-code" required placeholder="e.g. FA-24" />
+          </label>
+          <label class="field">
+            <span class="field-label">Unit <em>*</em></span>
+            <select name="unit" id="inv-form-unit" required>
+              <option value="pcs">pcs</option>
+              <option value="pkt">pkt</option>
+              <option value="box">box</option>
+              <option value="set">set</option>
+              <option value="bottle">bottle</option>
+              <option value="other">other</option>
+            </select>
+          </label>
+        </div>
         <label class="field">
           <span class="field-label">Item name <em>*</em></span>
           <input type="text" name="item_name" id="inv-form-name" required placeholder="e.g. Antiseptic Wipes" />
-        </label>
-        <label class="field">
-          <span class="field-label">Unit <em>*</em></span>
-          <select name="unit" id="inv-form-unit" required>
-            <option value="pcs">pcs</option>
-            <option value="pkt">pkt</option>
-            <option value="box">box</option>
-            <option value="set">set</option>
-            <option value="bottle">bottle</option>
-            <option value="other">other</option>
-          </select>
         </label>
         <div class="field-row">
           <label class="field">
@@ -116,18 +118,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
           <span class="field-label">Required standard</span>
           <input type="text" name="required_std" id="inv-form-std" placeholder="e.g. 5pcs per 50 workers" />
         </label>
-        <label class="field">
-          <span class="field-label">Category group</span>
-          <input type="number" name="category_group" id="inv-form-cat" min="1" placeholder="e.g. 1" />
-          <span class="field-hint">Optional. Used to group items in UI.</span>
-        </label>
-        <label class="field">
-          <span class="field-label">Expired Date</span>
-          <input type="date" name="expiry_date" id="inv-form-expiry" />
-        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Category group</span>
+            <input type="number" name="category_group" id="inv-form-cat" min="1" placeholder="e.g. 1" />
+          </label>
+          <label class="field">
+            <span class="field-label">Expired Date</span>
+            <input type="date" name="expiry_date" id="inv-form-expiry" />
+          </label>
+        </div>
         <label class="field-check">
           <input type="checkbox" name="is_active" id="inv-form-active" checked />
-          <span>Active</span>
+          <span>Active Item</span>
         </label>
         <div class="inv-modal-actions">
           <button type="button" class="inv-secondary-btn" id="inv-form-cancel">Cancel</button>
@@ -1116,67 +1119,116 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   .inv-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(43, 45, 66, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    z-index: 50;
+    padding: 16px;
+    z-index: 1000;
   }
   .inv-modal-card {
-    background: var(--color-bg, #fff);
+    background: #FFFDF9;
     width: 100%;
     max-width: 520px;
-    max-height: 90vh;
-    overflow: auto;
-    border: 1px solid var(--color-border, #E0E0E0);
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    display: flex;
+    flex-direction: column;
+    border: 3px solid #2B2D42 !important;
+    border-radius: 16px !important;
+    box-shadow: 6px 6px 0px #2B2D42, 0 12px 30px rgba(0, 0, 0, 0.2) !important;
+    overflow: hidden;
   }
   .inv-modal-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--color-border-light, #F0F0F0);
+    background: #FFFFFF;
+    border-bottom: 2.5px solid #2B2D42;
+    flex-shrink: 0;
   }
-  .inv-modal-head h2 { font-size: 1.1rem; font-weight: 900; margin: 0; }
+  .inv-modal-head h2 {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #2B2D42;
+    margin: 0;
+  }
   .inv-modal-close {
-    background: transparent;
-    border: none;
-    font-size: 1.5rem;
-    line-height: 1;
+    background: #FFFFFF;
+    border: 2px solid #2B2D42;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #2B2D42;
     cursor: pointer;
-    color: var(--color-text-muted, #6A6A69);
-    padding: 4px 8px;
+    box-shadow: 2px 2px 0px #2B2D42;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+    line-height: 1;
+    padding: 0;
   }
-  #inv-form, #inv-restock-form, #inv-adjust-form { padding: 20px; }
-  .field { display: block; margin-bottom: 16px; }
+  .inv-modal-close:hover {
+    background: #FF6B6B;
+    color: #FFFFFF;
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #2B2D42;
+  }
+  #inv-form, #inv-restock-form, #inv-adjust-form {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .field {
+    display: block;
+    margin-bottom: 0;
+  }
   .field-label {
     display: block;
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    color: #2B2D42;
     margin-bottom: 6px;
   }
-  .field-label em { color: var(--color-primary, #E58E1A); font-style: normal; }
+  .field-label em {
+    color: #FF6B6B;
+    font-style: normal;
+    font-weight: 900;
+  }
   .field input, .field select, .field textarea {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border, #E0E0E0);
+    padding: 11px 14px;
+    border: 2.5px solid #2B2D42;
+    border-radius: 10px;
     font-family: inherit;
-    font-size: 0.9rem;
-    background: var(--color-bg, #fff);
+    font-size: 0.95rem;
+    background: #FFFFFF;
+    color: #2B2D42;
+    box-shadow: 2px 2px 0px #2B2D42;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
   .field input:focus, .field select:focus, .field textarea:focus {
-    outline: 2px solid var(--color-primary, #E58E1A);
-    outline-offset: 1px;
-    border-color: var(--color-primary, #E58E1A);
+    outline: none;
+    border-color: #E58E1A;
+    box-shadow: 3.5px 3.5px 0px #2B2D42;
   }
   .field-hint {
     display: block;
     font-size: 0.75rem;
-    color: var(--color-text-muted, #6A6A69);
+    color: #64748b;
     margin-top: 4px;
+    font-weight: 500;
   }
   .field-row {
     display: grid;
@@ -1186,19 +1238,95 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   .field-check {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-    font-size: 0.9rem;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #2B2D42;
+    cursor: pointer;
+    user-select: none;
+  }
+  .field-check input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #FFD166;
+    cursor: pointer;
+    border: 2px solid #2B2D42;
+    border-radius: 4px;
   }
   .inv-restock-name {
-    font-size: 0.88rem;
-    color: var(--color-text-muted, #6A6A69);
-    margin-bottom: 16px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #2B2D42;
+    background: #FFEED2;
+    border: 2px solid #2B2D42;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
   }
   .inv-modal-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 14px;
+    border-top: 2px solid #E2E8F0;
+    background: #FFFDF9;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+  .inv-secondary-btn, .inv-primary-btn {
+    flex: 1;
+    padding: 12px 16px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 900;
+    border-radius: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 3px 3px 0px #2B2D42;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    text-align: center;
+  }
+  .inv-secondary-btn {
+    background: #FFFFFF;
+    color: #2B2D42;
+    border: 2.5px solid #2B2D42;
+  }
+  .inv-secondary-btn:hover {
+    background: #F1F5F9;
+    transform: translateY(-1px);
+    box-shadow: 4px 4px 0px #2B2D42;
+  }
+  .inv-primary-btn {
+    background: #FFD166;
+    color: #2B2D42;
+    border: 2.5px solid #2B2D42;
+  }
+  .inv-primary-btn:hover {
+    background: #FFC038;
+    transform: translateY(-1px);
+    box-shadow: 4px 4px 0px #2B2D42;
+  }
+
+  @media (max-width: 600px) {
+    .inv-modal {
+      padding: 12px;
+      align-items: flex-end;
+    }
+    .inv-modal-card {
+      max-height: 90vh;
+      max-height: 90dvh;
+      border-radius: 16px 16px 16px 16px !important;
+    }
+    #inv-form, #inv-restock-form, #inv-adjust-form {
+      padding: 16px;
+      gap: 12px;
+    }
+    .field-row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
   }
 </style>

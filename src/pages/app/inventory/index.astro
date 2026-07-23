@@ -258,6 +258,17 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   const adjustCancel = document.getElementById('inv-adjust-cancel') as HTMLButtonElement;
   const adjustSave = document.getElementById('inv-adjust-save') as HTMLButtonElement;
 
+  // Teleport modal containers directly to document.body to break out of transformed parent layouts
+  if (formModal && formModal.parentElement !== document.body) {
+    document.body.appendChild(formModal);
+  }
+  if (restockModal && restockModal.parentElement !== document.body) {
+    document.body.appendChild(restockModal);
+  }
+  if (adjustModal && adjustModal.parentElement !== document.body) {
+    document.body.appendChild(adjustModal);
+  }
+
   let activeTenantId: string | null = null;
   let activeUserRole: string | null = null;
   let allRows: InventoryRow[] = [];

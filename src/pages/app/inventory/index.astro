@@ -74,6 +74,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   </main>
 
   <!-- Add/Edit modal -->
+  <!-- Add/Edit modal -->
   <div id="inv-modal" class="inv-modal" hidden role="dialog" aria-modal="true" aria-labelledby="inv-modal-title">
     <div class="inv-modal-card">
       <header class="inv-modal-head">
@@ -82,56 +83,58 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       </header>
       <form id="inv-form" novalidate>
         <input type="hidden" name="id" id="inv-form-id" />
-        <div id="inv-form-error" class="inv-error" hidden></div>
-        <div class="field-row">
+        <div class="inv-modal-body">
+          <div id="inv-form-error" class="inv-error" hidden></div>
+          <div class="field-row">
+            <label class="field">
+              <span class="field-label">Item code <em>*</em></span>
+              <input type="text" name="item_code" id="inv-form-code" required placeholder="e.g. FA-24" />
+            </label>
+            <label class="field">
+              <span class="field-label">Unit <em>*</em></span>
+              <select name="unit" id="inv-form-unit" required>
+                <option value="pcs">pcs</option>
+                <option value="pkt">pkt</option>
+                <option value="box">box</option>
+                <option value="set">set</option>
+                <option value="bottle">bottle</option>
+                <option value="other">other</option>
+              </select>
+            </label>
+          </div>
           <label class="field">
-            <span class="field-label">Item code <em>*</em></span>
-            <input type="text" name="item_code" id="inv-form-code" required placeholder="e.g. FA-24" />
+            <span class="field-label">Item name <em>*</em></span>
+            <input type="text" name="item_name" id="inv-form-name" required placeholder="e.g. Antiseptic Wipes" />
           </label>
+          <div class="field-row">
+            <label class="field">
+              <span class="field-label">Current stock <em>*</em></span>
+              <input type="number" name="current_stock" id="inv-form-stock" required min="0" value="0" />
+            </label>
+            <label class="field">
+              <span class="field-label">Min alert level <em>*</em></span>
+              <input type="number" name="min_alert_level" id="inv-form-min" required min="0" value="0" />
+            </label>
+          </div>
           <label class="field">
-            <span class="field-label">Unit <em>*</em></span>
-            <select name="unit" id="inv-form-unit" required>
-              <option value="pcs">pcs</option>
-              <option value="pkt">pkt</option>
-              <option value="box">box</option>
-              <option value="set">set</option>
-              <option value="bottle">bottle</option>
-              <option value="other">other</option>
-            </select>
+            <span class="field-label">Required standard</span>
+            <input type="text" name="required_std" id="inv-form-std" placeholder="e.g. 5pcs per 50 workers" />
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span class="field-label">Category group</span>
+              <input type="number" name="category_group" id="inv-form-cat" min="1" placeholder="e.g. 1" />
+            </label>
+            <label class="field">
+              <span class="field-label">Expired Date</span>
+              <input type="date" name="expiry_date" id="inv-form-expiry" />
+            </label>
+          </div>
+          <label class="field-check">
+            <input type="checkbox" name="is_active" id="inv-form-active" checked />
+            <span>Active Item</span>
           </label>
         </div>
-        <label class="field">
-          <span class="field-label">Item name <em>*</em></span>
-          <input type="text" name="item_name" id="inv-form-name" required placeholder="e.g. Antiseptic Wipes" />
-        </label>
-        <div class="field-row">
-          <label class="field">
-            <span class="field-label">Current stock <em>*</em></span>
-            <input type="number" name="current_stock" id="inv-form-stock" required min="0" value="0" />
-          </label>
-          <label class="field">
-            <span class="field-label">Min alert level <em>*</em></span>
-            <input type="number" name="min_alert_level" id="inv-form-min" required min="0" value="0" />
-          </label>
-        </div>
-        <label class="field">
-          <span class="field-label">Required standard</span>
-          <input type="text" name="required_std" id="inv-form-std" placeholder="e.g. 5pcs per 50 workers" />
-        </label>
-        <div class="field-row">
-          <label class="field">
-            <span class="field-label">Category group</span>
-            <input type="number" name="category_group" id="inv-form-cat" min="1" placeholder="e.g. 1" />
-          </label>
-          <label class="field">
-            <span class="field-label">Expired Date</span>
-            <input type="date" name="expiry_date" id="inv-form-expiry" />
-          </label>
-        </div>
-        <label class="field-check">
-          <input type="checkbox" name="is_active" id="inv-form-active" checked />
-          <span>Active Item</span>
-        </label>
         <div class="inv-modal-actions">
           <button type="button" class="inv-secondary-btn" id="inv-form-cancel">Cancel</button>
           <button type="submit" class="inv-primary-btn" id="inv-form-save">Save</button>
@@ -148,16 +151,18 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         <button type="button" class="inv-modal-close" id="inv-restock-close" aria-label="Close">×</button>
       </header>
       <form id="inv-restock-form" novalidate>
-        <p class="inv-restock-name" id="inv-restock-name"></p>
-        <div id="inv-restock-error" class="inv-error" hidden></div>
-        <label class="field">
-          <span class="field-label">Quantity to add <em>*</em></span>
-          <input type="number" name="quantity" id="inv-restock-qty" required min="1" value="1" />
-        </label>
-        <label class="field">
-          <span class="field-label">Notes</span>
-          <textarea name="notes" id="inv-restock-notes" rows="3" placeholder="e.g. PO #1234, supplier ABC"></textarea>
-        </label>
+        <div class="inv-modal-body">
+          <p class="inv-restock-name" id="inv-restock-name"></p>
+          <div id="inv-restock-error" class="inv-error" hidden></div>
+          <label class="field">
+            <span class="field-label">Quantity to add <em>*</em></span>
+            <input type="number" name="quantity" id="inv-restock-qty" required min="1" value="1" />
+          </label>
+          <label class="field">
+            <span class="field-label">Notes</span>
+            <textarea name="notes" id="inv-restock-notes" rows="3" placeholder="e.g. PO #1234, supplier ABC"></textarea>
+          </label>
+        </div>
         <div class="inv-modal-actions">
           <button type="button" class="inv-secondary-btn" id="inv-restock-cancel">Cancel</button>
           <button type="submit" class="inv-primary-btn" id="inv-restock-save">Restock</button>
@@ -174,17 +179,19 @@ import AppLayout from '../../../layouts/AppLayout.astro';
         <button type="button" class="inv-modal-close" id="inv-adjust-close" aria-label="Close">×</button>
       </header>
       <form id="inv-adjust-form" novalidate>
-        <p class="inv-restock-name" id="inv-adjust-name"></p>
-        <div id="inv-adjust-error" class="inv-error" hidden></div>
-        <label class="field">
-          <span class="field-label">Quantity delta <em>*</em></span>
-          <input type="number" name="delta" id="inv-adjust-delta" required placeholder="e.g. -2 or 5" />
-          <span class="field-hint">Use a negative number to subtract. Cannot go below zero.</span>
-        </label>
-        <label class="field">
-          <span class="field-label">Notes <em>*</em></span>
-          <textarea name="notes" id="inv-adjust-notes" rows="3" required placeholder="Reason for adjustment"></textarea>
-        </label>
+        <div class="inv-modal-body">
+          <p class="inv-restock-name" id="inv-adjust-name"></p>
+          <div id="inv-adjust-error" class="inv-error" hidden></div>
+          <label class="field">
+            <span class="field-label">Quantity delta <em>*</em></span>
+            <input type="number" name="delta" id="inv-adjust-delta" required placeholder="e.g. -2 or 5" />
+            <span class="field-hint">Use a negative number to subtract. Cannot go below zero.</span>
+          </label>
+          <label class="field">
+            <span class="field-label">Notes <em>*</em></span>
+            <textarea name="notes" id="inv-adjust-notes" rows="3" required placeholder="Reason for adjustment"></textarea>
+          </label>
+        </div>
         <div class="inv-modal-actions">
           <button type="button" class="inv-secondary-btn" id="inv-adjust-cancel">Cancel</button>
           <button type="submit" class="inv-primary-btn" id="inv-adjust-save">Adjust</button>
@@ -1181,8 +1188,17 @@ import AppLayout from '../../../layouts/AppLayout.astro';
     box-shadow: 3px 3px 0px #2B2D42;
   }
   #inv-form, #inv-restock-form, #inv-adjust-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  .inv-modal-body {
     padding: 20px;
     overflow-y: auto;
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -1267,13 +1283,10 @@ import AppLayout from '../../../layouts/AppLayout.astro';
   .inv-modal-actions {
     display: flex;
     gap: 12px;
-    margin-top: 10px;
-    padding-top: 14px;
-    border-top: 2px solid #E2E8F0;
+    padding: 14px 20px;
+    border-top: 2.5px solid #2B2D42;
     background: #FFFDF9;
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
+    flex-shrink: 0;
   }
   .inv-secondary-btn, .inv-primary-btn {
     flex: 1;
@@ -1333,11 +1346,9 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       padding: 14px 16px;
       border-bottom: 2.5px solid #2B2D42;
       background: #FFFFFF;
-      position: sticky;
-      top: 0;
-      z-index: 20;
+      flex-shrink: 0;
     }
-    #inv-form, #inv-restock-form, #inv-adjust-form {
+    .inv-modal-body {
       padding: 16px;
       gap: 14px;
       flex: 1;
@@ -1354,6 +1365,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
       background: #FFFDF9;
       border-top: 2.5px solid #2B2D42;
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
     }
   }
 </style>

@@ -81,8 +81,15 @@ const gateRoutes = defineMiddleware(async (context, next) => {
   // tenant yet, force them through onboarding.
   if (pathname.startsWith('/app/')) {
     if (!context.locals.user) {
-      const next = encodeURIComponent(pathname + context.url.search);
-      return context.redirect(`/login?next=${next}`);
+      // Check if any Supabase auth cookies are present on the request
+      const hasAuthCookie = context.cookies.get('sb-access-token') || 
+                             context.cookies.get('sb-refresh-token') ||
+                             Array.from(context.cookies.headers?.() ?? []).some(([k]) => k.toLowerCase().includes('sb-'));
+      if (hasAuthCookie) {
+        return next();
+      }
+      const nextUrl = encodeURIComponent(pathname + context.url.search);
+      return context.redirect(`/login?next=${nextUrl}`);
     }
     if (!context.locals.tenantId && pathname !== '/app/onboarding') {
       return context.redirect('/app/onboarding');

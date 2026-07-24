@@ -304,8 +304,11 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     const supabase = getSupabase();
 
     (async () => {
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userData.user) {
+      let user = (await supabase.auth.getUser()).data.user;
+      if (!user) {
+        user = (await supabase.auth.getSession()).data.session?.user ?? null;
+      }
+      if (!user) {
         window.location.replace('/login');
         return;
       }

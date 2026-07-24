@@ -38,6 +38,7 @@ import Layout from '../../layouts/Layout.astro';
 
 <script>
   import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
+  import type { SupabaseClient } from '@supabase/supabase-js';
 
   const countdownEl = document.getElementById('countdown') as HTMLElement;
   const timerTextEl = document.getElementById('timer-text') as HTMLElement;
@@ -50,35 +51,62 @@ import Layout from '../../layouts/Layout.astro';
   let secondsLeft = 3;
   let targetRedirect = '/app/onboarding';
 
+  // Clean up ?code= parameter from URL history immediately
+  if (window.location.search.includes('code=')) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   // Animate progress bar fill over 3 seconds
   requestAnimationFrame(() => {
     fillEl.style.width = '100%';
   });
 
+  async function resolveTargetDestination(supabase: SupabaseClient): Promise<string> {
+    try {
+      const { data: tenantId } = await supabase.rpc('get_my_tenant_id');
+      if (tenantId) return '/app/dashboard';
+
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user?.id) {
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('id')
+          .eq('owner_user_id', userData.user.id)
+          .maybeSingle();
+        if (tenant?.id) return '/app/dashboard';
+      }
+    } catch (e) {
+      console.warn('Workspace resolution notice:', e);
+    }
+    return '/app/onboarding';
+  }
+
   if (isSupabaseConfigured()) {
     const supabase = getSupabase();
     
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+      supabase.auth.exchangeCodeForSession(code).then(async ({ data, error }) => {
         if (error) {
           console.warn('Session code exchange notice:', error.message);
-          // If code exchange failed (e.g. opened on different browser/device), check if session exists
-          supabase.auth.getSession().then(({ data: sessionData }) => {
-            if (!sessionData.session) {
-              targetRedirect = '/login?confirmed=true';
-              if (launchBtn) launchBtn.href = targetRedirect;
-            }
-          });
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData.session) {
+            targetRedirect = '/login?confirmed=true';
+          } else {
+            targetRedirect = await resolveTargetDestination(supabase);
+          }
         } else if (data?.session) {
-          targetRedirect = '/app/onboarding';
+          targetRedirect = await resolveTargetDestination(supabase);
         }
+        if (launchBtn) launchBtn.href = targetRedirect;
       });
     } else {
-      supabase.auth.getSession().then(({ data }) => {
+      supabase.auth.getSession().then(async ({ data }) => {
         if (!data.session) {
           targetRedirect = '/login?confirmed=true';
-          if (launchBtn) launchBtn.href = targetRedirect;
+        } else {
+          targetRedirect = await resolveTargetDestination(supabase);
         }
+        if (launchBtn) launchBtn.href = targetRedirect;
       });
     }
   }

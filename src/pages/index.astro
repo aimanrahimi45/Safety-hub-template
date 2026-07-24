@@ -420,7 +420,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxkqvl5E03H0IN2igM0RXRc
     if (code && isSupabaseConfigured()) {
       // Clean up ?code= parameter from browser history immediately to prevent re-triggering on screen resize/reload
       window.history.replaceState({}, document.title, window.location.pathname);
-      window.location.replace(`/auth/confirmed?code=${encodeURIComponent(code)}`);
+      window.location.replace(`/auth/callback?code=${encodeURIComponent(code)}`);
     }
   </script>
 

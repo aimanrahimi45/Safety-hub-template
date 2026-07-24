@@ -1,6 +1,11 @@
 ---
 import { createSupabaseServerClient } from '../../lib/supabaseServer';
 
+// Prevent browser/DevTools caching of OAuth callback responses
+Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+Astro.response.headers.set('Pragma', 'no-cache');
+Astro.response.headers.set('Expires', '0');
+
 const code = Astro.url.searchParams.get('code');
 const errorParam = Astro.url.searchParams.get('error_description') || Astro.url.searchParams.get('error');
 
@@ -8,16 +13,34 @@ if (errorParam) {
   return Astro.redirect(`/login?error=${encodeURIComponent(errorParam)}`);
 }
 
-if (code) {
-  const supabase = createSupabaseServerClient(Astro);
-  if (supabase) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      // Successfully authenticated and cookies set. Redirect to dashboard.
-      return Astro.redirect('/app/dashboard');
-    } else {
-      return Astro.redirect(`/login?error=${encodeURIComponent(error.message)}`);
+const supabase = createSupabaseServerClient(Astro);
+
+if (code && supabase) {
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (!error) {
+    // Successfully authenticated. Check workspace status
+    const { data: tenantId } = await supabase.rpc('get_my_tenant_id');
+    const target = tenantId ? '/app/dashboard' : '/app/onboarding';
+    return Astro.redirect(target, 303);
+  } else {
+    // If code exchange failed (e.g. DevTools re-sent an already used code), check if user is already authenticated
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user) {
+      const { data: tenantId } = await supabase.rpc('get_my_tenant_id');
+      const target = tenantId ? '/app/dashboard' : '/app/onboarding';
+      return Astro.redirect(target, 303);
     }
+    return Astro.redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  }
+}
+
+// Fallback check: If no code param present or already consumed, check active session
+if (supabase) {
+  const { data: userData } = await supabase.auth.getUser();
+  if (userData?.user) {
+    const { data: tenantId } = await supabase.rpc('get_my_tenant_id');
+    const target = tenantId ? '/app/dashboard' : '/app/onboarding';
+    return Astro.redirect(target, 303);
   }
 }
 

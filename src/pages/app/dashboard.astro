@@ -316,7 +316,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       const { data: tenant, error: tenantErr } = await supabase
         .from('tenants')
         .select('*')
-        .eq('owner_user_id', userData.user.id)
+        .eq('owner_user_id', user.id)
         .single<Tenant>();
 
       if (tenantErr || !tenant) {

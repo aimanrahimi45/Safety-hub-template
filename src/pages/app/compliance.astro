@@ -214,7 +214,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
           <div class="cmp-search-header-row">
             <h2>AI-Powered OSH Search</h2>
             <div id="cmp-search-credit-badge" class="cmp-search-credit-badge">
-              ⚡ <span id="cmp-credit-counter">25 of 25</span> queries remaining (<span id="cmp-plan-label">Trial</span>)
+              ⚡ <span id="cmp-credit-counter">25 of 25</span> AI credits remaining (<span id="cmp-plan-label">Trial</span>)
             </div>
           </div>
           <p>Type a natural-language question to similarity-match against the Malaysian OSH corpus (e.g. <em>"What are safety duties for crane operators?"</em>).</p>
@@ -845,7 +845,12 @@ import AppLayout from '../../layouts/AppLayout.astro';
       lastSearchResults = results ?? [];
       renderSearchResults(lastSearchResults, q);
 
-      // Increment query count upon successful search
+      // Auto-trigger AI summary immediately as primary output
+      if (lastSearchResults.length > 0) {
+        void runAiSummary(q);
+      }
+
+      // Increment unified AI credit count upon successful search + summary
       const nextUsed = currentUsed + 1;
       localStorage.setItem(`amerispro_ai_used_${tenantId}`, String(nextUsed));
       const remaining = Math.max(0, maxQueries - nextUsed);
@@ -917,8 +922,37 @@ import AppLayout from '../../layouts/AppLayout.astro';
       docGroups[docName].sections[baseSection].items.push(it);
     }
 
-    let html = `<div id="cmp-ai-summary-box" class="cmp-ai-summary-box" hidden></div>`;
-    html += `<div class="cmp-search-results">`;
+    const docCount = Object.keys(docGroups).length;
+
+    // PRIMARY OUTPUT: AI Summary Box at top (visible by default with loading state)
+    let html = `
+      <div id="cmp-ai-summary-box" class="cmp-ai-summary-box" style="margin-bottom: 24px; border: 3px solid var(--border); border-radius: 16px; background: white; padding: 24px; box-shadow: 4px 4px 0 var(--shadow);">
+        <h4 style="margin-top: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">🤖 AI Legal Assistant (Executive Summary)</h4>
+        <div class="cmp-ai-summary-text" style="color: var(--text-muted); font-size: 0.95rem;">⚡ AI is analyzing Malaysian OSH legal corpus to generate executive summary…</div>
+      </div>
+    `;
+
+    // SECONDARY OUTPUT: Collapsible Matched Legal Clauses Container
+    html += `
+      <div class="cmp-references-panel" style="margin-top: 20px; border: 3px solid var(--border); border-radius: 16px; background: #FAF9F6; box-shadow: 3px 3px 0 var(--shadow); overflow: hidden;">
+        <div class="cmp-references-header" style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; background: white; border-bottom: 2px solid var(--border);" onclick="window.toggleComplianceAccordion(this)">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.2rem;">📂</span>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--primary);">
+              Matched Legal References & Full Clauses (${docCount} ${docCount === 1 ? 'Document' : 'Documents'} Matched)
+            </h3>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); background: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: 20px;">
+              Click to view full legal text
+            </span>
+            <span class="cmp-accordion-icon" style="font-size: 1rem; color: var(--text-muted); transition: transform 0.3s; display: inline-block;">▼</span>
+          </div>
+        </div>
+
+        <div class="cmp-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; padding: 0 20px; background: transparent;">
+          <div style="display: flex; flex-direction: column; gap: 16px; padding: 20px 0;">
+    `;
 
     Object.values(docGroups).forEach((docGroup) => {
       const docSimilarityPct = Math.round((docGroup.maxSimilarity || 0) * 100);
@@ -927,14 +961,14 @@ import AppLayout from '../../layouts/AppLayout.astro';
       sectionsArray.sort((a, b) => b.maxSimilarity - a.maxSimilarity);
 
       html += `
-        <div class="cmp-search-accordion" style="margin-bottom: 16px; border: 3px solid var(--border); border-radius: 14px; background: white; box-shadow: 3px 3px 0 var(--shadow); overflow: hidden; display: block; position: relative;">
-          <div class="cmp-accordion-header" style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background 0.2s;" onclick="window.toggleComplianceAccordion(this)">
+        <div class="cmp-search-accordion" style="border: 2px solid var(--border); border-radius: 12px; background: white; box-shadow: 2px 2px 0 var(--shadow); overflow: hidden; display: block; position: relative;">
+          <div class="cmp-accordion-header" style="padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background 0.2s;" onclick="window.toggleComplianceAccordion(this)">
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <h4 style="margin: 0; color: var(--primary); font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                📂 ${escapeHtml(docGroup.docDisplayName)}
+              <h4 style="margin: 0; color: var(--primary); font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                📜 ${escapeHtml(docGroup.docDisplayName)}
               </h4>
-              <div style="color: var(--text-muted); font-size: 0.8rem; display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-                <span class="cmp-tag cmp-tag-act" style="padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(78, 168, 222, 0.12); color: var(--info); font-weight: 600; border: 2px solid var(--border); margin: 0;">
+              <div style="color: var(--text-muted); font-size: 0.8rem; display: flex; gap: 8px; align-items: center; margin-top: 2px;">
+                <span class="cmp-tag cmp-tag-act" style="padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(78, 168, 222, 0.12); color: var(--info); font-weight: 600; border: 1.5px solid var(--border); margin: 0;">
                   ${escapeHtml(docGroup.docType)}
                 </span>
                 <span>•</span>
@@ -949,8 +983,8 @@ import AppLayout from '../../layouts/AppLayout.astro';
             </div>
           </div>
           
-          <div class="cmp-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; background: rgba(0, 0, 0, 0.015); border-top: 0 solid var(--border); padding: 0 20px;">
-            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px 0;">
+          <div class="cmp-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; background: rgba(0, 0, 0, 0.015); border-top: 0 solid var(--border); padding: 0 16px;">
+            <div style="display: flex; flex-direction: column; gap: 14px; padding: 14px 0;">
       `;
 
       sectionsArray.forEach((section) => {
@@ -965,9 +999,9 @@ import AppLayout from '../../layouts/AppLayout.astro';
         }
 
         html += `
-          <div class="cmp-nested-accordion" style="border: 2px solid var(--border); border-radius: 8px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.6); overflow: hidden; display: block;">
-            <div class="cmp-nested-header" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: 600; color: var(--primary); transition: background 0.2s;" onclick="window.toggleComplianceNestedAccordion(this)">
-              <span style="font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+          <div class="cmp-nested-accordion" style="border: 1.5px solid var(--border); border-radius: 8px; margin-bottom: 8px; background: rgba(255, 255, 255, 0.8); overflow: hidden; display: block;">
+            <div class="cmp-nested-header" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: 600; color: var(--primary); transition: background 0.2s;" onclick="window.toggleComplianceNestedAccordion(this)">
+              <span style="font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
                 📖 ${escapeHtml(section.baseSection)}${commonTitle ? `: ${escapeHtml(commonTitle)}` : ''}
               </span>
               <div style="display: flex; align-items: center; gap: 12px;">
@@ -978,7 +1012,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
               </div>
             </div>
             <div class="cmp-nested-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: rgba(0, 0, 0, 0.015);">
-              <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px;">
         `;
 
         sectionItems.forEach((item) => {
@@ -1009,7 +1043,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
           }
 
           html += `
-            <div style="padding: 12px; background: rgba(255, 255, 255, 0.5); border-radius: 6px; border: 1px solid rgba(0,0,0,0.05); position: relative;">
+            <div style="padding: 12px; background: rgba(255, 255, 255, 0.7); border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); position: relative;">
               <div class="cmp-match-score" style="position: absolute; top: 10px; right: 10px; font-size: 0.75rem; background: rgba(15, 118, 110, 0.08); padding: 2px 8px; border-radius: 12px; font-weight: 600; color: var(--primary);">
                 ${Math.round((item.similarity || 0) * 100)}% match
               </div>
@@ -1042,19 +1076,21 @@ import AppLayout from '../../layouts/AppLayout.astro';
       `;
     });
 
-    html += `</div>`;
-    html += `<div class="cmp-search-actions"><button type="button" class="cmp-primary-btn cmp-primary-btn-accent" id="cmp-ai-summary-btn">🤖 Get AI Summary</button></div>`;
-    searchResults.innerHTML = html;
+    html += `
+          </div>
+        </div>
+      </div>
+    `;
 
-    const btn = document.getElementById('cmp-ai-summary-btn');
-    if (btn) btn.addEventListener('click', () => { void runAiSummary(q); });
+    searchResults.innerHTML = html;
   }
 
   async function runAiSummary(q: string): Promise<void> {
     if (lastSearchResults.length === 0) return;
     const box = document.getElementById('cmp-ai-summary-box') as HTMLElement;
+    if (!box) return;
     box.hidden = false;
-    box.innerHTML = '<h4>🤖 AI Legal Assistant</h4><div class="cmp-ai-summary-text">AI is analyzing the matched references…</div>';
+    box.innerHTML = '<h4 style="margin-top: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">🤖 AI Legal Assistant (Executive Summary)</h4><div class="cmp-ai-summary-text" style="color: var(--text-muted); font-size: 0.95rem;">⚡ AI is analyzing Malaysian OSH legal corpus to generate executive summary…</div>';
     try {
       const resp = await fetch('/api/ai-summary', {
         method: 'POST',

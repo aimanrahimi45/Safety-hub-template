@@ -68,8 +68,8 @@ export const POST: APIRoute = async ({ request }) => {
     const supabasePublic = getSupabasePublic();
     const { data: matched, error: rpcErr } = await supabasePublic.rpc('match_clauses', {
       query_embedding: embedding,
-      match_threshold: 0.15,
-      match_count: 10,
+      match_threshold: 0.10,
+      match_count: 20,
     });
 
     if (rpcErr) {

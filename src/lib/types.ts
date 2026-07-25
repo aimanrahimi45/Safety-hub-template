@@ -26,7 +26,7 @@ export type InventoryTransactionType =
   | 'manual_adjustment'
   | 'initial_seed';
 export type InspectionResponseType = 'yes_no' | 'text' | 'number' | 'pass_fail' | 'dropdown';
-export type LicensePlanType = 'free' | 'premium';
+export type LicensePlanType = 'free' | 'trial' | 'premium';
 
 // --- Tables ------------------------------------------------------------
 

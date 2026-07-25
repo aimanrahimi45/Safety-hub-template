@@ -333,12 +333,20 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         planBadgeEl.textContent = 'Premium';
         planBadgeEl.classList.remove('plan-free');
         planBadgeEl.classList.add('plan-premium');
+      } else if (tenant.subscription_plan === 'trial') {
+        planBadgeEl.textContent = 'Free Trial';
+        planBadgeEl.classList.remove('plan-free');
+        planBadgeEl.classList.add('plan-trial');
       } else {
         planBadgeEl.textContent = 'Free';
       }
 
       if (tenant.subscription_expires_at) {
-        expiryEl.textContent = 'Expires: ' + formatDate(tenant.subscription_expires_at);
+        const expiresDate = new Date(tenant.subscription_expires_at);
+        const daysLeft = Math.max(0, Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+        expiryEl.textContent = tenant.subscription_plan === 'trial' 
+          ? `⏳ ${daysLeft} days left in Trial` 
+          : 'Expires: ' + formatDate(tenant.subscription_expires_at);
       } else {
         expiryEl.textContent = 'No expiry set';
       }

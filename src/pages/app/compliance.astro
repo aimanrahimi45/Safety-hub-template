@@ -211,7 +211,12 @@ import AppLayout from '../../layouts/AppLayout.astro';
       <!-- ====================== TAB: AI LEGAL SEARCH (PREMIUM) ====================== -->
       <section id="cmp-panel-search" class="cmp-panel" role="tabpanel" aria-labelledby="cmp-tab-search" hidden>
         <div class="cmp-search-area">
-          <h2>AI-Powered OSH Search</h2>
+          <div class="cmp-search-header-row">
+            <h2>AI-Powered OSH Search</h2>
+            <div id="cmp-search-credit-badge" class="cmp-search-credit-badge">
+              ⚡ <span id="cmp-credit-counter">25 of 25</span> queries remaining (<span id="cmp-plan-label">Trial</span>)
+            </div>
+          </div>
           <p>Type a natural-language question to similarity-match against the Malaysian OSH corpus (e.g. <em>"What are safety duties for crane operators?"</em>).</p>
           <div class="cmp-search-input-group">
             <input type="text" id="cmp-search-query" placeholder="Search safety rules…" autocomplete="off" />
@@ -421,11 +426,6 @@ import AppLayout from '../../layouts/AppLayout.astro';
   // Tab switching
   // -------------------------------------------------------------------
   function switchTab(tab: 'profiler' | 'register' | 'policy' | 'search'): void {
-    if (tab === 'search' && !isPremium) {
-      // Defence in depth: the tab button is hidden, but if someone
-      // clicks via dev tools we still bail.
-      return;
-    }
     for (const btn of tabButtons) {
       const isActive = btn.dataset.tab === tab;
       btn.classList.toggle('active', isActive);
@@ -798,6 +798,22 @@ import AppLayout from '../../layouts/AppLayout.astro';
   async function runSearch(): Promise<void> {
     const q = searchQuery.value.trim();
     if (!q) return;
+
+    const maxQueries = isPremium ? 100 : 25;
+    const currentUsed = parseInt(localStorage.getItem(`amerispro_ai_used_${tenantId}`) ?? '0', 10);
+
+    if (currentUsed >= maxQueries) {
+      searchResults.innerHTML = `
+        <div class="cmp-empty" style="background: #FFEED2; border: 3px solid #2B2D42; border-radius: 16px; padding: 24px; text-align: center;">
+          <div class="cmp-empty-icon">⚡</div>
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; color: #2B2D42;">AI Search Limit Reached</h3>
+          <p style="font-size: 0.9rem; margin-bottom: 16px; color: #4A4E69;">You have used all ${maxQueries} ${isPremium ? 'monthly' : 'trial'} AI search queries.</p>
+          <a href="/app/settings" class="cmp-primary-btn" style="display: inline-block; text-decoration: none;">🚀 Upgrade to Premium</a>
+        </div>
+      `;
+      return;
+    }
+
     searchResults.innerHTML = renderSkeletonCards(3);
 
     try {
@@ -914,6 +930,13 @@ import AppLayout from '../../layouts/AppLayout.astro';
       results.sort((a, b) => b.similarity - a.similarity);
       lastSearchResults = results;
       renderSearchResults(results, q);
+
+      // Increment query count upon successful search
+      const nextUsed = currentUsed + 1;
+      localStorage.setItem(`amerispro_ai_used_${tenantId}`, String(nextUsed));
+      const remaining = Math.max(0, maxQueries - nextUsed);
+      const creditCounterEl = document.getElementById('cmp-credit-counter');
+      if (creditCounterEl) creditCounterEl.textContent = `${remaining} of ${maxQueries}`;
     } catch (e) {
       searchResults.innerHTML = `<div class="cmp-empty" style="color:#8B1A1A;"><div class="cmp-empty-icon">❌</div><h3>Search failed</h3><p>${escapeHtml(e instanceof Error ? e.message : 'Unknown error')}</p></div>`;
     }
@@ -1200,11 +1223,19 @@ import AppLayout from '../../layouts/AppLayout.astro';
         (tenant.subscription_expires_at === null ||
           new Date(tenant.subscription_expires_at) > new Date());
       localStorage.setItem('is_premium', isPremium ? 'true' : 'false');
-      if (isPremium) {
-        searchTabBtn.hidden = false;
-      } else {
-        searchTabBtn.hidden = true;
-      }
+      
+      // AI Legal Search is unhidden for both Trial and Premium users
+      searchTabBtn.hidden = false;
+
+      // Update credit counter UI
+      const maxQueries = isPremium ? 100 : 25;
+      const usedQueries = parseInt(localStorage.getItem(`amerispro_ai_used_${tenant.id}`) ?? '0', 10);
+      const remaining = Math.max(0, maxQueries - usedQueries);
+      
+      const creditCounterEl = document.getElementById('cmp-credit-counter');
+      const planLabelEl = document.getElementById('cmp-plan-label');
+      if (creditCounterEl) creditCounterEl.textContent = `${remaining} of ${maxQueries}`;
+      if (planLabelEl) planLabelEl.textContent = isPremium ? 'Premium' : 'Trial';
 
       // Pre-fill the profiler form from the tenant row.
       applyProfileToForm(dbRowToProfile(tenant as unknown as Record<string, unknown>));
@@ -1801,6 +1832,29 @@ import AppLayout from '../../layouts/AppLayout.astro';
     gap: 16px;
     margin-bottom: 20px;
     flex-wrap: wrap;
+  }
+
+  .cmp-search-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .cmp-search-header-row h2 {
+    margin: 0;
+  }
+  .cmp-search-credit-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: #FFD166;
+    border: 2.5px solid #2B2D42;
+    border-radius: 20px;
+    box-shadow: 2px 2px 0px #2B2D42;
   }
 
   .cmp-register-actions {

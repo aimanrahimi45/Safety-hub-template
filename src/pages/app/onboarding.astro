@@ -140,8 +140,12 @@ import AppLayout from '../../layouts/AppLayout.astro';
         const tenantId = tenantIdRaw as string | null;
         if (!tenantId) throw new Error('setup_tenant did not return a tenant id.');
 
-        // If a license key was supplied, validate it against the GAS
-        // Web App. If it returns a premium plan, flip the tenant row.
+        // Set 14-Day Free Trial by default for new workspaces
+        const trialExpiry = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+        let plan: LicensePlanType = 'trial';
+        let activatedAt: string | null = new Date().toISOString();
+
+        // If a license key was supplied, validate it against the GAS Web App.
         if (licenseKey) {
           submitBtn.textContent = 'Validating license…';
           try {
@@ -156,27 +160,23 @@ import AppLayout from '../../layouts/AppLayout.astro';
                 planType?: LicensePlanType;
               };
               if (result.valid && result.planType === 'premium') {
-                const { error: upgradeError } = await supabase
-                  .from('tenants')
-                  .update({
-                    subscription_plan: 'premium',
-                    subscription_activated_at: new Date().toISOString(),
-                  })
-                  .eq('id', tenantId);
-                if (upgradeError) {
-                  // Don't block onboarding — show a soft warning.
-                  showError(
-                    'Workspace created, but upgrading to premium failed: ' +
-                      upgradeError.message,
-                  );
-                }
+                plan = 'premium';
               }
             }
           } catch {
-            // License validation failure is non-fatal — workspace still
-            // created on the free plan.
+            // License validation failure is non-fatal — workspace defaults to 14-day trial.
           }
         }
+
+        // Apply subscription plan to the new tenant row
+        await supabase
+          .from('tenants')
+          .update({
+            subscription_plan: plan,
+            subscription_expires_at: plan === 'trial' ? trialExpiry : null,
+            subscription_activated_at: activatedAt,
+          })
+          .eq('id', tenantId);
 
         window.location.replace('/app/dashboard');
       } catch (e) {

@@ -1167,24 +1167,33 @@ import AppLayout from '../../layouts/AppLayout.astro';
   }
 
   function renderMarkdown(md: string): string {
-    // Minimal Markdown: bold + bullet lists + paragraphs.
     const lines = md.split('\n');
     let inList = false;
-    let out = '';
+    let out = '<div class="cmp-ai-summary-content" style="line-height: 1.6;">';
     for (const raw of lines) {
       const line = raw.trim();
-      if (!line) { if (inList) { out += '</ul>'; inList = false; } continue; }
-      const bolded = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      if (!line) {
+        if (inList) { out += '</ul>'; inList = false; }
+        continue;
+      }
+
+      const bolded = line.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--primary); font-weight: 700;">$1</strong>');
       const m = bolded.match(/^[-*+•]\s+(.*)$/);
+
       if (m) {
-        if (!inList) { out += '<ul>'; inList = true; }
-        out += `<li>${m[1]}</li>`;
+        if (!inList) { out += '<ul style="margin: 8px 0 16px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">'; inList = true; }
+        out += `<li style="margin-bottom: 4px; color: var(--text-main); font-size: 0.95rem;">${m[1]}</li>`;
       } else {
         if (inList) { out += '</ul>'; inList = false; }
-        out += `<p>${bolded}</p>`;
+        if (bolded.startsWith('<strong') && (bolded.endsWith('</strong>') || bolded.endsWith(':</strong>'))) {
+          out += `<h5 style="margin: 16px 0 8px 0; font-size: 1rem; font-weight: 700; color: var(--primary); border-bottom: 1.5px solid rgba(0,0,0,0.06); padding-bottom: 4px;">${bolded}</h5>`;
+        } else {
+          out += `<p style="margin: 8px 0 12px 0; color: var(--text-main); font-size: 0.95rem; line-height: 1.55;">${bolded}</p>`;
+        }
       }
     }
     if (inList) out += '</ul>';
+    out += '</div>';
     return out;
   }
 

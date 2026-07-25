@@ -44,18 +44,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // cookies when imported here on the server.
   const { createClient } = await import('@supabase/supabase-js');
   const url = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
-  const anonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
-  if (!url || !anonKey) {
+  const serviceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY ?? import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
+  if (!url || !serviceKey) {
     return json(500, {
       status: 'ERROR',
       message: 'Tenant Supabase is not configured.',
     } satisfies AiSummaryResponse);
   }
-  const serverClient = createClient(url, anonKey, {
+  const serverClient = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    global: {
-      headers: { cookie: request.headers.get('cookie') ?? '' },
-    },
   });
 
   const { data: tenant } = await serverClient

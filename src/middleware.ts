@@ -73,6 +73,9 @@ const attachAuth = defineMiddleware(async (context, next) => {
 const gateRoutes = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
+  if (pathname === '/privacy.html') return context.redirect('/privacy', 301);
+  if (pathname === '/terms.html' || pathname === '/term.html') return context.redirect('/terms', 301);
+
   if (isPublicPath(pathname)) {
     return next();
   }

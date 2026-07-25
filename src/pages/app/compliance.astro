@@ -214,7 +214,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
           <div class="cmp-search-header-row">
             <h2>AI-Powered OSH Search</h2>
             <div id="cmp-search-credit-badge" class="cmp-search-credit-badge">
-              ⚡ <span id="cmp-credit-counter">25 of 25</span> queries remaining (<span id="cmp-plan-label">Trial</span>)
+              ⚡ <span id="cmp-credit-counter">2 of 2</span> queries remaining (<span id="cmp-plan-label">Trial</span>)
             </div>
           </div>
           <p>Type a natural-language question to similarity-match against the Malaysian OSH corpus (e.g. <em>"What are safety duties for crane operators?"</em>).</p>
@@ -812,7 +812,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
       return;
     }
 
-    const maxQueries = isPremium ? 100 : 25;
+    const maxQueries = isPremium ? 100 : 2;
     const currentUsed = parseInt(localStorage.getItem(`amerispro_ai_used_${tenantId}`) ?? '0', 10);
 
     if (currentUsed >= maxQueries) {
@@ -1150,7 +1150,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
       searchTabBtn.hidden = false;
 
       // Update credit counter UI
-      const maxQueries = isPremium ? 100 : 25;
+      const maxQueries = isPremium ? 100 : 2;
       const usedQueries = parseInt(localStorage.getItem(`amerispro_ai_used_${tenant.id}`) ?? '0', 10);
       const remaining = Math.max(0, maxQueries - usedQueries);
       

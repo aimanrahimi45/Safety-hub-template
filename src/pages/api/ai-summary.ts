@@ -21,11 +21,19 @@ export const prerender = false;
 // =====================================================================
 
 // Mirrors the legacy GAS prompt verbatim.
+function extractBaseSection(sectionNum: string): string {
+  if (!sectionNum || typeof sectionNum !== 'string') return 'General';
+  const clean = sectionNum.trim();
+  const m = clean.match(/^([A-Za-z\s-]+\s*\d+|\d+)/i);
+  return m ? m[0].trim() : clean;
+}
+
 const SYSTEM_PROMPT =
   'You are an AI Legal Assistant for Occupational Safety and Health (OSH) in Malaysia.\n' +
   'Analyze the primary subject (e.g. employee/pekerja, employer/majikan, machinery/jentera, noise/bising, chemical/bahan kimia) ' +
   'and language (Malay or English) of the user\'s question.\n' +
   'Always structure your response in the user\'s language using separate bullet points starting with a hyphen ("- ").\n' +
+  'CRITICAL RULE: When summarizing a legal section that contains sub-clauses (e.g. points a, b, c, d), you MUST list ALL individual sub-clauses (a, b, c, d) provided in the legal references without omitting any point.\n' +
   'Place the clauses directly matching the primary subject FIRST under a clear section heading, followed by secondary background oversight under a separate heading.\n' +
   'Include the exact reference citation badge for each section (e.g. **Akta 514 Seksyen 24:** [duty]). ' +
   'Do not add outside information or assumptions.';
@@ -141,41 +149,72 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } satisfies AiSummaryResponse);
   }
 
-  // 3. Dynamic Subject Re-Ranking & Token Truncation
+  // 3. Dynamic Subject Re-Ranking & Universal Base Section Grouping
   const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
   
-  // Rank clauses by subject keyword overlap dynamically (Malay & English)
-  const rankedClauses = clausesPayload.map((c) => {
+  // Score clauses by relevance to query
+  const scoredMap = new Map<string, number>();
+  clausesPayload.forEach((c) => {
     const text = `${c.section_number ?? ''} ${c.document_name ?? ''} ${c.clause_text ?? ''}`.toLowerCase();
     let score = 0;
     for (const word of queryWords) {
       if (text.includes(word)) score += 1;
     }
-    // Specific subject boosts
     if ((queryWords.includes('employee') || queryWords.includes('pekerja')) && (text.includes('24') || text.includes('pekerja') || text.includes('employee'))) {
       score += 5;
     }
     if ((queryWords.includes('employer') || queryWords.includes('majikan')) && (text.includes('15') || text.includes('majikan') || text.includes('employer'))) {
       score += 5;
     }
-    return { clause: c, score };
+    scoredMap.set(`${c.document_name}::${c.section_number}`, score);
   });
 
-  rankedClauses.sort((a, b) => b.score - a.score);
+  // Universal Base Section Grouping (groups all sister sub-clauses: a, b, c, d...)
+  const baseGroups = new Map<string, { docName: string; baseSec: string; maxScore: number; clauses: typeof clausesPayload }>();
 
-  // Take top 12 clauses and truncate each text snippet to ~400 characters to keep payload < 3000 tokens
-  const topClauses = rankedClauses.slice(0, 12).map(item => item.clause);
+  for (const c of clausesPayload) {
+    const doc = c.document_name ?? 'Legislation';
+    const baseSec = extractBaseSection(c.section_number ?? '');
+    const groupKey = `${doc}::${baseSec}`;
+    const score = scoredMap.get(`${c.document_name}::${c.section_number}`) ?? 0;
 
-  const clausesText = topClauses.map((c) => {
-    let docName = (c.document_name ?? 'Legislation').replace(/\.pdf$/i, '').replace(/_/g, ' ');
-    if (docName.includes('OSHA_1994_Act_514')) docName = 'Akta 514';
-    if (docName.includes('FMA_1967_Act_139')) docName = 'Akta 139';
-    const secNum = (c.section_number ?? '')
-      .replace(/Section/i, 'Seksyen')
-      .replace(/Regulation/i, 'Peraturan');
-    const snippet = (c.clause_text ?? '').slice(0, 450);
-    return `Rujukan: ${docName} (${secNum}) - Kandungan: ${snippet}`;
-  }).join('\n');
+    if (!baseGroups.has(groupKey)) {
+      baseGroups.set(groupKey, { docName: doc, baseSec, maxScore: score, clauses: [] });
+    }
+    const group = baseGroups.get(groupKey)!;
+    if (score > group.maxScore) group.maxScore = score;
+    group.clauses.push(c);
+  }
+
+  // Sort base section groups by max relevance score
+  const sortedGroups = Array.from(baseGroups.values()).sort((a, b) => b.maxScore - a.maxScore);
+
+  // Format all sister sub-clauses sequentially for top section groups
+  const formattedLines: string[] = [];
+  let currentChars = 0;
+  const maxPayloadChars = 6000;
+
+  for (const group of sortedGroups) {
+    if (currentChars >= maxPayloadChars) break;
+
+    // Sort sub-clauses inside group alphabetically/numerically (a, b, c, d)
+    group.clauses.sort((a, b) => (a.section_number ?? '').localeCompare(b.section_number ?? '', undefined, { numeric: true, sensitivity: 'base' }));
+
+    let docDisplayName = group.docName.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+    if (docDisplayName.includes('OSHA_1994_Act_514')) docDisplayName = 'Akta 514';
+    if (docDisplayName.includes('FMA_1967_Act_139')) docDisplayName = 'Akta 139';
+
+    for (const c of group.clauses) {
+      const secNum = (c.section_number ?? '').replace(/Section/i, 'Seksyen').replace(/Regulation/i, 'Peraturan');
+      const snippet = (c.clause_text ?? '').slice(0, 600);
+      const line = `Rujukan: ${docDisplayName} (${secNum}) - Kandungan: ${snippet}`;
+      formattedLines.push(line);
+      currentChars += line.length;
+      if (currentChars >= maxPayloadChars) break;
+    }
+  }
+
+  const clausesText = formattedLines.join('\n');
 
   const messages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },

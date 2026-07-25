@@ -22,11 +22,13 @@ export const prerender = false;
 
 // Mirrors the legacy GAS prompt verbatim.
 const SYSTEM_PROMPT =
-  'You are an AI Legal Assistant for Occupational Safety and Health (OSH) in Malaysia. ' +
-  'Based ONLY on the legal references provided below, answer the user\'s question clearly. ' +
-  'EVERY duty must be a SEPARATE bullet point starting with a hyphen ("- "). ' +
-  'Include the reference citation badge (e.g., **Akta 514 Seksyen 15:** [duty]). ' +
-  'Do not merge multiple duties into a single paragraph. Respond in the user\'s language (Malay or English).';
+  'You are an AI Legal Assistant for Occupational Safety and Health (OSH) in Malaysia.\n' +
+  'Analyze the primary subject (e.g. employee/pekerja, employer/majikan, machinery/jentera, noise/bising, chemical/bahan kimia) ' +
+  'and language (Malay or English) of the user\'s question.\n' +
+  'Always structure your response in the user\'s language using separate bullet points starting with a hyphen ("- ").\n' +
+  'Place the clauses directly matching the primary subject FIRST under a clear section heading, followed by secondary background oversight under a separate heading.\n' +
+  'Include the exact reference citation badge for each section (e.g. **Akta 514 Seksyen 24:** [duty]). ' +
+  'Do not add outside information or assumptions.';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   // 1. Premium gate.
@@ -38,11 +40,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } satisfies AiSummaryResponse);
   }
 
-  // We need a tenant-scoped client to call is_my_tenant_premium().
-  // The Astro project uses the getSupabase() singleton (browser bundle),
-  // but for the API route we use a fresh server client that uses the
-  // user's session from cookies. The supabase client auto-detects
-  // cookies when imported here on the server.
   const { createClient } = await import('@supabase/supabase-js');
   const url = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
   const serviceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY ?? import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -75,11 +72,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       message: 'Your 14-day free trial has expired. Upgrade to Premium to use AI summary.',
     } satisfies AiSummaryResponse);
   }
-
-  // Allocation: Premium = 1,000 summaries/month | Trial = 25 summaries total.
-  const maxSummaries = isPremium ? 1000 : 25;
-
-
 
   // 2. Parse body.
   let body: {
@@ -138,7 +130,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         });
       }
     } catch {
-      // Ignore fallback failure if client sends payload
+      // Ignore fallback failure
     }
   }
 
@@ -149,15 +141,40 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } satisfies AiSummaryResponse);
   }
 
-  // 4. Build prompt.
-  const clausesText = clausesPayload.map((c) => {
+  // 3. Dynamic Subject Re-Ranking & Token Truncation
+  const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  
+  // Rank clauses by subject keyword overlap dynamically (Malay & English)
+  const rankedClauses = clausesPayload.map((c) => {
+    const text = `${c.section_number ?? ''} ${c.document_name ?? ''} ${c.clause_text ?? ''}`.toLowerCase();
+    let score = 0;
+    for (const word of queryWords) {
+      if (text.includes(word)) score += 1;
+    }
+    // Specific subject boosts
+    if ((queryWords.includes('employee') || queryWords.includes('pekerja')) && (text.includes('24') || text.includes('pekerja') || text.includes('employee'))) {
+      score += 5;
+    }
+    if ((queryWords.includes('employer') || queryWords.includes('majikan')) && (text.includes('15') || text.includes('majikan') || text.includes('employer'))) {
+      score += 5;
+    }
+    return { clause: c, score };
+  });
+
+  rankedClauses.sort((a, b) => b.score - a.score);
+
+  // Take top 12 clauses and truncate each text snippet to ~400 characters to keep payload < 3000 tokens
+  const topClauses = rankedClauses.slice(0, 12).map(item => item.clause);
+
+  const clausesText = topClauses.map((c) => {
     let docName = (c.document_name ?? 'Legislation').replace(/\.pdf$/i, '').replace(/_/g, ' ');
     if (docName.includes('OSHA_1994_Act_514')) docName = 'Akta 514';
     if (docName.includes('FMA_1967_Act_139')) docName = 'Akta 139';
     const secNum = (c.section_number ?? '')
       .replace(/Section/i, 'Seksyen')
       .replace(/Regulation/i, 'Peraturan');
-    return `Rujukan: ${docName} (${secNum}) - Kandungan: ${c.clause_text ?? ''}`;
+    const snippet = (c.clause_text ?? '').slice(0, 450);
+    return `Rujukan: ${docName} (${secNum}) - Kandungan: ${snippet}`;
   }).join('\n');
 
   const messages: ChatMessage[] = [
@@ -165,7 +182,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     {
       role: 'user',
       content:
-        `${SYSTEM_PROMPT}\n\n` +
         `Legal references:\n${clausesText}\n\n` +
         `Question: ${query}`,
     },

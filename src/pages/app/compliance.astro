@@ -291,6 +291,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
   let supabase: ReturnType<typeof getSupabase> | null = null;
   let tenantId: string | null = null;
   let isPremium = getCachedPremiumStatus();
+  let isTrialExpired = false;
   let lastSearchResults: LegalSearchResult[] = [];
 
   // -------------------------------------------------------------------
@@ -1234,6 +1235,10 @@ import AppLayout from '../../layouts/AppLayout.astro';
         tenant.subscription_plan === 'premium' &&
         (tenant.subscription_expires_at === null ||
           new Date(tenant.subscription_expires_at) > new Date());
+      isTrialExpired =
+        tenant.subscription_plan === 'trial' &&
+        tenant.subscription_expires_at !== null &&
+        new Date(tenant.subscription_expires_at) <= new Date();
       localStorage.setItem('is_premium', isPremium ? 'true' : 'false');
       
       // AI Legal Search is unhidden for both Trial and Premium users

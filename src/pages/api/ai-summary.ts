@@ -33,7 +33,8 @@ const SYSTEM_PROMPT =
   'Analyze the primary subject (e.g. employee/pekerja, employer/majikan, machinery/jentera, noise/bising, chemical/bahan kimia) ' +
   'and language (Malay or English) of the user\'s question.\n' +
   'Always structure your response in the user\'s language using separate bullet points starting with a hyphen ("- ").\n' +
-  'CRITICAL RULE: When summarizing a legal section that contains sub-clauses (e.g. points a, b, c, d), you MUST list ALL individual sub-clauses (a, b, c, d) provided in the legal references without omitting any point.\n' +
+  'CRITICAL RULE 1: When summarizing a legal section that contains sub-clauses (e.g. points a, b, c, d), you MUST list ALL individual sub-clauses (a, b, c, d) provided in the legal references without omitting any point.\n' +
+  'CRITICAL RULE 2 (COMPLETION BUDGET): Plan your summary to fit cleanly within ~250 words. Simplify points concisely so that every section finishes completely. Do NOT start any heading or bullet point that you cannot complete. ALWAYS finish your final sentence cleanly with a full period ("."). Never leave any sentence or section cut off mid-way.\n' +
   'Place the clauses directly matching the primary subject FIRST under a clear section heading, followed by secondary background oversight under a separate heading.\n' +
   'Include the exact reference citation badge for each section (e.g. **Akta 514 Seksyen 24:** [duty]). ' +
   'Do not add outside information or assumptions.';

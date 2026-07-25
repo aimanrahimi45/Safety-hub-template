@@ -940,6 +940,28 @@ import AppLayout from '../../layouts/AppLayout.astro';
           similarity: similarityMap.get(cid) ?? 0,
         });
       }
+
+      // Fallback: If any matched clauses have no obligation records, add them directly
+      for (const cl of clauses) {
+        const cid = typeof cl.id === 'string' ? cl.id : '';
+        if (!cid || results.some((r) => r.clause_id === cid)) continue;
+        const docs = cl.documents as { name?: string; type?: string } | undefined;
+        results.push({
+          id: cid,
+          clause_id: cid,
+          clause_text: typeof cl.clause_text === 'string' ? cl.clause_text : '',
+          section_number: typeof cl.section_number === 'string' ? cl.section_number : null,
+          document_name: docs?.name ?? 'Legislation',
+          document_type: docs?.type ?? 'Act',
+          parent_citations: Array.isArray(cl.parent_citations) ? (cl.parent_citations as string[]) : null,
+          trigger_activity: 'General Duties & Compliance Provisions',
+          required_action: typeof cl.clause_text === 'string' ? cl.clause_text : '',
+          frequency: 'ongoing',
+          legal_weight: 'mandatory',
+          similarity: similarityMap.get(cid) ?? 0,
+        });
+      }
+
       results.sort((a, b) => b.similarity - a.similarity);
       lastSearchResults = results;
       renderSearchResults(results, q);
@@ -974,6 +996,10 @@ import AppLayout from '../../layouts/AppLayout.astro';
   }
 
   function renderSearchResults(items: LegalSearchResult[], q: string): void {
+    if (items.length === 0) {
+      searchResults.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔍</div><h3>No matches found</h3><p>Try rephrasing your search query (e.g., "duties of employee" or "noise hazards").</p></div>';
+      return;
+    }
     const docGroups: Record<string, DocGroup> = {};
     for (const it of items) {
       const docName = it.document_name || 'Legislation';

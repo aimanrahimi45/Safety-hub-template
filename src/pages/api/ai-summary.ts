@@ -82,9 +82,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   // 2. Parse body.
-  let body: { query?: unknown; clause_ids?: unknown };
+  let body: {
+    query?: unknown;
+    clause_ids?: unknown;
+    clauses?: Array<{ clause_text?: string; section_number?: string; document_name?: string }>;
+  };
   try {
-    body = (await request.json()) as { query?: unknown; clause_ids?: unknown };
+    body = (await request.json()) as typeof body;
   } catch {
     return json(400, {
       status: 'ERROR',
@@ -93,9 +97,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const query = typeof body.query === 'string' ? body.query.trim() : '';
-  const clauseIds = Array.isArray(body.clause_ids)
-    ? (body.clause_ids.filter((s): s is string => typeof s === 'string'))
-    : [];
+  let clausesPayload = Array.isArray(body.clauses) ? body.clauses : [];
 
   if (query.length === 0) {
     return json(200, {
@@ -103,65 +105,59 @@ export const POST: APIRoute = async ({ request, locals }) => {
       summary: 'Please enter a question.',
     } satisfies AiSummaryResponse);
   }
-  if (clauseIds.length === 0) {
-    return json(200, {
-      status: 'SUCCESS',
-      summary: 'No relevant legal references found. Try different keywords.',
-    } satisfies AiSummaryResponse);
-  }
 
-  // 3. Fetch clause texts from Project A.
-  const baseUrl = import.meta.env.SUPABASE_PUBLIC_URL ?? '';
-  const publicKey = import.meta.env.SUPABASE_PUBLIC_ANON_KEY ?? '';
-  if (!baseUrl || !publicKey) {
-    return json(500, {
-      status: 'ERROR',
-      message: 'Public Supabase is not configured on the server.',
-    } satisfies AiSummaryResponse);
-  }
+  // If clauses were not sent directly, attempt fetch via getSupabasePublic
+  if (clausesPayload.length === 0) {
+    const clauseIds = Array.isArray(body.clause_ids)
+      ? (body.clause_ids.filter((s): s is string => typeof s === 'string'))
+      : [];
 
-  const url2 = `/rest/v1/clauses?select=id,clause_text,section_number,documents(name,type)&id=in.(${clauseIds.map((id) => `"${id}"`).join(',')})`;
-  let clauses: Array<Record<string, unknown>>;
-  try {
-    const resp = await fetch(`${baseUrl}${url2}`, {
-      method: 'GET',
-      headers: {
-        'apikey': publicKey,
-        'Authorization': `Bearer ${publicKey}`,
-      },
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      return json(502, {
-        status: 'ERROR',
-        message: `Clauses fetch failed (${resp.status}): ${text.slice(0, 200)}`,
+    if (clauseIds.length === 0) {
+      return json(200, {
+        status: 'SUCCESS',
+        summary: 'No relevant legal references found. Try different keywords.',
       } satisfies AiSummaryResponse);
     }
-    clauses = (await resp.json()) as Array<Record<string, unknown>>;
-  } catch (err) {
-    return json(500, {
-      status: 'ERROR',
-      message: err instanceof Error ? err.message : 'Clauses fetch failed.',
-    } satisfies AiSummaryResponse);
+
+    try {
+      const { getSupabasePublic } = await import('../../lib/supabasePublic');
+      const supabasePublic = getSupabasePublic();
+      const { data: dbClauses } = await supabasePublic
+        .from('clauses')
+        .select('id, clause_text, section_number, documents(name,type)')
+        .in('id', clauseIds);
+
+      if (Array.isArray(dbClauses)) {
+        clausesPayload = dbClauses.map((c) => {
+          const docs = c.documents as { name?: string } | undefined;
+          return {
+            clause_text: typeof c.clause_text === 'string' ? c.clause_text : '',
+            section_number: typeof c.section_number === 'string' ? c.section_number : '',
+            document_name: docs?.name ?? 'Legislation',
+          };
+        });
+      }
+    } catch {
+      // Ignore fallback failure if client sends payload
+    }
   }
 
-  if (clauses.length === 0) {
+  if (clausesPayload.length === 0) {
     return json(200, {
       status: 'SUCCESS',
       summary: 'No relevant legal references found. Try different keywords.',
     } satisfies AiSummaryResponse);
   }
 
-  // 4. Build prompt (legacy shape).
-  const clausesText = clauses.map((c) => {
-    const docs = c.documents as { name?: string } | undefined;
-    let docName = (docs?.name ?? 'Legislation').replace(/\.pdf$/i, '').replace(/_/g, ' ');
+  // 4. Build prompt.
+  const clausesText = clausesPayload.map((c) => {
+    let docName = (c.document_name ?? 'Legislation').replace(/\.pdf$/i, '').replace(/_/g, ' ');
     if (docName.includes('OSHA_1994_Act_514')) docName = 'Akta 514';
     if (docName.includes('FMA_1967_Act_139')) docName = 'Akta 139';
-    const secNum = (typeof c.section_number === 'string' ? c.section_number : '')
+    const secNum = (c.section_number ?? '')
       .replace(/Section/i, 'Seksyen')
       .replace(/Regulation/i, 'Peraturan');
-    return `Rujukan: ${docName} (${secNum}) - Kandungan: ${typeof c.clause_text === 'string' ? c.clause_text : ''}`;
+    return `Rujukan: ${docName} (${secNum}) - Kandungan: ${c.clause_text ?? ''}`;
   }).join('\n');
 
   const messages: ChatMessage[] = [

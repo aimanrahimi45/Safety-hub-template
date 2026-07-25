@@ -1062,6 +1062,12 @@ import AppLayout from '../../layouts/AppLayout.astro';
         body: JSON.stringify({
           query: q,
           clause_ids: lastSearchResults.map((r) => r.clause_id),
+          clauses: lastSearchResults.map((r) => ({
+            clause_id: r.clause_id,
+            clause_text: r.clause_text,
+            section_number: r.section_number ?? '',
+            document_name: r.document_name ?? 'Legislation',
+          })),
         }),
       });
       const data = (await resp.json()) as AiSummaryResponse;

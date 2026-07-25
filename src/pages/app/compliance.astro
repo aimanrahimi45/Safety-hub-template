@@ -242,9 +242,9 @@ import AppLayout from '../../layouts/AppLayout.astro';
   // legal data is global Malaysian OSH law with no secrets, and RLS
   // is OFF on Project A's public tables.
   (window as unknown as { __PUBLIC_SUPABASE_URL__: string }).__PUBLIC_SUPABASE_URL__ =
-    import.meta.env.PUBLIC_SUPABASE_PUBLIC_URL ?? '';
+    import.meta.env.PUBLIC_SUPABASE_URL ?? '';
   (window as unknown as { __PUBLIC_SUPABASE_ANON_KEY__: string }).__PUBLIC_SUPABASE_ANON_KEY__ =
-    import.meta.env.PUBLIC_SUPABASE_PUBLIC_ANON_KEY ?? '';
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 
   // -------------------------------------------------------------------
   // Refs
@@ -830,141 +830,20 @@ import AppLayout from '../../layouts/AppLayout.astro';
     searchResults.innerHTML = renderSkeletonCards(3);
 
     try {
-      // 1. Embed via /api/ai-embed
-      const embedResp = await fetch('/api/ai-embed', {
+      const searchResp = await fetch('/api/ai-search', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ query: q }),
       });
-      if (!embedResp.ok) {
-        const err = await embedResp.json().catch(() => ({ error: 'Embed failed' }));
-        throw new Error(err.error ?? `HTTP ${embedResp.status}`);
-      }
-      const { embedding } = (await embedResp.json()) as { embedding: number[] };
 
-      // 2. RPC match_clauses via the public Supabase directly is
-      //    impossible (no anon write to RLS-protected / public anon
-      //    has no auth). For the AI Search we expose a search call
-      //    through a new endpoint to keep the key off the client. To
-      //    stay within scope of Phase 2.7 (no new endpoint beyond the
-      //    three declared), we instead call the same flow via the
-      //    /api/generate-register logic — but that uses a profile, not
-      //    a free-text query. The simpler approach: build a fake
-      //    profile with no operations + a "search" hazard isn't right.
-      //
-      //    Cleanest path: do the RPC + obligation join from a new
-      //    server route, or piggyback on the existing pattern. The
-      //    prompt specifies 4 API routes; we use /api/ai-summary
-      //    already, and re-use the embed + a direct public-Supabase
-      //    call from the browser. The public Supabase anon key is
-      //    safe to ship (the legal data is global), so we can call
-      //    match_clauses from the browser if we expose the URL+key
-      //    via PUBLIC_*.
-      //
-      //    To keep server-side-only secrets, we instead do the vector
-      //    search via the public Supabase anon key fetched in a
-      //    build-time env (public — same as the data being public).
-      //    For Phase 2.7, fall back to displaying the search box UI
-      //    but instruct the user via a placeholder when env is
-      //    missing.
-      const publicUrl = (window as unknown as { __PUBLIC_SUPABASE_URL__?: string }).__PUBLIC_SUPABASE_URL__;
-      const publicKey = (window as unknown as { __PUBLIC_SUPABASE_ANON_KEY__?: string }).__PUBLIC_SUPABASE_ANON_KEY__;
-      if (!publicUrl || !publicKey) {
-        searchResults.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">⚙️</div><h3>Search backend not configured</h3><p>The server has not been configured with SUPABASE_PUBLIC_URL / SUPABASE_PUBLIC_ANON_KEY. The AI Legal Search requires the public legal Supabase to be reachable from the browser.</p></div>';
-        return;
+      if (!searchResp.ok) {
+        const err = await searchResp.json().catch(() => ({ error: 'Search failed' }));
+        throw new Error(err.error ?? `HTTP ${searchResp.status}`);
       }
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const publicClient = createClient(publicUrl, publicKey, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      });
-      const { data: matched, error: matchErr } = await publicClient.rpc('match_clauses', {
-        query_embedding: embedding,
-        match_threshold: 0.35,
-        match_count: 8,
-      });
-      if (matchErr) throw new Error(matchErr.message);
-      const matchedRows = (matched ?? []) as Array<{ id: string; similarity: number }>;
-      if (matchedRows.length === 0) {
-        searchResults.innerHTML = '<div class="cmp-empty"><div class="cmp-empty-icon">🔍</div><h3>No matches found</h3><p>Try rephrasing your search query.</p></div>';
-        lastSearchResults = [];
-        return;
-      }
-
-      const clauseIds = matchedRows.map((c) => c.id);
-      const similarityMap = new Map<string, number>();
-      for (const c of matchedRows) similarityMap.set(c.id, c.similarity);
-
-      // Fetch obligations + clauses + documents via PostgREST joins.
-      const oblResp = await fetch(
-        `${publicUrl}/rest/v1/obligations?select=id,clause_id,trigger_activity,required_action,frequency,legal_weight&clause_id=in.(${clauseIds.map((id) => `"${id}"`).join(',')})`,
-        { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } },
-      );
-      if (!oblResp.ok) {
-        const text = await oblResp.text();
-        throw new Error(`Obligations fetch failed: ${text.slice(0, 200)}`);
-      }
-      const obligations = (await oblResp.json()) as Array<Record<string, unknown>>;
-      const clauseResp = await fetch(
-        `${publicUrl}/rest/v1/clauses?select=id,clause_text,section_number,parent_citations,documents(name,type)&id=in.(${clauseIds.map((id) => `"${id}"`).join(',')})`,
-        { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } },
-      );
-      if (!clauseResp.ok) {
-        const text = await clauseResp.text();
-        throw new Error(`Clauses fetch failed: ${text.slice(0, 200)}`);
-      }
-      const clauses = (await clauseResp.json()) as Array<Record<string, unknown>>;
-      const clauseById = new Map<string, Record<string, unknown>>();
-      for (const c of clauses) {
-        if (typeof c.id === 'string') clauseById.set(c.id, c);
-      }
-
-      const results: LegalSearchResult[] = [];
-      for (const obl of obligations) {
-        const cid = typeof obl.clause_id === 'string' ? obl.clause_id : '';
-        const cl = clauseById.get(cid);
-        if (!cl) continue;
-        const docs = cl.documents as { name?: string; type?: string } | undefined;
-        results.push({
-          id: typeof obl.id === 'string' ? obl.id : '',
-          clause_id: cid,
-          clause_text: typeof cl.clause_text === 'string' ? cl.clause_text : '',
-          section_number: typeof cl.section_number === 'string' ? cl.section_number : null,
-          document_name: docs?.name ?? 'Legislation',
-          document_type: docs?.type ?? 'Act',
-          parent_citations: Array.isArray(cl.parent_citations) ? (cl.parent_citations as string[]) : null,
-          trigger_activity: typeof obl.trigger_activity === 'string' ? obl.trigger_activity : '',
-          required_action: typeof obl.required_action === 'string' ? obl.required_action : '',
-          frequency: typeof obl.frequency === 'string' ? obl.frequency : 'other',
-          legal_weight: typeof obl.legal_weight === 'string' ? obl.legal_weight : 'mandatory',
-          similarity: similarityMap.get(cid) ?? 0,
-        });
-      }
-
-      // Fallback: If any matched clauses have no obligation records, add them directly
-      for (const cl of clauses) {
-        const cid = typeof cl.id === 'string' ? cl.id : '';
-        if (!cid || results.some((r) => r.clause_id === cid)) continue;
-        const docs = cl.documents as { name?: string; type?: string } | undefined;
-        results.push({
-          id: cid,
-          clause_id: cid,
-          clause_text: typeof cl.clause_text === 'string' ? cl.clause_text : '',
-          section_number: typeof cl.section_number === 'string' ? cl.section_number : null,
-          document_name: docs?.name ?? 'Legislation',
-          document_type: docs?.type ?? 'Act',
-          parent_citations: Array.isArray(cl.parent_citations) ? (cl.parent_citations as string[]) : null,
-          trigger_activity: 'General Duties & Compliance Provisions',
-          required_action: typeof cl.clause_text === 'string' ? cl.clause_text : '',
-          frequency: 'ongoing',
-          legal_weight: 'mandatory',
-          similarity: similarityMap.get(cid) ?? 0,
-        });
-      }
-
-      results.sort((a, b) => b.similarity - a.similarity);
-      lastSearchResults = results;
-      renderSearchResults(results, q);
+      const { results } = (await searchResp.json()) as { results: LegalSearchResult[] };
+      lastSearchResults = results ?? [];
+      renderSearchResults(lastSearchResults, q);
 
       // Increment query count upon successful search
       const nextUsed = currentUsed + 1;

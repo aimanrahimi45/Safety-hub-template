@@ -75,6 +75,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } satisfies AiSummaryResponse);
   }
 
+  // Allocation: Premium = 1,000 summaries/month | Trial = 25 summaries total.
+  const maxSummaries = isPremium ? 1000 : 25;
+
 
 
   // 2. Parse body.

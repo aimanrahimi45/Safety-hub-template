@@ -58,27 +58,37 @@ export const POST: APIRoute = async ({ request, locals }) => {
     },
   });
 
-  const { data: isPremium, error: premErr } = await serverClient.rpc('is_my_tenant_premium');
-  if (premErr) {
-    return json(500, {
-      status: 'ERROR',
-      message: `Premium check failed: ${premErr.message}`,
-    } satisfies AiSummaryResponse);
-  }
-  if (isPremium !== true) {
+  const { data: tenant } = await serverClient
+    .from('tenants')
+    .select('subscription_plan, subscription_expires_at')
+    .eq('owner_user_id', user.id)
+    .single();
+
+  const isPremium = tenant?.subscription_plan === 'premium' &&
+    (tenant?.subscription_expires_at === null || new Date(tenant.subscription_expires_at) > new Date());
+
+  const isTrialActive = tenant?.subscription_plan === 'trial' &&
+    tenant?.subscription_expires_at !== null &&
+    new Date(tenant.subscription_expires_at) > new Date();
+
+  if (!isPremium && !isTrialActive) {
     return json(403, {
       status: 'ERROR',
-      message: 'Premium feature. Upgrade your plan to use AI summary.',
+      message: 'Your 14-day free trial has expired. Upgrade to Premium to use AI summary.',
     } satisfies AiSummaryResponse);
   }
 
   // 1b. Credit check — 500 summaries/month per tenant-user.
-  const { data: creditOk, error: creditErr } = await serverClient.rpc('consume_ai_credit', { p_endpoint: 'summary', p_max: 500 });
-  if (creditErr || !creditOk) {
-    return json(429, {
-      status: 'ERROR',
-      message: 'Monthly AI summary credit limit reached (500/month). Your credits reset on the 1st.',
-    } satisfies AiSummaryResponse);
+  try {
+    const { data: creditOk, error: creditErr } = await serverClient.rpc('consume_ai_credit', { p_endpoint: 'summary', p_max: 500 });
+    if (!creditErr && creditOk === false) {
+      return json(429, {
+        status: 'ERROR',
+        message: 'Monthly AI summary credit limit reached (500/month). Your credits reset on the 1st.',
+      } satisfies AiSummaryResponse);
+    }
+  } catch {
+    // Soft fallback if RPC function is absent
   }
 
   // 2. Parse body.

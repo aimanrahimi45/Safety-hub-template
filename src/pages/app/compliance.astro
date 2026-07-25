@@ -924,11 +924,24 @@ import AppLayout from '../../layouts/AppLayout.astro';
 
     const docCount = Object.keys(docGroups).length;
 
-    // PRIMARY OUTPUT: AI Summary Box at top (visible by default with loading state)
+    // PRIMARY OUTPUT: AI Summary Box at top (visible by default with animated loading state)
     let html = `
       <div id="cmp-ai-summary-box" class="cmp-ai-summary-box" style="margin-bottom: 24px; border: 3px solid var(--border); border-radius: 16px; background: white; padding: 24px; box-shadow: 4px 4px 0 var(--shadow);">
-        <h4 style="margin-top: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">🤖 AI Legal Assistant (Executive Summary)</h4>
-        <div class="cmp-ai-summary-text" style="color: var(--text-muted); font-size: 0.95rem;">⚡ AI is analyzing Malaysian OSH legal corpus to generate executive summary…</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <h4 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px;">
+            <span class="cmp-ai-pulse-icon">🤖</span>
+            <span>AI Legal Assistant (Executive Summary)</span>
+          </h4>
+          <span class="cmp-ai-loading-pill">⚡ Synthesizing OSH Law...</span>
+        </div>
+        <div class="cmp-ai-summary-text">
+          <div class="cmp-ai-skeleton-container" style="margin-top: 14px;">
+            <div class="cmp-ai-skeleton-bar" style="width: 95%; height: 16px;"></div>
+            <div class="cmp-ai-skeleton-bar" style="width: 88%; height: 16px;"></div>
+            <div class="cmp-ai-skeleton-bar" style="width: 78%; height: 16px;"></div>
+            <div class="cmp-ai-skeleton-bar" style="width: 62%; height: 16px;"></div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -1090,7 +1103,23 @@ import AppLayout from '../../layouts/AppLayout.astro';
     const box = document.getElementById('cmp-ai-summary-box') as HTMLElement;
     if (!box) return;
     box.hidden = false;
-    box.innerHTML = '<h4 style="margin-top: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">🤖 AI Legal Assistant (Executive Summary)</h4><div class="cmp-ai-summary-text" style="color: var(--text-muted); font-size: 0.95rem;">⚡ AI is analyzing Malaysian OSH legal corpus to generate executive summary…</div>';
+    box.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h4 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px;">
+          <span class="cmp-ai-pulse-icon">🤖</span>
+          <span>AI Legal Assistant (Executive Summary)</span>
+        </h4>
+        <span class="cmp-ai-loading-pill">⚡ Synthesizing OSH Law...</span>
+      </div>
+      <div class="cmp-ai-summary-text">
+        <div class="cmp-ai-skeleton-container" style="margin-top: 14px;">
+          <div class="cmp-ai-skeleton-bar" style="width: 95%; height: 16px;"></div>
+          <div class="cmp-ai-skeleton-bar" style="width: 88%; height: 16px;"></div>
+          <div class="cmp-ai-skeleton-bar" style="width: 78%; height: 16px;"></div>
+          <div class="cmp-ai-skeleton-bar" style="width: 62%; height: 16px;"></div>
+        </div>
+      </div>
+    `;
     try {
       const resp = await fetch('/api/ai-summary', {
         method: 'POST',
@@ -1108,9 +1137,16 @@ import AppLayout from '../../layouts/AppLayout.astro';
       });
       const data = (await resp.json()) as AiSummaryResponse;
       if (data.status === 'SUCCESS' && typeof data.summary === 'string') {
+        const pillEl = box.querySelector('.cmp-ai-loading-pill') as HTMLElement;
+        if (pillEl) {
+          pillEl.textContent = '✅ Executive Summary Ready';
+          pillEl.style.background = 'rgba(15, 118, 110, 0.12)';
+          pillEl.style.color = '#0F766E';
+          pillEl.style.animation = 'none';
+        }
         const textEl = box.querySelector('.cmp-ai-summary-text') as HTMLElement;
         textEl.innerHTML = renderMarkdown(data.summary) +
-          '<div class="cmp-ai-copy-row"><button type="button" class="cmp-secondary-btn" id="cmp-ai-copy">📋 Copy to clipboard</button></div>';
+          '<div class="cmp-ai-copy-row" style="margin-top: 16px;"><button type="button" class="cmp-secondary-btn" id="cmp-ai-copy">📋 Copy to clipboard</button></div>';
         const copyBtn = document.getElementById('cmp-ai-copy');
         if (copyBtn) {
           copyBtn.addEventListener('click', async () => {
@@ -1280,6 +1316,41 @@ import AppLayout from '../../layouts/AppLayout.astro';
 </script>
 
 <style>
+  @keyframes cmpAiPulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(78, 168, 222, 0.3)); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(78, 168, 222, 0.7)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(78, 168, 222, 0.3)); }
+  }
+
+  @keyframes cmpShimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+  }
+
+  .cmp-ai-pulse-icon {
+    display: inline-block;
+    animation: cmpAiPulse 1.6s infinite ease-in-out;
+  }
+
+  .cmp-ai-loading-pill {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #0F766E;
+    background: rgba(15, 118, 110, 0.1);
+    border: 1.5px solid rgba(15, 118, 110, 0.3);
+    padding: 4px 12px;
+    border-radius: 20px;
+    animation: cmpAiPulse 1.8s infinite ease-in-out;
+  }
+
+  .cmp-ai-skeleton-bar {
+    background: linear-gradient(90deg, #F3F4F6 0%, #E5E7EB 50%, #F3F4F6 100%);
+    background-size: 200px 100%;
+    animation: cmpShimmer 1.5s infinite ease-in-out;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+
   .compliance-page { padding: 32px 0 64px; }
   .cmp-warning,
   .cmp-error {

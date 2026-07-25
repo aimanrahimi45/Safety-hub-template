@@ -799,6 +799,18 @@ import AppLayout from '../../layouts/AppLayout.astro';
     const q = searchQuery.value.trim();
     if (!q) return;
 
+    if (isTrialExpired) {
+      searchResults.innerHTML = `
+        <div class="cmp-empty" style="background: #FFEED2; border: 3px solid #2B2D42; border-radius: 16px; padding: 24px; text-align: center;">
+          <div class="cmp-empty-icon">⏳</div>
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; color: #2B2D42;">14-Day Free Trial Expired</h3>
+          <p style="font-size: 0.9rem; margin-bottom: 16px; color: #4A4E69;">Your 14-day free trial period has ended. Please upgrade to Premium to continue using AI Legal Search.</p>
+          <a href="/app/settings" class="cmp-primary-btn" style="display: inline-block; text-decoration: none;">🚀 Upgrade to Premium</a>
+        </div>
+      `;
+      return;
+    }
+
     const maxQueries = isPremium ? 100 : 25;
     const currentUsed = parseInt(localStorage.getItem(`amerispro_ai_used_${tenantId}`) ?? '0', 10);
 

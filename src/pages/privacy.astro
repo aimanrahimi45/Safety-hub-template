@@ -2,199 +2,138 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Privacy Policy & PDPA Declaration - AmerisPro">
+<Layout title="Privacy Policy & PDPA Statement - AmerisPro">
   <div class="legal-page">
-    <div class="container">
+    <div class="legal-container">
       
-      <!-- Hero Header -->
-      <div class="legal-hero">
-        <div class="badge badge-legal">🔒 Data Protection & Legal Compliance</div>
-        <h1 class="legal-title">Privacy Policy & PDPA Declaration</h1>
+      <!-- Header -->
+      <header class="legal-header">
+        <span class="legal-badge">🔒 Legal & Data Privacy</span>
+        <h1 class="legal-title">Privacy Policy & Notis PDPA</h1>
         <p class="legal-subtitle">
-          AmerisPro is committed to protecting your personal data in strict compliance with the 
-          <strong>Malaysian Personal Data Protection Act 2010 (Act 709)</strong>, 2024 Amendments, and international <strong>GDPR standards</strong>.
+          AmerisPro is committed to protecting your personal data in accordance with the 
+          <strong>Malaysian Personal Data Protection Act 2010 (Act 709)</strong> and international <strong>GDPR standards</strong>.
         </p>
         <div class="legal-meta">
-          <span>📅 Effective Date: July 25, 2026</span>
-          <span>•</span>
-          <span>🌍 Applicable Region: Malaysia & Global</span>
+          <span>Effective Date: July 25, 2026</span> • <span>Version 2.0</span>
         </div>
-      </div>
+      </header>
 
       <!-- Language Switcher Tabs -->
-      <div class="tab-switcher">
-        <button type="button" id="tab-btn-en" class="tab-btn active">
+      <div class="lang-tabs">
+        <button type="button" id="tab-en" class="lang-btn active">
           🇬🇧 English (Global & PDPA)
         </button>
-        <button type="button" id="tab-btn-bm" class="tab-btn">
+        <button type="button" id="tab-bm" class="lang-btn">
           🇲🇾 Bahasa Melayu (Notis PDPA)
         </button>
       </div>
 
-      <!-- ENGLISH CONTENT -->
-      <div id="content-en" class="legal-content">
-        <div class="legal-card">
-          <h2>1. Introduction & Scope</h2>
+      <!-- ENGLISH SECTION -->
+      <div id="content-en" class="legal-body">
+        
+        <section class="legal-section">
+          <h2>1. Overview & Principles</h2>
           <p>
-            This Privacy Policy describes how AmerisPro ("we," "our," or "us") collects, uses, stores, and protects personal and organizational data when you use the AmerisPro Safety Hub SaaS platform ("Service").
+            This Privacy Policy explains how AmerisPro ("we," "our," or "us") collects, processes, and safeguards data when you use the AmerisPro Safety Hub SaaS platform ("Service").
           </p>
           <p>
-            Whether you are on a <strong>14-Day Free Trial</strong> or a <strong>Premium Subscription</strong>, we adhere to the 7 Core Principles of the Malaysian Personal Data Protection Act 2010 (PDPA) and EU General Data Protection Regulation (GDPR) standards.
+            We process your personal and organizational data strictly in compliance with the seven Core Principles of the Malaysian Personal Data Protection Act 2010 (PDPA) and global General Data Protection Regulation (GDPR) standards.
           </p>
-        </div>
+        </section>
 
-        <div class="legal-card">
-          <h2>2. The 7 PDPA Principles We Adhere To</h2>
-          <div class="principle-grid">
-            <div class="principle-item">
-              <span class="principle-num">1</span>
-              <h4>General Principle (Consent)</h4>
-              <p>We process your personal data only with your explicit consent obtained during user registration or Google OAuth authorization.</p>
-            </div>
-            <div class="principle-item">
-              <span class="principle-num">2</span>
-              <h4>Notice & Choice Principle</h4>
-              <p>You are informed in advance about what data is collected (name, email, site inspection logs, PPE records) and how it is used.</p>
-            </div>
-            <div class="principle-item">
-              <span class="principle-num">3</span>
-              <h4>Disclosure Principle</h4>
-              <p>We never sell, rent, or trade your data. Data is disclosed only to essential sub-processors (Supabase Cloud, Vercel, Payment Gateways).</p>
-            </div>
-            <div class="principle-item">
-              <span class="principle-num">4</span>
-              <h4>Security Principle</h4>
-              <p>All data in transit is encrypted via SSL/TLS 256-bit. Database tables are isolated per organization using PostgreSQL Row Level Security (RLS).</p>
-            </div>
-            <div class="principle-item">
-              <span class="principle-num">5</span>
-              <h4>Retention Principle</h4>
-              <p>Your workspace data is retained for the duration of your active subscription and deleted upon account termination request.</p>
-            </div>
-            <div class="principle-item">
-              <span class="principle-num">6</span>
-              <h4>Data Integrity Principle</h4>
-              <p>We maintain accurate and up-to-date records. Users can update their workspace and staff profiles at any time inside Settings.</p>
-            </div>
-            <div class="principle-item">
-              <span class="principle-num">7</span>
-              <h4>Access Principle</h4>
-              <p>You have full rights to request access to, download, or request deletion of all personal data stored in your workspace.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="legal-card">
-          <h2>3. Data Infrastructure & Sub-Processors</h2>
-          <p>AmerisPro relies on enterprise-grade cloud providers to deliver fast and secure service in Southeast Asia:</p>
-          <table class="legal-table">
-            <thead>
-              <tr>
-                <th>Sub-Processor</th>
-                <th>Role / Purpose</th>
-                <th>Data Hosting Region</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Supabase Cloud</strong></td>
-                <td>Database, Authentication, Storage & Row-Level Security</td>
-                <td>Singapore Region (sin1)</td>
-              </tr>
-              <tr>
-                <td><strong>Vercel Inc.</strong></td>
-                <td>Serverless Application Hosting & Edge Functions</td>
-                <td>Singapore Region (sin1)</td>
-              </tr>
-              <tr>
-                <td><strong>HitPay / ToyyibPay</strong></td>
-                <td>Payment Gateway (FPX, DuitNow QR, TNG eWallet, Cards)</td>
-                <td>Malaysia</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="legal-card">
-          <h2>4. AI Legal Search & Document Processing</h2>
-          <p>
-            AmerisPro features an <strong>AI OSH Legal Vector Search Engine</strong> that indexes Malaysian safety legislation (Act 514, Act 872, Act 302, USECHH 2000).
-          </p>
+        <section class="legal-section">
+          <h2>2. Information We Collect</h2>
+          <p>To provide our safety management and compliance services, we collect:</p>
           <ul>
-            <li>Search queries are processed anonymously against vectorized public legal statutes.</li>
-            <li>Trial accounts receive <strong>25 AI Legal Search credits</strong> during the 14-day trial period.</li>
-            <li>Premium accounts receive <strong>100 AI Legal Search credits/month</strong>.</li>
-            <li>Your proprietary site records, private inspection photos, and staff lists are <strong>NEVER used to train AI models</strong>.</li>
+            <li><strong>Account & Organization Data:</strong> Name, work email address, company/tenant name, and workspace preferences collected during user registration or Google OAuth sign-in.</li>
+            <li><strong>Safety & Operational Records:</strong> Site inspection logs, incident reports, PPE stock balances, contractor registrations, staff directory data, and digital signature records created within your workspace.</li>
+            <li><strong>Technical & Usage Data:</strong> IP addresses, browser types, and session tokens necessary for secure authentication and system operation.</li>
           </ul>
-        </div>
+        </section>
 
-        <div class="legal-card">
-          <h2>5. Your Rights & Data Export</h2>
-          <p>Under Section 30 of Malaysia PDPA 2010, you are entitled to:</p>
+        <section class="legal-section">
+          <h2>3. Purpose of Processing & Third-Party Disclosure</h2>
+          <p>Your data is processed exclusively to deliver, maintain, and secure the AmerisPro platform. We never sell, rent, or trade your personal data to third parties.</p>
+          <p>Data may be processed by trusted infrastructure sub-processors essential to service delivery:</p>
           <ul>
-            <li>Export your inspection logs, PPE inventory, and contractor records to CSV/Excel at any time.</li>
-            <li>Request permanent account and workspace deletion by emailing our privacy team.</li>
-            <li>Revoke Google OAuth permissions directly inside your Google Account Security Settings.</li>
+            <li><strong>Cloud Database & Storage:</strong> Encrypted hosting provided via Supabase Cloud in secure regional data centers (Singapore region).</li>
+            <li><strong>Application Infrastructure:</strong> Serverless web hosting and edge routing provided via Vercel Inc.</li>
+            <li><strong>Payment Gateways:</strong> Secure transaction processing for subscriptions via licensed payment partners.</li>
           </ul>
-        </div>
+        </section>
+
+        <section class="legal-section">
+          <h2>4. AI Search & Data Privacy</h2>
+          <p>
+            AmerisPro provides automated search and compliance assistance tools to help organizations reference relevant safety statutes, codes of practice, and regulatory guidelines.
+          </p>
+          <p>
+            <strong>Data Confidentiality:</strong> Your workspace records, private site inspection logs, uploaded photos, and personnel directories are <strong>never used to train public AI models</strong> or disclosed to unauthorized external entities.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2>5. Data Security & Retention</h2>
+          <p>
+            We implement multi-layered security controls, including SSL/TLS 256-bit encryption in transit and PostgreSQL Row Level Security (RLS) data isolation per organization.
+          </p>
+          <p>
+            Your workspace data is retained for the duration of your active subscription. You retain full rights to request complete data export or workspace deletion at any time.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2>6. Contact & Data Access Rights</h2>
+          <p>
+            Under the PDPA Act 709 and applicable privacy laws, you have the right to request access to, correction of, or deletion of your personal data.
+          </p>
+          <p>
+            For any privacy inquiries or data requests, please contact our support team at: <a href="mailto:support@amerispro.com" class="legal-link">support@amerispro.com</a>.
+          </p>
+        </section>
+
       </div>
 
-      <!-- BAHASA MELAYU CONTENT -->
-      <div id="content-bm" class="legal-content" hidden>
-        <div class="legal-card">
+      <!-- BAHASA MELAYU SECTION -->
+      <div id="content-bm" class="legal-body" hidden>
+        
+        <section class="legal-section">
           <h2>1. Notis Perlindungan Data Peribadi (Akta 709)</h2>
           <p>
-            Notis ini dikeluarkan mengikut keperluan <strong>Seksyen 7 Akta Perlindungan Data Peribadi 2010 (PDPA)</strong> Malaysia. 
-            AmerisPro ("kami") menghormati privasi anda dan komited untuk melindungi data peribadi anda.
+            Notis ini dikeluarkan mengikut keperluan Seksyen 7 Akta Perlindungan Data Peribadi 2010 (PDPA) Malaysia. AmerisPro ("kami") komited untuk memelihara kerahsiaan dan keselamatan data peribadi anda.
           </p>
-        </div>
+        </section>
 
-        <div class="legal-card">
-          <h2>2. Jenis Data Yang Dikitip</h2>
-          <p>Kami mengumpul maklumat berikut untuk menyediakan perkhidmatan sistem pengurusan keselamatan OSH:</p>
-          <ul>
-            <li><strong>Maklumat Akaun:</strong> Nama pengguna, alamat e-mel, nama syarikat/organisasi.</li>
-            <li><strong>Data Rekod Keselamatan:</strong> Log pemeriksaan tapak, laporan insiden, kuantiti stok PPE, senarai kontraktor dan tandatangan digital.</li>
-            <li><strong>Data Pembayaran:</strong> Transaksi langganan disemak secara selamat melalui gerbang pembayaran FPX / DuitNow QR.</li>
-          </ul>
-        </div>
+        <section class="legal-section">
+          <h2>2. Pengumpulan dan Pemprosesan Data</h2>
+          <p>Kami mengumpul maklumat akaun, nama organisasi, alamat e-mel, dan rekod pengurusan keselamatan tapak yang dimasukkan oleh anda untuk tujuan perkhidmatan sistem SaaS AmerisPro.</p>
+        </section>
 
-        <div class="legal-card">
-          <h2>3. Tujuan Pemprosesan Data</h2>
-          <p>Data peribadi anda diproses untuk tujuan berikut sahaja:</p>
-          <ul>
-            <li>Menyediakan akses kepada platform SaaS AmerisPro.</li>
-            <li>Mengesahkan identiti pengguna semasa log masuk Google OAuth.</li>
-            <li>Memproses langganan akaun Percubaan 14 Hari dan Akaun Premium.</li>
-            <li>Menjana laporan audit PDF dan eksport data CSV untuk pemeriksaan Jabatan Keselamatan dan Kesihatan Pekerjaan (JKKP / DOSH).</li>
-          </ul>
-        </div>
-
-        <div class="legal-card">
-          <h2>4. Keselamatan & Hak Pengguna</h2>
+        <section class="legal-section">
+          <h2>3. Keselamatan dan Hak Pengguna</h2>
           <p>
-            Semua data anda disimpan di pusat data Singapura yang dilindungi oleh penyulitan SSL 256-bit dan dasar <i>Row Level Security (RLS)</i>.
+            Semua data disimpan secara selamat menggunakan penyulitan data terkini. Data anda tidak akan dijual atau dikongsi kepada pihak ketiga tanpa kebenaran.
           </p>
           <p>
-            Anda mempunyai hak mengikut Akta 709 untuk mengakses, membetulkan, memuat turun, atau meminta pemadaman data peribadi anda pada bila-bila masa.
+            Anda berhak mengikut Akta 709 untuk mengakses, membetulkan, memuat turun, atau meminta pemadaman data peribadi anda dengan menghubungi kami di: <a href="mailto:support@amerispro.com" class="legal-link">support@amerispro.com</a>.
           </p>
-        </div>
+        </section>
+
       </div>
 
-      <!-- Legal Contact Footer Card -->
-      <div class="legal-card legal-contact-card">
-        <h3>💬 Questions regarding your data privacy?</h3>
-        <p>If you have any questions or wish to exercise your PDPA data rights, please contact our support team at:</p>
-        <a href="mailto:support@amerispro.com" class="legal-contact-btn">✉️ Contact Support Team</a>
-      </div>
+      <!-- Footer -->
+      <footer class="legal-footer">
+        <p>&copy; 2026 AmerisPro. All rights reserved.</p>
+      </footer>
 
     </div>
   </div>
 </Layout>
 
 <script>
-  const btnEn = document.getElementById('tab-btn-en');
-  const btnBm = document.getElementById('tab-btn-bm');
+  const btnEn = document.getElementById('tab-en');
+  const btnBm = document.getElementById('tab-bm');
   const contentEn = document.getElementById('content-en');
   const contentBm = document.getElementById('content-bm');
 
@@ -217,218 +156,144 @@ import Layout from '../layouts/Layout.astro';
 
 <style>
   .legal-page {
-    padding: 40px 16px 64px;
+    padding: 48px 20px 80px;
     background: #FFF9EC;
     min-height: 100vh;
     font-family: 'Fredoka', sans-serif;
     color: #2B2D42;
   }
 
-  .container {
-    max-width: 900px;
+  .legal-container {
+    max-width: 820px;
     margin: 0 auto;
-  }
-
-  .legal-hero {
-    text-align: center;
-    margin-bottom: 32px;
-  }
-
-  .badge-legal {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 14px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    background: #FFD166;
+    background: #FFFFFF;
     border: 3px solid #2B2D42;
     border-radius: 20px;
-    box-shadow: 3px 3px 0px #2B2D42;
-    margin-bottom: 16px;
+    padding: 44px;
+    box-shadow: 6px 6px 0px #2B2D42;
   }
 
-  .legal-title {
-    font-size: 2.2rem;
-    font-weight: 800;
+  .legal-header {
+    border-bottom: 2px solid #E2E8F0;
+    padding-bottom: 24px;
+    margin-bottom: 28px;
+  }
+
+  .legal-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: #FFD166;
+    border: 2px solid #2B2D42;
+    border-radius: 20px;
     margin-bottom: 12px;
   }
 
+  .legal-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #2B2D42;
+  }
+
   .legal-subtitle {
-    font-size: 1.05rem;
-    max-width: 720px;
-    margin: 0 auto 16px;
-    line-height: 1.5;
+    font-size: 1rem;
     color: #4A4E69;
+    line-height: 1.5;
+    margin-bottom: 12px;
   }
 
   .legal-meta {
     font-size: 0.85rem;
     font-weight: 600;
     color: #6C757D;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
   }
 
-  /* Tab Switcher */
-  .tab-switcher {
+  /* Lang Tabs */
+  .lang-tabs {
     display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 28px;
+    gap: 10px;
+    margin-bottom: 32px;
   }
 
-  .tab-btn {
-    padding: 10px 20px;
+  .lang-btn {
+    padding: 8px 16px;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
-    background: #FFFFFF;
+    background: #FFF9EC;
     color: #2B2D42;
-    border: 3px solid #2B2D42;
-    border-radius: 12px;
-    box-shadow: 3px 3px 0px #2B2D42;
+    border: 2px solid #2B2D42;
+    border-radius: 10px;
     cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 2px 2px 0px #2B2D42;
+    transition: transform 0.1s, background 0.1s;
   }
 
-  .tab-btn:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0px #2B2D42;
-  }
-
-  .tab-btn.active {
+  .lang-btn.active {
     background: #FFD166;
-    transform: translate(1px, 1px);
     box-shadow: 2px 2px 0px #2B2D42;
   }
 
-  /* Cards */
-  .legal-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  .lang-btn:hover:not(.active) {
+    background: #FFEED2;
   }
 
-  .legal-card {
-    background: #FFFFFF;
-    border: 3px solid #2B2D42;
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 5px 5px 0px #2B2D42;
+  /* Content */
+  .legal-body {
+    line-height: 1.65;
   }
 
-  .legal-card h2 {
-    font-size: 1.35rem;
+  .legal-section {
+    margin-bottom: 28px;
+  }
+
+  .legal-section h2 {
+    font-size: 1.2rem;
     font-weight: 800;
-    margin-bottom: 14px;
     color: #2B2D42;
-    border-bottom: 2.5px solid #FFD166;
-    padding-bottom: 8px;
+    margin-bottom: 10px;
   }
 
-  .legal-card p, .legal-card li {
+  .legal-section p {
     font-size: 0.95rem;
-    line-height: 1.6;
     color: #333333;
+    margin-bottom: 10px;
   }
 
-  .legal-card ul {
+  .legal-section ul {
     padding-left: 20px;
-    margin-top: 10px;
+    margin-bottom: 12px;
   }
 
-  .legal-card li {
-    margin-bottom: 8px;
-  }
-
-  /* Grid */
-  .principle-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px;
-    margin-top: 16px;
-  }
-
-  .principle-item {
-    background: #FFF9EC;
-    border: 2.5px solid #2B2D42;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 3px 3px 0px #2B2D42;
-  }
-
-  .principle-num {
-    display: inline-block;
-    width: 28px;
-    height: 28px;
-    line-height: 28px;
-    text-align: center;
-    background: #FFD166;
-    border: 2px solid #2B2D42;
-    border-radius: 50%;
-    font-weight: 800;
-    font-size: 0.85rem;
-    margin-bottom: 8px;
-  }
-
-  .principle-item h4 {
-    font-size: 1rem;
-    font-weight: 800;
+  .legal-section li {
+    font-size: 0.92rem;
+    color: #333333;
     margin-bottom: 6px;
   }
 
-  .principle-item p {
-    font-size: 0.85rem;
-    margin: 0;
-  }
-
-  /* Table */
-  .legal-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 14px;
-    font-size: 0.9rem;
-  }
-
-  .legal-table th, .legal-table td {
-    border: 2px solid #2B2D42;
-    padding: 12px 14px;
-    text-align: left;
-  }
-
-  .legal-table th {
-    background: #FFEED2;
-    font-weight: 800;
-  }
-
-  /* Contact Card */
-  .legal-contact-card {
-    background: #FFEED2;
-    text-align: center;
-
-  .legal-contact-card h3 {
-    font-size: 1.25rem;
-    font-weight: 800;
-    margin-bottom: 8px;
-  }
-
-  .legal-contact-btn {
-    display: inline-block;
-    margin-top: 14px;
-    padding: 10px 20px;
-    background: #2B2D42;
-    color: #FFFFFF;
+  .legal-link {
+    color: #2B2D42;
     font-weight: 700;
-    border-radius: 10px;
-    text-decoration: none;
-    border: 2.5px solid #2B2D42;
-    box-shadow: 3px 3px 0px #FFD166;
-    transition: transform 0.1s;
+    text-decoration: underline;
   }
 
-  .legal-contact-btn:hover {
-    transform: translate(-1px, -1px);
+  .legal-footer {
+    border-top: 2px solid #E2E8F0;
+    padding-top: 20px;
+    margin-top: 36px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #6C757D;
+  }
+
+  @media (max-width: 640px) {
+    .legal-container {
+      padding: 24px;
+    }
+    .legal-title {
+      font-size: 1.6rem;
+    }
   }
 </style>

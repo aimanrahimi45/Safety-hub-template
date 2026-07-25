@@ -61,15 +61,37 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // 1. Generate vector embedding
-    const embedding = await getEmbedding(query);
+    // 1. Dual-language term & acronym query expansion for vector embedding
+    let searchEmbeddingPrompt = query;
+
+    if (/section|seksyen|peraturan/i.test(query)) {
+      searchEmbeddingPrompt = searchEmbeddingPrompt
+        .replace(/section\s*(\d+(?:\(\d+\))*)/gi, 'Peraturan $1 Seksyen $1 Section $1')
+        .replace(/peraturan\s*(\d+(?:\(\d+\))*)/gi, 'Peraturan $1 Seksyen $1 Section $1')
+        .replace(/seksyen\s*(\d+(?:\(\d+\))*)/gi, 'Peraturan $1 Seksyen $1 Section $1');
+    }
+
+    if (/usechh/i.test(query)) {
+      searchEmbeddingPrompt += ' Peraturan-Keselamatan-dan-Kesihatan-Pekerjaan-Penggunaan-dan-Standard-Pendedahan-Bahan-Kimia-Berbahaya-Kepada-Kesihatan-2000 Penilaian Risiko Kesihatan';
+    }
+    if (/class/i.test(query)) {
+      searchEmbeddingPrompt += ' Peraturan-peraturan-Keselamatan-dan-Kesihatan-Pekerjaan-Pengelasan-Pelabelan-dan-Helaian-Data-Keselamatan-Bahan-Kimia-Berbahaya-2013';
+    }
+    if (/fma/i.test(query)) {
+      searchEmbeddingPrompt += ' Akta-139-Akta-Kilang-dan-Jentera-1967';
+    }
+    if (/osha/i.test(query)) {
+      searchEmbeddingPrompt += ' Akta-514-Edisi-Cetakan-Semula-1.6.2024_BM.pdf';
+    }
+
+    const embedding = await getEmbedding(searchEmbeddingPrompt);
 
     // 2. Query Project A via getSupabasePublic
     const supabasePublic = getSupabasePublic();
     const { data: matched, error: rpcErr } = await supabasePublic.rpc('match_clauses', {
       query_embedding: embedding,
-      match_threshold: 0.10,
-      match_count: 20,
+      match_threshold: 0.05,
+      match_count: 50,
     });
 
     if (rpcErr) {
@@ -108,6 +130,39 @@ export const POST: APIRoute = async ({ request }) => {
         if (typeof c.id === 'string') clauseById.set(c.id, c as Record<string, unknown>);
       }
     }
+
+    // 4. Dynamic Document Title & Section Re-Ranking
+    const numMatch = query.match(/\d+(?:\(\d+\))*/);
+    const targetSectionNum = numMatch ? numMatch[0].toLowerCase() : '';
+    const queryTokens = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+
+    matchedRows.forEach(row => {
+      const c = clauseById.get(row.id);
+      if (!c) return;
+      const docs = c.documents as { name?: string } | undefined;
+      const docName = (docs?.name ?? '').toLowerCase();
+      const secNum = (typeof c.section_number === 'string' ? c.section_number : '').toLowerCase();
+
+      let boost = 0;
+      queryTokens.forEach(tok => {
+        if (docName.includes(tok)) boost += 0.30;
+      });
+
+      if (/usechh/i.test(query) && docName.includes('pendedahan-bahan-kimia')) boost += 0.50;
+      if (/class/i.test(query) && docName.includes('pengelasan-pelabelan')) boost += 0.50;
+      if (/fma/i.test(query) && docName.includes('kilang-dan-jentera')) boost += 0.50;
+      if (/514|osha/i.test(query) && docName.includes('514')) boost += 0.50;
+
+      if (targetSectionNum && secNum.includes(targetSectionNum)) {
+        if (secNum === targetSectionNum || secNum === `section ${targetSectionNum}` || secNum === `peraturan ${targetSectionNum}`) {
+          boost += 0.60;
+        } else {
+          boost += 0.40;
+        }
+      }
+
+      similarityMap.set(row.id, row.similarity + boost);
+    });
 
     const results: LegalSearchResult[] = [];
 

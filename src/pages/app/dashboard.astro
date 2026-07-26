@@ -16,6 +16,53 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         </span>
       </div>
 
+      <!-- SVG Content Loader Skeleton (Inspired by react-content-loader, prevents layout blips) -->
+      <div id="dash-skeleton-loader" class="dash-skeleton-container">
+        <div class="dash-skeleton-hero">
+          <div class="skeleton-rect line-title"></div>
+          <div class="skeleton-rect line-sub"></div>
+        </div>
+        <div class="dash-skeleton-kpi-grid">
+          <div class="skeleton-rect kpi-pill"></div>
+          <div class="skeleton-rect kpi-pill"></div>
+          <div class="skeleton-rect kpi-pill"></div>
+          <div class="skeleton-rect kpi-pill"></div>
+          <div class="skeleton-rect kpi-pill"></div>
+          <div class="skeleton-rect kpi-pill"></div>
+        </div>
+        <div class="dash-skeleton-main-grid">
+          <div class="dash-skeleton-left">
+            <div class="skeleton-card chart-skeleton-1">
+              <div class="skeleton-chart-bars">
+                <div class="skeleton-bar" style="height: 45%;"></div>
+                <div class="skeleton-bar" style="height: 70%;"></div>
+                <div class="skeleton-bar" style="height: 30%;"></div>
+                <div class="skeleton-bar" style="height: 85%;"></div>
+                <div class="skeleton-bar" style="height: 55%;"></div>
+                <div class="skeleton-bar" style="height: 75%;"></div>
+              </div>
+            </div>
+            <div class="skeleton-card chart-skeleton-2">
+              <div class="skeleton-donut-ring"></div>
+              <div class="skeleton-stat-pills">
+                <div class="skeleton-rect stat-pill-skel"></div>
+                <div class="skeleton-rect stat-pill-skel"></div>
+              </div>
+            </div>
+          </div>
+          <div class="dash-skeleton-right">
+            <div class="skeleton-card activity-skel">
+              <div class="skeleton-rect act-row"></div>
+              <div class="skeleton-rect act-row"></div>
+              <div class="skeleton-rect act-row"></div>
+              <div class="skeleton-rect act-row"></div>
+              <div class="skeleton-rect act-row"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real Dashboard Hero -->
       <section id="dash-hero" class="dash-hero" hidden>
         <div class="dash-hero-text">
           <h1>Welcome, <span id="dash-tenant-name">…</span></h1>
@@ -201,8 +248,10 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   const expiryEl = document.getElementById('dash-expiry') as HTMLElement;
   const statInspectionsPct = document.getElementById('stat-inspections-pct') as HTMLElement;
   const statPpePct = document.getElementById('stat-ppe-pct') as HTMLElement;
+  const skeletonLoaderEl = document.getElementById('dash-skeleton-loader') as HTMLElement;
 
   function showError(): void {
+    if (skeletonLoaderEl) skeletonLoaderEl.style.display = 'none';
     if (errorEl) errorEl.hidden = false;
   }
 
@@ -825,6 +874,14 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         faCounts.push(i === 0 ? (faVal ?? 0) : Math.floor(Math.random() * 4));
       }
 
+      // Synchronized Batch Reveal (Prevents Layout Blip)
+      if (skeletonLoaderEl) skeletonLoaderEl.style.display = 'none';
+
+      if (heroEl) heroEl.hidden = false;
+      if (metricsEl) metricsEl.hidden = false;
+      if (chartsEl) chartsEl.hidden = false;
+      if (activityEl) activityEl.hidden = false;
+
       drawIncidentTrendChart(monthLabels, incCounts, faCounts);
       drawComplianceDonut(insPct, ppePct);
 
@@ -833,10 +890,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         drawComplianceDonut(insPct, ppePct);
       });
 
-      if (heroEl) heroEl.hidden = false;
-      if (metricsEl) metricsEl.hidden = false;
-      if (chartsEl) chartsEl.hidden = false;
-      if (activityEl) activityEl.hidden = false;
       applyMobileTabState();
     })().catch(() => {
       showError();
@@ -845,6 +898,96 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 </script>
 
 <style>
+  @keyframes skeletonShimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+
+  .dash-skeleton-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .skeleton-rect {
+    background: linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
+    background-size: 800px 100%;
+    animation: skeletonShimmer 1.4s infinite ease-in-out;
+    border-radius: 8px;
+  }
+  .line-title { width: 220px; height: 24px; margin-bottom: 6px; }
+  .line-sub { width: 140px; height: 14px; }
+  .dash-skeleton-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .kpi-pill { height: 62px; }
+
+  .dash-skeleton-main-grid {
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap: 16px;
+    height: 460px;
+  }
+  .dash-skeleton-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .dash-skeleton-right {
+    display: flex;
+    flex-direction: column;
+  }
+  .skeleton-card {
+    background: #FFFFFF;
+    border: 3px solid #2B2D42;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 3px 3px 0px #2B2D42;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .skeleton-chart-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+  }
+  .skeleton-bar {
+    width: 24px;
+    background: linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
+    background-size: 800px 100%;
+    animation: skeletonShimmer 1.4s infinite ease-in-out;
+    border-radius: 4px 4px 0 0;
+  }
+  .skeleton-donut-ring {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 12px solid #E2E8F0;
+    position: relative;
+  }
+  .skeleton-stat-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-left: 20px;
+  }
+  .stat-pill-skel { width: 140px; height: 42px; }
+  .activity-skel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: space-evenly;
+  }
+  .act-row { width: 100%; height: 50px; }
+
   .dashboard-page {
     padding: 16px 0 32px;
   }
@@ -1329,6 +1472,9 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
      MOBILE RESPONSIVE SCOPING (< 768px)
      ------------------------------------------------------------------- */
   @media (max-width: 768px) {
+    .dash-skeleton-container {
+      display: none !important;
+    }
     .dash-charts-section {
       display: none !important;
     }

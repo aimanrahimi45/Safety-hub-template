@@ -324,8 +324,40 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     }
   }
 
-  // Canvas 1: Monthly Incident & Safety Trend Bar Chart
+  // Easing function for smooth 60fps animation
+  function easeOutCubic(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  let trendAnimFrame: number | null = null;
+  let donutAnimFrame: number | null = null;
+
+  // Canvas 1: Monthly Incident & Safety Trend Bar Chart (Animated)
   function drawIncidentTrendChart(months: string[], incidentCounts: number[], firstAidCounts: number[]): void {
+    if (trendAnimFrame) cancelAnimationFrame(trendAnimFrame);
+
+    const startTime = performance.now();
+    const duration = 750; // ms
+
+    function renderFrame(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const ease = easeOutCubic(progress);
+
+      const currentInc = incidentCounts.map((v) => v * ease);
+      const currentFa = firstAidCounts.map((v) => v * ease);
+
+      drawIncidentTrendCanvasFrame(months, currentInc, currentFa);
+
+      if (progress < 1) {
+        trendAnimFrame = requestAnimationFrame(renderFrame);
+      }
+    }
+
+    trendAnimFrame = requestAnimationFrame(renderFrame);
+  }
+
+  function drawIncidentTrendCanvasFrame(months: string[], incidentCounts: number[], firstAidCounts: number[]): void {
     const canvas = document.getElementById('canvas-incident-trend') as HTMLCanvasElement | null;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -333,6 +365,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
@@ -400,8 +434,32 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     });
   }
 
-  // Canvas 2: Compliance Donut & Progress Gauge
-  function drawComplianceDonut(inspectionPct: number, ppePct: number): void {
+  // Canvas 2: Compliance Donut & Progress Gauge (Animated & Perfect Circle Fix)
+  function drawComplianceDonut(targetInsPct: number, targetPpePct: number): void {
+    if (donutAnimFrame) cancelAnimationFrame(donutAnimFrame);
+
+    const startTime = performance.now();
+    const duration = 850; // ms
+
+    function renderFrame(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const ease = easeOutCubic(progress);
+
+      const currentIns = targetInsPct * ease;
+      const currentPpe = targetPpePct * ease;
+
+      drawComplianceDonutCanvasFrame(currentIns, currentPpe);
+
+      if (progress < 1) {
+        donutAnimFrame = requestAnimationFrame(renderFrame);
+      }
+    }
+
+    donutAnimFrame = requestAnimationFrame(renderFrame);
+  }
+
+  function drawComplianceDonutCanvasFrame(inspectionPct: number, ppePct: number): void {
     const canvas = document.getElementById('canvas-compliance-donut') as HTMLCanvasElement | null;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -409,6 +467,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
@@ -419,50 +479,55 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const outerRadius = Math.min(centerX, centerY) - 12;
-    const innerRadius = outerRadius - 16;
+    const side = Math.min(width, height);
+    const outerRadius = Math.max(10, side / 2 - 12);
+    const innerRadius = Math.max(10, outerRadius - 16);
 
-    // Background Ring
+    // Background Outer Ring
     ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 14;
+    ctx.lineWidth = 12;
     ctx.beginPath();
     ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI);
     ctx.stroke();
 
     // Inspection Arc (Emerald Green)
     const insAngle = (Math.min(100, Math.max(0, inspectionPct)) / 100) * 2 * Math.PI;
-    ctx.strokeStyle = '#06D6A0';
-    ctx.lineWidth = 14;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, outerRadius, -Math.PI / 2, -Math.PI / 2 + insAngle);
-    ctx.stroke();
+    if (insAngle > 0) {
+      ctx.strokeStyle = '#06D6A0';
+      ctx.lineWidth = 12;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, outerRadius, -Math.PI / 2, -Math.PI / 2 + insAngle);
+      ctx.stroke();
+    }
 
-    // Inner PPE Ring
+    // Background Inner Ring
     ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 9;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, innerRadius - 8, 0, 2 * Math.PI);
+    ctx.arc(centerX, centerY, innerRadius - 6, 0, 2 * Math.PI);
     ctx.stroke();
 
     // PPE Arc (Blue)
     const ppeAngle = (Math.min(100, Math.max(0, ppePct)) / 100) * 2 * Math.PI;
-    ctx.strokeStyle = '#4EA8DE';
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, innerRadius - 8, -Math.PI / 2, -Math.PI / 2 + ppeAngle);
-    ctx.stroke();
+    if (ppeAngle > 0) {
+      ctx.strokeStyle = '#4EA8DE';
+      ctx.lineWidth = 9;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, innerRadius - 6, -Math.PI / 2, -Math.PI / 2 + ppeAngle);
+      ctx.stroke();
+    }
 
     // Center Text
     ctx.fillStyle = '#2B2D42';
-    ctx.font = '900 16px sans-serif';
+    ctx.font = '900 15px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`${Math.round(inspectionPct)}%`, centerX, centerY - 2);
     ctx.font = 'bold 9px sans-serif';
     ctx.fillStyle = '#64748B';
-    ctx.fillText('READINESS', centerX, centerY + 14);
+    ctx.fillText('READINESS', centerX, centerY + 13);
   }
 
   // Mobile Tab Switcher Handler
@@ -1202,13 +1267,20 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       gap: 16px;
     }
     .dash-canvas-donut-wrapper {
-      flex: 1;
       height: 100%;
-      min-height: 0;
+      max-height: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 0 auto;
     }
     .dash-canvas-donut-wrapper canvas {
       width: 100% !important;
       height: 100% !important;
+      max-width: 100%;
+      max-height: 100%;
     }
     .dash-compliance-stats {
       display: flex;

@@ -1575,6 +1575,16 @@ import AppLayout from '../../layouts/AppLayout.astro';
     .cmp-tabs-wrapper.scrolled-end .cmp-tab-arrow {
       opacity: 0 !important;
     }
+    .cmp-tabs {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-x !important;
+    }
+    .cmp-tab-btn {
+      flex: 0 0 auto !important;
+      min-width: 125px !important;
+      padding: 12px 14px !important;
+    }
   }
 
   .cmp-tabs {

@@ -1334,7 +1334,16 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       gap: 16px;
       align-items: stretch;
     }
-    .dash-charts-section {
+    .dash-hero:not([hidden]) {
+      margin-bottom: 0;
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .dash-metrics-section:not([hidden]) {
+      display: block !important;
+    }
+    .dash-charts-section:not([hidden]) {
       display: flex !important;
       flex-direction: column;
       gap: 12px;
@@ -1462,7 +1471,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       height: 100%;
       min-height: 0;
     }
-    .activity-feed {
+    .activity-feed:not([hidden]) {
+      display: flex !important;
       flex: 1;
       min-height: 0;
     }

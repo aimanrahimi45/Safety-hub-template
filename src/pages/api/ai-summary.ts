@@ -42,6 +42,16 @@ function formatCreditsUsed(declaration: string | null | undefined, used: number)
   return `AI_CREDITS_USED: ${used}${current ? ` | ${current}` : ''}`;
 }
 
+function cleanDocDisplayName(name: string): string {
+  if (!name) return 'Legislation';
+  if (name.includes('Pemberitahuan-Mengenai-Kemalangan')) return 'Peraturan NADOPOD 2004';
+  if (name.includes('Pendedahan-Bahan-Kimia')) return 'Peraturan USECHH 2000';
+  if (name.includes('Pengelasan-Pelabelan')) return 'Peraturan CLASS 2013';
+  if (name.includes('OSHA_1994_Act_514') || name.includes('Akta-514')) return 'Akta 514 (OSHA 1994)';
+  if (name.includes('FMA_1967_Act_139') || name.includes('Akta-139')) return 'Akta 139 (FMA 1967)';
+  return name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+}
+
 const SYSTEM_PROMPT =
   'You are an AI Legal Assistant for Occupational Safety and Health (OSH) in Malaysia.\n' +
   'Analyze the primary subject (e.g. employee/pekerja, employer/majikan, machinery/jentera, noise/bising, chemical/bahan kimia) ' +
@@ -49,8 +59,8 @@ const SYSTEM_PROMPT =
   'Always structure your response in the user\'s language using separate bullet points starting with a hyphen ("- ").\n' +
   'CRITICAL RULE 1: When summarizing a legal section that contains sub-clauses (e.g. points a, b, c, d), you MUST list ALL individual sub-clauses (a, b, c, d) provided in the legal references without omitting any point.\n' +
   'CRITICAL RULE 2 (COMPLETION BUDGET): Plan your summary to fit cleanly within ~250 words. Simplify points concisely so that every section finishes completely. Do NOT start any heading or bullet point that you cannot complete. ALWAYS finish your final sentence cleanly with a full period ("."). Never leave any sentence or section cut off mid-way.\n' +
+  'CRITICAL RULE 3 (MANDATORY DOCUMENT CITATION): Every single bullet point or heading MUST explicitly include the full Document Name alongside the Section/Regulation number (e.g. **Peraturan NADOPOD 2004 Peraturan 5(2):** or **Akta 514 Seksyen 24:**). NEVER write "Seksyen 5" or "Section 5" alone without stating the exact document name.\n' +
   'Place the clauses directly matching the primary subject FIRST under a clear section heading, followed by secondary background oversight under a separate heading.\n' +
-  'Include the exact reference citation badge for each section (e.g. **Akta 514 Seksyen 24:** [duty]). ' +
   'Do not add outside information or assumptions.';
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -225,9 +235,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Sort sub-clauses inside group alphabetically/numerically (a, b, c, d)
     group.clauses.sort((a, b) => (a.section_number ?? '').localeCompare(b.section_number ?? '', undefined, { numeric: true, sensitivity: 'base' }));
 
-    let docDisplayName = group.docName.replace(/\.pdf$/i, '').replace(/_/g, ' ');
-    if (docDisplayName.includes('OSHA_1994_Act_514')) docDisplayName = 'Akta 514';
-    if (docDisplayName.includes('FMA_1967_Act_139')) docDisplayName = 'Akta 139';
+    const docDisplayName = cleanDocDisplayName(group.docName);
 
     for (const c of group.clauses) {
       const secNum = (c.section_number ?? '').replace(/Section/i, 'Seksyen').replace(/Regulation/i, 'Peraturan');

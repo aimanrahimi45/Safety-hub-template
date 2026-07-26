@@ -1665,6 +1665,20 @@ import AppLayout from '../../layouts/AppLayout.astro';
       min-width: 110px !important;
       padding: 12px 14px !important;
     }
+    .cmp-grid-options {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+    }
+    .cmp-profile-card {
+      padding: 14px 16px !important;
+    }
+    .cmp-profile-card h4 {
+      font-size: 0.95rem !important;
+    }
+    .cmp-profile-card p {
+      font-size: 0.80rem !important;
+      line-height: 1.4 !important;
+    }
   }
 
   .cmp-tabs {
@@ -1891,17 +1905,23 @@ import AppLayout from '../../layouts/AppLayout.astro';
   /* Operation Matrix Cards */
   .cmp-grid-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 14px;
   }
 
   .cmp-profile-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
     background: #FFFFFF;
     border: 3px solid #2B2D42 !important;
     border-radius: 12px !important;
     padding: 16px !important;
     box-shadow: 3px 3px 0px #2B2D42 !important;
-    text-align: left;
+    text-align: left !important;
     cursor: pointer;
     font-family: inherit;
     color: #2B2D42;
@@ -1920,14 +1940,16 @@ import AppLayout from '../../layouts/AppLayout.astro';
   }
 
   .cmp-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin-bottom: 10px !important;
   }
 
   .cmp-card-icon {
     font-size: 1.8rem;
+    line-height: 1;
   }
 
   .cmp-checkbox-custom {
@@ -1941,6 +1963,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     justify-content: center;
     color: #2B2D42;
     font-weight: 900;
+    flex-shrink: 0;
   }
 
   .cmp-profile-card.selected .cmp-checkbox-custom {
@@ -1954,17 +1977,25 @@ import AppLayout from '../../layouts/AppLayout.astro';
   }
 
   .cmp-profile-card h4 {
-    font-size: 1rem;
-    font-weight: 900;
-    margin: 0 0 4px 0;
-    color: #2B2D42;
+    display: block !important;
+    width: 100% !important;
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+    margin: 0 0 6px 0 !important;
+    color: #2B2D42 !important;
+    line-height: 1.3 !important;
+    word-break: break-word !important;
   }
 
   .cmp-profile-card p {
-    font-size: 0.82rem;
-    color: #475569;
-    margin: 0;
-    line-height: 1.4;
+    display: block !important;
+    width: 100% !important;
+    font-size: 0.82rem !important;
+    color: #475569 !important;
+    margin: 0 !important;
+    line-height: 1.45 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
   }
 
   .cmp-form-actions {

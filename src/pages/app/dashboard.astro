@@ -906,9 +906,12 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   .dash-skeleton-container {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
+  }
+  .dash-skeleton-hero {
+    margin-bottom: 4px;
   }
   .skeleton-rect {
     background: linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
@@ -923,22 +926,27 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     grid-template-columns: repeat(6, 1fr);
     gap: 10px;
   }
-  .kpi-pill { height: 62px; }
+  .kpi-pill { height: 64px; }
 
   .dash-skeleton-main-grid {
     display: grid;
     grid-template-columns: 1.55fr 1fr;
     gap: 16px;
-    height: 460px;
+    flex: 1;
+    min-height: 0;
   }
   .dash-skeleton-left {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    height: 100%;
+    min-height: 0;
   }
   .dash-skeleton-right {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    min-height: 0;
   }
   .skeleton-card {
     background: #FFFFFF;
@@ -1320,6 +1328,9 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       display: flex;
       flex-direction: column;
       gap: 12px;
+    }
+    .dash-skeleton-container {
+      height: 100%;
     }
     .metric-grid {
       grid-template-columns: repeat(6, 1fr);

@@ -1180,6 +1180,10 @@ import AppLayout from '../../layouts/AppLayout.astro';
       });
       const data = (await resp.json()) as AiSummaryResponse;
       if (data.status === 'SUCCESS' && typeof data.summary === 'string') {
+        const pacmanEl = box.querySelector('.cmp-pacman-wrapper') as HTMLElement;
+        if (pacmanEl) {
+          pacmanEl.remove();
+        }
         const pillEl = box.querySelector('.cmp-ai-loading-pill') as HTMLElement;
         if (pillEl) {
           pillEl.textContent = '✅ Executive Summary Ready';

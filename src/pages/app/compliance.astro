@@ -1237,7 +1237,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
       }
       const { data: tenant, error: tenantErr } = await supabase
         .from('tenants')
-        .select('id, industry, headcount, hazard_noise, hazard_chemicals, hazard_machinery, hazard_lifting, hazard_toxic, hazard_radiation, operations, subscription_plan, subscription_expires_at')
+        .select('id, industry, headcount, hazard_noise, hazard_chemicals, hazard_machinery, hazard_lifting, hazard_toxic, hazard_radiation, operations, subscription_plan, subscription_expires_at, contractor_declaration')
         .eq('owner_user_id', userData.user.id)
         .single();
       if (tenantErr || !tenant) {

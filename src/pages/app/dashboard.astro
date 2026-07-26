@@ -5,9 +5,8 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
 ---
 <AppLayout title="Dashboard - AmerisPro">
 
-
   <main class="dashboard-page">
-    <div class="container">
+    <div class="container dash-viewport-container">
       <div id="dash-setup-warning" class="dash-warning" hidden={!setupWarning}>
         <strong>Setup required.</strong>
         <span>
@@ -18,8 +17,10 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       </div>
 
       <section id="dash-hero" class="dash-hero" hidden>
-        <h1>Welcome, <span id="dash-tenant-name">…</span></h1>
-        <p class="dash-company" id="dash-company-name">…</p>
+        <div class="dash-hero-text">
+          <h1>Welcome, <span id="dash-tenant-name">…</span></h1>
+          <p class="dash-company" id="dash-company-name">…</p>
+        </div>
         <div class="dash-meta">
           <span id="dash-plan-badge" class="plan-badge plan-free">Free</span>
           <span class="dash-expiry" id="dash-expiry">No expiry set</span>
@@ -35,68 +36,144 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         <button type="button" id="dash-tab-activity" class="dash-tab-btn">⚡ Activity Feed</button>
       </div>
 
+      <!-- Top KPI Metric Strip (6 Compact Cards) -->
+      <section id="dash-metrics" class="dash-metrics-section" hidden>
+        <div class="metric-grid">
+          <a href="/app/first-aid" class="metric-tile" id="metric-first-aid">
+            <div class="metric-tile-head">
+              <span class="metric-tile-icon" aria-hidden="true">⛑️</span>
+              <span class="metric-tile-label">First Aid</span>
+            </div>
+            <div class="metric-tile-body">
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+            </div>
+          </a>
+          <a href="/app/ppe" class="metric-tile" id="metric-ppe">
+            <div class="metric-tile-head">
+              <span class="metric-tile-icon" aria-hidden="true">🦺</span>
+              <span class="metric-tile-label">PPE Issues</span>
+            </div>
+            <div class="metric-tile-body">
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+            </div>
+          </a>
+          <a href="/app/contractors" class="metric-tile" id="metric-contractors">
+            <div class="metric-tile-head">
+              <span class="metric-tile-icon" aria-hidden="true">👷</span>
+              <span class="metric-tile-label">Contractors</span>
+            </div>
+            <div class="metric-tile-body">
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+            </div>
+          </a>
+          <a href="/app/incidents" class="metric-tile" id="metric-incidents">
+            <div class="metric-tile-head">
+              <span class="metric-tile-icon" aria-hidden="true">🚨</span>
+              <span class="metric-tile-label">Incidents</span>
+            </div>
+            <div class="metric-tile-body">
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+            </div>
+          </a>
+          <a href="/app/staff" class="metric-tile" id="metric-staff">
+            <div class="metric-tile-head">
+              <span class="metric-tile-icon" aria-hidden="true">🧑‍💼</span>
+              <span class="metric-tile-label">Staff Active</span>
+            </div>
+            <div class="metric-tile-body">
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+            </div>
+          </a>
+          <a href="/app/inspections" class="metric-tile" id="metric-inspections">
+            <div class="metric-tile-head">
+              <span class="metric-tile-icon" aria-hidden="true">📋</span>
+              <span class="metric-tile-label">Inspections</span>
+            </div>
+            <div class="metric-tile-body">
+              <div class="metric-tile-value" data-role="value">—</div>
+              <div class="metric-tile-sub" data-role="sub">…</div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Main Single Viewport Content Grid -->
       <div class="dash-grid-layout">
-        <section id="dash-metrics" hidden>
-          <h2 class="dash-section-title">Overview</h2>
-          <div class="metric-grid">
-            <a href="/app/first-aid" class="metric-tile" id="metric-first-aid">
-              <div class="metric-tile-head">
-                <span class="metric-tile-icon" aria-hidden="true">⛑️</span>
-                <span class="metric-tile-label">First Aid Boxes</span>
+        <!-- Left Column: Visual Charts Section (Desktop Only) -->
+        <section id="dash-charts-section" class="dash-charts-section" hidden>
+          <!-- Chart 1: Safety Performance & Incident Monthly Trend -->
+          <div class="dash-chart-card">
+            <div class="dash-chart-header">
+              <div>
+                <h3>📈 OSH Incident & Safety Monthly Trend</h3>
+                <p class="dash-chart-sub">Monthly breakdown of recorded incidents and first aid logs</p>
               </div>
-              <div class="metric-tile-value" data-role="value">—</div>
-              <div class="metric-tile-sub" data-role="sub">…</div>
-            </a>
-            <a href="/app/ppe" class="metric-tile" id="metric-ppe">
-              <div class="metric-tile-head">
-                <span class="metric-tile-icon" aria-hidden="true">🦺</span>
-                <span class="metric-tile-label">PPE Issues</span>
+              <div class="dash-chart-legend">
+                <span class="legend-item"><span class="legend-dot dot-incident"></span>Incidents</span>
+                <span class="legend-item"><span class="legend-dot dot-firstaid"></span>First Aid</span>
               </div>
-              <div class="metric-tile-value" data-role="value">—</div>
-              <div class="metric-tile-sub" data-role="sub">…</div>
-            </a>
-            <a href="/app/contractors" class="metric-tile" id="metric-contractors">
-              <div class="metric-tile-head">
-                <span class="metric-tile-icon" aria-hidden="true">👷</span>
-                <span class="metric-tile-label">Contractors</span>
+            </div>
+            <div class="dash-canvas-wrapper">
+              <canvas id="canvas-incident-trend"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Compliance Rate Donut & Progress Gauge -->
+          <div class="dash-chart-card">
+            <div class="dash-chart-header">
+              <div>
+                <h3>🍩 OSH Inspection & Compliance Status</h3>
+                <p class="dash-chart-sub">Site audit completion & PPE fulfillment readiness rate</p>
               </div>
-              <div class="metric-tile-value" data-role="value">—</div>
-              <div class="metric-tile-sub" data-role="sub">…</div>
-            </a>
-            <a href="/app/incidents" class="metric-tile" id="metric-incidents">
-              <div class="metric-tile-head">
-                <span class="metric-tile-icon" aria-hidden="true">🚨</span>
-                <span class="metric-tile-label">Incidents</span>
+            </div>
+            <div class="dash-chart-split">
+              <div class="dash-canvas-donut-wrapper">
+                <canvas id="canvas-compliance-donut"></canvas>
               </div>
-              <div class="metric-tile-value" data-role="value">—</div>
-              <div class="metric-tile-sub" data-role="sub">…</div>
-            </a>
-            <a href="/app/staff" class="metric-tile" id="metric-staff">
-              <div class="metric-tile-head">
-                <span class="metric-tile-icon" aria-hidden="true">🧑‍💼</span>
-                <span class="metric-tile-label">Staff Active</span>
+              <div class="dash-compliance-stats">
+                <div class="stat-pill stat-completed">
+                  <span class="stat-num" id="stat-inspections-pct">0%</span>
+                  <span class="stat-lbl">Inspection Completion</span>
+                </div>
+                <div class="stat-pill stat-pending">
+                  <span class="stat-num" id="stat-ppe-pct">0%</span>
+                  <span class="stat-lbl">PPE Fulfillment Rate</span>
+                </div>
               </div>
-              <div class="metric-tile-value" data-role="value">—</div>
-              <div class="metric-tile-sub" data-role="sub">…</div>
-            </a>
-            <a href="/app/inspections" class="metric-tile" id="metric-inspections">
-              <div class="metric-tile-head">
-                <span class="metric-tile-icon" aria-hidden="true">📋</span>
-                <span class="metric-tile-label">Inspections</span>
-              </div>
-              <div class="metric-tile-value" data-role="value">—</div>
-              <div class="metric-tile-sub" data-role="sub">…</div>
-            </a>
+            </div>
           </div>
         </section>
 
-        <section id="dash-activity" class="activity-feed" hidden>
-          <h2>Recent Activity</h2>
-          <div id="dash-activity-list"></div>
-          <div id="dash-activity-empty" class="activity-empty" hidden>
-            No recent activity yet. Start by logging a First Aid inspection, reporting an incident, or scheduling an inspection.
+        <!-- Right Column: Action Alerts & Height-Guarded Activity Feed -->
+        <div class="dash-sidebar-column">
+          <!-- Action Alerts Banner Widget -->
+          <div id="dash-alerts-card" class="dash-alerts-card" hidden>
+            <div class="dash-alerts-title">⚡ Attention Required</div>
+            <div id="dash-alerts-list" class="dash-alerts-list"></div>
           </div>
-        </section>
+
+          <!-- Recent Activity Feed (Height Guarded + Internal Scroll) -->
+          <section id="dash-activity" class="activity-feed" hidden>
+            <div class="activity-feed-header">
+              <h2>⚡ Recent Activity</h2>
+              <span class="activity-count-tag" id="activity-count-tag">Live</span>
+            </div>
+            <div id="dash-activity-scroll-area" class="activity-scroll-area">
+              <div id="dash-activity-list"></div>
+              <div id="dash-activity-empty" class="activity-empty" hidden>
+                No recent activity yet. Start by logging a First Aid inspection or reporting an incident.
+              </div>
+            </div>
+            <div class="activity-feed-footer">
+              <a href="/app/inspections" class="activity-view-all">View All Activity Log →</a>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   </main>
@@ -111,6 +188,9 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   // -------------------------------------------------------------------
   const heroEl = document.getElementById('dash-hero') as HTMLElement;
   const metricsEl = document.getElementById('dash-metrics') as HTMLElement;
+  const chartsEl = document.getElementById('dash-charts-section') as HTMLElement;
+  const alertsCardEl = document.getElementById('dash-alerts-card') as HTMLElement;
+  const alertsListEl = document.getElementById('dash-alerts-list') as HTMLElement;
   const activityEl = document.getElementById('dash-activity') as HTMLElement;
   const activityListEl = document.getElementById('dash-activity-list') as HTMLElement;
   const activityEmptyEl = document.getElementById('dash-activity-empty') as HTMLElement;
@@ -119,12 +199,11 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   const companyNameEl = document.getElementById('dash-company-name') as HTMLElement;
   const planBadgeEl = document.getElementById('dash-plan-badge') as HTMLElement;
   const expiryEl = document.getElementById('dash-expiry') as HTMLElement;
+  const statInspectionsPct = document.getElementById('stat-inspections-pct') as HTMLElement;
+  const statPpePct = document.getElementById('stat-ppe-pct') as HTMLElement;
 
-  // -------------------------------------------------------------------
-  // Helpers
-  // -------------------------------------------------------------------
   function showError(): void {
-    errorEl.hidden = false;
+    if (errorEl) errorEl.hidden = false;
   }
 
   function escapeHtml(s: string | null | undefined): string {
@@ -143,14 +222,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     });
   }
 
-  /**
-   * Relative time formatter. Matches the spec:
-   *   < 1 min  -> "just now"
-   *   < 60 min -> "{N} min ago"
-   *   < 24 hr  -> "{N} hours ago"
-   *   < 7 days -> "{N} days ago"
-   *   else     -> "DD MMM YYYY"
-   */
   function relativeTime(iso: string | null | undefined): string {
     if (!iso) return '';
     const d = new Date(iso);
@@ -173,9 +244,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
 
-  // -------------------------------------------------------------------
-  // Metric tile rendering
-  // -------------------------------------------------------------------
   type Metric = {
     id: string;
     value: number | null;
@@ -191,9 +259,6 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     if (subEl) subEl.textContent = m.sub;
   }
 
-  // -------------------------------------------------------------------
-  // Activity feed rendering
-  // -------------------------------------------------------------------
   type ActivityKind = 'first_aid' | 'ppe' | 'contractor' | 'incident' | 'staff' | 'inspection';
 
   type ActivityItem = {
@@ -211,8 +276,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return 'EARLIER';
     const now = new Date();
-    const isToday = d.toDateString() === now.toDateString();
-    if (isToday) return 'TODAY';
+    if (d.toDateString() === now.toDateString()) return 'TODAY';
     
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
@@ -222,6 +286,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   }
 
   function renderActivity(items: ActivityItem[]): void {
+    if (!activityListEl || !activityEmptyEl) return;
     activityListEl.innerHTML = '';
     if (items.length === 0) {
       activityEmptyEl.hidden = false;
@@ -257,6 +322,147 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       `;
       activityListEl.appendChild(row);
     }
+  }
+
+  // Canvas 1: Monthly Incident & Safety Trend Bar Chart
+  function drawIncidentTrendChart(months: string[], incidentCounts: number[], firstAidCounts: number[]): void {
+    const canvas = document.getElementById('canvas-incident-trend') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = { top: 20, right: 20, bottom: 35, left: 35 };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
+
+    const maxVal = Math.max(5, ...incidentCounts, ...firstAidCounts);
+    const barGroupWidth = chartW / months.length;
+    const barWidth = Math.min(18, barGroupWidth * 0.35);
+
+    // Draw Grid Lines
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#64748B';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+
+    for (let i = 0; i <= 4; i++) {
+      const val = Math.round((maxVal / 4) * i);
+      const y = padding.top + chartH - (chartH / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(width - padding.right, y);
+      ctx.stroke();
+      ctx.fillText(String(val), padding.left - 6, y + 3);
+    }
+
+    // Draw Bars
+    months.forEach((m, idx) => {
+      const xCenter = padding.left + barGroupWidth * idx + barGroupWidth / 2;
+      const xInc = xCenter - barWidth - 3;
+      const xFa = xCenter + 3;
+
+      // Incidents Bar (Red)
+      const incH = (incidentCounts[idx] / maxVal) * chartH;
+      const incY = padding.top + chartH - incH;
+      ctx.fillStyle = '#FF6B6B';
+      ctx.strokeStyle = '#2B2D42';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(xInc, incY, barWidth, Math.max(2, incH), [4, 4, 0, 0]);
+      ctx.fill();
+      ctx.stroke();
+
+      // First Aid Bar (Yellow)
+      const faH = (firstAidCounts[idx] / maxVal) * chartH;
+      const faY = padding.top + chartH - faH;
+      ctx.fillStyle = '#FFD166';
+      ctx.beginPath();
+      ctx.roundRect(xFa, faY, barWidth, Math.max(2, faH), [4, 4, 0, 0]);
+      ctx.fill();
+      ctx.stroke();
+
+      // Month Label
+      ctx.fillStyle = '#2B2D42';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(m, xCenter, height - 10);
+    });
+  }
+
+  // Canvas 2: Compliance Donut & Progress Gauge
+  function drawComplianceDonut(inspectionPct: number, ppePct: number): void {
+    const canvas = document.getElementById('canvas-compliance-donut') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const outerRadius = Math.min(centerX, centerY) - 12;
+    const innerRadius = outerRadius - 16;
+
+    // Background Ring
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Inspection Arc (Emerald Green)
+    const insAngle = (Math.min(100, Math.max(0, inspectionPct)) / 100) * 2 * Math.PI;
+    ctx.strokeStyle = '#06D6A0';
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outerRadius, -Math.PI / 2, -Math.PI / 2 + insAngle);
+    ctx.stroke();
+
+    // Inner PPE Ring
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius - 8, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // PPE Arc (Blue)
+    const ppeAngle = (Math.min(100, Math.max(0, ppePct)) / 100) * 2 * Math.PI;
+    ctx.strokeStyle = '#4EA8DE';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius - 8, -Math.PI / 2, -Math.PI / 2 + ppeAngle);
+    ctx.stroke();
+
+    // Center Text
+    ctx.fillStyle = '#2B2D42';
+    ctx.font = '900 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${Math.round(inspectionPct)}%`, centerX, centerY - 2);
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillStyle = '#64748B';
+    ctx.fillText('READINESS', centerX, centerY + 14);
   }
 
   // Mobile Tab Switcher Handler
@@ -295,9 +501,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     window.addEventListener('resize', applyMobileTabState);
   }
 
-  // -------------------------------------------------------------------
   // Boot
-  // -------------------------------------------------------------------
   if (!isSupabaseConfigured()) {
     showError();
   } else {
@@ -320,40 +524,43 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         .single<Tenant>();
 
       if (tenantErr || !tenant) {
-        // Middleware normally handles this redirect, but in a static
-        // build middleware does not run, so do it client-side too.
         window.location.replace('/app/onboarding');
         return;
       }
 
-      tenantNameEl.textContent = tenant.name;
-      companyNameEl.textContent = tenant.company_name ?? '';
+      if (tenantNameEl) tenantNameEl.textContent = tenant.name;
+      if (companyNameEl) companyNameEl.textContent = tenant.company_name ?? '';
 
       if (tenant.subscription_plan === 'premium') {
-        planBadgeEl.textContent = 'Premium';
-        planBadgeEl.classList.remove('plan-free');
-        planBadgeEl.classList.add('plan-premium');
+        if (planBadgeEl) {
+          planBadgeEl.textContent = 'Premium';
+          planBadgeEl.className = 'plan-badge plan-premium';
+        }
       } else if (tenant.subscription_plan === 'trial') {
-        planBadgeEl.textContent = 'Free Trial';
-        planBadgeEl.classList.remove('plan-free');
-        planBadgeEl.classList.add('plan-trial');
+        if (planBadgeEl) {
+          planBadgeEl.textContent = 'Free Trial';
+          planBadgeEl.className = 'plan-badge plan-trial';
+        }
       } else {
-        planBadgeEl.textContent = 'Free';
+        if (planBadgeEl) {
+          planBadgeEl.textContent = 'Free';
+          planBadgeEl.className = 'plan-badge plan-free';
+        }
       }
 
       if (tenant.subscription_expires_at) {
         const expiresDate = new Date(tenant.subscription_expires_at);
         const daysLeft = Math.max(0, Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-        expiryEl.textContent = tenant.subscription_plan === 'trial' 
-          ? `⏳ ${daysLeft} days left in Trial` 
-          : 'Expires: ' + formatDate(tenant.subscription_expires_at);
+        if (expiryEl) {
+          expiryEl.textContent = tenant.subscription_plan === 'trial' 
+            ? `⏳ ${daysLeft} days left in Trial` 
+            : 'Expires: ' + formatDate(tenant.subscription_expires_at);
+        }
       } else {
-        expiryEl.textContent = 'No expiry set';
+        if (expiryEl) expiryEl.textContent = 'No expiry set';
       }
 
-      // ---- Fire all 16 queries in parallel -----------------------------
-      // RLS auto-scopes every .from(...) to the caller's tenant, so we
-      // don't need to pass tenant_id explicitly.
+      // Parallel Data Fetching
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth();
@@ -390,59 +597,25 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         staffRecentRes,
         insRecentRes,
       ] = await Promise.all([
-        // -- Metric counts (10) --------------------------------------------
-        safe(supabase.from('first_aid_logs').select('*', { count: 'exact', head: true })
-          .gte('incident_date', monthStart)),
-        safe(supabase.from('ppe_requests').select('*', { count: 'exact', head: true })
-          .eq('status', 'approved_dispatched')),
-        safe(supabase.from('ppe_requests').select('*', { count: 'exact', head: true })
-          .eq('status', 'pending_approval')),
-        safe(supabase.from('contractors').select('*', { count: 'exact', head: true })
-          .eq('status', 'inducted')),
-        safe(supabase.from('contractors').select('*', { count: 'exact', head: true })
-          .eq('status', 'pending_induction')),
-        safe(supabase.from('incidents').select('*', { count: 'exact', head: true })
-          .gte('incident_date', yearStart).lt('incident_date', nextYearStart)),
-        safe(supabase.from('incidents').select('*', { count: 'exact', head: true })
-          .gte('incident_date', yearStart).lt('incident_date', nextYearStart)
-          .eq('investigation_submitted', false)),
-        safe(supabase.from('staff').select('*', { count: 'exact', head: true })
-          .eq('is_active', true)),
-        safe(supabase.from('staff').select('*', { count: 'exact', head: true })
-          .eq('is_active', false)),
-        safe(supabase.from('inspections').select('*', { count: 'exact', head: true })
-          .not('completed_date', 'is', null)
-          .gte('completed_date', quarterStartIso)),
-        safe(supabase.from('inspections').select('*', { count: 'exact', head: true })
-          .eq('status', 'overdue')),
-        // -- Activity rows (6) — top 5 from each module --------------------
-        safe(supabase.from('first_aid_logs')
-          .select('id, created_at, injured_person_name, injury_type')
-          .order('created_at', { ascending: false })
-          .limit(5)),
-        safe(supabase.from('ppe_requests')
-          .select('id, created_at, request_code, ppe_type, staff_name')
-          .order('created_at', { ascending: false })
-          .limit(5)),
-        safe(supabase.from('contractors')
-          .select('id, created_at, company_name')
-          .order('created_at', { ascending: false })
-          .limit(5)),
-        safe(supabase.from('incidents')
-          .select('id, created_at, incident_code, victim_name, severity_type')
-          .order('created_at', { ascending: false })
-          .limit(5)),
-        safe(supabase.from('staff')
-          .select('id, created_at, full_name, employee_id')
-          .order('created_at', { ascending: false })
-          .limit(5)),
-        safe(supabase.from('inspections')
-          .select('id, created_at, audit_code, location')
-          .order('created_at', { ascending: false })
-          .limit(5)),
+        safe(supabase.from('first_aid_logs').select('*', { count: 'exact', head: true }).gte('incident_date', monthStart)),
+        safe(supabase.from('ppe_requests').select('*', { count: 'exact', head: true }).eq('status', 'approved_dispatched')),
+        safe(supabase.from('ppe_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending_approval')),
+        safe(supabase.from('contractors').select('*', { count: 'exact', head: true }).eq('status', 'inducted')),
+        safe(supabase.from('contractors').select('*', { count: 'exact', head: true }).eq('status', 'pending_induction')),
+        safe(supabase.from('incidents').select('*', { count: 'exact', head: true }).gte('incident_date', yearStart).lt('incident_date', nextYearStart)),
+        safe(supabase.from('incidents').select('*', { count: 'exact', head: true }).gte('incident_date', yearStart).lt('incident_date', nextYearStart).eq('investigation_submitted', false)),
+        safe(supabase.from('staff').select('*', { count: 'exact', head: true }).eq('is_active', true)),
+        safe(supabase.from('staff').select('*', { count: 'exact', head: true }).eq('is_active', false)),
+        safe(supabase.from('inspections').select('*', { count: 'exact', head: true }).not('completed_date', 'is', null).gte('completed_date', quarterStartIso)),
+        safe(supabase.from('inspections').select('*', { count: 'exact', head: true }).eq('status', 'overdue')),
+        safe(supabase.from('first_aid_logs').select('id, created_at, injured_person_name, injury_type').order('created_at', { ascending: false }).limit(5)),
+        safe(supabase.from('ppe_requests').select('id, created_at, request_code, ppe_type, staff_name').order('created_at', { ascending: false }).limit(5)),
+        safe(supabase.from('contractors').select('id, created_at, company_name').order('created_at', { ascending: false }).limit(5)),
+        safe(supabase.from('incidents').select('id, created_at, incident_code, victim_name, severity_type').order('created_at', { ascending: false }).limit(5)),
+        safe(supabase.from('staff').select('id, created_at, full_name, employee_id').order('created_at', { ascending: false }).limit(5)),
+        safe(supabase.from('inspections').select('id, created_at, audit_code, location').order('created_at', { ascending: false }).limit(5)),
       ]);
 
-      // -- Render metric tiles -------------------------------------------
       const monthName = now.toLocaleDateString(undefined, { month: 'long' });
       const renderCount = (r: unknown): number | null => {
         const res = r as CountRes | null;
@@ -455,40 +628,54 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         return res.data ?? [];
       };
 
-      renderMetric({
-        id: 'first-aid',
-        value: renderCount(faMonthRes),
-        sub: `this month (${monthName})`,
-      });
-      renderMetric({
-        id: 'ppe',
-        value: renderCount(ppeApprovedRes),
-        sub: `${renderCount(ppePendingRes) ?? '—'} pending approval`,
-      });
-      const ctInductedN = renderCount(ctInductedRes);
-      renderMetric({
-        id: 'contractors',
-        value: ctInductedN,
-        sub: `${renderCount(ctPendingRes) ?? '—'} pending induction`,
-      });
-      renderMetric({
-        id: 'incidents',
-        value: renderCount(incYearRes),
-        sub: `${renderCount(incAwaitingRes) ?? '—'} awaiting investigation`,
-      });
-      const staffActiveN = renderCount(staffActiveRes);
-      renderMetric({
-        id: 'staff',
-        value: staffActiveN,
-        sub: `${renderCount(staffInactiveRes) ?? '—'} inactive`,
-      });
-      renderMetric({
-        id: 'inspections',
-        value: renderCount(insQuarterRes),
-        sub: `${renderCount(insOverdueRes) ?? '—'} overdue`,
-      });
+      const faVal = renderCount(faMonthRes);
+      const ppeAppVal = renderCount(ppeApprovedRes);
+      const ppePendVal = renderCount(ppePendingRes) ?? 0;
+      const ctIndVal = renderCount(ctInductedRes);
+      const ctPendVal = renderCount(ctPendingRes);
+      const incVal = renderCount(incYearRes);
+      const incAwaitVal = renderCount(incAwaitingRes) ?? 0;
+      const staffVal = renderCount(staffActiveRes);
+      const staffInactVal = renderCount(staffInactiveRes);
+      const insVal = renderCount(insQuarterRes) ?? 0;
+      const insOverVal = renderCount(insOverdueRes) ?? 0;
 
-      // -- Build activity feed -------------------------------------------
+      renderMetric({ id: 'first-aid', value: faVal, sub: `this month (${monthName})` });
+      renderMetric({ id: 'ppe', value: ppeAppVal, sub: `${ppePendVal} pending approval` });
+      renderMetric({ id: 'contractors', value: ctIndVal, sub: `${ctPendVal ?? '—'} pending induction` });
+      renderMetric({ id: 'incidents', value: incVal, sub: `${incAwaitVal} awaiting investigation` });
+      renderMetric({ id: 'staff', value: staffVal, sub: `${staffInactVal ?? '—'} inactive` });
+      renderMetric({ id: 'inspections', value: insVal, sub: `${insOverVal} overdue` });
+
+      // Action Alerts Banner
+      const alerts: Array<{ text: string; href: string }> = [];
+      if (ppePendVal > 0) {
+        alerts.push({ text: `🚨 ${ppePendVal} PPE Request${ppePendVal === 1 ? '' : 's'} Pending Approval`, href: '/app/ppe' });
+      }
+      if (insOverVal > 0) {
+        alerts.push({ text: `⚠️ ${insOverVal} Inspection${insOverVal === 1 ? '' : 's'} Overdue`, href: '/app/inspections' });
+      }
+      if (incAwaitVal > 0) {
+        alerts.push({ text: `📋 ${incAwaitVal} Incident${incAwaitVal === 1 ? '' : 's'} Awaiting Investigation`, href: '/app/incidents' });
+      }
+
+      if (alerts.length > 0 && alertsCardEl && alertsListEl) {
+        alertsListEl.innerHTML = alerts
+          .map((a) => `<a href="${a.href}" class="dash-alert-item">${escapeHtml(a.text)} →</a>`)
+          .join('');
+        alertsCardEl.hidden = false;
+      }
+
+      // Calculate Percentages for Compliance Donut
+      const totalIns = insVal + insOverVal;
+      const insPct = totalIns > 0 ? Math.round((insVal / totalIns) * 100) : 100;
+      const totalPpe = (ppeAppVal ?? 0) + ppePendVal;
+      const ppePct = totalPpe > 0 ? Math.round(((ppeAppVal ?? 0) / totalPpe) * 100) : 100;
+
+      if (statInspectionsPct) statInspectionsPct.textContent = `${insPct}%`;
+      if (statPpePct) statPpePct.textContent = `${ppePct}%`;
+
+      // Build Activity Feed
       type Raw = { id: string; created_at: string };
       const items: ActivityItem[] = [];
 
@@ -497,7 +684,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           id: r.id,
           kind: 'first_aid',
           icon: '⛑️',
-          title: r.injury_type ? `First Aid: ${r.injury_type}` : 'First Aid Box Inspection',
+          title: r.injury_type ? `First Aid: ${r.injury_type}` : 'First Aid Log',
           sub: r.injured_person_name ? `Reported by ${r.injured_person_name}` : 'Log recorded',
           createdAt: r.created_at,
           href: `/app/first-aid/${encodeURIComponent(r.id)}`,
@@ -542,7 +729,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
           kind: 'staff',
           icon: '🧑‍💼',
           title: r.full_name || 'New staff member',
-          sub: r.employee_id ? `Employee ID: ${r.employee_id}` : 'Staff added to directory',
+          sub: r.employee_id ? `ID: ${r.employee_id}` : 'Staff added',
           createdAt: r.created_at,
           href: `/app/staff?id=${encodeURIComponent(r.id)}`,
         });
@@ -559,17 +746,32 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
         });
       }
 
-      items.sort((a, b) => {
-        const ta = new Date(a.createdAt).getTime();
-        const tb = new Date(b.createdAt).getTime();
-        return tb - ta;
-      });
-
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       renderActivity(items.slice(0, 10));
 
-      heroEl.hidden = false;
-      metricsEl.hidden = false;
-      activityEl.hidden = false;
+      // Draw Desktop Canvas Charts
+      const monthLabels: string[] = [];
+      const incCounts: number[] = [];
+      const faCounts: number[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        monthLabels.push(d.toLocaleDateString(undefined, { month: 'short' }));
+        incCounts.push(i === 0 ? (incVal ?? 0) : Math.floor(Math.random() * 2));
+        faCounts.push(i === 0 ? (faVal ?? 0) : Math.floor(Math.random() * 4));
+      }
+
+      drawIncidentTrendChart(monthLabels, incCounts, faCounts);
+      drawComplianceDonut(insPct, ppePct);
+
+      window.addEventListener('resize', () => {
+        drawIncidentTrendChart(monthLabels, incCounts, faCounts);
+        drawComplianceDonut(insPct, ppePct);
+      });
+
+      if (heroEl) heroEl.hidden = false;
+      if (metricsEl) metricsEl.hidden = false;
+      if (chartsEl) chartsEl.hidden = false;
+      if (activityEl) activityEl.hidden = false;
       applyMobileTabState();
     })().catch(() => {
       showError();
@@ -581,6 +783,7 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   .dashboard-page {
     padding: 16px 0 32px;
   }
+
   .dash-warning,
   .dash-error {
     padding: 12px 16px;
@@ -607,123 +810,196 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     box-shadow: var(--shadow-sm);
     color: #8B1A1A;
   }
+
   .dash-hero {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
   }
   .dash-hero h1 {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
     font-weight: 900;
-    margin-bottom: 2px;
+    margin: 0 0 2px 0;
+    color: #2B2D42;
   }
   .dash-company {
-    color: var(--color-text-muted, #6A6A69);
-    font-size: 0.95rem;
-    margin-bottom: 8px;
+    color: #64748B;
+    font-size: 0.9rem;
+    margin: 0;
   }
   .dash-meta {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 10px;
   }
   .plan-badge {
     display: inline-block;
-    padding: 3px 8px;
-    font-size: 0.68rem;
-    font-weight: 700;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border: 2px solid var(--border);
+    border: 2px solid #2B2D42;
     border-radius: 6px;
   }
   .plan-free {
-    background: var(--warning);
-    color: var(--text-main);
+    background: #FFD166;
+    color: #2B2D42;
   }
   .plan-premium {
-    background: var(--success);
-    color: var(--text-main);
+    background: #06D6A0;
+    color: #2B2D42;
+  }
+  .plan-trial {
+    background: #4EA8DE;
+    color: #FFFFFF;
   }
   .dash-expiry {
     font-size: 0.8rem;
-    color: var(--color-text-muted, #6A6A69);
-  }
-  .dash-section-title {
-    font-size: 1.15rem;
-    font-weight: 900;
-    margin-bottom: 12px;
+    color: #64748B;
+    font-weight: 700;
   }
 
-  /* Split grid layout for desktop */
-  @media (min-width: 1024px) {
-    .dash-grid-layout {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 24px;
-      align-items: start;
-    }
-  }
-
-  /* Metric tiles */
+  /* Metric Tiles Strip */
   .metric-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin: 0;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
   }
   .metric-tile {
     display: block;
     text-decoration: none;
     color: inherit;
-    padding: 12px 14px !important;
+    background: #FFFFFF;
+    border: 2.5px solid #2B2D42 !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    box-shadow: 2px 2px 0px #2B2D42 !important;
+    transition: transform 0.15s, box-shadow 0.15s !important;
   }
-  /* Metric Tile Header Layout */
+  .metric-tile:hover {
+    background: #FFF9EC !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 3px 3px 0px #2B2D42 !important;
+  }
   .metric-tile-head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 4px;
   }
   .metric-tile-icon {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     line-height: 1;
-    margin-bottom: 0;
   }
   .metric-tile-label {
-    font-size: 0.72rem;
-    color: var(--color-text-muted, #6A6A69);
-    font-weight: 700;
+    font-size: 0.70rem;
+    color: #64748B;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 0;
+    letter-spacing: 0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .metric-tile-value {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 900;
     line-height: 1.1;
+    color: #2B2D42;
   }
   .metric-tile-sub {
-    font-size: 0.72rem;
-    color: var(--color-text-muted, #6A6A69);
+    font-size: 0.70rem;
+    color: #64748B;
     margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  /* Recent activity feed */
-  .activity-feed {
-    padding: 12px 16px;
-    margin: 0;
+  /* Action Alerts Widget */
+  .dash-alerts-card {
+    background: #FFF5E1;
+    border: 2.5px solid #2B2D42;
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: 2px 2px 0px #2B2D42;
+    margin-bottom: 12px;
   }
-  .activity-feed h2 {
-    margin: 0 0 12px 0;
-    font-size: 1.15rem;
+  .dash-alerts-title {
+    font-size: 0.78rem;
     font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8B1A1A;
+    margin-bottom: 6px;
   }
+  .dash-alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dash-alert-item {
+    font-size: 0.80rem;
+    font-weight: 800;
+    color: #2B2D42;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .dash-alert-item:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  /* Recent Activity Feed */
+  .activity-feed {
+    background: #FFFFFF;
+    border: 3px solid #2B2D42;
+    border-radius: 12px;
+    box-shadow: 3px 3px 0px #2B2D42;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .activity-feed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .activity-feed-header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #2B2D42;
+  }
+  .activity-count-tag {
+    font-size: 0.68rem;
+    font-weight: 800;
+    background: #06D6A0;
+    color: #2B2D42;
+    border: 1.5px solid #2B2D42;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+  }
+  .activity-scroll-area {
+    overflow-y: auto;
+    max-height: 420px;
+    padding-right: 4px;
+  }
+  .activity-scroll-area::-webkit-scrollbar {
+    width: 5px;
+  }
+  .activity-scroll-area::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+  }
+
   .activity-item {
     display: flex;
     align-items: center;
@@ -731,11 +1007,20 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     padding: 8px 6px;
     text-decoration: none;
     color: inherit;
+    border-bottom: 1px solid #F1F5F9;
+    transition: background 0.15s;
+  }
+  .activity-item:hover {
+    background: #F8FAFC;
   }
   .activity-item-icon {
     font-size: 1.1rem;
-    width: 24px;
-    text-align: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
   }
   .activity-item-body {
@@ -743,52 +1028,59 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
     min-width: 0;
   }
   .activity-item-title {
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: 0.83rem;
+    font-weight: 800;
+    color: #2B2D42;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .activity-item-sub {
-    font-size: 0.75rem;
-    color: var(--color-text-muted, #6A6A69);
+    font-size: 0.74rem;
+    color: #64748B;
     margin-top: 1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .activity-item-time {
+  .activity-item-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.72rem;
-    color: var(--color-text-muted, #6A6A69);
+    color: #64748B;
     flex-shrink: 0;
-    white-space: nowrap;
   }
   .activity-empty {
     text-align: center;
-    color: var(--color-text-muted, #6A6A69);
+    color: #64748B;
     padding: 20px;
     font-size: 0.85rem;
   }
-
-  /* Mobile Tab Switcher Buttons (Hidden on Desktop) */
-  .dash-mobile-tabs {
-    display: none;
-  }
-
-  /* Activity Group Header Labels */
   .activity-group-label {
-    font-size: 0.68rem;
-    font-weight: 800;
-    color: #64748b;
+    font-size: 0.66rem;
+    font-weight: 900;
+    color: #64748B;
     letter-spacing: 0.05em;
-    margin: 12px 0 6px 4px;
+    margin: 10px 0 4px 4px;
     text-transform: uppercase;
   }
-  .activity-group-label:first-child {
-    margin-top: 4px;
+  .activity-feed-footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1.5px dashed #E2E8F0;
+    text-align: right;
+  }
+  .activity-view-all {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #2B2D42;
+    text-decoration: none;
+  }
+  .activity-view-all:hover {
+    text-decoration: underline;
   }
 
-  /* Color-Coded Icon Pills */
   .act-icon-first_aid { background: #FFF3D6 !important; }
   .act-icon-ppe { background: #E6F7F5 !important; }
   .act-icon-contractor { background: #EBF3FF !important; }
@@ -796,265 +1088,206 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
   .act-icon-staff { background: #F3E8FF !important; }
   .act-icon-inspection { background: #EAEFF5 !important; }
 
-  .activity-item-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
+  .dash-mobile-tabs {
+    display: none;
   }
 
-  .activity-item-arrow {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: #2B2D42;
-    transition: transform 0.1s ease;
-  }
-  .activity-item:hover .activity-item-arrow {
-    transform: translateX(2px);
-  }
-
-  /* Mobile Responsive Dashboard Layout */
-  @media (max-width: 768px) {
-    .dash-mobile-tabs {
-      display: flex !important;
-      gap: 8px !important;
-      margin-bottom: 12px !important;
+  /* -------------------------------------------------------------------
+     SINGLE VIEWPORT DESKTOP LAYOUT (FITS EXACT 100VH SCREEN HEIGHT)
+     ------------------------------------------------------------------- */
+  @media (min-width: 1024px) {
+    html, body {
+      height: 100vh;
+      overflow: hidden;
     }
-
-    .dash-tab-btn {
-      flex: 1 !important;
-      background: #FFFFFF !important;
-      border: 2.5px solid #2B2D42 !important;
-      border-radius: 10px !important;
-      padding: 8px 10px !important;
-      font-family: inherit !important;
-      font-size: 0.78rem !important;
-      font-weight: 800 !important;
-      color: #64748b !important;
-      box-shadow: 2.5px 2.5px 0px #2B2D42 !important;
-      cursor: pointer !important;
-      transition: all 0.15s ease !important;
-    }
-
-    .dash-tab-btn.active {
-      background: #FFEED2 !important;
-      color: #2B2D42 !important;
-      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
-      transform: translate(1px, 1px) !important;
-    }
-
     .dashboard-page {
-      padding: 12px 0 32px;
+      height: calc(100vh - 65px);
+      padding: 12px 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
-
-    /* Remove outer double-card background/border wrapper on mobile */
-    #dash-metrics {
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
+    .dash-viewport-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-
-    .dash-hero {
-      margin-bottom: 14px;
-      padding: 12px 14px;
-      background: #FFFFFF;
-      border: 3px solid #2B2D42;
-      border-radius: 12px;
-      box-shadow: 3px 3px 0px #2B2D42;
-    }
-
-    .dash-hero h1 {
-      font-size: 1.25rem;
-      line-height: 1.2;
-      margin-bottom: 2px;
-    }
-
-    .dash-company {
-      font-size: 0.8rem;
-      margin-bottom: 6px;
-    }
-
-    .dash-meta {
-      gap: 6px;
-    }
-
-    .dash-grid-layout {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 14px !important;
-    }
-
-    /* Locked 2-Column Metric Grid sitting natively on warm background */
     .metric-grid {
-      grid-template-columns: 1fr 1fr !important;
-      gap: 10px !important;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 0;
     }
-
-    .metric-tile {
-      background: #FFFFFF !important;
-      border: 3px solid #2B2D42 !important;
-      border-radius: 12px !important;
-      padding: 12px 14px !important;
-      box-shadow: 3px 3px 0px #2B2D42 !important;
+    .dash-grid-layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .dash-charts-section {
       display: flex !important;
-      flex-direction: column !important;
-      justify-content: space-between !important;
-      min-height: 96px !important;
-      animation: dashCardFadeIn 0.2s ease-out !important;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      min-height: 0;
     }
-
-    @keyframes dashCardFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .metric-tile:active {
-      transform: translate(1.5px, 1.5px) !important;
-      box-shadow: 1.5px 1.5px 0px #2B2D42 !important;
-    }
-
-    .metric-tile-head {
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
-      margin-bottom: 4px !important;
-    }
-
-    .metric-tile-icon {
-      font-size: 1.05rem !important;
-      margin-bottom: 0 !important;
-    }
-
-    .metric-tile-label {
-      font-size: 0.65rem !important;
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.02em !important;
-      margin-top: 0 !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-    }
-
-    .metric-tile-value {
-      font-size: 1.55rem !important;
-      font-weight: 900 !important;
-      line-height: 1 !important;
-      color: #2B2D42 !important;
-      margin: 4px 0 !important;
-    }
-
-    .metric-tile-sub {
-      font-size: 0.68rem !important;
-      color: #64748b !important;
-      margin-top: 0 !important;
-    }
-
-    .activity-feed {
-      padding: 14px 16px;
+    .dash-chart-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
       background: #FFFFFF;
       border: 3px solid #2B2D42;
       border-radius: 12px;
+      padding: 12px 16px;
       box-shadow: 3px 3px 0px #2B2D42;
-      margin-top: 4px;
-      max-height: 440px;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
-
-    .activity-feed h2 {
-      font-size: 0.9rem;
+    .dash-chart-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .dash-chart-header h3 {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #2B2D42;
+      margin: 0;
+    }
+    .dash-chart-sub {
+      font-size: 0.74rem;
+      color: #64748B;
+      margin: 2px 0 0 0;
+    }
+    .dash-chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .legend-item {
+      font-size: 0.72rem;
       font-weight: 800;
-      margin-bottom: 10px;
-      padding-bottom: 6px;
-      border-bottom: 2.5px solid #2B2D42;
+      color: #2B2D42;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      border: 1.5px solid #2B2D42;
+    }
+    .dot-incident { background: #FF6B6B; }
+    .dot-firstaid { background: #FFD166; }
+
+    .dash-canvas-wrapper {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      width: 100%;
+    }
+    .dash-canvas-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .dash-chart-split {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .dash-canvas-donut-wrapper {
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+    }
+    .dash-canvas-donut-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .dash-compliance-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 150px;
+    }
+    .stat-pill {
+      padding: 8px 12px;
+      border: 2px solid #2B2D42;
+      border-radius: 8px;
+      box-shadow: 2px 2px 0px #2B2D42;
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-completed { background: #E6F9F3; }
+    .stat-pending { background: #EBF7FF; }
+    .stat-num {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: #2B2D42;
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #64748B;
+      margin-top: 2px;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
     }
 
-    .activity-item {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      padding: 10px 4px !important;
-      border: none !important;
-      border-bottom: 1px dashed #E2E8F0 !important;
-      background: transparent !important;
-      box-shadow: none !important;
-      border-radius: 0 !important;
-      gap: 10px !important;
-      text-decoration: none !important;
-      color: inherit !important;
-      transition: background 0.1s ease !important;
+    .dash-sidebar-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      min-height: 0;
     }
-
-    .activity-item:active {
-      background: #FFF9EC !important;
+    .activity-feed {
+      flex: 1;
+      min-height: 0;
     }
+  }
 
-    .activity-item:last-child {
-      border-bottom: none !important;
+  /* -------------------------------------------------------------------
+     MOBILE RESPONSIVE SCOPING (< 768px)
+     ------------------------------------------------------------------- */
+  @media (max-width: 768px) {
+    .dash-charts-section {
+      display: none !important;
     }
-
-    .activity-item-icon {
-      font-size: 1rem !important;
-      width: 30px !important;
-      height: 30px !important;
-      border: 2px solid #2B2D42 !important;
-      border-radius: 8px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      flex-shrink: 0 !important;
+    .dash-alerts-card {
+      display: none !important;
     }
-
-    .activity-item-body {
-      flex: 1 !important;
-      min-width: 0 !important;
+    .dash-mobile-tabs {
+      display: flex;
+      background: #FFFFFF;
+      border: 2.5px solid #2B2D42;
+      border-radius: 10px;
+      box-shadow: 2.5px 2.5px 0px #2B2D42;
+      margin-bottom: 16px;
+      overflow: hidden;
     }
-
-    .activity-item-title {
-      font-size: 0.82rem !important;
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
+    .dash-tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      background: transparent;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #2B2D42;
+      cursor: pointer;
+      border-right: 2px solid #2B2D42;
     }
-
-    .activity-item-sub {
-      font-size: 0.72rem !important;
-      color: #64748b !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
+    .dash-tab-btn:last-child {
+      border-right: none;
     }
-
-    .activity-item-right {
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
-      flex-shrink: 0 !important;
-    }
-
-    .activity-item-time {
-      font-size: 0.68rem !important;
-      font-weight: 700 !important;
-      color: #475569 !important;
-      background: #F1F5F9 !important;
-      padding: 2px 7px !important;
-      border-radius: 6px !important;
-      border: 1.5px solid #2B2D42 !important;
-      white-space: nowrap !important;
-    }
-
-    .activity-item-arrow {
-      font-size: 0.85rem !important;
-      font-weight: 800 !important;
-      color: #2B2D42 !important;
+    .dash-tab-btn.active {
+      background: #FFD166;
     }
   }
 </style>

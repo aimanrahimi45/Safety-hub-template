@@ -1372,9 +1372,9 @@ import AppLayout from '../../layouts/AppLayout.astro';
   };
 </script>
 
-<style is:global>
-  /* Self-contained PacmanLoader CSS */
-  .cmp-pacman-wrapper {
+<style>
+  /* Self-contained PacmanLoader CSS (globally targeted for dynamic innerHTML injection) */
+  :global(.cmp-pacman-wrapper) {
     display: inline-block;
     position: relative;
     font-size: 0;
@@ -1383,7 +1383,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     vertical-align: middle;
   }
 
-  .cmp-pacman-top {
+  :global(.cmp-pacman-top) {
     width: 0;
     height: 0;
     border-right: 12px solid transparent;
@@ -1397,7 +1397,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     animation: cmpPacmanTop 0.5s infinite ease-in-out;
   }
 
-  .cmp-pacman-bottom {
+  :global(.cmp-pacman-bottom) {
     width: 0;
     height: 0;
     border-right: 12px solid transparent;
@@ -1411,7 +1411,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     animation: cmpPacmanBottom 0.5s infinite ease-in-out;
   }
 
-  .cmp-pacman-ball {
+  :global(.cmp-pacman-ball) {
     background-color: #0F766E;
     width: 6px;
     height: 6px;
@@ -1422,10 +1422,10 @@ import AppLayout from '../../layouts/AppLayout.astro';
     animation: cmpPacmanBall 1s infinite linear;
   }
 
-  .cmp-pacman-ball:nth-child(3) { animation-delay: -0.75s; }
-  .cmp-pacman-ball:nth-child(4) { animation-delay: -0.50s; }
-  .cmp-pacman-ball:nth-child(5) { animation-delay: -0.25s; }
-  .cmp-pacman-ball:nth-child(6) { animation-delay: 0s; }
+  :global(.cmp-pacman-ball:nth-child(3)) { animation-delay: -0.75s; }
+  :global(.cmp-pacman-ball:nth-child(4)) { animation-delay: -0.50s; }
+  :global(.cmp-pacman-ball:nth-child(5)) { animation-delay: -0.25s; }
+  :global(.cmp-pacman-ball:nth-child(6)) { animation-delay: 0s; }
 
   @keyframes cmpPacmanTop {
     0% { transform: rotate(0deg); }
@@ -1564,7 +1564,87 @@ import AppLayout from '../../layouts/AppLayout.astro';
     50% { transform: translateY(-50%) translateX(3px); opacity: 0.85; }
   }
 
+  .cmp-tabs {
+    display: flex;
+    background: #FFFFFF !important;
+    border: 3px solid #2B2D42 !important;
+    border-radius: 12px !important;
+    box-shadow: 4px 4px 0px #2B2D42 !important;
+    overflow-x: auto;
+    margin-bottom: 0 !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .cmp-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cmp-tab-btn {
+    flex: 1 1 0px !important;
+    white-space: nowrap;
+    background: transparent !important;
+    border: none !important;
+    border-right: 2.5px solid #2B2D42 !important;
+    padding: 13px 8px !important;
+    font-family: inherit;
+    font-size: 0.83rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #2B2D42 !important;
+    cursor: pointer;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px;
+    transition: background 0.15s ease !important;
+  }
+
+  .cmp-tab-btn:last-child {
+    border-right: none !important;
+  }
+
+  .cmp-tabs:has(#cmp-tab-search[hidden]) #cmp-tab-policy {
+    border-right: none !important;
+  }
+
+  .cmp-tab-btn,
+  .cmp-tab-btn:hover,
+  .cmp-tab-btn:focus,
+  .cmp-tab-btn:active,
+  .cmp-tab-btn.active {
+    transform: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .cmp-tab-btn:hover {
+    background: #FFF9EC !important;
+  }
+
+  .cmp-tab-btn.active {
+    background: #FFD166 !important;
+    color: #2B2D42 !important;
+  }
+
+  .cmp-tab-btn[hidden] {
+    display: none !important;
+  }
+
+  .tab-text-short {
+    display: none;
+  }
+
+  /* Mobile Responsive Tab Styles */
   @media (max-width: 768px) {
+    .tab-text-full {
+      display: none !important;
+    }
+    .tab-text-short {
+      display: inline !important;
+    }
     .cmp-tabs-wrapper::after {
       opacity: 1;
     }
@@ -1582,7 +1662,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
     }
     .cmp-tab-btn {
       flex: 0 0 auto !important;
-      min-width: 125px !important;
+      min-width: 110px !important;
       padding: 12px 14px !important;
     }
   }

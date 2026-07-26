@@ -1324,10 +1324,14 @@ const setupWarning = !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PU
       flex-direction: column;
     }
     .dash-viewport-container {
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 0 24px !important;
       height: 100%;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      box-sizing: border-box;
     }
     .dash-skeleton-container {
       height: 100%;

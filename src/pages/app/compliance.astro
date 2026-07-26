@@ -1162,6 +1162,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
         </div>
       </div>
     `;
+    console.log('[DEBUG] Pacman loader inserted into AI summary box');
     try {
       const resp = await fetch('/api/ai-summary', {
         method: 'POST',
@@ -1367,7 +1368,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
   };
 </script>
 
-<style>
+<style is:global>
   /* Self-contained PacmanLoader CSS */
   .cmp-pacman-wrapper {
     display: inline-block;

@@ -1368,82 +1368,75 @@ import AppLayout from '../../layouts/AppLayout.astro';
 </script>
 
 <style>
-  /* Exact react-spinners PacmanLoader CSS */
+  /* Self-contained PacmanLoader CSS */
   .cmp-pacman-wrapper {
     display: inline-block;
     position: relative;
     font-size: 0;
-    width: 100px;
-    height: 50px;
-    transform: scale(0.5);
-    transform-origin: center center;
-    margin: -10px 0;
+    width: 60px;
+    height: 25px;
+    vertical-align: middle;
   }
 
   .cmp-pacman-top {
     width: 0;
     height: 0;
-    border-right: 25px solid transparent;
-    border-top: 25px solid transparent;
-    border-left: 25px solid var(--primary);
-    border-bottom: 25px solid var(--primary);
-    border-radius: 25px;
+    border-right: 12px solid transparent;
+    border-top: 12px solid transparent;
+    border-left: 12px solid #0F766E;
+    border-bottom: 12px solid #0F766E;
+    border-radius: 12px;
     position: absolute;
     top: 0;
     left: 0;
-    animation: cmpPacmanTop 0.8s infinite ease-in-out;
+    animation: cmpPacmanTop 0.5s infinite ease-in-out;
   }
 
   .cmp-pacman-bottom {
     width: 0;
     height: 0;
-    border-right: 25px solid transparent;
-    border-top: 25px solid var(--primary);
-    border-left: 25px solid var(--primary);
-    border-bottom: 25px solid transparent;
-    border-radius: 25px;
+    border-right: 12px solid transparent;
+    border-top: 12px solid #0F766E;
+    border-left: 12px solid #0F766E;
+    border-bottom: 12px solid transparent;
+    border-radius: 12px;
     position: absolute;
     top: 0;
     left: 0;
-    animation: cmpPacmanBottom 0.8s infinite ease-in-out;
+    animation: cmpPacmanBottom 0.5s infinite ease-in-out;
   }
 
   .cmp-pacman-ball {
-    background-color: var(--primary);
-    width: 8px;
-    height: 8px;
-    border-radius: 100%;
+    background-color: #0F766E;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
     position: absolute;
-    top: 25px;
-    left: 100px;
-    transform: translate(0, -6.25px);
-    animation-name: cmpPacmanBall;
-    animation-duration: 1s;
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;
-    animation-fill-mode: both;
+    top: 9px;
+    left: 50px;
+    animation: cmpPacmanBall 1s infinite linear;
   }
 
-  .cmp-pacman-ball:nth-child(3) { animation-delay: 0.5s; }
-  .cmp-pacman-ball:nth-child(4) { animation-delay: 0.75s; }
-  .cmp-pacman-ball:nth-child(5) { animation-delay: 1s; }
-  .cmp-pacman-ball:nth-child(6) { animation-delay: 1.25s; }
+  .cmp-pacman-ball:nth-child(3) { animation-delay: -0.75s; }
+  .cmp-pacman-ball:nth-child(4) { animation-delay: -0.50s; }
+  .cmp-pacman-ball:nth-child(5) { animation-delay: -0.25s; }
+  .cmp-pacman-ball:nth-child(6) { animation-delay: 0s; }
 
   @keyframes cmpPacmanTop {
     0% { transform: rotate(0deg); }
-    50% { transform: rotate(-44deg); }
+    50% { transform: rotate(-35deg); }
     100% { transform: rotate(0deg); }
   }
 
   @keyframes cmpPacmanBottom {
     0% { transform: rotate(0deg); }
-    50% { transform: rotate(44deg); }
+    50% { transform: rotate(35deg); }
     100% { transform: rotate(0deg); }
   }
 
   @keyframes cmpPacmanBall {
     75% { opacity: 0.7; }
-    100% { transform: translate(-100px, -6.25px); opacity: 0; }
+    100% { transform: translate(-45px, 0); opacity: 0; }
   }
 
   @keyframes cmpAiPulse {

@@ -954,9 +954,14 @@ import AppLayout from '../../layouts/AppLayout.astro';
             <span class="cmp-ai-pulse-icon">🤖</span>
             <span>AI Legal Assistant (Executive Summary)</span>
           </h4>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div class="cmp-pacman-spinner">
-              <div></div><div></div><div></div><div></div><div></div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="cmp-pacman-wrapper">
+              <div class="cmp-pacman-top"></div>
+              <div class="cmp-pacman-bottom"></div>
+              <div class="cmp-pacman-ball"></div>
+              <div class="cmp-pacman-ball"></div>
+              <div class="cmp-pacman-ball"></div>
+              <div class="cmp-pacman-ball"></div>
             </div>
             <span class="cmp-ai-loading-pill">⚡ Synthesizing OSH Law...</span>
           </div>
@@ -1136,9 +1141,14 @@ import AppLayout from '../../layouts/AppLayout.astro';
           <span class="cmp-ai-pulse-icon">🤖</span>
           <span>AI Legal Assistant (Executive Summary)</span>
         </h4>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="cmp-pacman-spinner">
-            <div></div><div></div><div></div><div></div><div></div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="cmp-pacman-wrapper">
+            <div class="cmp-pacman-top"></div>
+            <div class="cmp-pacman-bottom"></div>
+            <div class="cmp-pacman-ball"></div>
+            <div class="cmp-pacman-ball"></div>
+            <div class="cmp-pacman-ball"></div>
+            <div class="cmp-pacman-ball"></div>
           </div>
           <span class="cmp-ai-loading-pill">⚡ Synthesizing OSH Law...</span>
         </div>
@@ -1358,57 +1368,62 @@ import AppLayout from '../../layouts/AppLayout.astro';
 </script>
 
 <style>
-  /* Pacman Spinner Animation */
-  .cmp-pacman-spinner {
+  /* Exact PacmanLoader CSS referenced from react-spinners */
+  .cmp-pacman-wrapper {
     position: relative;
-    width: 44px;
-    height: 20px;
+    width: 60px;
+    height: 30px;
     display: inline-block;
     vertical-align: middle;
+    transform: scale(0.65);
+    transform-origin: left center;
   }
-  .cmp-pacman-spinner > div:nth-child(1),
-  .cmp-pacman-spinner > div:nth-child(2) {
-    width: 0;
-    height: 0;
-    border: 10px solid var(--primary);
-    border-right-color: transparent;
-    border-radius: 50%;
+  .cmp-pacman-top,
+  .cmp-pacman-bottom {
+    width: 0px;
+    height: 0px;
+    border-right: 18px solid transparent;
+    border-top: 18px solid #0F766E;
+    border-left: 18px solid #0F766E;
+    border-bottom: 18px solid #0F766E;
+    border-radius: 18px;
     position: absolute;
     top: 0;
     left: 0;
   }
-  .cmp-pacman-spinner > div:nth-child(1) {
-    animation: cmpPacmanRotateTop 0.4s infinite alternate ease-in-out;
+  .cmp-pacman-top {
+    animation: cmpPacmanRotateTop 0.5s 0s infinite ease-in-out;
   }
-  .cmp-pacman-spinner > div:nth-child(2) {
-    animation: cmpPacmanRotateBottom 0.4s infinite alternate ease-in-out;
+  .cmp-pacman-bottom {
+    animation: cmpPacmanRotateBottom 0.5s 0s infinite ease-in-out;
   }
-  .cmp-pacman-spinner > div:nth-child(3),
-  .cmp-pacman-spinner > div:nth-child(4),
-  .cmp-pacman-spinner > div:nth-child(5) {
-    background-color: var(--primary);
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
+  .cmp-pacman-ball {
+    background-color: #0F766E;
+    width: 8px;
+    height: 8px;
+    border-radius: 100%;
     position: absolute;
-    top: 7px;
-    right: 0;
-    animation: cmpPacmanDots 0.8s infinite linear;
+    top: 14px;
+    left: 60px;
   }
-  .cmp-pacman-spinner > div:nth-child(4) { animation-delay: -0.26s; }
-  .cmp-pacman-spinner > div:nth-child(5) { animation-delay: -0.52s; }
+  .cmp-pacman-ball:nth-child(3) { animation: cmpPacmanBalls 1s -0.66s infinite linear; }
+  .cmp-pacman-ball:nth-child(4) { animation: cmpPacmanBalls 1s -0.33s infinite linear; }
+  .cmp-pacman-ball:nth-child(5) { animation: cmpPacmanBalls 1s 0s infinite linear; }
+  .cmp-pacman-ball:nth-child(6) { animation: cmpPacmanBalls 1s 0.33s infinite linear; }
 
   @keyframes cmpPacmanRotateTop {
     0% { transform: rotate(0deg); }
-    100% { transform: rotate(-35deg); }
+    50% { transform: rotate(-44deg); }
+    100% { transform: rotate(0deg); }
   }
   @keyframes cmpPacmanRotateBottom {
     0% { transform: rotate(0deg); }
-    100% { transform: rotate(35deg); }
+    50% { transform: rotate(44deg); }
+    100% { transform: rotate(0deg); }
   }
-  @keyframes cmpPacmanDots {
-    0% { transform: translate(0, 0); opacity: 1; }
-    100% { transform: translate(-32px, 0); opacity: 0; }
+  @keyframes cmpPacmanBalls {
+    75% { opacity: 0.7; }
+    100% { transform: translate(-60px, 0); opacity: 0; }
   }
 
   @keyframes cmpAiPulse {

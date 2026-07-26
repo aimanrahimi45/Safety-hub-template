@@ -28,6 +28,20 @@ function extractBaseSection(sectionNum: string): string {
   return m ? m[0].trim() : clean;
 }
 
+function parseCreditsUsed(declaration: string | null | undefined): number {
+  if (!declaration) return 0;
+  const match = declaration.match(/AI_CREDITS_USED:\s*(\d+)/i);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+function formatCreditsUsed(declaration: string | null | undefined, used: number): string {
+  const current = declaration ?? '';
+  if (current.includes('AI_CREDITS_USED:')) {
+    return current.replace(/AI_CREDITS_USED:\s*\d+/i, `AI_CREDITS_USED: ${used}`);
+  }
+  return `AI_CREDITS_USED: ${used}${current ? ` | ${current}` : ''}`;
+}
+
 const SYSTEM_PROMPT =
   'You are an AI Legal Assistant for Occupational Safety and Health (OSH) in Malaysia.\n' +
   'Analyze the primary subject (e.g. employee/pekerja, employer/majikan, machinery/jentera, noise/bising, chemical/bahan kimia) ' +
@@ -64,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const { data: tenant } = await serverClient
     .from('tenants')
-    .select('subscription_plan, subscription_expires_at')
+    .select('subscription_plan, subscription_expires_at, contractor_declaration')
     .eq('owner_user_id', user.id)
     .single();
 
@@ -79,6 +93,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json(403, {
       status: 'ERROR',
       message: 'Your 14-day free trial has expired. Upgrade to Premium to use AI summary.',
+    } satisfies AiSummaryResponse);
+  }
+
+  const currentUsed = parseCreditsUsed(tenant?.contractor_declaration);
+  const maxSummaries = isPremium ? 1000 : 25;
+
+  if (currentUsed >= maxSummaries) {
+    return json(403, {
+      status: 'ERROR',
+      message: `Monthly AI credit limit reached (${maxSummaries}/${maxSummaries}). Your credits reset on the 1st.`,
     } satisfies AiSummaryResponse);
   }
 
@@ -230,6 +254,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // 5. Call OpenRouter.
   try {
     const summary = await getChatCompletion(messages);
+
+    // Increment credit count in database across all devices
+    const updatedDecl = formatCreditsUsed(tenant?.contractor_declaration, currentUsed + 1);
+    await serverClient
+      .from('tenants')
+      .update({ contractor_declaration: updatedDecl })
+      .eq('owner_user_id', user.id);
+
     return json(200, {
       status: 'SUCCESS',
       summary,

@@ -49,8 +49,15 @@ async function getEmbedding(text: string): Promise<number[]> {
   return embedding;
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    if (!locals.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized. Please sign in to use vector search.' }), {
+        status: 401,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
     const body = (await request.json()) as { query?: string };
     const query = body.query?.trim();
 
